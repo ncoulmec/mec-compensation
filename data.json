@@ -35,10 +35,11 @@
     "kpiMinForComm": 0,
     "guardrailBasis": "gm",
     "guardrailBasisOptions": {
-      "gm": "Gross Margin (Rev − CoS) / Rev",
-      "cm": "Contribution Margin (GP − Contrib. Exp) / Rev",
-      "np": "Net Margin (CM − OpEx) / Rev"
-    }
+      "gm": "Gross Margin (Rev \u2212 CoS) / Rev",
+      "cm": "Contribution Margin (GP \u2212 Contrib. Exp) / Rev",
+      "np": "Net Margin (CM \u2212 OpEx) / Rev"
+    },
+    "guardrailEnabled": false
   },
   "planTypes": {
     "gm": {
@@ -94,7 +95,8 @@
           "threshold": 1050000,
           "rate": 0.1
         }
-      ]
+      ],
+      "includeProjects": false
     },
     "gp_bands_senior": {
       "name": "Senior Sales Manager (GP Incremental Bands)",
@@ -142,7 +144,8 @@
       "productionPct": 0.01,
       "productionBasis": "eventGP",
       "showOldCommissionComparison": true,
-      "oldCommissionRate": 0.035
+      "oldCommissionRate": 0.035,
+      "includeProjects": false
     },
     "gp_bands": {
       "name": "Sales Rep (GP Incremental Bands)",
@@ -190,11 +193,12 @@
       "productionPct": 0.01,
       "productionBasis": "eventGP",
       "showOldCommissionComparison": true,
-      "oldCommissionRate": 0.035
+      "oldCommissionRate": 0.035,
+      "includeProjects": false
     },
     "hybrid_gp": {
       "name": "Sales-Producer Hybrid (GP Sales + Production)",
-      "description": "For Evie & Evie 2.0. GP bands on cash-received GP (roughly half the Sales Rep bands — they sell at a lower rate) + 1% production on Event GP.",
+      "description": "For Evie & Evie 2.0. GP bands on cash-received GP (roughly half the Sales Rep bands \u2014 they sell at a lower rate) + 1% production on Event GP.",
       "metricLabel": "Annual GP Sold",
       "metricBasis": "gp",
       "inputIncludesGST": false,
@@ -226,7 +230,8 @@
       "productionPct": 0.01,
       "productionBasis": "eventGP",
       "showOldCommissionComparison": true,
-      "oldCommissionRate": 0.035
+      "oldCommissionRate": 0.035,
+      "includeProjects": false
     },
     "hybrid_rev": {
       "name": "Talent (Performer-Revenue Hybrid)",
@@ -280,11 +285,12 @@
         }
       ],
       "productionPct": 0.01,
-      "productionBasis": "revenue"
+      "productionBasis": "revenue",
+      "includeProjects": true
     },
     "hybrid_rev_senior": {
       "name": "Talent Senior (Performer-Revenue Hybrid)",
-      "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue → ~$100k base ex-super equivalent. Nathan to set rates.",
+      "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue \u2192 ~$100k base ex-super equivalent. Nathan to set rates.",
       "metricLabel": "Annual Performance Revenue",
       "metricBasis": "revenue",
       "inputIncludesGST": false,
@@ -302,24 +308,26 @@
         }
       ],
       "productionPct": 0.01,
-      "productionBasis": "revenue"
+      "productionBasis": "revenue",
+      "includeProjects": false
     },
     "base_only": {
       "name": "Base Salary Only",
-      "description": "Placeholder plan — no variable comp.",
+      "description": "Placeholder plan \u2014 no variable comp.",
       "metricLabel": "(none)",
       "metricBasis": "none",
       "payoutFrequency": "n/a",
       "payoutPercentage": 1,
       "includeProduction": false,
-      "bands": []
+      "bands": [],
+      "includeProjects": false
     }
   },
   "kpis": {
     "definitions": [
       {
         "id": "conversion_rate_quoted",
-        "name": "Conversion Rate (Quoted → Confirmed)",
+        "name": "Conversion Rate (Quoted \u2192 Confirmed)",
         "unit": "%",
         "direction": "higher",
         "defaultWeight": 0.25,

@@ -641,7 +641,7 @@
       </table>
     </div>
 
-    <div class="card" style="padding: 18px 24px;">
+    <div class="card" data-guardrail-card style="padding: 18px 24px;">
       <h2>Company Guardrail</h2>
       <div id="guardrail-banner" style="margin-top: 10px;"></div>
       <p style="font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.5;">
@@ -809,10 +809,18 @@ async function load() {
     if (!emp) throw new Error(`Employee "${EMPLOYEE_ID}" not found`);
     plan = data.planTypes[emp.planType];
     if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
-    myProjects = (data.projects || []).filter(p => (p.assignedTo || []).includes(EMPLOYEE_ID));
-
-    // Initialize project toggles (default all OFF — user opts in)
+    myProjects = plan.includeProjects
+      ? (data.projects || []).filter(p => (p.assignedTo || []).includes(EMPLOYEE_ID))
+      : [];
     myProjects.forEach(p => { scenario.projectsEnabled[p.id] = false; });
+
+    if (!plan.includeProjects) {
+      const projTab = document.querySelector('[data-tab="projects"]');
+      if (projTab) projTab.style.display = 'none';
+    }
+    if (data.globals.guardrailEnabled === false) {
+      document.querySelectorAll('[data-guardrail-card]').forEach(el => el.style.display = 'none');
+    }
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('emp-name').textContent = emp.name;
@@ -1332,15 +1340,16 @@ function renderSuperCard(r) {
   document.getElementById('spr-super').textContent = `+ ${fmtMoney(r.totalSuper)}`;
   document.getElementById('spr-total').textContent = fmtMoney(r.totalPackage);
 
-  // Payout banner
+  // Payout banner — dynamic based on plan's payoutPercentage
   const banner = document.getElementById('payout-banner-text');
-  const freq = plan.payoutFrequency;
-  if (freq === 'quarterly') {
-    banner.textContent = `Your commission is paid quarterly. 75% on the quarter, 25% reconciled at year-end.`;
-  } else if (freq === 'monthly') {
-    banner.textContent = 'Your commission is paid monthly.';
+  const freq = plan.payoutFrequency || 'not set';
+  const payoutPct = plan.payoutPercentage != null ? plan.payoutPercentage : 1.0;
+  const payoutPctTxt = (payoutPct * 100).toFixed(0);
+  const holdbackTxt = ((1 - payoutPct) * 100).toFixed(0);
+  if (payoutPct >= 0.999) {
+    banner.textContent = `Your commission is paid ${freq} — 100% paid out each period.`;
   } else {
-    banner.textContent = `Payout frequency: ${freq || 'not set'}`;
+    banner.textContent = `Your commission is paid ${freq} — ${payoutPctTxt}% paid out each period, ${holdbackTxt}% reconciled at year-end.`;
   }
 }
 

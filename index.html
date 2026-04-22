@@ -894,10 +894,13 @@ document.addEventListener('input', (ev) => {
   if (!path) return;
   setDirty();
   // Side effects based on what changed
-  if (path.startsWith('companyPL.quarters') || path.startsWith('companyPL.historicalQuarters')) {
+  if (path.startsWith('companyPL.quarters')) {
     updatePLTotals();
-    // Also refresh the guardrail "current LTM" display if quarters changed
     refreshGuardrailDisplay();
+  }
+  if (path.startsWith('companyPL.historicalQuarters')) {
+    updatePLTotals();
+    updateHistoricalTotals();
   }
   if (path.startsWith('companyPL.currentQuarter')) {
     updateCurrentQuarterTotals();
@@ -1132,6 +1135,10 @@ function renderPlans() {
           <label>Input Includes GST <span class="hint">Tick if the metric input comes GST-inclusive (auto-strips GST)</span></label>
           <input type="checkbox" ${plan.inputIncludesGST ? 'checked' : ''} onchange="data.planTypes['${key}'].inputIncludesGST=this.checked; setDirty()">
         </div>
+        <div class="input-group">
+          <label>Include Projects in this role <span class="hint">When ticked, project bonuses assigned to employees on this plan appear on their dashboards (Projects tab + Overview checkboxes). When unticked, project bonuses are hidden from this role even if assigned.</span></label>
+          <input type="checkbox" ${plan.includeProjects ? 'checked' : ''} onchange="data.planTypes['${key}'].includeProjects=this.checked; setDirty()">
+        </div>
         ${!isGM ? `
           <div class="input-group">
             <label>Production % <span class="hint">Extra % paid on GP on Events Produced that have happened (based on the Event Date)</span></label>
@@ -1328,34 +1335,40 @@ function renderGlobals() {
   const threshold = data.globals.guardrailMargin || 0.35;
   const status = current == null ? 'unknown' : current >= threshold ? 'clear' : 'breach';
 
+  const guardrailOn = data.globals.guardrailEnabled !== false;
   el.innerHTML = `
     ${simpleRow('Super rate', 'superRate', 'Employer super contribution (12% = 0.12)')}
     ${simpleRow('GST rate', 'gstRate', 'For stripping GST from Zoho-sourced GST-inclusive inputs')}
     <div style="padding: 10px 0; border-bottom: 1px solid var(--border);">
       <label style="font-size: 14px; display: block; margin-bottom: 6px;">
-        Guardrail Margin
-        <span class="hint">If realised margin drops below this, variable comp pauses. Pick which margin definition to check against.</span>
+        <input type="checkbox" ${guardrailOn ? 'checked' : ''} onchange="data.globals.guardrailEnabled=this.checked; setDirty(); renderGlobals();" style="margin-right: 8px;">
+        Enable Company Guardrail
+        <span class="hint" style="display:block;">When enabled, variable compensation pauses if company margin drops below the floor. Individual dashboards show the guardrail status card. When disabled (default), the guardrail is hidden everywhere.</span>
       </label>
-      <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
-        <select style="width: 260px; flex: 0 0 auto; padding: 7px 10px;" onchange="data.globals.guardrailBasis=this.value; setDirty(); renderGlobals();">
-          <option value="gm" ${basis === 'gm' ? 'selected' : ''}>Gross Margin (Rev − CoS) / Rev</option>
-          <option value="cm" ${basis === 'cm' ? 'selected' : ''}>Contribution Margin (GP − CE) / Rev</option>
-          <option value="np" ${basis === 'np' ? 'selected' : ''}>Net Margin (CM − OpEx) / Rev</option>
-        </select>
-        <span style="font-size: 13px; color: var(--muted);">Floor:</span>
-        <div class="input-with-suffix" style="width: 90px; flex: 0 0 auto;">
-          <input type="text" inputmode="decimal" data-percent-path="globals.guardrailMargin" value="${(threshold*100).toFixed(1)}">
-          <span class="suffix">%</span>
+      ${guardrailOn ? `
+        <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 12px; background: #fafaf7; border-radius: 8px;">
+          <select style="width: 260px; flex: 0 0 auto; padding: 7px 10px;" onchange="data.globals.guardrailBasis=this.value; setDirty(); renderGlobals();">
+            <option value="gm" ${basis === 'gm' ? 'selected' : ''}>Gross Margin (Rev − CoS) / Rev</option>
+            <option value="cm" ${basis === 'cm' ? 'selected' : ''}>Contribution Margin (GP − CE) / Rev</option>
+            <option value="np" ${basis === 'np' ? 'selected' : ''}>Net Margin (CM − OpEx) / Rev</option>
+          </select>
+          <span style="font-size: 13px; color: var(--muted);">Floor:</span>
+          <div class="input-with-suffix" style="width: 90px; flex: 0 0 auto;">
+            <input type="text" inputmode="decimal" data-percent-path="globals.guardrailMargin" value="${(threshold*100).toFixed(1)}">
+            <span class="suffix">%</span>
+          </div>
+          <span style="font-size: 13px; color: var(--muted);">Current LTM:</span>
+          <span style="font-family: var(--mono); font-weight: 600; color: ${status === 'clear' ? 'var(--accent)' : status === 'breach' ? 'var(--danger)' : 'var(--muted)'};">
+            ${current == null ? '—' : (current*100).toFixed(1) + '%'}
+            ${status === 'clear' ? '✓ Clear' : status === 'breach' ? '⚠ Breach' : ''}
+          </span>
         </div>
-        <span style="font-size: 13px; color: var(--muted);">Current LTM:</span>
-        <span style="font-family: var(--mono); font-weight: 600; color: ${status === 'clear' ? 'var(--accent)' : status === 'breach' ? 'var(--danger)' : 'var(--muted)'};">
-          ${current == null ? '—' : (current*100).toFixed(1) + '%'}
-          ${status === 'clear' ? '✓ Clear' : status === 'breach' ? '⚠ Breach' : ''}
-        </span>
-      </div>
-      <div style="font-size: 11px; color: var(--faint); font-family: var(--mono); margin-top: 6px;">
-        GM: ${gm == null ? '—' : (gm*100).toFixed(1)+'%'} · CM: ${cm == null ? '—' : (cm*100).toFixed(1)+'%'} · NM: ${nm == null ? '—' : (nm*100).toFixed(1)+'%'} · From the last 4 complete quarters below
-      </div>
+        <div style="font-size: 11px; color: var(--faint); font-family: var(--mono); margin-top: 6px;">
+          GM: ${gm == null ? '—' : (gm*100).toFixed(1)+'%'} · CM: ${cm == null ? '—' : (cm*100).toFixed(1)+'%'} · NM: ${nm == null ? '—' : (nm*100).toFixed(1)+'%'} · From the last 4 complete quarters below
+        </div>
+      ` : `
+        <div style="font-size: 12px; color: var(--faint); font-style: italic; margin-top: 4px;">Guardrail paused — no margin gating on any dashboard. Enable the checkbox above to turn it on.</div>
+      `}
     </div>
     ${simpleRow('Quarterly payout', 'quarterlyPayoutPct', 'Proportion of variable comp paid each quarter (75% = 0.75)')}
     ${simpleRow('Year-end holdback', 'yearEndHoldbackPct', 'Proportion held until year-end reconciliation')}
@@ -1705,7 +1718,34 @@ function renderHistoricalPL() {
   body.innerHTML = lines.map(l => `<tr>
       <td style="color: var(--muted);">${l.label}</td>
       ${hist.map((q, i) => `<td style="min-width:150px;text-align:center;"><div style="margin: 0 auto; max-width: 130px;">${moneyInputHtml(`companyPL.historicalQuarters.${i}.${l.key}`)}</div></td>`).join('')}
-    </tr>`).join('');
+    </tr>`).join('') +
+  `<tr class="totals">
+     <td>Gross Profit</td>
+     ${hist.map((q, i) => `<td style="text-align:center;font-family:'DM Mono',monospace;" data-hist-gp="${i}"></td>`).join('')}
+   </tr>
+   <tr class="totals">
+     <td>Contribution Margin</td>
+     ${hist.map((q, i) => `<td style="text-align:center;font-family:'DM Mono',monospace;" data-hist-cm="${i}"></td>`).join('')}
+   </tr>
+   <tr class="totals">
+     <td>Net Profit</td>
+     ${hist.map((q, i) => `<td style="text-align:center;font-family:'DM Mono',monospace;" data-hist-np="${i}"></td>`).join('')}
+   </tr>`;
+  updateHistoricalTotals();
+}
+function updateHistoricalTotals() {
+  const hist = data.companyPL.historicalQuarters || [];
+  hist.forEach((q, i) => {
+    const gp = (+q.revenue || 0) - (+q.cogs || 0);
+    const cm = gp - (+q.contribExp || 0);
+    const np = cm - (+q.opex || 0);
+    const g = document.querySelector(`[data-hist-gp="${i}"]`);
+    const c = document.querySelector(`[data-hist-cm="${i}"]`);
+    const n = document.querySelector(`[data-hist-np="${i}"]`);
+    if (g) g.textContent = fmtMoney(gp);
+    if (c) c.textContent = fmtMoney(cm);
+    if (n) n.textContent = fmtMoney(np);
+  });
 }
 function computeDerived(q) {
   const gp = (+q.revenue || 0) - (+q.cogs || 0);
