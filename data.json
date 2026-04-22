@@ -9,19 +9,31 @@
   },
   "globals": {
     "superRate": 0.12,
-    "gstRate": 0.10,
+    "gstRate": 0.1,
     "guardrailMargin": 0.35,
     "quarterlyPayoutPct": 0.75,
     "yearEndHoldbackPct": 0.25,
     "marginMultipliers": [
-      { "minMargin": 0.35, "multiplier": 1.0 },
-      { "minMargin": 0.40, "multiplier": 1.1 },
-      { "minMargin": 0.45, "multiplier": 1.2 },
-      { "minMargin": 0.50, "multiplier": 1.3 }
+      {
+        "minMargin": 0.35,
+        "multiplier": 1
+      },
+      {
+        "minMargin": 0.4,
+        "multiplier": 1.1
+      },
+      {
+        "minMargin": 0.45,
+        "multiplier": 1.2
+      },
+      {
+        "minMargin": 0.5,
+        "multiplier": 1.3
+      }
     ],
-    "kpiScoreCap": 1.0,
-    "kpiMinForComm": 0.0,
-    "guardrailBasis": "cm",
+    "kpiScoreCap": 1,
+    "kpiMinForComm": 0,
+    "guardrailBasis": "gm",
     "guardrailBasisOptions": {
       "gm": "Gross Margin (Rev − CoS) / Rev",
       "cm": "Contribution Margin (GP − Contrib. Exp) / Rev",
@@ -40,18 +52,48 @@
       "includeProduction": false,
       "cmBaseline": 1093000,
       "cmBands": [
-        { "threshold": 1000000, "rate": 0.00 },
-        { "threshold": 1100000, "rate": 0.02 },
-        { "threshold": 1200000, "rate": 0.03 },
-        { "threshold": 1300000, "rate": 0.04 },
-        { "threshold": 1400000, "rate": 0.05 }
+        {
+          "threshold": 1000000,
+          "rate": 0
+        },
+        {
+          "threshold": 1100000,
+          "rate": 0.02
+        },
+        {
+          "threshold": 1200000,
+          "rate": 0.03
+        },
+        {
+          "threshold": 1300000,
+          "rate": 0.04
+        },
+        {
+          "threshold": 1400000,
+          "rate": 0.05
+        }
       ],
       "npBands": [
-        { "threshold": 850000,  "rate": 0.05 },
-        { "threshold": 900000,  "rate": 0.07 },
-        { "threshold": 950000,  "rate": 0.08 },
-        { "threshold": 1000000, "rate": 0.10 },
-        { "threshold": 1050000, "rate": 0.10 }
+        {
+          "threshold": 850000,
+          "rate": 0.05
+        },
+        {
+          "threshold": 900000,
+          "rate": 0.07
+        },
+        {
+          "threshold": 950000,
+          "rate": 0.08
+        },
+        {
+          "threshold": 1000000,
+          "rate": 0.1
+        },
+        {
+          "threshold": 1050000,
+          "rate": 0.1
+        }
       ]
     },
     "gp_bands_senior": {
@@ -61,17 +103,41 @@
       "metricBasis": "gp",
       "inputIncludesGST": true,
       "payoutFrequency": "monthly",
-      "payoutPercentage": 1.0,
+      "payoutPercentage": 1,
       "includeProduction": true,
       "bands": [
-        { "threshold": 0,      "rate": 0.000 },
-        { "threshold": 200000, "rate": 0.030 },
-        { "threshold": 300000, "rate": 0.050 },
-        { "threshold": 350000, "rate": 0.080 },
-        { "threshold": 400000, "rate": 0.120 },
-        { "threshold": 450000, "rate": 0.143 },
-        { "threshold": 500000, "rate": 0.172 },
-        { "threshold": 550000, "rate": 0.201 }
+        {
+          "threshold": 0,
+          "rate": 0
+        },
+        {
+          "threshold": 200000,
+          "rate": 0.03
+        },
+        {
+          "threshold": 300000,
+          "rate": 0.05
+        },
+        {
+          "threshold": 350000,
+          "rate": 0.08
+        },
+        {
+          "threshold": 400000,
+          "rate": 0.12
+        },
+        {
+          "threshold": 450000,
+          "rate": 0.143
+        },
+        {
+          "threshold": 500000,
+          "rate": 0.172
+        },
+        {
+          "threshold": 550000,
+          "rate": 0.201
+        }
       ],
       "productionPct": 0.01,
       "productionBasis": "eventGP",
@@ -85,17 +151,41 @@
       "metricBasis": "gp",
       "inputIncludesGST": true,
       "payoutFrequency": "monthly",
-      "payoutPercentage": 1.0,
+      "payoutPercentage": 1,
       "includeProduction": true,
       "bands": [
-        { "threshold": 0,      "rate": 0.000 },
-        { "threshold": 200000, "rate": 0.030 },
-        { "threshold": 300000, "rate": 0.050 },
-        { "threshold": 350000, "rate": 0.080 },
-        { "threshold": 400000, "rate": 0.120 },
-        { "threshold": 450000, "rate": 0.143 },
-        { "threshold": 500000, "rate": 0.172 },
-        { "threshold": 550000, "rate": 0.201 }
+        {
+          "threshold": 0,
+          "rate": 0
+        },
+        {
+          "threshold": 200000,
+          "rate": 0.03
+        },
+        {
+          "threshold": 300000,
+          "rate": 0.05
+        },
+        {
+          "threshold": 350000,
+          "rate": 0.08
+        },
+        {
+          "threshold": 400000,
+          "rate": 0.12
+        },
+        {
+          "threshold": 450000,
+          "rate": 0.143
+        },
+        {
+          "threshold": 500000,
+          "rate": 0.172
+        },
+        {
+          "threshold": 550000,
+          "rate": 0.201
+        }
       ],
       "productionPct": 0.01,
       "productionBasis": "eventGP",
@@ -109,14 +199,29 @@
       "metricBasis": "gp",
       "inputIncludesGST": false,
       "payoutFrequency": "monthly",
-      "payoutPercentage": 1.0,
+      "payoutPercentage": 1,
       "includeProduction": true,
       "bands": [
-        { "threshold": 0,      "rate": 0.000 },
-        { "threshold": 100000, "rate": 0.030 },
-        { "threshold": 150000, "rate": 0.050 },
-        { "threshold": 175000, "rate": 0.080 },
-        { "threshold": 200000, "rate": 0.120 }
+        {
+          "threshold": 0,
+          "rate": 0
+        },
+        {
+          "threshold": 100000,
+          "rate": 0.03
+        },
+        {
+          "threshold": 150000,
+          "rate": 0.05
+        },
+        {
+          "threshold": 175000,
+          "rate": 0.08
+        },
+        {
+          "threshold": 200000,
+          "rate": 0.12
+        }
       ],
       "productionPct": 0.01,
       "productionBasis": "eventGP",
@@ -130,19 +235,49 @@
       "metricBasis": "revenue",
       "inputIncludesGST": false,
       "payoutFrequency": "quarterly",
-      "payoutPercentage": 1.0,
+      "payoutPercentage": 1,
       "includeProduction": false,
       "bands": [
-        { "threshold": 0,      "rate": 0.000 },
-        { "threshold": 70000,  "rate": 0.000 },
-        { "threshold": 100000, "rate": 0.050 },
-        { "threshold": 130000, "rate": 0.125 },
-        { "threshold": 160000, "rate": 0.175 },
-        { "threshold": 190000, "rate": 0.250 },
-        { "threshold": 220000, "rate": 0.000 },
-        { "threshold": 250000, "rate": 0.000 },
-        { "threshold": 280000, "rate": 0.000 },
-        { "threshold": 300000, "rate": 0.000 }
+        {
+          "threshold": 0,
+          "rate": 0
+        },
+        {
+          "threshold": 70000,
+          "rate": 0
+        },
+        {
+          "threshold": 100000,
+          "rate": 0.05
+        },
+        {
+          "threshold": 130000,
+          "rate": 0.125
+        },
+        {
+          "threshold": 160000,
+          "rate": 0.175
+        },
+        {
+          "threshold": 190000,
+          "rate": 0.25
+        },
+        {
+          "threshold": 220000,
+          "rate": 0
+        },
+        {
+          "threshold": 250000,
+          "rate": 0
+        },
+        {
+          "threshold": 280000,
+          "rate": 0
+        },
+        {
+          "threshold": 300000,
+          "rate": 0
+        }
       ],
       "productionPct": 0.01,
       "productionBasis": "revenue"
@@ -154,17 +289,17 @@
       "metricBasis": "revenue",
       "inputIncludesGST": false,
       "payoutFrequency": "quarterly",
-      "payoutPercentage": 1.0,
+      "payoutPercentage": 1,
       "includeProduction": false,
       "bands": [
-        { "threshold": 0,      "rate": 0.000 },
-        { "threshold": 100000, "rate": 0.000 },
-        { "threshold": 150000, "rate": 0.000 },
-        { "threshold": 190000, "rate": 0.000 },
-        { "threshold": 220000, "rate": 0.000 },
-        { "threshold": 250000, "rate": 0.000 },
-        { "threshold": 280000, "rate": 0.000 },
-        { "threshold": 310000, "rate": 0.000 }
+        {
+          "threshold": 195000,
+          "rate": 0.34600000000000003
+        },
+        {
+          "threshold": 220000,
+          "rate": 0.1
+        }
       ],
       "productionPct": 0.01,
       "productionBasis": "revenue"
@@ -175,21 +310,72 @@
       "metricLabel": "(none)",
       "metricBasis": "none",
       "payoutFrequency": "n/a",
-      "payoutPercentage": 1.0,
+      "payoutPercentage": 1,
       "includeProduction": false,
       "bands": []
     }
   },
   "kpis": {
     "definitions": [
-      { "id": "conversion_rate_quoted", "name": "Conversion Rate (Quoted → Confirmed)", "unit": "%", "direction": "higher", "defaultWeight": 0.25, "formula": "bookingsConfirmed / bookingsQuoted" },
-      { "id": "call_rate",              "name": "Call Rate (Quotes with Call/VM Attached)", "unit": "%", "direction": "higher", "defaultWeight": 0.15, "formula": "quotesWithCall / totalQuotes", "draft": true },
-      { "id": "revenue_target",         "name": "Revenue vs Target", "unit": "AUD", "direction": "higher", "defaultWeight": 0.20 },
-      { "id": "margin_target",          "name": "Realised Margin vs Target", "unit": "%", "direction": "higher", "defaultWeight": 0.15 },
-      { "id": "client_satisfaction",    "name": "Client Satisfaction", "unit": "/10", "direction": "higher", "defaultWeight": 0.10 },
-      { "id": "bookings_on_time",       "name": "Bookings Delivered On-Time", "unit": "%", "direction": "higher", "defaultWeight": 0.10 },
-      { "id": "complaint_rate",         "name": "Complaint Rate", "unit": "%", "direction": "lower", "defaultWeight": 0.05 },
-      { "id": "team_engagement",        "name": "Team Engagement (GM only)", "unit": "score", "direction": "higher", "defaultWeight": 0.10 }
+      {
+        "id": "conversion_rate_quoted",
+        "name": "Conversion Rate (Quoted → Confirmed)",
+        "unit": "%",
+        "direction": "higher",
+        "defaultWeight": 0.25,
+        "formula": "bookingsConfirmed / bookingsQuoted"
+      },
+      {
+        "id": "call_rate",
+        "name": "Call Rate (Quotes with Call/VM Attached)",
+        "unit": "%",
+        "direction": "higher",
+        "defaultWeight": 0.15,
+        "formula": "quotesWithCall / totalQuotes",
+        "draft": true
+      },
+      {
+        "id": "revenue_target",
+        "name": "Revenue vs Target",
+        "unit": "AUD",
+        "direction": "higher",
+        "defaultWeight": 0.2
+      },
+      {
+        "id": "margin_target",
+        "name": "Realised Margin vs Target",
+        "unit": "%",
+        "direction": "higher",
+        "defaultWeight": 0.15
+      },
+      {
+        "id": "client_satisfaction",
+        "name": "Client Satisfaction",
+        "unit": "/10",
+        "direction": "higher",
+        "defaultWeight": 0.1
+      },
+      {
+        "id": "bookings_on_time",
+        "name": "Bookings Delivered On-Time",
+        "unit": "%",
+        "direction": "higher",
+        "defaultWeight": 0.1
+      },
+      {
+        "id": "complaint_rate",
+        "name": "Complaint Rate",
+        "unit": "%",
+        "direction": "lower",
+        "defaultWeight": 0.05
+      },
+      {
+        "id": "team_engagement",
+        "name": "Team Engagement (GM only)",
+        "unit": "score",
+        "direction": "higher",
+        "defaultWeight": 0.1
+      }
     ]
   },
   "projects": [
@@ -198,7 +384,9 @@
       "name": "Rostering System",
       "bonusAmount": 2500,
       "bonusIncludesSuper": true,
-      "assignedTo": ["michael"],
+      "assignedTo": [
+        "michael"
+      ],
       "status": "In Progress",
       "dueDate": "2026-06-30",
       "dodLink": "",
@@ -209,7 +397,9 @@
       "name": "Quoting Tool",
       "bonusAmount": 2500,
       "bonusIncludesSuper": true,
-      "assignedTo": ["michael"],
+      "assignedTo": [
+        "michael"
+      ],
       "status": "In Progress",
       "dueDate": "2026-09-30",
       "dodLink": "",
@@ -220,7 +410,9 @@
       "name": "Client Portal",
       "bonusAmount": 2500,
       "bonusIncludesSuper": true,
-      "assignedTo": ["michael"],
+      "assignedTo": [
+        "michael"
+      ],
       "status": "Not Started",
       "dueDate": "2026-12-31",
       "dodLink": "",
@@ -228,14 +420,110 @@
     }
   ],
   "employees": [
-    { "id": "hayley", "name": "Hayley Wilson", "role": "General Manager", "roleShort": "GM", "baseSalary": 110000, "baseSalaryIncludesSuper": false, "planType": "gm", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "hayley.html", "placeholder": false },
-    { "id": "dane", "name": "Dane McKenzie", "role": "Senior Sales", "roleShort": "Senior Sales", "baseSalary": 92500, "baseSalaryIncludesSuper": false, "planType": "gp_bands_senior", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "dane.html", "placeholder": false },
-    { "id": "daniel", "name": "Daniel Steer", "role": "Sales Rep", "roleShort": "Sales", "baseSalary": 75000, "baseSalaryIncludesSuper": false, "planType": "gp_bands", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "daniel.html", "placeholder": false },
-    { "id": "nic", "name": "Nic Symons", "role": "Sales Rep", "roleShort": "Sales", "baseSalary": 75000, "baseSalaryIncludesSuper": false, "planType": "gp_bands", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "nic.html", "placeholder": false },
-    { "id": "evie", "name": "Evie Johnston", "role": "Sales / Producer Hybrid", "roleShort": "Hybrid", "baseSalary": 80000, "baseSalaryIncludesSuper": false, "planType": "hybrid_gp", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "evie.html", "placeholder": false },
-    { "id": "evie2", "name": "Evie 2.0", "role": "Sales / Producer Hybrid", "roleShort": "Hybrid", "baseSalary": 80000, "baseSalaryIncludesSuper": false, "planType": "hybrid_gp", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "evie2.html", "placeholder": true },
-    { "id": "tom", "name": "Tom Bunnett", "role": "Performer / Talent Manager", "roleShort": "Talent", "baseSalary": 91350, "baseSalaryIncludesSuper": false, "planType": "hybrid_rev_senior", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "tom.html", "placeholder": false },
-    { "id": "michael", "name": "Michael Kourkov", "role": "Performer / Systems Manager", "roleShort": "Talent", "baseSalary": 70000, "baseSalaryIncludesSuper": false, "planType": "hybrid_rev", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "michael.html", "placeholder": false }
+    {
+      "id": "hayley",
+      "name": "Hayley Wilson",
+      "role": "General Manager",
+      "roleShort": "GM",
+      "baseSalary": 110000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gm",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "hayley.html",
+      "placeholder": false
+    },
+    {
+      "id": "dane",
+      "name": "Dane McKenzie",
+      "role": "Senior Sales",
+      "roleShort": "Senior Sales",
+      "baseSalary": 92500,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gp_bands_senior",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "dane.html",
+      "placeholder": false
+    },
+    {
+      "id": "daniel",
+      "name": "Daniel Steer",
+      "role": "Sales Rep",
+      "roleShort": "Sales",
+      "baseSalary": 75000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gp_bands",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "daniel.html",
+      "placeholder": false
+    },
+    {
+      "id": "nic",
+      "name": "Nic Symons",
+      "role": "Sales Rep",
+      "roleShort": "Sales",
+      "baseSalary": 75000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gp_bands",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "nic.html",
+      "placeholder": false
+    },
+    {
+      "id": "evie",
+      "name": "Evie Johnston",
+      "role": "Sales / Producer Hybrid",
+      "roleShort": "Hybrid",
+      "baseSalary": 80000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "hybrid_gp",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "evie.html",
+      "placeholder": false
+    },
+    {
+      "id": "evie2",
+      "name": "Evie 2.0",
+      "role": "Sales / Producer Hybrid",
+      "roleShort": "Hybrid",
+      "baseSalary": 80000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "hybrid_gp",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "evie2.html",
+      "placeholder": true
+    },
+    {
+      "id": "tom",
+      "name": "Tom Bunnett",
+      "role": "Performer / Talent Manager",
+      "roleShort": "Talent",
+      "baseSalary": 91350,
+      "baseSalaryIncludesSuper": false,
+      "planType": "hybrid_rev_senior",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "tom.html",
+      "placeholder": false
+    },
+    {
+      "id": "michael",
+      "name": "Michael Kourkov",
+      "role": "Performer / Systems Manager",
+      "roleShort": "Talent",
+      "baseSalary": 70000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "hybrid_rev",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "michael.html",
+      "placeholder": false
+    }
   ],
   "companyPL": {
     "label": "Company P&L (Cash Basis)",
@@ -246,20 +534,92 @@
       "note": "TODO: create an integration that pulls in directly from Xero. In the meantime, use CSV upload or manual entry."
     },
     "quarters": [
-      { "label": "Apr-Jun 2025", "revenue": 736680, "cogs": 276345, "contribExp": 208953, "opex": 17781 },
-      { "label": "Jul-Sep 2025", "revenue": 913414, "cogs": 332610, "contribExp": 229616, "opex": 57214 },
-      { "label": "Oct-Dec 2025", "revenue": 1168425, "cogs": 707559, "contribExp": 241306, "opex": 33456 },
-      { "label": "Jan-Mar 2026", "revenue": 987753, "cogs": 459256, "contribExp": 239627, "opex": 52191 }
+      {
+        "label": "Apr-Jun 2025",
+        "revenue": 736680,
+        "cogs": 276345,
+        "contribExp": 208953,
+        "opex": 17781
+      },
+      {
+        "label": "Jul-Sep 2025",
+        "revenue": 913414,
+        "cogs": 332610,
+        "contribExp": 229616,
+        "opex": 57214
+      },
+      {
+        "label": "Oct-Dec 2025",
+        "revenue": 1168425,
+        "cogs": 707559,
+        "contribExp": 241306,
+        "opex": 33456
+      },
+      {
+        "label": "Jan-Mar 2026",
+        "revenue": 987753,
+        "cogs": 459256,
+        "contribExp": 239627,
+        "opex": 52191
+      }
     ],
-    "currentQuarter": { "label": "Apr-Jun 2026", "revenue": 0, "cogs": 0, "contribExp": 0, "opex": 0 },
+    "currentQuarter": {
+      "label": "Apr-Jun 2026",
+      "revenue": 0,
+      "cogs": 0,
+      "contribExp": 0,
+      "opex": 0
+    },
     "historicalQuarters": [
-      { "label": "Jul-Sep 2023", "revenue": 605642, "cogs": 169422, "contribExp": 136868, "opex": 29127 },
-      { "label": "Oct-Dec 2023", "revenue": 889100, "cogs": 490656, "contribExp": 134350, "opex": 16927 },
-      { "label": "Jan-Mar 2024", "revenue": 695000, "cogs": 375340, "contribExp": 175298, "opex": 29556 },
-      { "label": "Apr-Jun 2024", "revenue": 615855, "cogs": 278120, "contribExp": 181917, "opex": 20523 },
-      { "label": "Jul-Sep 2024", "revenue": 753116, "cogs": 227517, "contribExp": 195132, "opex": 43354 },
-      { "label": "Oct-Dec 2024", "revenue": 964984, "cogs": 595819, "contribExp": 199633, "opex": 29634 },
-      { "label": "Jan-Mar 2025", "revenue": 779829, "cogs": 386494, "contribExp": 164919, "opex": 54189 }
+      {
+        "label": "Jul-Sep 2023",
+        "revenue": 605642,
+        "cogs": 169422,
+        "contribExp": 136868,
+        "opex": 29127
+      },
+      {
+        "label": "Oct-Dec 2023",
+        "revenue": 889100,
+        "cogs": 490656,
+        "contribExp": 134350,
+        "opex": 16927
+      },
+      {
+        "label": "Jan-Mar 2024",
+        "revenue": 695000,
+        "cogs": 375340,
+        "contribExp": 175298,
+        "opex": 29556
+      },
+      {
+        "label": "Apr-Jun 2024",
+        "revenue": 615855,
+        "cogs": 278120,
+        "contribExp": 181917,
+        "opex": 20523
+      },
+      {
+        "label": "Jul-Sep 2024",
+        "revenue": 753116,
+        "cogs": 227517,
+        "contribExp": 195132,
+        "opex": 43354
+      },
+      {
+        "label": "Oct-Dec 2024",
+        "revenue": 964984,
+        "cogs": 595819,
+        "contribExp": 199633,
+        "opex": 29634
+      },
+      {
+        "label": "Jan-Mar 2025",
+        "revenue": 779829,
+        "cogs": 386494,
+        "contribExp": 164919,
+        "opex": 54189
+      }
     ]
   }
 }
