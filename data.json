@@ -30,6 +30,7 @@
       "metricBasis": "cm_np",
       "inputIncludesGST": false,
       "payoutFrequency": "quarterly",
+      "payoutPercentage": 0.75,
       "includeProduction": false,
       "cmBaseline": 1093000,
       "cmBands": [
@@ -54,6 +55,7 @@
       "metricBasis": "gp",
       "inputIncludesGST": true,
       "payoutFrequency": "monthly",
+      "payoutPercentage": 1.0,
       "includeProduction": true,
       "bands": [
         { "threshold": 0,      "rate": 0.000 },
@@ -77,6 +79,7 @@
       "metricBasis": "gp",
       "inputIncludesGST": true,
       "payoutFrequency": "monthly",
+      "payoutPercentage": 1.0,
       "includeProduction": true,
       "bands": [
         { "threshold": 0,      "rate": 0.000 },
@@ -100,6 +103,7 @@
       "metricBasis": "gp",
       "inputIncludesGST": false,
       "payoutFrequency": "monthly",
+      "payoutPercentage": 1.0,
       "includeProduction": true,
       "bands": [
         { "threshold": 0,      "rate": 0.000 },
@@ -115,20 +119,23 @@
     },
     "hybrid_rev": {
       "name": "Talent (Performer-Revenue Hybrid)",
-      "description": "For Performer/Talent Manager roles (Michael, Tom). Variable comp on revenue bands.",
+      "description": "For Performer/Talent Manager roles (Michael, Tom). Variable comp on revenue bands. Threshold structure: $70k floor (pay-for-yourself), then $30k increments up to $300k+.",
       "metricLabel": "Annual Performance Revenue",
       "metricBasis": "revenue",
       "inputIncludesGST": false,
       "payoutFrequency": "quarterly",
+      "payoutPercentage": 1.0,
       "includeProduction": false,
       "bands": [
         { "threshold": 0,      "rate": 0.000 },
+        { "threshold": 70000,  "rate": 0.000 },
         { "threshold": 100000, "rate": 0.050 },
         { "threshold": 130000, "rate": 0.125 },
         { "threshold": 160000, "rate": 0.175 },
-        { "threshold": 200000, "rate": 0.250 },
-        { "threshold": 230000, "rate": 0.000 },
-        { "threshold": 260000, "rate": 0.000 },
+        { "threshold": 190000, "rate": 0.250 },
+        { "threshold": 220000, "rate": 0.000 },
+        { "threshold": 250000, "rate": 0.000 },
+        { "threshold": 280000, "rate": 0.000 },
         { "threshold": 300000, "rate": 0.000 }
       ],
       "productionPct": 0.01,
@@ -140,6 +147,7 @@
       "metricLabel": "(none)",
       "metricBasis": "none",
       "payoutFrequency": "n/a",
+      "payoutPercentage": 1.0,
       "includeProduction": false,
       "bands": []
     }
@@ -176,6 +184,17 @@
       "assignedTo": ["michael"],
       "status": "In Progress",
       "dueDate": "2026-09-30",
+      "dodLink": "",
+      "payoutTrigger": "on_dod_signoff"
+    },
+    {
+      "id": "client_portal",
+      "name": "Client Portal",
+      "bonusAmount": 2500,
+      "bonusIncludesSuper": true,
+      "assignedTo": ["michael"],
+      "status": "Not Started",
+      "dueDate": "2026-12-31",
       "dodLink": "",
       "payoutTrigger": "on_dod_signoff"
     }

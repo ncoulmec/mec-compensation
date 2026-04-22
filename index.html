@@ -1060,9 +1060,13 @@ function renderPlans() {
         </div>
         <div class="input-group">
           <label>Payout Frequency <span class="hint">How often this plan's variable comp is paid out</span></label>
-          <select style="max-width:160px;" onchange="data.planTypes['${key}'].payoutFrequency=this.value; setDirty()">
-            ${freqOptions.map(f => `<option value="${f.value}" ${plan.payoutFrequency === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}
-          </select>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <select style="max-width:160px;" onchange="data.planTypes['${key}'].payoutFrequency=this.value; setDirty()">
+              ${freqOptions.map(f => `<option value="${f.value}" ${plan.payoutFrequency === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}
+            </select>
+            <span style="font-size:12px;color:var(--muted);">Payout %:</span>
+            ${percentInputHtml(`planTypes.${key}.payoutPercentage`, 0)}
+          </div>
         </div>
         <div class="input-group">
           <label>Input Includes GST <span class="hint">Tick if the metric input comes GST-inclusive (auto-strips GST)</span></label>
@@ -1070,15 +1074,15 @@ function renderPlans() {
         </div>
         ${!isGM ? `
           <div class="input-group">
-            <label>Include 1% Production in this role? <span class="hint">Extra % paid on GP on Events Produced that have happened (based on the Event Date)</span></label>
-            <input type="checkbox" ${hasProduction ? 'checked' : ''} onchange="togglePlanProduction('${key}', this.checked)">
-          </div>
-          ${hasProduction ? `
-            <div class="input-group">
-              <label>Production % <span class="hint">Extra % paid on GP on Events Produced that have happened (based on the Event Date)</span></label>
-              ${percentInputHtml(`planTypes.${key}.productionPct`, 3)}
+            <label>Production % <span class="hint">Extra % paid on GP on Events Produced that have happened (based on the Event Date)</span></label>
+            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); font-weight: normal; text-transform: none; letter-spacing: normal;">
+                <input type="checkbox" ${hasProduction ? 'checked' : ''} onchange="togglePlanProduction('${key}', this.checked)">
+                Include in this role?
+              </label>
+              ${hasProduction ? percentInputHtml(`planTypes.${key}.productionPct`, 3) : ''}
             </div>
-          ` : ''}
+          </div>
         ` : ''}
         ${plan.showOldCommissionComparison ? `
           <div class="input-group">
@@ -1107,27 +1111,44 @@ function togglePlanProduction(key, enabled) {
 function renderStandardBands(key, plan) {
   if (!plan.bands) return '';
   const sortedBands = plan.bands;
+  let cumulative = 0;
   const rows = sortedBands.map((b, i) => {
     const nextThreshold = sortedBands[i + 1]?.threshold;
     const rangeLabel = nextThreshold !== undefined
       ? `${fmtMoney(b.threshold)} – ${fmtMoney(nextThreshold)}`
       : `${fmtMoney(b.threshold)}+`;
+    // Band Earn = (next - current) × rate, assuming the band is fully filled
+    const bandSize = nextThreshold !== undefined ? (nextThreshold - b.threshold) : null;
+    const bandEarn = bandSize !== null ? bandSize * b.rate : null;
+    if (bandEarn !== null) cumulative += bandEarn;
+    const earnTxt = bandEarn === null ? '<span style="color:var(--faint);">—</span>' : fmtMoney(bandEarn);
+    const cumTxt = bandEarn === null ? '<span style="color:var(--faint);">—</span>' : fmtMoney(cumulative);
     return `
       <tr>
         <td style="color: var(--muted); font-family: var(--mono); font-size: 12px;">${i + 1}</td>
         <td>${moneyInputHtml(`planTypes.${key}.bands.${i}.threshold`)}</td>
         <td style="color: var(--faint); font-family: var(--mono); font-size: 12px;">${rangeLabel}</td>
         <td>${percentInputHtml(`planTypes.${key}.bands.${i}.rate`, 3)}</td>
+        <td style="font-family: var(--mono); font-size: 12px; text-align: right; color: var(--ink);">${earnTxt}</td>
+        <td style="font-family: var(--mono); font-size: 12px; text-align: right; color: var(--accent); font-weight: 500;">${cumTxt}</td>
         <td style="width:90px;text-align:right;"><button class="btn small danger" onclick="removeBand('${key}', ${i})">Remove</button></td>
       </tr>
     `;
   }).join('');
   return `
     <h3>Bands <span class="pill">${plan.bands.length}</span></h3>
-    <p class="intro" style="margin-bottom:10px;font-size:12px;">Enter just the threshold (the starting point) of each band — the upper bound is automatically the next band's threshold. Each rate applies only to metric earned within that band. The last band is open-ended.</p>
+    <p class="intro" style="margin-bottom:10px;font-size:12px;">Enter just the threshold (the starting point) of each band — the upper bound is automatically the next band's threshold. Each rate applies only to metric earned within that band. <strong>Band Earn</strong> shows max commission if that band is fully filled; <strong>Cumulative</strong> is the running total. Last band is open-ended.</p>
     <table class="tight-table">
       <thead>
-        <tr><th style="width:30px">#</th><th style="width:24%">Threshold</th><th style="width:28%">Range (auto)</th><th style="width:20%">Rate</th><th></th></tr>
+        <tr>
+          <th style="width:30px">#</th>
+          <th style="width:18%">Threshold</th>
+          <th style="width:22%">Range (auto)</th>
+          <th style="width:14%">Rate</th>
+          <th style="text-align:right;width:14%">Band Earn</th>
+          <th style="text-align:right;width:14%">Cumulative</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>

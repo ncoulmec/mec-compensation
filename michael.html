@@ -180,11 +180,18 @@
   /* Scenario row */
   .scenario-row {
     display: grid;
-    grid-template-columns: 180px 1fr 140px;
+    grid-template-columns: 200px 1fr 140px;
     align-items: center;
     gap: 14px;
     padding: 12px 0;
     border-bottom: 1px solid var(--border);
+  }
+  .scenario-row label {
+    line-height: 1.3;
+  }
+  .scenario-row label .lbl-main { display: inline; }
+  @media (max-width: 700px) {
+    .scenario-row { grid-template-columns: 1fr; }
   }
   .scenario-row:last-of-type { border-bottom: none; }
   .scenario-row label { font-size: 13px; color: var(--muted); }
@@ -550,7 +557,7 @@
         <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Drag the sliders or type in exact figures to model different scenarios.</p>
 
         <div class="scenario-row">
-          <label>Annual Performance Revenue <span class="tooltip-trigger" data-tip="Your projected annual revenue from talent/performer work. Drives the commission bands calculation.">?</span></label>
+          <label><span style="display:block;">Annual Performance</span><span>Revenue <span class="tooltip-trigger" data-tip="Enter your Performance Revenue excl. GST from your Zoho Dashboard Data.">?</span></span></label>
           <input type="range" id="rev-slider" min="0" max="400000" step="5000" value="150000">
           <div style="position: relative;">
             <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
@@ -618,16 +625,16 @@
     </div>
 
     <div class="card">
-      <h2>Quarterly Payout</h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 10px;">Enter actual revenue per quarter. 75% of each quarter's commission is paid on the quarter; 25% is reconciled at year-end.</p>
+      <h2>Quarterly Payout <span style="font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: normal; color: var(--muted); margin-left: 8px;">Based on last 365 days of revenue (ex. GST) that you generated from your performance <span class="tooltip-trigger" data-tip="Copy your last 365 Days revenue (ex GST) amount from your Performer Data tab inside of Zoho into each quarter below. Your quarterly bonus will be calculated automatically. Each quarter uses its own independent trailing 12-month figure.">?</span></span></h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 8px 0 12px;">At each quarter-end, enter your trailing 12-month (TTM) revenue. The commission is calculated on that annualised figure, then divided by 4 to get that quarter's payout.</p>
       <div class="quarter-grid" id="quarter-grid"></div>
       <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px;">
-        <span style="color: var(--muted);">Total annual performance revenue</span>
-        <span id="q-total-revenue">—</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px; font-weight: 600; margin-top: 4px;">
-        <span>Total quarterly payouts paid</span>
+        <span style="color: var(--muted);">Total commission paid across all 4 quarters</span>
         <span id="q-total-paid">—</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; color: var(--muted); margin-top: 2px;" id="q-holdback-row">
+        <span>Year-end reconciliation (if payout % &lt; 100)</span>
+        <span id="q-total-heldback">—</span>
       </div>
     </div>
   </section>
@@ -884,10 +891,10 @@ function renderQuarterInputs() {
         <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
         <input type="text" inputmode="numeric" style="padding-left: 20px;"
                value="${scenario.quarters[i] == null ? '' : fmtNum(scenario.quarters[i])}"
-               placeholder="Actual revenue"
+               placeholder="Last 365 days revenue"
                data-quarter="${i}" data-scope="${scopeLabel}">
       </div>
-      <div class="q-calc" data-qcalc="${i}-${scopeLabel}">Annual ÷ 4 applies if blank</div>
+      <div class="q-calc" data-qcalc="${i}-${scopeLabel}">Enter TTM revenue</div>
       <div class="q-pay" data-qpay="${i}-${scopeLabel}">—</div>
     </div>
   `).join('');
@@ -908,7 +915,6 @@ function renderQuarterInputs() {
         cursor++;
       }
       input.setSelectionRange(cursor, cursor);
-      // Sync the other copy
       syncQuarterInputs(i);
       update();
     });
@@ -1133,47 +1139,63 @@ function renderBreakdown(r) {
 
 function updateQuarterlyDisplay(r) {
   const g = data.globals;
-  const anyEntered = scenario.quarters.some(q => q != null);
-  const actualSum = scenario.quarters.reduce((s, q) => s + (+q || 0), 0);
-  const revToUse = anyEntered ? actualSum : scenario.revenue;
-  const totalComm = anyEntered
-    ? calcBandCommission(revToUse, plan.bands).total + (plan.includeProduction ? plan.productionPct * revToUse : 0)
-    : r.preKpi;
-  const totalVariable = totalComm * r.effectiveKpi;
-  const quarterlyPct = g.quarterlyPayoutPct || 0.75;
+  const payoutPct = plan.payoutPercentage != null ? plan.payoutPercentage : 1.0;
+  const holdbackPct = 1 - payoutPct;
 
-  // Per-quarter display
-  scenario.quarters.forEach((qRev, i) => {
-    const revQ = qRev == null ? scenario.revenue / 4 : qRev;
-    const commQ = anyEntered && qRev != null
-      ? (calcBandCommission(revQ, plan.bands).total + (plan.includeProduction ? plan.productionPct * revQ : 0)) * r.effectiveKpi
-      : r.variable / 4;
-    const payout = commQ * quarterlyPct;
+  // Rolling TTM model: each quarter's input = trailing 365-day revenue at that quarter-end
+  // Commission for that quarter = (annual commission on TTM) × KPI × payoutPct / 4
+  let totalPaidAllQuarters = 0;
+
+  scenario.quarters.forEach((ttmRev, i) => {
+    const revForCalc = ttmRev == null ? scenario.revenue : ttmRev;
+    const { total: bandComm } = calcBandCommission(revForCalc, plan.bands);
+    const production = (plan.includeProduction ? (plan.productionPct || 0) : 0) * revForCalc;
+    const annualVariable = (bandComm + production) * r.effectiveKpi;
+    const quarterlyPayout = annualVariable / 4 * payoutPct;
+
+    const calcText = ttmRev == null
+      ? `At projected $${fmtNum(scenario.revenue)} TTM`
+      : `Annual variable: ${fmtMoney(annualVariable)}`;
+    const payText = ttmRev == null
+      ? `${fmtMoney(quarterlyPayout)} (projected)`
+      : `${fmtMoney(quarterlyPayout)} paid`;
 
     document.querySelectorAll(`[data-qcalc="${i}-overview"], [data-qcalc="${i}-payouts"]`).forEach(el => {
-      const annualTxt = qRev == null
-        ? `Annual variable: ${fmtMoney(r.variable)} ÷ 4`
-        : `Quarter variable: ${fmtMoney(commQ)}`;
-      el.textContent = annualTxt;
+      el.textContent = ttmRev == null
+        ? calcText
+        : `${fmtMoney(annualVariable)} ÷ 4 = quarterly payout`;
     });
     document.querySelectorAll(`[data-qpay="${i}-overview"], [data-qpay="${i}-payouts"]`).forEach(el => {
-      el.textContent = `${fmtMoney(payout)} paid`;
+      el.textContent = ttmRev == null ? `${fmtMoney(quarterlyPayout)} (projected)` : fmtMoney(quarterlyPayout);
     });
+
+    if (ttmRev != null) totalPaidAllQuarters += quarterlyPayout;
   });
 
-  // Totals
-  const totalPaid = totalVariable * quarterlyPct;
-  const totalHeld = totalVariable * (g.yearEndHoldbackPct || 0.25);
-  ['q-total-revenue', 'q-total-revenue-p'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = fmtMoney(revToUse);
-  });
+  // If nothing entered, project from annual scenario
+  const anyEntered = scenario.quarters.some(q => q != null);
+  if (!anyEntered) {
+    totalPaidAllQuarters = r.variable * payoutPct;
+  }
+  const totalHeld = anyEntered
+    ? (totalPaidAllQuarters / payoutPct) * holdbackPct
+    : r.variable * holdbackPct;
+
   ['q-total-paid', 'q-total-paid-p'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.textContent = fmtMoney(totalPaid);
+    if (el) el.textContent = fmtMoney(totalPaidAllQuarters);
   });
-  const heldEl = document.getElementById('q-total-heldback-p');
+  const heldRow = document.getElementById('q-holdback-row');
+  if (heldRow) heldRow.style.display = holdbackPct > 0 ? 'flex' : 'none';
+  const heldEl = document.getElementById('q-total-heldback');
   if (heldEl) heldEl.textContent = fmtMoney(totalHeld);
+  const heldElP = document.getElementById('q-total-heldback-p');
+  if (heldElP) heldElP.textContent = fmtMoney(totalHeld);
+
+  // Revenue summary on Payouts tab
+  const revTotal = anyEntered ? scenario.quarters.reduce((s, q) => s + (+q || 0), 0) : scenario.revenue;
+  const rp = document.getElementById('q-total-revenue-p');
+  if (rp) rp.textContent = anyEntered ? `(sum of entries: ${fmtMoney(revTotal)})` : fmtMoney(scenario.revenue);
 }
 
 function renderProjects(r) {
