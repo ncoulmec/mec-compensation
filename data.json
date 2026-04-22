@@ -20,7 +20,13 @@
       { "minMargin": 0.50, "multiplier": 1.3 }
     ],
     "kpiScoreCap": 1.0,
-    "kpiMinForComm": 0.0
+    "kpiMinForComm": 0.0,
+    "guardrailBasis": "cm",
+    "guardrailBasisOptions": {
+      "gm": "Gross Margin (Rev − CoS) / Rev",
+      "cm": "Contribution Margin (GP − Contrib. Exp) / Rev",
+      "np": "Net Margin (CM − OpEx) / Rev"
+    }
   },
   "planTypes": {
     "gm": {
@@ -119,7 +125,7 @@
     },
     "hybrid_rev": {
       "name": "Talent (Performer-Revenue Hybrid)",
-      "description": "For Performer/Talent Manager roles (Michael, Tom). Variable comp on revenue bands. Threshold structure: $70k floor (pay-for-yourself), then $30k increments up to $300k+.",
+      "description": "For Michael (Performer/Systems Manager). Variable comp on revenue bands. Threshold structure: $70k floor (pay-for-yourself), then $30k increments up to $300k+.",
       "metricLabel": "Annual Performance Revenue",
       "metricBasis": "revenue",
       "inputIncludesGST": false,
@@ -137,6 +143,28 @@
         { "threshold": 250000, "rate": 0.000 },
         { "threshold": 280000, "rate": 0.000 },
         { "threshold": 300000, "rate": 0.000 }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "revenue"
+    },
+    "hybrid_rev_senior": {
+      "name": "Talent Senior (Performer-Revenue Hybrid)",
+      "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue → ~$100k base ex-super equivalent. Nathan to set rates.",
+      "metricLabel": "Annual Performance Revenue",
+      "metricBasis": "revenue",
+      "inputIncludesGST": false,
+      "payoutFrequency": "quarterly",
+      "payoutPercentage": 1.0,
+      "includeProduction": false,
+      "bands": [
+        { "threshold": 0,      "rate": 0.000 },
+        { "threshold": 100000, "rate": 0.000 },
+        { "threshold": 150000, "rate": 0.000 },
+        { "threshold": 190000, "rate": 0.000 },
+        { "threshold": 220000, "rate": 0.000 },
+        { "threshold": 250000, "rate": 0.000 },
+        { "threshold": 280000, "rate": 0.000 },
+        { "threshold": 310000, "rate": 0.000 }
       ],
       "productionPct": 0.01,
       "productionBasis": "revenue"
@@ -206,7 +234,7 @@
     { "id": "nic", "name": "Nic Symons", "role": "Sales Rep", "roleShort": "Sales", "baseSalary": 75000, "baseSalaryIncludesSuper": false, "planType": "gp_bands", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "nic.html", "placeholder": false },
     { "id": "evie", "name": "Evie Johnston", "role": "Sales / Producer Hybrid", "roleShort": "Hybrid", "baseSalary": 80000, "baseSalaryIncludesSuper": false, "planType": "hybrid_gp", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "evie.html", "placeholder": false },
     { "id": "evie2", "name": "Evie 2.0", "role": "Sales / Producer Hybrid", "roleShort": "Hybrid", "baseSalary": 80000, "baseSalaryIncludesSuper": false, "planType": "hybrid_gp", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "evie2.html", "placeholder": true },
-    { "id": "tom", "name": "Tom Bunnett", "role": "Performer / Talent Manager", "roleShort": "Talent", "baseSalary": 91350, "baseSalaryIncludesSuper": false, "planType": "hybrid_rev", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "tom.html", "placeholder": false },
+    { "id": "tom", "name": "Tom Bunnett", "role": "Performer / Talent Manager", "roleShort": "Talent", "baseSalary": 91350, "baseSalaryIncludesSuper": false, "planType": "hybrid_rev_senior", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "tom.html", "placeholder": false },
     { "id": "michael", "name": "Michael Kourkov", "role": "Performer / Systems Manager", "roleShort": "Talent", "baseSalary": 70000, "baseSalaryIncludesSuper": false, "planType": "hybrid_rev", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "michael.html", "placeholder": false }
   ],
   "companyPL": {
@@ -218,11 +246,12 @@
       "note": "TODO: create an integration that pulls in directly from Xero. In the meantime, use CSV upload or manual entry."
     },
     "quarters": [
+      { "label": "Apr-Jun 2025", "revenue": 736680, "cogs": 276345, "contribExp": 208953, "opex": 17781 },
       { "label": "Jul-Sep 2025", "revenue": 913414, "cogs": 332610, "contribExp": 229616, "opex": 57214 },
       { "label": "Oct-Dec 2025", "revenue": 1168425, "cogs": 707559, "contribExp": 241306, "opex": 33456 },
-      { "label": "Jan-Mar 2026", "revenue": 987753, "cogs": 459256, "contribExp": 239627, "opex": 52191 },
-      { "label": "Apr-Jun 2026", "revenue": 0, "cogs": 0, "contribExp": 0, "opex": 0 }
+      { "label": "Jan-Mar 2026", "revenue": 987753, "cogs": 459256, "contribExp": 239627, "opex": 52191 }
     ],
+    "currentQuarter": { "label": "Apr-Jun 2026", "revenue": 0, "cogs": 0, "contribExp": 0, "opex": 0 },
     "historicalQuarters": [
       { "label": "Jul-Sep 2023", "revenue": 605642, "cogs": 169422, "contribExp": 136868, "opex": 29127 },
       { "label": "Oct-Dec 2023", "revenue": 889100, "cogs": 490656, "contribExp": 134350, "opex": 16927 },
@@ -230,8 +259,7 @@
       { "label": "Apr-Jun 2024", "revenue": 615855, "cogs": 278120, "contribExp": 181917, "opex": 20523 },
       { "label": "Jul-Sep 2024", "revenue": 753116, "cogs": 227517, "contribExp": 195132, "opex": 43354 },
       { "label": "Oct-Dec 2024", "revenue": 964984, "cogs": 595819, "contribExp": 199633, "opex": 29634 },
-      { "label": "Jan-Mar 2025", "revenue": 779829, "cogs": 386494, "contribExp": 164919, "opex": 54189 },
-      { "label": "Apr-Jun 2025", "revenue": 736680, "cogs": 276345, "contribExp": 208953, "opex": 17781 }
+      { "label": "Jan-Mar 2025", "revenue": 779829, "cogs": 386494, "contribExp": 164919, "opex": 54189 }
     ]
   }
 }

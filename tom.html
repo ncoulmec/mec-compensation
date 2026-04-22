@@ -575,10 +575,10 @@
 
         <div class="scenario-row">
           <label><span style="display:block;">Annual Performance</span><span>Revenue <span class="tooltip-trigger" data-tip="Enter your Performance Revenue excl. GST from your Zoho Dashboard Data.">?</span></span></label>
-          <input type="range" id="rev-slider" min="0" max="400000" step="5000" value="150000">
+          <input type="range" id="rev-slider" min="0" max="400000" step="5000" value="195000">
           <div style="position: relative;">
             <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="rev-input" class="value-input" style="padding-left: 22px;" value="150,000">
+            <input type="text" inputmode="numeric" id="rev-input" class="value-input" style="padding-left: 22px;" value="195,000">
           </div>
         </div>
 
@@ -753,7 +753,7 @@
    Schema v2.0: bands = [{ threshold, rate }, ...]
    ============================================================ */
 
-const EMPLOYEE_ID = 'michael';
+const EMPLOYEE_ID = 'tom';
 
 let data = null;
 let emp = null;
@@ -761,7 +761,7 @@ let plan = null;
 let myProjects = [];
 
 const scenario = {
-  revenue: 150000,
+  revenue: 195000,
   kpiScore: 1.0,
   projectsEnabled: {}, // { projectId: bool } — default false (unchecked)
   quarters: [null, null, null, null]

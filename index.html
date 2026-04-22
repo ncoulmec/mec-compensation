@@ -547,6 +547,32 @@
   .save-toast.success { background: var(--accent-bg); color: var(--accent); border: 1px solid #c3e4d0; }
   .save-toast.error { background: #fdf2f2; color: var(--danger); border: 1px solid #f2d5d5; }
 
+  .tooltip-help {
+    display: inline-block;
+    width: 14px; height: 14px;
+    line-height: 14px; text-align: center;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--muted);
+    font-size: 10px; font-weight: 600;
+    margin-left: 6px; cursor: help;
+    position: relative;
+    font-family: 'DM Sans', sans-serif;
+    text-transform: none; letter-spacing: normal;
+    vertical-align: middle;
+  }
+  .tooltip-help:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%; left: 0;
+    transform: translateY(-4px);
+    background: var(--ink); color: #fff;
+    padding: 8px 12px; border-radius: 6px;
+    font-size: 12px; font-weight: 400; line-height: 1.4;
+    white-space: normal; width: 260px; z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
   .gh-status {
     font-size: 11px;
     font-family: var(--mono);
@@ -684,6 +710,9 @@
       <div id="xero-note" style="margin: 0 0 18px; padding: 10px 14px; background: #fff7e6; border: 1px solid #f5d890; border-radius: 6px; font-size: 13px; color: #8a6a00;">
         <strong>TODO:</strong> create an integration that pulls in directly from Xero. In the meantime, enter quarterly figures manually.
       </div>
+
+      <h3 style="font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 4px;">Last 4 Complete Quarters</h3>
+      <p style="margin: 4px 0 12px; font-size: 13px; color: var(--muted);">These sum to the LTM (Last Twelve Months) total used for guardrail and reporting. <strong>Green ▲ / red ▼</strong> badges on Contribution Margin and Net Profit show the delta vs the same quarter last year (from the "Previous Quarters" section below).</p>
       <div class="pl-grid">
         <table id="pl-table">
           <thead id="pl-head"></thead>
@@ -693,11 +722,21 @@
       <div style="margin-top: 16px; display: flex; gap: 10px; align-items: center;">
         <button class="btn small" onclick="addQuarter()">+ Add quarter</button>
         <button class="btn small" onclick="removeLastQuarter()">− Remove last</button>
-        <span style="color: var(--muted); font-size: 12px;">Or use the buttons to add/remove quarter columns. Labels are editable.</span>
+        <button class="btn small" onclick="rollForwardQuarter()" title="Close current quarter → shift it into last-4, retire the oldest to historical">⇨ Roll quarter forward</button>
+        <span style="color: var(--muted); font-size: 12px;">Labels are editable.</span>
+      </div>
+
+      <h3 style="margin-top: 32px; font-size: 14px; font-weight: 600; color: var(--ink);">Current Quarter (In Progress)</h3>
+      <p style="margin: 4px 0 12px; font-size: 13px; color: var(--muted);">Enter partial data as the quarter progresses. <em>Not</em> included in the LTM Total above until you "Roll quarter forward".</p>
+      <div class="pl-grid">
+        <table id="pl-current-table">
+          <thead id="pl-current-head"></thead>
+          <tbody id="pl-current-body"></tbody>
+        </table>
       </div>
 
       <h3 style="margin-top: 32px; font-size: 14px; font-weight: 600; color: var(--ink);">Previous Quarters (Historical)</h3>
-      <p style="margin: 4px 0 12px; font-size: 13px; color: var(--muted);">Past 8 quarters used for year-over-year comparison. Feeds the YoY deltas above.</p>
+      <p style="margin: 4px 0 12px; font-size: 13px; color: var(--muted);">Past quarters used for year-over-year comparison. Feeds the YoY deltas in the main table above.</p>
       <div class="pl-grid">
         <table id="pl-hist-table">
           <thead id="pl-hist-head"></thead>
@@ -857,6 +896,14 @@ document.addEventListener('input', (ev) => {
   // Side effects based on what changed
   if (path.startsWith('companyPL.quarters') || path.startsWith('companyPL.historicalQuarters')) {
     updatePLTotals();
+    // Also refresh the guardrail "current LTM" display if quarters changed
+    refreshGuardrailDisplay();
+  }
+  if (path.startsWith('companyPL.currentQuarter')) {
+    updateCurrentQuarterTotals();
+  }
+  if (path === 'globals.guardrailMargin') {
+    refreshGuardrailDisplay();
   }
   if (path.startsWith('employees.') && path.endsWith('.baseSalary')) {
     const i = +path.split('.')[1];
@@ -1134,6 +1181,12 @@ function updateBandDerivedColumns(key) {
   });
 }
 
+// Re-render just the Globals panel so the guardrail current-LTM badge updates live
+function refreshGuardrailDisplay() {
+  // Only re-render if the Globals panel is currently in the DOM (cheap check)
+  if (document.getElementById('globals-simple')) renderGlobals();
+}
+
 function togglePlanProduction(key, enabled) {
   const p = data.planTypes[key];
   p.includeProduction = enabled;
@@ -1259,10 +1312,51 @@ function removeGMBand(key, which, i) {
 /* ---------- GLOBALS ---------- */
 function renderGlobals() {
   const el = $('#globals-simple');
+  // Compute current LTM margin from the quarters
+  const qs = data.companyPL.quarters || [];
+  const totals = qs.reduce((a, q) => ({
+    rev: a.rev + (+q.revenue || 0),
+    cogs: a.cogs + (+q.cogs || 0),
+    ce: a.ce + (+q.contribExp || 0),
+    ox: a.ox + (+q.opex || 0)
+  }), { rev: 0, cogs: 0, ce: 0, ox: 0 });
+  const gm = totals.rev > 0 ? (totals.rev - totals.cogs) / totals.rev : null;
+  const cm = totals.rev > 0 ? (totals.rev - totals.cogs - totals.ce) / totals.rev : null;
+  const nm = totals.rev > 0 ? (totals.rev - totals.cogs - totals.ce - totals.ox) / totals.rev : null;
+  const basis = data.globals.guardrailBasis || 'cm';
+  const current = basis === 'gm' ? gm : basis === 'np' ? nm : cm;
+  const threshold = data.globals.guardrailMargin || 0.35;
+  const status = current == null ? 'unknown' : current >= threshold ? 'clear' : 'breach';
+
   el.innerHTML = `
     ${simpleRow('Super rate', 'superRate', 'Employer super contribution (12% = 0.12)')}
     ${simpleRow('GST rate', 'gstRate', 'For stripping GST from Zoho-sourced GST-inclusive inputs')}
-    ${simpleRow('Guardrail margin', 'guardrailMargin', 'If realised margin drops below this, variable comp pauses')}
+    <div style="padding: 10px 0; border-bottom: 1px solid var(--border);">
+      <label style="font-size: 14px; display: block; margin-bottom: 6px;">
+        Guardrail Margin
+        <span class="hint">If realised margin drops below this, variable comp pauses. Pick which margin definition to check against.</span>
+      </label>
+      <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+        <select style="width: 260px; flex: 0 0 auto; padding: 7px 10px;" onchange="data.globals.guardrailBasis=this.value; setDirty(); renderGlobals();">
+          <option value="gm" ${basis === 'gm' ? 'selected' : ''}>Gross Margin (Rev − CoS) / Rev</option>
+          <option value="cm" ${basis === 'cm' ? 'selected' : ''}>Contribution Margin (GP − CE) / Rev</option>
+          <option value="np" ${basis === 'np' ? 'selected' : ''}>Net Margin (CM − OpEx) / Rev</option>
+        </select>
+        <span style="font-size: 13px; color: var(--muted);">Floor:</span>
+        <div class="input-with-suffix" style="width: 90px; flex: 0 0 auto;">
+          <input type="text" inputmode="decimal" data-percent-path="globals.guardrailMargin" value="${(threshold*100).toFixed(1)}">
+          <span class="suffix">%</span>
+        </div>
+        <span style="font-size: 13px; color: var(--muted);">Current LTM:</span>
+        <span style="font-family: var(--mono); font-weight: 600; color: ${status === 'clear' ? 'var(--accent)' : status === 'breach' ? 'var(--danger)' : 'var(--muted)'};">
+          ${current == null ? '—' : (current*100).toFixed(1) + '%'}
+          ${status === 'clear' ? '✓ Clear' : status === 'breach' ? '⚠ Breach' : ''}
+        </span>
+      </div>
+      <div style="font-size: 11px; color: var(--faint); font-family: var(--mono); margin-top: 6px;">
+        GM: ${gm == null ? '—' : (gm*100).toFixed(1)+'%'} · CM: ${cm == null ? '—' : (cm*100).toFixed(1)+'%'} · NM: ${nm == null ? '—' : (nm*100).toFixed(1)+'%'} · From the last 4 complete quarters below
+      </div>
+    </div>
     ${simpleRow('Quarterly payout', 'quarterlyPayoutPct', 'Proportion of variable comp paid each quarter (75% = 0.75)')}
     ${simpleRow('Year-end holdback', 'yearEndHoldbackPct', 'Proportion held until year-end reconciliation')}
     ${simpleRow('KPI score cap', 'kpiScoreCap', 'Max KPI multiplier on variable comp (100% = cap at 1.0x; 150% = over-achievement allowed)')}
@@ -1489,6 +1583,7 @@ function renderPL() {
     { key: 'contribExp', label: 'Contribution Expenses' },
     { key: 'opex', label: 'Operating Expenses' }
   ];
+  const yoyTip = `data-tip="Compared to the same quarter last year — pulled from Previous Quarters below. Green ▲ = improvement, red ▼ = decline, shown as % change and $ change."`;
   body.innerHTML = lines.map(l => {
     const total = quarters.reduce((s, q) => s + (+q[l.key] || 0), 0);
     return `<tr>
@@ -1503,18 +1598,91 @@ function renderPL() {
     <td style="text-align:right;font-family:'DM Mono',monospace;" data-gp-total></td>
   </tr>
   <tr class="totals">
-    <td>Contribution Margin</td>
+    <td>Contribution Margin <span class="tooltip-help" ${yoyTip}>?</span></td>
     ${quarters.map((q, i) => `<td style="text-align:center;" data-cm="${i}"></td>`).join('')}
     <td style="text-align:right;font-family:'DM Mono',monospace;" data-cm-total></td>
   </tr>
   <tr class="totals">
-    <td>Net Profit</td>
+    <td>Net Profit <span class="tooltip-help" ${yoyTip}>?</span></td>
     ${quarters.map((q, i) => `<td style="text-align:center;" data-np="${i}"></td>`).join('')}
     <td style="text-align:right;font-family:'DM Mono',monospace;" data-np-total></td>
   </tr>`;
 
+  renderCurrentQuarter();
   renderHistoricalPL();
   updatePLTotals();
+}
+
+function renderCurrentQuarter() {
+  const cq = data.companyPL.currentQuarter;
+  const head = $('#pl-current-head');
+  const body = $('#pl-current-body');
+  if (!head || !body) return;
+  if (!cq) {
+    head.innerHTML = '';
+    body.innerHTML = '<tr><td style="padding:14px;color:var(--muted);font-size:13px;">No current quarter. Click "Roll quarter forward" to start one.</td></tr>';
+    return;
+  }
+  head.innerHTML = `<tr>
+    <th style="text-align:left;min-width:180px;"></th>
+    <th style="text-align:center;min-width:200px;"><input type="text" class="mono" style="width:100%;text-align:center;background:transparent;border:none;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;" value="${cq.label || ''}" onblur="data.companyPL.currentQuarter.label=this.value; setDirty()"></th>
+  </tr>`;
+  const lines = [
+    { key: 'revenue', label: 'Revenue' },
+    { key: 'cogs', label: 'Cost of Sales' },
+    { key: 'contribExp', label: 'Contribution Expenses' },
+    { key: 'opex', label: 'Operating Expenses' }
+  ];
+  body.innerHTML = lines.map(l => `<tr>
+    <td>${l.label}</td>
+    <td style="min-width:200px;text-align:center;"><div style="margin:0 auto;max-width:160px;">${moneyInputHtml(`companyPL.currentQuarter.${l.key}`)}</div></td>
+  </tr>`).join('') +
+  `<tr class="totals"><td>Gross Profit</td><td style="text-align:center;" data-cq-gp></td></tr>
+   <tr class="totals"><td>Contribution Margin</td><td style="text-align:center;" data-cq-cm></td></tr>
+   <tr class="totals"><td>Net Profit</td><td style="text-align:center;" data-cq-np></td></tr>`;
+  updateCurrentQuarterTotals();
+}
+
+function updateCurrentQuarterTotals() {
+  const cq = data.companyPL.currentQuarter;
+  if (!cq) return;
+  const gp = (+cq.revenue || 0) - (+cq.cogs || 0);
+  const cm = gp - (+cq.contribExp || 0);
+  const np = cm - (+cq.opex || 0);
+  const setCell = (sel, v) => {
+    const el = document.querySelector(sel);
+    if (el) el.innerHTML = `<div style="font-family:'DM Mono',monospace;">${fmtMoney(v)}</div>`;
+  };
+  setCell('[data-cq-gp]', gp);
+  setCell('[data-cq-cm]', cm);
+  setCell('[data-cq-np]', np);
+}
+
+function rollForwardQuarter() {
+  if (!confirm('Close the current quarter and shift into Last 4 Quarters?\n\n' +
+               '• Current quarter moves to position 4 of Last 4\n' +
+               '• Oldest of Last 4 moves down to Historical\n' +
+               '• A fresh empty current quarter is created with the next label (you can edit)')) return;
+
+  const cq = data.companyPL.currentQuarter;
+  const qs = data.companyPL.quarters;
+  const hist = data.companyPL.historicalQuarters || (data.companyPL.historicalQuarters = []);
+
+  if (qs.length >= 4) hist.push(qs.shift());
+  qs.push({ ...cq });
+
+  // Guess next label
+  const [q1, y] = (cq.label || '').split(' ');
+  const rolls = { 'Apr-Jun': ['Jul-Sep', 0], 'Jul-Sep': ['Oct-Dec', 0], 'Oct-Dec': ['Jan-Mar', 1], 'Jan-Mar': ['Apr-Jun', 0] };
+  let newLabel = 'New quarter';
+  if (rolls[q1] && y) {
+    const [nextQ, yearBump] = rolls[q1];
+    newLabel = `${nextQ} ${+y + yearBump}`;
+  }
+  data.companyPL.currentQuarter = { label: newLabel, revenue: 0, cogs: 0, contribExp: 0, opex: 0 };
+
+  setDirty();
+  renderPL();
 }
 
 function renderHistoricalPL() {
@@ -1526,7 +1694,7 @@ function renderHistoricalPL() {
 
   head.innerHTML = '<tr><th style="text-align:left;min-width:180px;"></th>' +
     hist.map((q, i) => `<th style="text-align:center;min-width:150px;"><input type="text" class="mono" style="width:100%;text-align:center;background:transparent;border:none;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;" value="${q.label}" onblur="data.companyPL.historicalQuarters[${i}].label=this.value; setDirty()"></th>`).join('') +
-    '<th style="text-align:right;min-width:110px;">Total</th></tr>';
+    '</tr>';
 
   const lines = [
     { key: 'revenue', label: 'Revenue' },
@@ -1534,14 +1702,10 @@ function renderHistoricalPL() {
     { key: 'contribExp', label: 'Contribution Expenses' },
     { key: 'opex', label: 'Operating Expenses' }
   ];
-  body.innerHTML = lines.map(l => {
-    const total = hist.reduce((s, q) => s + (+q[l.key] || 0), 0);
-    return `<tr>
+  body.innerHTML = lines.map(l => `<tr>
       <td style="color: var(--muted);">${l.label}</td>
       ${hist.map((q, i) => `<td style="min-width:150px;text-align:center;"><div style="margin: 0 auto; max-width: 130px;">${moneyInputHtml(`companyPL.historicalQuarters.${i}.${l.key}`)}</div></td>`).join('')}
-      <td style="text-align:right; font-family:'DM Mono',monospace; color: var(--muted);" data-hist-total="${l.key}">${fmtMoney(total)}</td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
 }
 function computeDerived(q) {
   const gp = (+q.revenue || 0) - (+q.cogs || 0);
