@@ -213,10 +213,11 @@
     position: relative;
     display: flex;
     align-items: center;
-    max-width: 150px;
+    max-width: 120px;
   }
-  .input-with-prefix { max-width: 160px; }
-  .input-with-suffix.narrow, .input-with-prefix.narrow { max-width: 90px; }
+  .input-with-prefix { max-width: 150px; }
+  .input-with-suffix.narrow, .input-with-prefix.narrow { max-width: 70px; }
+  .input-with-suffix.tiny, .input-with-prefix.tiny { max-width: 60px; }
   .input-with-suffix input {
     padding-right: 22px;
     padding-left: 8px;
@@ -694,6 +695,15 @@
         <button class="btn small" onclick="removeLastQuarter()">− Remove last</button>
         <span style="color: var(--muted); font-size: 12px;">Or use the buttons to add/remove quarter columns. Labels are editable.</span>
       </div>
+
+      <h3 style="margin-top: 32px; font-size: 14px; font-weight: 600; color: var(--ink);">Previous Quarters (Historical)</h3>
+      <p style="margin: 4px 0 12px; font-size: 13px; color: var(--muted);">Past 8 quarters used for year-over-year comparison. Feeds the YoY deltas above.</p>
+      <div class="pl-grid">
+        <table id="pl-hist-table">
+          <thead id="pl-hist-head"></thead>
+          <tbody id="pl-hist-body"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 </main>
@@ -845,7 +855,7 @@ document.addEventListener('input', (ev) => {
   if (!path) return;
   setDirty();
   // Side effects based on what changed
-  if (path.startsWith('companyPL.')) {
+  if (path.startsWith('companyPL.quarters') || path.startsWith('companyPL.historicalQuarters')) {
     updatePLTotals();
   }
   if (path.startsWith('employees.') && path.endsWith('.baseSalary')) {
@@ -1022,12 +1032,19 @@ function onEmpEdit(ev) {
 function renderPlans() {
   const container = $('#plans-list');
   container.innerHTML = '';
-  const freqOptions = ['fortnightly', 'monthly', 'quarterly', 'annually', 'n/a'];
+  const freqOptions = [
+    { value: 'fortnightly', label: 'Fortnightly' },
+    { value: 'monthly', label: 'Monthly' },
+    { value: 'quarterly', label: 'Quarterly' },
+    { value: 'annually', label: 'Annually' },
+    { value: 'n/a', label: 'N/A' }
+  ];
   Object.entries(data.planTypes).forEach(([key, plan]) => {
     const div = document.createElement('div');
     div.className = 'plan-section';
     div.setAttribute('data-plan-key', key);
     const isGM = key === 'gm';
+    const hasProduction = plan.includeProduction !== undefined ? plan.includeProduction : (plan.productionPct !== undefined);
     div.innerHTML = `
       <div class="plan-header" onclick="if(!event.target.closest('button,input,select')) this.parentElement.classList.toggle('open')">
         <div>
@@ -1038,28 +1055,34 @@ function renderPlans() {
       </div>
       <div class="plan-body">
         <div class="input-group">
-          <label>Metric label <span class="hint">What employees see on their dashboard</span></label>
-          <input type="text" class="name-input" style="max-width:260px;" value="${plan.metricLabel || ''}" oninput="data.planTypes['${key}'].metricLabel=this.value; setDirty()">
+          <label>Metric Label <span class="hint">What employees see on their dashboard</span></label>
+          <input type="text" class="name-input" style="max-width:420px;" value="${plan.metricLabel || ''}" oninput="data.planTypes['${key}'].metricLabel=this.value; setDirty()">
         </div>
         <div class="input-group">
-          <label>Payout frequency <span class="hint">How often this plan's variable comp is paid out</span></label>
+          <label>Payout Frequency <span class="hint">How often this plan's variable comp is paid out</span></label>
           <select style="max-width:160px;" onchange="data.planTypes['${key}'].payoutFrequency=this.value; setDirty()">
-            ${freqOptions.map(f => `<option value="${f}" ${plan.payoutFrequency === f ? 'selected' : ''}>${f}</option>`).join('')}
+            ${freqOptions.map(f => `<option value="${f.value}" ${plan.payoutFrequency === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}
           </select>
         </div>
         <div class="input-group">
-          <label>Input includes GST <span class="hint">Tick if the metric input comes GST-inclusive (auto-strips GST)</span></label>
+          <label>Input Includes GST <span class="hint">Tick if the metric input comes GST-inclusive (auto-strips GST)</span></label>
           <input type="checkbox" ${plan.inputIncludesGST ? 'checked' : ''} onchange="data.planTypes['${key}'].inputIncludesGST=this.checked; setDirty()">
         </div>
-        ${plan.productionPct !== undefined ? `
+        ${!isGM ? `
           <div class="input-group">
-            <label>Production % <span class="hint">Extra % paid on ${plan.productionBasis === 'eventGP' ? 'Event GP' : 'revenue/GP'}</span></label>
-            ${percentInputHtml(`planTypes.${key}.productionPct`, 3)}
+            <label>Include 1% Production in this role? <span class="hint">Extra % paid on GP on Events Produced that have happened (based on the Event Date)</span></label>
+            <input type="checkbox" ${hasProduction ? 'checked' : ''} onchange="togglePlanProduction('${key}', this.checked)">
           </div>
+          ${hasProduction ? `
+            <div class="input-group">
+              <label>Production % <span class="hint">Extra % paid on GP on Events Produced that have happened (based on the Event Date)</span></label>
+              ${percentInputHtml(`planTypes.${key}.productionPct`, 3)}
+            </div>
+          ` : ''}
         ` : ''}
         ${plan.showOldCommissionComparison ? `
           <div class="input-group">
-            <label>Old commission rate (for comparison) <span class="hint">Shows side-by-side on Sales dashboards</span></label>
+            <label>Old Commission Rate (for comparison) <span class="hint">Shows side-by-side on Sales dashboards</span></label>
             ${percentInputHtml(`planTypes.${key}.oldCommissionRate`, 2)}
           </div>
         ` : ''}
@@ -1070,24 +1093,41 @@ function renderPlans() {
   });
 }
 
+function togglePlanProduction(key, enabled) {
+  const p = data.planTypes[key];
+  p.includeProduction = enabled;
+  if (enabled && (p.productionPct === undefined || p.productionPct === null)) {
+    p.productionPct = 0.01;
+    p.productionBasis = p.productionBasis || 'eventGP';
+  }
+  setDirty();
+  rerenderPlans();
+}
+
 function renderStandardBands(key, plan) {
   if (!plan.bands) return '';
-  const rows = plan.bands.map((b, i) => `
-    <tr>
-      <td>${moneyInputHtml(`planTypes.${key}.bands.${i}.min`)}</td>
-      <td>${b.max === null
-        ? `<div class="input-with-prefix"><span class="prefix">$</span><input type="text" inputmode="numeric" placeholder="∞" value="" oninput="data.planTypes['${key}'].bands[${i}].max=this.value===''?null:parseMoney(this.value); const n=parseMoney(this.value); this.value=n==null?'':fmtNum(n); setDirty()"></div>`
-        : moneyInputHtml(`planTypes.${key}.bands.${i}.max`)}</td>
-      <td>${percentInputHtml(`planTypes.${key}.bands.${i}.rate`, 3)}</td>
-      <td style="width:90px;text-align:right;"><button class="btn small danger" onclick="removeBand('${key}', ${i})">Remove</button></td>
-    </tr>
-  `).join('');
+  const sortedBands = plan.bands;
+  const rows = sortedBands.map((b, i) => {
+    const nextThreshold = sortedBands[i + 1]?.threshold;
+    const rangeLabel = nextThreshold !== undefined
+      ? `${fmtMoney(b.threshold)} – ${fmtMoney(nextThreshold)}`
+      : `${fmtMoney(b.threshold)}+`;
+    return `
+      <tr>
+        <td style="color: var(--muted); font-family: var(--mono); font-size: 12px;">${i + 1}</td>
+        <td>${moneyInputHtml(`planTypes.${key}.bands.${i}.threshold`)}</td>
+        <td style="color: var(--faint); font-family: var(--mono); font-size: 12px;">${rangeLabel}</td>
+        <td>${percentInputHtml(`planTypes.${key}.bands.${i}.rate`, 3)}</td>
+        <td style="width:90px;text-align:right;"><button class="btn small danger" onclick="removeBand('${key}', ${i})">Remove</button></td>
+      </tr>
+    `;
+  }).join('');
   return `
     <h3>Bands <span class="pill">${plan.bands.length}</span></h3>
-    <p class="intro" style="margin-bottom:10px;font-size:12px;">Each rate applies only to metric earned within that band. Leave "Max" blank for the top band (open-ended).</p>
+    <p class="intro" style="margin-bottom:10px;font-size:12px;">Enter just the threshold (the starting point) of each band — the upper bound is automatically the next band's threshold. Each rate applies only to metric earned within that band. The last band is open-ended.</p>
     <table class="tight-table">
       <thead>
-        <tr><th style="width:26%">Min</th><th style="width:26%">Max</th><th style="width:22%">Rate</th><th></th></tr>
+        <tr><th style="width:30px">#</th><th style="width:24%">Threshold</th><th style="width:28%">Range (auto)</th><th style="width:20%">Rate</th><th></th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
@@ -1133,9 +1173,8 @@ function renderGMBands(key, plan) {
 function addBand(key) {
   const bands = data.planTypes[key].bands;
   const last = bands[bands.length - 1];
-  const min = last ? (last.max ?? last.min + 50000) : 0;
-  bands.push({ min, max: min + 50000, rate: 0 });
-  if (last && last.max === null) last.max = min;
+  const threshold = last ? last.threshold + 50000 : 0;
+  bands.push({ threshold, rate: 0 });
   setDirty();
   rerenderPlans();
 }
@@ -1211,7 +1250,7 @@ function renderProjects() {
     container.innerHTML = '<div class="empty-state">No projects yet. Click "Add project" to create one.</div>';
     return;
   }
-  const statusOptions = ['not_started', 'in_progress', 'complete', 'paused', 'cancelled'];
+  const statusOptions = ['Not Started', 'In Progress', 'Complete', 'Paused', 'Cancelled'];
   const superPct = (data.globals.superRate * 100).toFixed(0);
 
   container.innerHTML = data.projects.map((p, i) => {
@@ -1272,7 +1311,7 @@ function renderProjects() {
           <div class="input-group">
             <label>Status</label>
             <select style="max-width:180px;" onchange="data.projects[${i}].status=this.value; setDirty()">
-              ${statusOptions.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s.replace('_', ' ')}</option>`).join('')}
+              ${statusOptions.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
           </div>
           <div class="input-group">
@@ -1381,58 +1420,116 @@ function renderPL() {
   $('#pl-sublabel').textContent = pl.subLabel || 'Quarterly company financials. Feeds the company-wide view and can gate variable comp payouts (e.g., "comm only pays if company NP > X"). Fiscal year starts July.';
 
   const head = $('#pl-head');
-  head.innerHTML = '<tr><th style="text-align:left;min-width:160px;">Line</th>' +
-    quarters.map((q, i) => `<th style="text-align:right;min-width:130px;"><input type="text" class="mono" style="width:100%;text-align:right;background:transparent;border:none;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;" value="${q.label}" onblur="data.companyPL.quarters[${i}].label=this.value; setDirty()"></th>`).join('') +
-    '<th style="text-align:right">LTM Total</th></tr>';
+  head.innerHTML = '<tr><th style="text-align:left;min-width:180px;"></th>' +
+    quarters.map((q, i) => `<th style="text-align:center;min-width:150px;"><input type="text" class="mono" style="width:100%;text-align:center;background:transparent;border:none;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;" value="${q.label}" onblur="data.companyPL.quarters[${i}].label=this.value; setDirty()"></th>`).join('') +
+    '<th style="text-align:right;min-width:110px;">LTM Total</th></tr>';
 
   const body = $('#pl-body');
   const lines = [
     { key: 'revenue', label: 'Revenue' },
-    { key: 'cogs', label: 'Cost of sales' },
-    { key: 'contribExp', label: 'Contribution expenses' },
-    { key: 'opex', label: 'Operating expenses' }
+    { key: 'cogs', label: 'Cost of Sales' },
+    { key: 'contribExp', label: 'Contribution Expenses' },
+    { key: 'opex', label: 'Operating Expenses' }
   ];
   body.innerHTML = lines.map(l => {
     const total = quarters.reduce((s, q) => s + (+q[l.key] || 0), 0);
     return `<tr>
       <td>${l.label}</td>
-      ${quarters.map((q, i) => `<td style="min-width:130px;">${moneyInputHtml(`companyPL.quarters.${i}.${l.key}`)}</td>`).join('')}
+      ${quarters.map((q, i) => `<td style="min-width:150px;text-align:center;"><div style="margin: 0 auto; max-width: 130px;">${moneyInputHtml(`companyPL.quarters.${i}.${l.key}`)}</div></td>`).join('')}
       <td style="text-align:right; font-family:'DM Mono',monospace; font-weight:600;" data-total="${l.key}">${fmtMoney(total)}</td>
     </tr>`;
   }).join('') +
   `<tr class="totals">
-    <td>Gross profit</td>
-    ${quarters.map((q, i) => `<td style="text-align:right;" data-gp="${i}"></td>`).join('')}
+    <td>Gross Profit</td>
+    ${quarters.map((q, i) => `<td style="text-align:center;" data-gp="${i}"></td>`).join('')}
     <td style="text-align:right;font-family:'DM Mono',monospace;" data-gp-total></td>
   </tr>
   <tr class="totals">
-    <td>Contribution margin</td>
-    ${quarters.map((q, i) => `<td style="text-align:right;" data-cm="${i}"></td>`).join('')}
+    <td>Contribution Margin</td>
+    ${quarters.map((q, i) => `<td style="text-align:center;" data-cm="${i}"></td>`).join('')}
     <td style="text-align:right;font-family:'DM Mono',monospace;" data-cm-total></td>
   </tr>
   <tr class="totals">
-    <td>Net profit</td>
-    ${quarters.map((q, i) => `<td style="text-align:right;" data-np="${i}"></td>`).join('')}
+    <td>Net Profit</td>
+    ${quarters.map((q, i) => `<td style="text-align:center;" data-np="${i}"></td>`).join('')}
     <td style="text-align:right;font-family:'DM Mono',monospace;" data-np-total></td>
   </tr>`;
+
+  renderHistoricalPL();
   updatePLTotals();
+}
+
+function renderHistoricalPL() {
+  const hist = data.companyPL.historicalQuarters;
+  if (!hist || hist.length === 0) return;
+  const head = $('#pl-hist-head');
+  const body = $('#pl-hist-body');
+  if (!head || !body) return;
+
+  head.innerHTML = '<tr><th style="text-align:left;min-width:180px;"></th>' +
+    hist.map((q, i) => `<th style="text-align:center;min-width:150px;"><input type="text" class="mono" style="width:100%;text-align:center;background:transparent;border:none;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;" value="${q.label}" onblur="data.companyPL.historicalQuarters[${i}].label=this.value; setDirty()"></th>`).join('') +
+    '<th style="text-align:right;min-width:110px;">Total</th></tr>';
+
+  const lines = [
+    { key: 'revenue', label: 'Revenue' },
+    { key: 'cogs', label: 'Cost of Sales' },
+    { key: 'contribExp', label: 'Contribution Expenses' },
+    { key: 'opex', label: 'Operating Expenses' }
+  ];
+  body.innerHTML = lines.map(l => {
+    const total = hist.reduce((s, q) => s + (+q[l.key] || 0), 0);
+    return `<tr>
+      <td style="color: var(--muted);">${l.label}</td>
+      ${hist.map((q, i) => `<td style="min-width:150px;text-align:center;"><div style="margin: 0 auto; max-width: 130px;">${moneyInputHtml(`companyPL.historicalQuarters.${i}.${l.key}`)}</div></td>`).join('')}
+      <td style="text-align:right; font-family:'DM Mono',monospace; color: var(--muted);" data-hist-total="${l.key}">${fmtMoney(total)}</td>
+    </tr>`;
+  }).join('');
+}
+function computeDerived(q) {
+  const gp = (+q.revenue || 0) - (+q.cogs || 0);
+  const cm = gp - (+q.contribExp || 0);
+  const np = cm - (+q.opex || 0);
+  return { gp, cm, np };
+}
+function deltaHtml(current, prior) {
+  if (!prior || prior === 0) return fmtMoney(current);
+  const diff = current - prior;
+  const pct = (diff / Math.abs(prior)) * 100;
+  const color = diff > 0 ? 'var(--accent)' : (diff < 0 ? 'var(--danger)' : 'var(--muted)');
+  const arrow = diff > 0 ? '▲' : (diff < 0 ? '▼' : '—');
+  const pctTxt = isFinite(pct) ? `${diff > 0 ? '+' : ''}${pct.toFixed(1)}%` : '';
+  return `
+    <div style="font-family:'DM Mono',monospace;">${fmtMoney(current)}</div>
+    <div style="font-size:10px; color:${color}; margin-top:2px; font-family:'DM Mono',monospace; line-height:1.2;">
+      ${arrow} ${pctTxt}
+      <span style="color: var(--faint); margin-left:4px;">${diff >= 0 ? '+' : ''}${fmtMoney(Math.abs(diff) * (diff < 0 ? -1 : 1))}</span>
+    </div>
+  `;
 }
 function updatePLTotals() {
   if (!data.companyPL.quarters) return;
   const quarters = data.companyPL.quarters;
+  const hist = data.companyPL.historicalQuarters || [];
   let gpTotal = 0, cmTotal = 0, npTotal = 0;
+
   quarters.forEach((q, i) => {
-    const gp = (+q.revenue || 0) - (+q.cogs || 0);
-    const cm = gp - (+q.contribExp || 0);
-    const np = cm - (+q.opex || 0);
+    const { gp, cm, np } = computeDerived(q);
     gpTotal += gp; cmTotal += cm; npTotal += np;
+
     const gpCell = document.querySelector(`[data-gp="${i}"]`);
+    if (gpCell) gpCell.innerHTML = `<div style="font-family:'DM Mono',monospace;">${fmtMoney(gp)}</div>`;
+
+    // Find same-quarter prior year for YoY comparison
+    const priorQuarter = hist.find(h => h.label && q.label && quartersMatch(q.label, h.label));
+    const priorDerived = priorQuarter ? computeDerived(priorQuarter) : null;
+
     const cmCell = document.querySelector(`[data-cm="${i}"]`);
+    if (cmCell) cmCell.innerHTML = deltaHtml(cm, priorDerived?.cm || 0);
+
     const npCell = document.querySelector(`[data-np="${i}"]`);
-    if (gpCell) gpCell.textContent = fmtMoney(gp);
-    if (cmCell) cmCell.textContent = fmtMoney(cm);
-    if (npCell) npCell.textContent = fmtMoney(np);
+    if (npCell) npCell.innerHTML = deltaHtml(np, priorDerived?.np || 0);
   });
+
   const gpT = document.querySelector('[data-gp-total]');
   const cmT = document.querySelector('[data-cm-total]');
   const npT = document.querySelector('[data-np-total]');
@@ -1442,7 +1539,15 @@ function updatePLTotals() {
   ['revenue', 'cogs', 'contribExp', 'opex'].forEach(k => {
     const t = document.querySelector(`[data-total="${k}"]`);
     if (t) t.textContent = fmtMoney(quarters.reduce((s, q) => s + (+q[k] || 0), 0));
+    const ht = document.querySelector(`[data-hist-total="${k}"]`);
+    if (ht) ht.textContent = fmtMoney(hist.reduce((s, q) => s + (+q[k] || 0), 0));
   });
+}
+
+// Match "Jan-Mar 2026" with "Jan-Mar 2025" for YoY comparison
+function quartersMatch(currentLabel, priorLabel) {
+  const extractMonths = (s) => (s.match(/^[A-Za-z]{3}-[A-Za-z]{3}/) || [''])[0].toLowerCase();
+  return extractMonths(currentLabel) && extractMonths(currentLabel) === extractMonths(priorLabel);
 }
 function addQuarter() {
   const qs = data.companyPL.quarters;
