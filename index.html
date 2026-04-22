@@ -209,7 +209,7 @@
     color: var(--muted);
     margin-top: 2px;
   }
-  .input-with-suffix {
+  .input-with-suffix, .input-with-prefix {
     position: relative;
     display: flex;
     align-items: center;
@@ -223,6 +223,68 @@
     color: var(--faint);
     pointer-events: none;
   }
+  .input-with-prefix input { padding-left: 24px; text-align: right; }
+  .input-with-prefix .prefix {
+    position: absolute;
+    left: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    pointer-events: none;
+    font-weight: 500;
+  }
+  tr.totals-row td {
+    background: #fafaf7;
+    font-weight: 600;
+    border-top: 2px solid var(--border);
+    font-family: 'DM Mono', monospace;
+  }
+  tr.totals-row td:first-child {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  .read-only-cell {
+    padding: 6px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* Collapsible project sections (reuse plan-section style) */
+  .project-section {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .project-header {
+    padding: 14px 18px;
+    background: #fafaf7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+  .project-header .project-title {
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .project-header .project-sub {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--muted);
+    display: block;
+    margin-top: 2px;
+  }
+  .project-header .chev { color: var(--muted); transition: transform 0.15s; }
+  .project-section.open .chev { transform: rotate(90deg); }
+  .project-body { padding: 18px; display: none; }
+  .project-section.open .project-body { display: block; }
 
   /* Buttons */
   button.btn {
@@ -385,15 +447,17 @@
       <table id="emp-table">
         <thead>
           <tr>
-            <th style="width:22%">Name</th>
-            <th style="width:22%">Role</th>
-            <th style="width:14%">Base Salary</th>
-            <th style="width:14%">Plan Type</th>
-            <th style="width:10%">Status</th>
-            <th style="width:18%">Dashboard File</th>
+            <th style="width:18%">Name</th>
+            <th style="width:18%">Role</th>
+            <th style="width:12%">Base Salary</th>
+            <th style="width:12%">+ 12% Super</th>
+            <th style="width:22%">Plan Type</th>
+            <th style="width:8%">Status</th>
+            <th style="width:10%">Dashboard</th>
           </tr>
         </thead>
         <tbody id="emp-body"></tbody>
+        <tfoot id="emp-foot"></tfoot>
       </table>
     </div>
   </section>
@@ -519,6 +583,92 @@ function fmtPct(n) {
 }
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
+/* ---- Formatted input helpers ----
+   Used for money ($100,000 with commas) and percent (3.5 → stored as 0.035).
+   Uses data-money-path and data-percent-path attributes + a single delegated
+   input listener so render functions stay clean. */
+
+function fmtNum(n) {
+  if (n === null || n === undefined || n === '') return '';
+  return Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 });
+}
+function parseMoney(str) {
+  const cleaned = String(str == null ? '' : str).replace(/[^0-9.-]/g, '');
+  return cleaned === '' || cleaned === '-' ? null : +cleaned;
+}
+function setPath(obj, path, value) {
+  // Supports "foo.bar.0.baz" style paths
+  const parts = path.split('.');
+  let o = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const p = parts[i];
+    o = o[isNaN(p) ? p : +p];
+    if (o == null) return;
+  }
+  const last = parts[parts.length - 1];
+  o[isNaN(last) ? last : +last] = value;
+}
+function getPath(obj, path) {
+  return path.split('.').reduce((o, p) => o == null ? o : o[isNaN(p) ? p : +p], obj);
+}
+function moneyInputHtml(path, placeholder = '') {
+  const v = getPath(data, path);
+  const display = v == null || v === '' ? '' : fmtNum(v);
+  return `<div class="input-with-prefix">
+    <span class="prefix">$</span>
+    <input type="text" inputmode="numeric" data-money-path="${path}" value="${display}" placeholder="${placeholder}">
+  </div>`;
+}
+function percentInputHtml(path, precision = 2) {
+  const v = getPath(data, path);
+  const display = v == null || v === '' ? '' : (+v * 100).toFixed(precision).replace(/\.?0+$/, '');
+  return `<div class="input-with-suffix">
+    <input type="text" inputmode="decimal" data-percent-path="${path}" value="${display}">
+    <span class="suffix">%</span>
+  </div>`;
+}
+
+// Single delegated listener for all formatted inputs
+document.addEventListener('input', (ev) => {
+  const el = ev.target;
+  let path = null;
+  if (el.dataset && el.dataset.moneyPath) {
+    const n = parseMoney(el.value);
+    setPath(data, el.dataset.moneyPath, n == null ? 0 : n);
+    // Live-format while preserving approximate caret position
+    const digitsBefore = (el.value.slice(0, el.selectionStart).match(/\d/g) || []).length;
+    el.value = n == null ? '' : fmtNum(n);
+    let caret = 0, seen = 0;
+    while (caret < el.value.length && seen < digitsBefore) {
+      if (/\d/.test(el.value[caret])) seen++;
+      caret++;
+    }
+    el.setSelectionRange(caret, caret);
+    path = el.dataset.moneyPath;
+  } else if (el.dataset && el.dataset.percentPath) {
+    const n = (+el.value || 0) / 100;
+    setPath(data, el.dataset.percentPath, n);
+    path = el.dataset.percentPath;
+  }
+  if (!path) return;
+  setDirty();
+  // Side effects based on what changed
+  if (path.startsWith('companyPL.')) {
+    updatePLTotals();
+  }
+  if (path.startsWith('employees.') && path.endsWith('.baseSalary')) {
+    const i = +path.split('.')[1];
+    const e = data.employees[i];
+    const cell = document.querySelector(`[data-super="${i}"]`);
+    if (cell) cell.textContent = fmtMoney(Math.round(e.baseSalary * (1 + data.globals.superRate)));
+    renderEmployeeTotals();
+  }
+  if (path === 'globals.superRate') {
+    // Re-render employees so super column reflects new rate
+    renderEmployees();
+  }
+});
+
 function setDirty(d = true) {
   dirty = d;
   const el = $('#dirty-status');
@@ -560,6 +710,12 @@ function renderAll() {
   renderProjects();
   renderKpis();
   renderPL();
+  // Attach the employees tbody listener once (idempotent flag)
+  const tbody = $('#emp-body');
+  if (tbody && !tbody.dataset.listenerAttached) {
+    tbody.addEventListener('input', onEmpEdit);
+    tbody.dataset.listenerAttached = '1';
+  }
 }
 
 /* ---------- TABS ---------- */
@@ -577,35 +733,51 @@ $('#panel-employees').classList.add('active');
 /* ---------- EMPLOYEES ---------- */
 function renderEmployees() {
   const tbody = $('#emp-body');
+  const tfoot = $('#emp-foot');
   tbody.innerHTML = '';
   const planOpts = Object.keys(data.planTypes).map(k =>
     `<option value="${k}">${data.planTypes[k].name}</option>`).join('');
+  const superRate = data.globals.superRate;
 
   data.employees.forEach((e, i) => {
+    const superIncl = Math.round(e.baseSalary * (1 + superRate));
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input type="text" class="name-input" value="${e.name}" data-i="${i}" data-f="name"></td>
       <td><input type="text" class="name-input" value="${e.role}" data-i="${i}" data-f="role"></td>
-      <td><div class="input-with-suffix"><input type="number" value="${e.baseSalary}" data-i="${i}" data-f="baseSalary"><span class="suffix">$</span></div></td>
+      <td>${moneyInputHtml(`employees.${i}.baseSalary`)}</td>
+      <td><div class="read-only-cell" data-super="${i}">${fmtMoney(superIncl)}</div></td>
       <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
-      <td>${e.placeholder
-        ? '<span class="pill warn">placeholder</span>'
-        : '<span class="pill">active</span>'}</td>
-      <td><span class="mono" style="color: var(--muted); font-size: 13px;">${e.dashboardFile}</span></td>
+      <td>${e.placeholder ? '<span class="pill warn">placeholder</span>' : '<span class="pill">active</span>'}</td>
+      <td><span class="mono" style="color: var(--muted); font-size: 12px;">${e.dashboardFile}</span></td>
     `;
     tbody.appendChild(tr);
     tr.querySelector(`select[data-f="planType"]`).value = e.planType;
   });
 
-  tbody.addEventListener('input', onEmpEdit);
+  renderEmployeeTotals();
+}
+function renderEmployeeTotals() {
+  const tfoot = $('#emp-foot');
+  const superRate = data.globals.superRate;
+  const baseTotal = data.employees.reduce((s, e) => s + (+e.baseSalary || 0), 0);
+  const superTotal = Math.round(baseTotal * (1 + superRate));
+  tfoot.innerHTML = `
+    <tr class="totals-row">
+      <td colspan="2">Team total</td>
+      <td class="read-only-cell" style="color: var(--ink); font-weight: 600;">${fmtMoney(baseTotal)}</td>
+      <td class="read-only-cell" style="color: var(--accent); font-weight: 600;">${fmtMoney(superTotal)}</td>
+      <td colspan="3" style="color: var(--muted); font-size: 12px; font-family: 'DM Sans', sans-serif;">Sum of all base salaries, and the super-inclusive total (base × 1.${(superRate*100).toFixed(0)})</td>
+    </tr>
+  `;
 }
 function onEmpEdit(ev) {
   const el = ev.target;
+  // Money inputs are handled by the global listener (which also updates the super cell + totals)
+  if (el.dataset.moneyPath) return;
   const i = +el.dataset.i, f = el.dataset.f;
-  if (!f) return;
-  let v = el.value;
-  if (f === 'baseSalary') v = +v || 0;
-  data.employees[i][f] = v;
+  if (isNaN(i) || !f) return;
+  data.employees[i][f] = el.value;
   setDirty();
 }
 
@@ -637,19 +809,13 @@ function renderPlans() {
         ${plan.productionPct !== undefined ? `
           <div class="input-group">
             <label>Production % <span class="hint">Extra % paid on ${plan.productionBasis === 'eventGP' ? 'Event GP' : 'revenue/GP'}</span></label>
-            <div class="input-with-suffix">
-              <input type="number" step="0.001" value="${plan.productionPct}" oninput="data.planTypes['${key}'].productionPct=+this.value||0; setDirty()">
-              <span class="suffix">dec</span>
-            </div>
+            ${percentInputHtml(`planTypes.${key}.productionPct`, 3)}
           </div>
         ` : ''}
         ${plan.showOldCommissionComparison ? `
           <div class="input-group">
             <label>Old commission rate (for comparison) <span class="hint">Shows side-by-side on Sales dashboards</span></label>
-            <div class="input-with-suffix">
-              <input type="number" step="0.001" value="${plan.oldCommissionRate || 0}" oninput="data.planTypes['${key}'].oldCommissionRate=+this.value||0; setDirty()">
-              <span class="suffix">dec</span>
-            </div>
+            ${percentInputHtml(`planTypes.${key}.oldCommissionRate`, 2)}
           </div>
         ` : ''}
         ${isGM ? renderGMBands(key, plan) : renderStandardBands(key, plan)}
@@ -663,15 +829,17 @@ function renderStandardBands(key, plan) {
   if (!plan.bands) return '';
   const rows = plan.bands.map((b, i) => `
     <tr>
-      <td><div class="input-with-suffix"><input type="number" value="${b.min}" oninput="data.planTypes['${key}'].bands[${i}].min=+this.value||0; setDirty()"><span class="suffix">$</span></div></td>
-      <td><div class="input-with-suffix"><input type="number" value="${b.max === null ? '' : b.max}" placeholder="∞" oninput="data.planTypes['${key}'].bands[${i}].max=this.value===''?null:+this.value; setDirty()"><span class="suffix">$</span></div></td>
-      <td><div class="input-with-suffix"><input type="number" step="0.001" value="${b.rate}" oninput="data.planTypes['${key}'].bands[${i}].rate=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td>${moneyInputHtml(`planTypes.${key}.bands.${i}.min`)}</td>
+      <td>${b.max === null
+        ? `<div class="input-with-prefix"><span class="prefix">$</span><input type="text" inputmode="numeric" placeholder="∞" value="" oninput="data.planTypes['${key}'].bands[${i}].max=this.value===''?null:parseMoney(this.value); const n=parseMoney(this.value); this.value=n==null?'':fmtNum(n); setDirty()"></div>`
+        : moneyInputHtml(`planTypes.${key}.bands.${i}.max`)}</td>
+      <td>${percentInputHtml(`planTypes.${key}.bands.${i}.rate`, 3)}</td>
       <td><button class="icon-btn" onclick="removeBand('${key}', ${i})" title="Remove band">×</button></td>
     </tr>
   `).join('');
   return `
     <h3>Bands <span class="pill">${plan.bands.length}</span></h3>
-    <p class="intro" style="margin-bottom:10px;font-size:12px;">Each rate applies only to metric earned within that band. Rate is a decimal (0.035 = 3.5%). Leave "Max" blank for the top band (open-ended).</p>
+    <p class="intro" style="margin-bottom:10px;font-size:12px;">Each rate applies only to metric earned within that band. Leave "Max" blank for the top band (open-ended).</p>
     <table>
       <thead>
         <tr><th>Min</th><th>Max</th><th>Rate</th><th></th></tr>
@@ -685,21 +853,21 @@ function renderStandardBands(key, plan) {
 function renderGMBands(key, plan) {
   const cmRows = (plan.cmBands || []).map((b, i) => `
     <tr>
-      <td><div class="input-with-suffix"><input type="number" value="${b.threshold}" oninput="data.planTypes['${key}'].cmBands[${i}].threshold=+this.value||0; setDirty()"><span class="suffix">$</span></div></td>
-      <td><div class="input-with-suffix"><input type="number" step="0.001" value="${b.rate}" oninput="data.planTypes['${key}'].cmBands[${i}].rate=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td>${moneyInputHtml(`planTypes.${key}.cmBands.${i}.threshold`)}</td>
+      <td>${percentInputHtml(`planTypes.${key}.cmBands.${i}.rate`, 2)}</td>
       <td><button class="icon-btn" onclick="removeGMBand('${key}','cmBands', ${i})" title="Remove">×</button></td>
     </tr>`).join('');
   const npRows = (plan.npBands || []).map((b, i) => `
     <tr>
-      <td><div class="input-with-suffix"><input type="number" value="${b.threshold}" oninput="data.planTypes['${key}'].npBands[${i}].threshold=+this.value||0; setDirty()"><span class="suffix">$</span></div></td>
-      <td><div class="input-with-suffix"><input type="number" step="0.001" value="${b.rate}" oninput="data.planTypes['${key}'].npBands[${i}].rate=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td>${moneyInputHtml(`planTypes.${key}.npBands.${i}.threshold`)}</td>
+      <td>${percentInputHtml(`planTypes.${key}.npBands.${i}.rate`, 2)}</td>
       <td><button class="icon-btn" onclick="removeGMBand('${key}','npBands', ${i})" title="Remove">×</button></td>
     </tr>`).join('');
 
   return `
     <div class="input-group">
       <label>CM baseline <span class="hint">Rate applies to Contribution Margin above this figure</span></label>
-      <div class="input-with-suffix"><input type="number" value="${plan.cmBaseline}" oninput="data.planTypes['${key}'].cmBaseline=+this.value||0; setDirty()"><span class="suffix">$</span></div>
+      ${moneyInputHtml(`planTypes.${key}.cmBaseline`)}
     </div>
     <h3>Contribution Margin Bands</h3>
     <table>
@@ -749,41 +917,33 @@ function removeGMBand(key, which, i) {
 /* ---------- GLOBALS ---------- */
 function renderGlobals() {
   const el = $('#globals-simple');
-  const g = data.globals;
   el.innerHTML = `
-    ${simpleRow('Super rate', 'superRate', g.superRate, 'dec', 'Employer super contribution (0.12 = 12%)')}
-    ${simpleRow('GST rate', 'gstRate', g.gstRate, 'dec', 'For stripping GST from Zoho-sourced GST-inclusive inputs')}
-    ${simpleRow('Guardrail margin', 'guardrailMargin', g.guardrailMargin, 'dec', 'If realised margin drops below this, variable comp pauses')}
-    ${simpleRow('Quarterly payout', 'quarterlyPayoutPct', g.quarterlyPayoutPct, 'dec', 'Proportion of variable comp paid each quarter (0.75 = 75%)')}
-    ${simpleRow('Year-end holdback', 'yearEndHoldbackPct', g.yearEndHoldbackPct, 'dec', 'Proportion held until year-end reconciliation')}
-    ${simpleRow('KPI score cap', 'kpiScoreCap', g.kpiScoreCap, 'dec', 'Max KPI multiplier on variable comp (1.0 = cap; 1.5 = 150% over-achievement)')}
-    ${simpleRow('KPI min for comm', 'kpiMinForComm', g.kpiMinForComm, 'dec', 'KPI score below this pays no variable comp at all')}
+    ${simpleRow('Super rate', 'superRate', 'Employer super contribution (12% = 0.12)')}
+    ${simpleRow('GST rate', 'gstRate', 'For stripping GST from Zoho-sourced GST-inclusive inputs')}
+    ${simpleRow('Guardrail margin', 'guardrailMargin', 'If realised margin drops below this, variable comp pauses')}
+    ${simpleRow('Quarterly payout', 'quarterlyPayoutPct', 'Proportion of variable comp paid each quarter (75% = 0.75)')}
+    ${simpleRow('Year-end holdback', 'yearEndHoldbackPct', 'Proportion held until year-end reconciliation')}
+    ${simpleRow('KPI score cap', 'kpiScoreCap', 'Max KPI multiplier on variable comp (100% = cap at 1.0x; 150% = over-achievement allowed)')}
+    ${simpleRow('KPI min for comm', 'kpiMinForComm', 'KPI score below this pays no variable comp at all')}
   `;
-  el.addEventListener('input', (ev) => {
-    const el = ev.target;
-    const f = el.dataset.field;
-    if (!f) return;
-    data.globals[f] = +el.value || 0;
-    setDirty();
-  });
 
   const mm = $('#mm-body');
   mm.innerHTML = '';
   data.globals.marginMultipliers.forEach((m, i) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><div class="input-with-suffix"><input type="number" step="0.001" value="${m.minMargin}" oninput="data.globals.marginMultipliers[${i}].minMargin=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td>${percentInputHtml(`globals.marginMultipliers.${i}.minMargin`, 2)}</td>
       <td><div class="input-with-suffix"><input type="number" step="0.01" value="${m.multiplier}" oninput="data.globals.marginMultipliers[${i}].multiplier=+this.value||0; setDirty()"><span class="suffix">×</span></div></td>
       <td><button class="icon-btn" onclick="removeMarginMult(${i})" title="Remove">×</button></td>
     `;
     mm.appendChild(tr);
   });
 }
-function simpleRow(label, field, value, suffix, hint) {
+function simpleRow(label, field, hint) {
   return `
     <div class="input-group">
       <label>${label}<span class="hint">${hint}</span></label>
-      <div class="input-with-suffix"><input type="number" step="0.01" value="${value}" data-field="${field}"><span class="suffix">${suffix}</span></div>
+      ${percentInputHtml(`globals.${field}`, 2)}
     </div>
   `;
 }
@@ -806,44 +966,76 @@ function renderProjects() {
     container.innerHTML = '<div class="empty-state">No projects yet. Click "Add project" to create one.</div>';
     return;
   }
+  const statusOptions = ['not_started', 'in_progress', 'complete', 'paused', 'cancelled'];
+  const superPct = (data.globals.superRate * 100).toFixed(0);
+
   container.innerHTML = data.projects.map((p, i) => {
+    const assignedNames = p.assignedTo
+      .map(id => data.employees.find(e => e.id === id)?.name || id)
+      .join(', ') || 'Unassigned';
     const assignedChips = data.employees.map(e => `
-      <label style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:13px;">
+      <label style="display:inline-flex;align-items:center;gap:4px;margin-right:14px;margin-bottom:6px;font-size:13px;">
         <input type="checkbox" ${p.assignedTo.includes(e.id) ? 'checked' : ''} onchange="toggleProjectAssign(${i}, '${e.id}', this.checked)">
         ${e.name}
       </label>
     `).join('');
+    const bonusLabel = p.bonusIncludesSuper
+      ? `Bonus amount (inc. ${superPct}% super)`
+      : `Bonus amount (ex. super)`;
     return `
-      <div class="card" style="margin-bottom:14px; border:1px solid var(--border); padding:18px;">
-        <div class="row-flex" style="margin-bottom:12px;">
-          <div style="flex:1;">
-            <input type="text" class="name-input" style="font-size:16px;font-weight:600;border:none;padding:4px 0;" value="${p.name}" oninput="data.projects[${i}].name=this.value; setDirty()">
+      <div class="project-section">
+        <div class="project-header" onclick="if(!event.target.closest('button,input')) this.parentElement.classList.toggle('open')">
+          <div>
+            <span class="project-title">${p.name}</span>
+            <span class="project-sub">${fmtMoney(p.bonusAmount)} · ${p.status || 'no status'} · ${assignedNames}</span>
           </div>
-          <button class="btn small danger" onclick="removeProject(${i})">Remove</button>
+          <span class="chev">›</span>
         </div>
-        <div class="input-group">
-          <label>Bonus amount <span class="hint">Total bonus for completing this project</span></label>
-          <div class="input-with-suffix"><input type="number" value="${p.bonusAmount}" oninput="data.projects[${i}].bonusAmount=+this.value||0; setDirty()"><span class="suffix">$</span></div>
-        </div>
-        <div class="input-group">
-          <label>Bonus includes super <span class="hint">Tick if the bonus amount is already super-inclusive</span></label>
-          <input type="checkbox" ${p.bonusIncludesSuper ? 'checked' : ''} onchange="data.projects[${i}].bonusIncludesSuper=this.checked; setDirty()">
-        </div>
-        <div class="input-group">
-          <label>Status <span class="hint">in_progress / complete / paused</span></label>
-          <input type="text" class="name-input" value="${p.status || ''}" oninput="data.projects[${i}].status=this.value; setDirty()">
-        </div>
-        <div class="input-group">
-          <label>Due date <span class="hint">YYYY-MM-DD</span></label>
-          <input type="text" class="name-input mono" value="${p.dueDate || ''}" oninput="data.projects[${i}].dueDate=this.value; setDirty()">
-        </div>
-        <div style="margin-top:14px;">
-          <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">Assigned to:</div>
-          ${assignedChips}
+        <div class="project-body">
+          <div class="row-flex" style="margin-bottom:14px;">
+            <div style="flex:1;">
+              <label style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;">Project name</label>
+              <input type="text" class="name-input" style="font-size:15px;font-weight:500;" value="${p.name}" oninput="data.projects[${i}].name=this.value; renderProjectHeader(${i}); setDirty()">
+            </div>
+            <button class="btn small danger" onclick="removeProject(${i})" style="align-self:flex-end;">Remove</button>
+          </div>
+          <div class="input-group">
+            <label id="bonus-label-${i}">${bonusLabel} <span class="hint">Total bonus for completing this project</span></label>
+            ${moneyInputHtml(`projects.${i}.bonusAmount`)}
+          </div>
+          <div class="input-group">
+            <label>Bonus includes super <span class="hint">Tick if the figure above already includes ${superPct}% super</span></label>
+            <input type="checkbox" ${p.bonusIncludesSuper ? 'checked' : ''} onchange="data.projects[${i}].bonusIncludesSuper=this.checked; renderProjects(); setDirty()">
+          </div>
+          <div class="input-group">
+            <label>Status</label>
+            <select onchange="data.projects[${i}].status=this.value; renderProjectHeader(${i}); setDirty()">
+              ${statusOptions.map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${s.replace('_', ' ')}</option>`).join('')}
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Due date <span class="hint">Stored as ISO (YYYY-MM-DD) · displays DD-MM-YYYY on employee dashboards</span></label>
+            <input type="date" value="${p.dueDate || ''}" oninput="data.projects[${i}].dueDate=this.value; setDirty()">
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Assigned to:</div>
+            ${assignedChips}
+          </div>
         </div>
       </div>
     `;
   }).join('');
+}
+function renderProjectHeader(i) {
+  // Quick update of just the header subtitle without re-rendering the whole list (preserves open state)
+  // For simplicity, re-render all but preserve .open class on each section
+  const openIds = Array.from(document.querySelectorAll('.project-section.open'))
+    .map(el => el.querySelector('.project-title')?.textContent);
+  renderProjects();
+  document.querySelectorAll('.project-section').forEach(el => {
+    const title = el.querySelector('.project-title')?.textContent;
+    if (openIds.includes(title)) el.classList.add('open');
+  });
 }
 function toggleProjectAssign(i, empId, checked) {
   const p = data.projects[i];
@@ -885,7 +1077,7 @@ function renderKpis() {
           <option value="lower" ${k.direction === 'lower' ? 'selected' : ''}>Lower is better</option>
         </select>
       </td>
-      <td><div class="input-with-suffix"><input type="number" step="0.01" value="${k.defaultWeight}" oninput="data.kpis.definitions[${i}].defaultWeight=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td>${percentInputHtml(`kpis.definitions.${i}.defaultWeight`, 1)}</td>
       <td><input type="text" class="name-input mono" value="${k.id}" oninput="data.kpis.definitions[${i}].id=this.value; setDirty()"></td>
       <td><button class="icon-btn" onclick="removeKpi(${i})">×</button></td>
     </tr>
@@ -929,7 +1121,7 @@ function renderPL() {
     const total = months.reduce((s, m) => s + (+pl[l.key][m] || 0), 0);
     return `<tr>
       <td>${l.label}</td>
-      ${months.map(m => `<td><input type="number" style="max-width:95px;text-align:right;" value="${pl[l.key][m]}" oninput="data.companyPL['${l.key}']['${m}']=+this.value||0; setDirty(); updatePLTotals()"></td>`).join('')}
+      ${months.map(m => `<td style="min-width:110px;">${moneyInputHtml(`companyPL.${l.key}.${m}`)}</td>`).join('')}
       <td style="text-align:right; font-family:'DM Mono',monospace;" data-total="${l.key}">${fmtMoney(total)}</td>
     </tr>`;
   }).join('') +
