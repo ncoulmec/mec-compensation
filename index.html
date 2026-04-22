@@ -427,6 +427,132 @@
     margin-bottom: 20px;
     font-size: 14px;
   }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(18, 28, 42, 0.55);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 28px 32px;
+    max-width: 540px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--ink);
+  }
+  .modal p {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .modal label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 14px 0 6px;
+  }
+  .modal input[type="text"], .modal input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: var(--mono, 'DM Mono', monospace);
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .modal input:focus { outline: none; border-color: var(--navy); }
+  .modal details {
+    margin: 18px 0;
+    padding: 12px 14px;
+    background: #fafaf7;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .modal details summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--navy);
+  }
+  .modal details ol {
+    margin: 12px 0 0;
+    padding-left: 22px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .modal details code {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    background: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .modal .link-btn {
+    background: none;
+    border: none;
+    color: var(--danger);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    text-decoration: underline;
+  }
+
+  /* Save status toast */
+  .save-toast {
+    position: fixed;
+    bottom: 86px;
+    right: 32px;
+    padding: 12px 18px;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    font-size: 14px;
+    z-index: 50;
+    display: none;
+    max-width: 420px;
+    line-height: 1.5;
+  }
+  .save-toast.show { display: block; }
+  .save-toast.saving { background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8; }
+  .save-toast.success { background: var(--accent-bg); color: var(--accent); border: 1px solid #c3e4d0; }
+  .save-toast.error { background: #fdf2f2; color: var(--danger); border: 1px solid #f2d5d5; }
+
+  .gh-status {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--faint);
+    margin-left: 14px;
+  }
+  .gh-status.connected { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -576,14 +702,55 @@
   <div class="export-bar-inner">
     <div>
       <span class="dirty-status saved" id="dirty-status">All changes saved locally</span>
+      <span class="gh-status" id="gh-status">GitHub: not connected</span>
       <span style="margin-left: 14px; color: var(--faint); font-size: 12px;" id="effective-info"></span>
     </div>
     <div class="row-flex">
-      <button class="btn" id="revert-btn">Revert to last loaded</button>
-      <button class="btn primary" id="export-btn">⬇ Export data.json</button>
+      <button class="btn" id="revert-btn" title="Discard unsaved changes">Revert</button>
+      <button class="btn" id="export-btn" title="Download data.json to your computer">⬇ Export</button>
+      <button class="btn primary" id="save-gh-btn" title="Commit changes directly to the GitHub repo">☁ Save to GitHub</button>
     </div>
   </div>
 </footer>
+
+<!-- GitHub connect modal -->
+<div class="modal-overlay" id="gh-modal">
+  <div class="modal">
+    <h2>Connect to GitHub</h2>
+    <p>Save edits directly to your repo in one click instead of exporting and uploading manually. Your token is stored only in this browser and sent only to GitHub.</p>
+
+    <label>Personal Access Token</label>
+    <input type="password" id="gh-pat-input" placeholder="github_pat_… or ghp_…" autocomplete="off">
+
+    <label>Repository (owner/name)</label>
+    <input type="text" id="gh-repo-input" value="ncoulmec/mec-compensation">
+
+    <label>Branch</label>
+    <input type="text" id="gh-branch-input" value="main">
+
+    <details>
+      <summary>How to create a Personal Access Token (≈ 3 minutes)</summary>
+      <ol>
+        <li>Go to <code>github.com/settings/personal-access-tokens/new</code> (sign in if needed)</li>
+        <li>Token name: <code>MEC Compensation Editor</code></li>
+        <li>Expiration: <code>90 days</code> (or whatever suits you)</li>
+        <li>Resource owner: <code>ncoulmec</code></li>
+        <li>Repository access: <strong>Only select repositories</strong> → pick <code>mec-compensation</code></li>
+        <li>Permissions → Repository permissions → <strong>Contents</strong> → set to <strong>Read and Write</strong></li>
+        <li>Click <strong>Generate token</strong> at the bottom</li>
+        <li>Copy the token (it starts with <code>github_pat_</code>) and paste it above</li>
+      </ol>
+    </details>
+
+    <div class="modal-buttons">
+      <button class="link-btn" id="gh-disconnect-btn" style="margin-right: auto; display: none;">Disconnect</button>
+      <button class="btn" onclick="closeGhModal()">Cancel</button>
+      <button class="btn primary" id="gh-save-btn">Save &amp; test connection</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-toast" id="save-toast"></div>
 
 <script>
 /* ============================================================
@@ -1321,6 +1488,190 @@ $('#revert-btn').addEventListener('click', () => {
   renderAll();
   setDirty(false);
 });
+
+/* ========== GITHUB SAVE INTEGRATION ==========
+   Uses GitHub's Contents API to PUT data.json directly to the repo.
+   Token stored in localStorage under `mec_gh_settings`.
+*/
+
+const GH_STORAGE_KEY = 'mec_gh_settings';
+
+function getGhSettings() {
+  try {
+    const raw = localStorage.getItem(GH_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+function saveGhSettings(s) { localStorage.setItem(GH_STORAGE_KEY, JSON.stringify(s)); updateGhStatus(); }
+function clearGhSettings() { localStorage.removeItem(GH_STORAGE_KEY); updateGhStatus(); }
+
+function updateGhStatus() {
+  const el = $('#gh-status');
+  const s = getGhSettings();
+  if (s && s.pat) {
+    el.textContent = `GitHub: connected to ${s.repo}`;
+    el.classList.add('connected');
+  } else {
+    el.textContent = 'GitHub: not connected';
+    el.classList.remove('connected');
+  }
+}
+
+function openGhModal() {
+  const s = getGhSettings();
+  $('#gh-pat-input').value = s?.pat || '';
+  $('#gh-repo-input').value = s?.repo || 'ncoulmec/mec-compensation';
+  $('#gh-branch-input').value = s?.branch || 'main';
+  $('#gh-disconnect-btn').style.display = (s && s.pat) ? 'inline-block' : 'none';
+  $('#gh-modal').classList.add('open');
+}
+function closeGhModal() { $('#gh-modal').classList.remove('open'); }
+window.closeGhModal = closeGhModal;
+
+// UTF-8 safe base64 encode
+function encodeBase64Utf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function showToast(kind, message, timeoutMs = 4500) {
+  const t = $('#save-toast');
+  t.className = 'save-toast show ' + kind;
+  t.textContent = message;
+  if (t._timer) clearTimeout(t._timer);
+  if (timeoutMs > 0) {
+    t._timer = setTimeout(() => t.classList.remove('show'), timeoutMs);
+  }
+}
+
+async function testAndSaveToken() {
+  const pat = $('#gh-pat-input').value.trim();
+  const repo = $('#gh-repo-input').value.trim();
+  const branch = $('#gh-branch-input').value.trim() || 'main';
+  if (!pat) return alert('Please paste your GitHub Personal Access Token.');
+  if (!repo.includes('/')) return alert('Repository must be in "owner/name" format.');
+
+  const btn = $('#gh-save-btn');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Testing…';
+
+  try {
+    // Test by fetching the repo metadata
+    const res = await fetch(`https://api.github.com/repos/${repo}`, {
+      headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
+    });
+    if (res.status === 401) throw new Error('Token rejected — check it was copied correctly and has not expired.');
+    if (res.status === 404) throw new Error('Repo not found, or token does not have access to this repo.');
+    if (!res.ok) throw new Error(`GitHub returned HTTP ${res.status}.`);
+    const info = await res.json();
+    if (!info.permissions?.push) throw new Error('Token is valid but does not have write permission. Re-create with Contents: Read and Write.');
+
+    saveGhSettings({ pat, repo, branch });
+    closeGhModal();
+    showToast('success', `✓ Connected to ${repo}. You can now Save to GitHub with one click.`);
+  } catch (err) {
+    alert(`Connection failed: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+$('#gh-save-btn').addEventListener('click', testAndSaveToken);
+
+$('#gh-disconnect-btn').addEventListener('click', () => {
+  if (!confirm('Disconnect GitHub? The token will be removed from this browser. The repo itself is untouched.')) return;
+  clearGhSettings();
+  closeGhModal();
+  showToast('success', 'GitHub token cleared from this browser.');
+});
+
+async function saveToGitHub() {
+  const s = getGhSettings();
+  if (!s || !s.pat) {
+    openGhModal();
+    return;
+  }
+
+  const btn = $('#save-gh-btn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  showToast('saving', 'Saving data.json to GitHub…', 0);
+
+  try {
+    // Update meta
+    data.meta.lastUpdatedBy = 'nathan';
+    data.meta.effectiveDate = new Date().toISOString().slice(0, 10);
+
+    const content = JSON.stringify(data, null, 2);
+    const path = 'data.json';
+    const apiBase = `https://api.github.com/repos/${s.repo}/contents/${path}`;
+
+    // 1. Get current file SHA (required for update)
+    const getRes = await fetch(`${apiBase}?ref=${s.branch}`, {
+      headers: { Authorization: `Bearer ${s.pat}`, Accept: 'application/vnd.github+json' }
+    });
+    let sha = null;
+    if (getRes.ok) {
+      const meta = await getRes.json();
+      sha = meta.sha;
+    } else if (getRes.status !== 404) {
+      throw new Error(`Could not read current file (HTTP ${getRes.status}).`);
+    }
+
+    // 2. PUT new content
+    const body = {
+      message: `Update data.json via MEC Overview — ${new Date().toLocaleString('en-AU')}`,
+      content: encodeBase64Utf8(content),
+      branch: s.branch
+    };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(apiBase, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${s.pat}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!putRes.ok) {
+      const errData = await putRes.json().catch(() => ({}));
+      let msg = errData.message || `HTTP ${putRes.status}`;
+      if (putRes.status === 409) msg = 'Conflict — someone else edited this file in the meantime. Reload and try again.';
+      if (putRes.status === 401) msg = 'Token rejected. Click "GitHub: connected" in the bar to re-enter your token.';
+      if (putRes.status === 403) msg = 'Token lacks write permission. Re-create with Contents: Read and Write.';
+      throw new Error(msg);
+    }
+
+    original = clone(data);
+    setDirty(false);
+    showToast('success', '✓ Saved to GitHub. Employee dashboards will reflect this in ~30-60 seconds.');
+  } catch (err) {
+    showToast('error', `Save failed: ${err.message}`, 8000);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+$('#save-gh-btn').addEventListener('click', saveToGitHub);
+
+// Click on the GitHub status label to re-open setup
+$('#gh-status').addEventListener('click', openGhModal);
+$('#gh-status').style.cursor = 'pointer';
+
+// Initialize status display
+updateGhStatus();
 
 load();
 </script>
