@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEC Compensation — Master</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a3a5c;
+    --navy-dark: #132a42;
+    --bg: #f5f3ee;
+    --card: #ffffff;
+    --border: #e5e2da;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --faint: #a8a8a8;
+    --accent: #2d6a4f;
+    --accent-bg: #e8f1ec;
+    --danger: #b91c1c;
+    --warn: #b45309;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'DM Mono', ui-monospace, monospace; }
+
+  /* Header */
+  header.top {
+    background: var(--navy);
+    color: #fff;
+    padding: 28px 32px;
+  }
+  .top-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  header.top h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header.top .sub {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #b8c7d8;
+    font-family: 'DM Mono', monospace;
+  }
+  .admin-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  /* Tabs */
+  nav.tabs {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    overflow-x: auto;
+  }
+  .tabs-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    gap: 4px;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 16px 20px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active {
+    color: var(--navy);
+    border-bottom-color: var(--navy);
+    font-weight: 600;
+  }
+
+  /* Content */
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 32px 120px;
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .card p.intro {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .card h3 {
+    margin: 24px 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 500;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr.highlight td { background: var(--accent-bg); }
+
+  /* Inputs */
+  input[type="text"], input[type="number"], select {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+    min-width: 0;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--navy);
+  }
+  input[type="number"] { text-align: right; }
+  input.name-input { font-family: 'DM Sans', sans-serif; text-align: left; }
+  select { font-family: 'DM Sans', sans-serif; }
+
+  input[type="checkbox"] { cursor: pointer; }
+
+  .input-group {
+    display: grid;
+    grid-template-columns: 1fr 160px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .input-group:last-child { border-bottom: none; }
+  .input-group label {
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .input-group .hint {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .input-with-suffix {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-with-suffix input { padding-right: 28px; }
+  .input-with-suffix .suffix {
+    position: absolute;
+    right: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--faint);
+    pointer-events: none;
+  }
+
+  /* Buttons */
+  button.btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--ink);
+    transition: all 0.15s;
+  }
+  button.btn:hover { border-color: var(--navy); }
+  button.btn.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+  button.btn.primary:hover { background: var(--navy-dark); }
+  button.btn.danger { color: var(--danger); border-color: #f2d5d5; }
+  button.btn.danger:hover { background: #fdf2f2; }
+  button.btn.small { padding: 4px 10px; font-size: 12px; }
+  button.icon-btn {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+  }
+  button.icon-btn:hover { color: var(--danger); }
+
+  /* Plan accordion */
+  .plan-section {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .plan-header {
+    padding: 14px 18px;
+    background: #fafaf7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .plan-header .plan-desc {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--muted);
+    display: block;
+    margin-top: 2px;
+  }
+  .plan-header .chev { color: var(--muted); transition: transform 0.15s; }
+  .plan-section.open .chev { transform: rotate(90deg); }
+  .plan-body { padding: 18px; display: none; }
+  .plan-section.open .plan-body { display: block; }
+
+  /* Footer */
+  footer.export-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    padding: 14px 32px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+    z-index: 10;
+  }
+  .export-bar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .dirty-status {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .dirty-status.dirty { color: var(--warn); }
+  .dirty-status.saved { color: var(--accent); }
+
+  /* Utility */
+  .row-flex { display: flex; gap: 10px; align-items: center; }
+  .spacer { flex: 1; }
+  .pill {
+    display: inline-block;
+    background: var(--accent-bg);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 8px;
+  }
+  .pill.warn { background: #fef5e6; color: var(--warn); }
+  .empty-state {
+    padding: 30px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .pl-grid { overflow-x: auto; }
+  .pl-grid table { min-width: 900px; }
+  .pl-grid td:first-child, .pl-grid th:first-child {
+    position: sticky; left: 0; background: #fff; z-index: 1;
+    font-weight: 500;
+  }
+  .pl-grid tr.totals td { background: #fafaf7; font-weight: 600; }
+
+  .loading { padding: 60px; text-align: center; color: var(--muted); }
+  .error-banner {
+    background: #fdf2f2;
+    border: 1px solid #f2d5d5;
+    color: var(--danger);
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div>
+      <h1>MEC Group Compensation</h1>
+      <p class="sub" id="sub-line">Master Dashboard · loading…</p>
+    </div>
+    <span class="admin-badge">Admin</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-inner" id="tab-bar">
+    <button class="tab-btn active" data-tab="employees">Employees</button>
+    <button class="tab-btn" data-tab="plans">Plan Types</button>
+    <button class="tab-btn" data-tab="globals">Global Settings</button>
+    <button class="tab-btn" data-tab="projects">Projects</button>
+    <button class="tab-btn" data-tab="kpis">KPIs (draft)</button>
+    <button class="tab-btn" data-tab="pl">Company P&amp;L</button>
+  </div>
+</nav>
+
+<main>
+  <div id="error-slot"></div>
+  <div id="loading" class="loading">Loading data.json…</div>
+
+  <!-- Employees -->
+  <section class="panel" id="panel-employees">
+    <div class="card">
+      <h2>Employees</h2>
+      <p class="intro">Base salaries, roles, and plan assignments. Base salary is the "before super" figure. Changes flow to each person's dashboard.</p>
+      <table id="emp-table">
+        <thead>
+          <tr>
+            <th style="width:22%">Name</th>
+            <th style="width:22%">Role</th>
+            <th style="width:14%">Base Salary</th>
+            <th style="width:14%">Plan Type</th>
+            <th style="width:10%">Status</th>
+            <th style="width:18%">Dashboard File</th>
+          </tr>
+        </thead>
+        <tbody id="emp-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section class="panel" id="panel-plans">
+    <div class="card">
+      <h2>Plan Types</h2>
+      <p class="intro">Reusable plan templates. Edit a plan once and every employee on that plan picks up the change. Click a plan to expand.</p>
+      <div id="plans-list"></div>
+    </div>
+  </section>
+
+  <!-- Globals -->
+  <section class="panel" id="panel-globals">
+    <div class="card">
+      <h2>Global Settings</h2>
+      <p class="intro">Company-wide values that apply to every employee unless their plan overrides.</p>
+      <div id="globals-simple"></div>
+
+      <h3>Margin Multipliers</h3>
+      <p class="intro" style="margin-bottom: 10px;">Commission rates get multiplied by this when realised margin is above each threshold. Rewards margin quality, not just top-line.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 45%">Margin is at least</th>
+            <th style="width: 45%">Multiplier</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="mm-body"></tbody>
+      </table>
+      <div style="margin-top: 12px;">
+        <button class="btn small" onclick="addMarginMult()">+ Add tier</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects -->
+  <section class="panel" id="panel-projects">
+    <div class="card">
+      <h2>Project Bonuses</h2>
+      <p class="intro">Discrete bonuses for completing named projects. Assign to specific employees — the bonus appears on their dashboard.</p>
+      <div id="projects-list"></div>
+      <div style="margin-top: 14px;">
+        <button class="btn small" onclick="addProject()">+ Add project</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPIs -->
+  <section class="panel" id="panel-kpis">
+    <div class="card">
+      <h2>KPI Definitions <span class="pill warn">Draft</span></h2>
+      <p class="intro">Master list of KPIs. Each employee is assigned a subset of these with their own weight and target (configured per employee later). KPI score flows into a multiplier on variable comp — currently capped at 1.0× until the real KPIs are finalised.</p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 28%">Name</th>
+            <th style="width: 14%">Unit</th>
+            <th style="width: 14%">Direction</th>
+            <th style="width: 14%">Default Weight</th>
+            <th style="width: 22%">ID (internal)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="kpi-body"></tbody>
+      </table>
+      <div style="margin-top: 12px;">
+        <button class="btn small" onclick="addKpi()">+ Add KPI</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- P&L -->
+  <section class="panel" id="panel-pl">
+    <div class="card">
+      <h2>Company P&amp;L</h2>
+      <p class="intro">Monthly company financials. Feeds the company-wide view and can gate variable comp payouts (e.g., "comm only pays if company NP &gt; X"). Fiscal year starts July.</p>
+      <div class="pl-grid">
+        <table id="pl-table">
+          <thead id="pl-head"></thead>
+          <tbody id="pl-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="export-bar">
+  <div class="export-bar-inner">
+    <div>
+      <span class="dirty-status saved" id="dirty-status">All changes saved locally</span>
+      <span style="margin-left: 14px; color: var(--faint); font-size: 12px;" id="effective-info"></span>
+    </div>
+    <div class="row-flex">
+      <button class="btn" id="revert-btn">Revert to last loaded</button>
+      <button class="btn primary" id="export-btn">⬇ Export data.json</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   MEC Compensation Master — simple vanilla JS app
+   Loads data.json, lets Nathan edit, exports updated JSON
+   ============================================================ */
+
+let data = null;         // current (possibly edited) state
+let original = null;     // last loaded snapshot for revert
+let dirty = false;
+
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+function fmtMoney(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return '$' + Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 });
+}
+function fmtPct(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return (n * 100).toFixed(1) + '%';
+}
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+function setDirty(d = true) {
+  dirty = d;
+  const el = $('#dirty-status');
+  if (!el) return;
+  if (d) {
+    el.textContent = '● Unsaved changes — click Export to download updated data.json';
+    el.classList.remove('saved');
+    el.classList.add('dirty');
+  } else {
+    el.textContent = 'All changes saved locally';
+    el.classList.remove('dirty');
+    el.classList.add('saved');
+  }
+}
+
+/* ---------- LOAD ---------- */
+async function load() {
+  try {
+    const res = await fetch('data.json?' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    data = await res.json();
+    original = clone(data);
+    $('#loading').style.display = 'none';
+    renderAll();
+    $('#sub-line').textContent = `Master Dashboard · Effective ${data.meta.effectiveDate} · Schema v${data.meta.schemaVersion}`;
+    $('#effective-info').textContent = `Last updated by ${data.meta.lastUpdatedBy}`;
+  } catch (err) {
+    $('#loading').style.display = 'none';
+    $('#error-slot').innerHTML =
+      `<div class="error-banner"><strong>Could not load data.json.</strong> ${err.message}.
+       Make sure <code>data.json</code> is uploaded alongside this file in the same repo folder.</div>`;
+  }
+}
+
+function renderAll() {
+  renderEmployees();
+  renderPlans();
+  renderGlobals();
+  renderProjects();
+  renderKpis();
+  renderPL();
+}
+
+/* ---------- TABS ---------- */
+$$('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    $$('.panel').forEach(p => p.classList.remove('active'));
+    $('#panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+// Show first panel by default
+$('#panel-employees').classList.add('active');
+
+/* ---------- EMPLOYEES ---------- */
+function renderEmployees() {
+  const tbody = $('#emp-body');
+  tbody.innerHTML = '';
+  const planOpts = Object.keys(data.planTypes).map(k =>
+    `<option value="${k}">${data.planTypes[k].name}</option>`).join('');
+
+  data.employees.forEach((e, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" class="name-input" value="${e.name}" data-i="${i}" data-f="name"></td>
+      <td><input type="text" class="name-input" value="${e.role}" data-i="${i}" data-f="role"></td>
+      <td><div class="input-with-suffix"><input type="number" value="${e.baseSalary}" data-i="${i}" data-f="baseSalary"><span class="suffix">$</span></div></td>
+      <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
+      <td>${e.placeholder
+        ? '<span class="pill warn">placeholder</span>'
+        : '<span class="pill">active</span>'}</td>
+      <td><span class="mono" style="color: var(--muted); font-size: 13px;">${e.dashboardFile}</span></td>
+    `;
+    tbody.appendChild(tr);
+    tr.querySelector(`select[data-f="planType"]`).value = e.planType;
+  });
+
+  tbody.addEventListener('input', onEmpEdit);
+}
+function onEmpEdit(ev) {
+  const el = ev.target;
+  const i = +el.dataset.i, f = el.dataset.f;
+  if (!f) return;
+  let v = el.value;
+  if (f === 'baseSalary') v = +v || 0;
+  data.employees[i][f] = v;
+  setDirty();
+}
+
+/* ---------- PLANS ---------- */
+function renderPlans() {
+  const container = $('#plans-list');
+  container.innerHTML = '';
+  Object.entries(data.planTypes).forEach(([key, plan]) => {
+    const div = document.createElement('div');
+    div.className = 'plan-section';
+    const isGM = key === 'gm';
+    div.innerHTML = `
+      <div class="plan-header" onclick="this.parentElement.classList.toggle('open')">
+        <div>
+          ${plan.name}
+          <span class="plan-desc">${plan.description || ''}</span>
+        </div>
+        <span class="chev">›</span>
+      </div>
+      <div class="plan-body">
+        <div class="input-group">
+          <label>Metric label <span class="hint">What employees see on their dashboard</span></label>
+          <input type="text" class="name-input" value="${plan.metricLabel || ''}" oninput="data.planTypes['${key}'].metricLabel=this.value; setDirty()">
+        </div>
+        <div class="input-group">
+          <label>Input includes GST <span class="hint">Tick if the metric input comes GST-inclusive (auto-strips GST)</span></label>
+          <input type="checkbox" ${plan.inputIncludesGST ? 'checked' : ''} onchange="data.planTypes['${key}'].inputIncludesGST=this.checked; setDirty()">
+        </div>
+        ${plan.productionPct !== undefined ? `
+          <div class="input-group">
+            <label>Production % <span class="hint">Extra % paid on ${plan.productionBasis === 'eventGP' ? 'Event GP' : 'revenue/GP'}</span></label>
+            <div class="input-with-suffix">
+              <input type="number" step="0.001" value="${plan.productionPct}" oninput="data.planTypes['${key}'].productionPct=+this.value||0; setDirty()">
+              <span class="suffix">dec</span>
+            </div>
+          </div>
+        ` : ''}
+        ${plan.showOldCommissionComparison ? `
+          <div class="input-group">
+            <label>Old commission rate (for comparison) <span class="hint">Shows side-by-side on Sales dashboards</span></label>
+            <div class="input-with-suffix">
+              <input type="number" step="0.001" value="${plan.oldCommissionRate || 0}" oninput="data.planTypes['${key}'].oldCommissionRate=+this.value||0; setDirty()">
+              <span class="suffix">dec</span>
+            </div>
+          </div>
+        ` : ''}
+        ${isGM ? renderGMBands(key, plan) : renderStandardBands(key, plan)}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function renderStandardBands(key, plan) {
+  if (!plan.bands) return '';
+  const rows = plan.bands.map((b, i) => `
+    <tr>
+      <td><div class="input-with-suffix"><input type="number" value="${b.min}" oninput="data.planTypes['${key}'].bands[${i}].min=+this.value||0; setDirty()"><span class="suffix">$</span></div></td>
+      <td><div class="input-with-suffix"><input type="number" value="${b.max === null ? '' : b.max}" placeholder="∞" oninput="data.planTypes['${key}'].bands[${i}].max=this.value===''?null:+this.value; setDirty()"><span class="suffix">$</span></div></td>
+      <td><div class="input-with-suffix"><input type="number" step="0.001" value="${b.rate}" oninput="data.planTypes['${key}'].bands[${i}].rate=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td><button class="icon-btn" onclick="removeBand('${key}', ${i})" title="Remove band">×</button></td>
+    </tr>
+  `).join('');
+  return `
+    <h3>Bands <span class="pill">${plan.bands.length}</span></h3>
+    <p class="intro" style="margin-bottom:10px;font-size:12px;">Each rate applies only to metric earned within that band. Rate is a decimal (0.035 = 3.5%). Leave "Max" blank for the top band (open-ended).</p>
+    <table>
+      <thead>
+        <tr><th>Min</th><th>Max</th><th>Rate</th><th></th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:10px;"><button class="btn small" onclick="addBand('${key}')">+ Add band</button></div>
+  `;
+}
+
+function renderGMBands(key, plan) {
+  const cmRows = (plan.cmBands || []).map((b, i) => `
+    <tr>
+      <td><div class="input-with-suffix"><input type="number" value="${b.threshold}" oninput="data.planTypes['${key}'].cmBands[${i}].threshold=+this.value||0; setDirty()"><span class="suffix">$</span></div></td>
+      <td><div class="input-with-suffix"><input type="number" step="0.001" value="${b.rate}" oninput="data.planTypes['${key}'].cmBands[${i}].rate=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td><button class="icon-btn" onclick="removeGMBand('${key}','cmBands', ${i})" title="Remove">×</button></td>
+    </tr>`).join('');
+  const npRows = (plan.npBands || []).map((b, i) => `
+    <tr>
+      <td><div class="input-with-suffix"><input type="number" value="${b.threshold}" oninput="data.planTypes['${key}'].npBands[${i}].threshold=+this.value||0; setDirty()"><span class="suffix">$</span></div></td>
+      <td><div class="input-with-suffix"><input type="number" step="0.001" value="${b.rate}" oninput="data.planTypes['${key}'].npBands[${i}].rate=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td><button class="icon-btn" onclick="removeGMBand('${key}','npBands', ${i})" title="Remove">×</button></td>
+    </tr>`).join('');
+
+  return `
+    <div class="input-group">
+      <label>CM baseline <span class="hint">Rate applies to Contribution Margin above this figure</span></label>
+      <div class="input-with-suffix"><input type="number" value="${plan.cmBaseline}" oninput="data.planTypes['${key}'].cmBaseline=+this.value||0; setDirty()"><span class="suffix">$</span></div>
+    </div>
+    <h3>Contribution Margin Bands</h3>
+    <table>
+      <thead><tr><th>Threshold</th><th>Rate</th><th></th></tr></thead>
+      <tbody>${cmRows}</tbody>
+    </table>
+    <div style="margin-top:10px;"><button class="btn small" onclick="addGMBand('${key}','cmBands')">+ Add CM band</button></div>
+
+    <h3>Net Profit Bands</h3>
+    <table>
+      <thead><tr><th>Threshold</th><th>Rate</th><th></th></tr></thead>
+      <tbody>${npRows}</tbody>
+    </table>
+    <div style="margin-top:10px;"><button class="btn small" onclick="addGMBand('${key}','npBands')">+ Add NP band</button></div>
+  `;
+}
+
+function addBand(key) {
+  const bands = data.planTypes[key].bands;
+  const last = bands[bands.length - 1];
+  const min = last ? (last.max ?? last.min + 50000) : 0;
+  bands.push({ min, max: min + 50000, rate: 0 });
+  if (last && last.max === null) last.max = min;
+  setDirty();
+  renderPlans();
+}
+function removeBand(key, i) {
+  if (!confirm('Remove this band?')) return;
+  data.planTypes[key].bands.splice(i, 1);
+  setDirty();
+  renderPlans();
+}
+function addGMBand(key, which) {
+  const bands = data.planTypes[key][which];
+  const last = bands[bands.length - 1];
+  bands.push({ threshold: last ? last.threshold + 50000 : 0, rate: 0 });
+  setDirty();
+  renderPlans();
+}
+function removeGMBand(key, which, i) {
+  if (!confirm('Remove this band?')) return;
+  data.planTypes[key][which].splice(i, 1);
+  setDirty();
+  renderPlans();
+}
+
+/* ---------- GLOBALS ---------- */
+function renderGlobals() {
+  const el = $('#globals-simple');
+  const g = data.globals;
+  el.innerHTML = `
+    ${simpleRow('Super rate', 'superRate', g.superRate, 'dec', 'Employer super contribution (0.12 = 12%)')}
+    ${simpleRow('GST rate', 'gstRate', g.gstRate, 'dec', 'For stripping GST from Zoho-sourced GST-inclusive inputs')}
+    ${simpleRow('Guardrail margin', 'guardrailMargin', g.guardrailMargin, 'dec', 'If realised margin drops below this, variable comp pauses')}
+    ${simpleRow('Quarterly payout', 'quarterlyPayoutPct', g.quarterlyPayoutPct, 'dec', 'Proportion of variable comp paid each quarter (0.75 = 75%)')}
+    ${simpleRow('Year-end holdback', 'yearEndHoldbackPct', g.yearEndHoldbackPct, 'dec', 'Proportion held until year-end reconciliation')}
+    ${simpleRow('KPI score cap', 'kpiScoreCap', g.kpiScoreCap, 'dec', 'Max KPI multiplier on variable comp (1.0 = cap; 1.5 = 150% over-achievement)')}
+    ${simpleRow('KPI min for comm', 'kpiMinForComm', g.kpiMinForComm, 'dec', 'KPI score below this pays no variable comp at all')}
+  `;
+  el.addEventListener('input', (ev) => {
+    const el = ev.target;
+    const f = el.dataset.field;
+    if (!f) return;
+    data.globals[f] = +el.value || 0;
+    setDirty();
+  });
+
+  const mm = $('#mm-body');
+  mm.innerHTML = '';
+  data.globals.marginMultipliers.forEach((m, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="input-with-suffix"><input type="number" step="0.001" value="${m.minMargin}" oninput="data.globals.marginMultipliers[${i}].minMargin=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td><div class="input-with-suffix"><input type="number" step="0.01" value="${m.multiplier}" oninput="data.globals.marginMultipliers[${i}].multiplier=+this.value||0; setDirty()"><span class="suffix">×</span></div></td>
+      <td><button class="icon-btn" onclick="removeMarginMult(${i})" title="Remove">×</button></td>
+    `;
+    mm.appendChild(tr);
+  });
+}
+function simpleRow(label, field, value, suffix, hint) {
+  return `
+    <div class="input-group">
+      <label>${label}<span class="hint">${hint}</span></label>
+      <div class="input-with-suffix"><input type="number" step="0.01" value="${value}" data-field="${field}"><span class="suffix">${suffix}</span></div>
+    </div>
+  `;
+}
+function addMarginMult() {
+  data.globals.marginMultipliers.push({ minMargin: 0.5, multiplier: 1.0 });
+  setDirty();
+  renderGlobals();
+}
+function removeMarginMult(i) {
+  if (!confirm('Remove this multiplier tier?')) return;
+  data.globals.marginMultipliers.splice(i, 1);
+  setDirty();
+  renderGlobals();
+}
+
+/* ---------- PROJECTS ---------- */
+function renderProjects() {
+  const container = $('#projects-list');
+  if (!data.projects.length) {
+    container.innerHTML = '<div class="empty-state">No projects yet. Click "Add project" to create one.</div>';
+    return;
+  }
+  container.innerHTML = data.projects.map((p, i) => {
+    const assignedChips = data.employees.map(e => `
+      <label style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:13px;">
+        <input type="checkbox" ${p.assignedTo.includes(e.id) ? 'checked' : ''} onchange="toggleProjectAssign(${i}, '${e.id}', this.checked)">
+        ${e.name}
+      </label>
+    `).join('');
+    return `
+      <div class="card" style="margin-bottom:14px; border:1px solid var(--border); padding:18px;">
+        <div class="row-flex" style="margin-bottom:12px;">
+          <div style="flex:1;">
+            <input type="text" class="name-input" style="font-size:16px;font-weight:600;border:none;padding:4px 0;" value="${p.name}" oninput="data.projects[${i}].name=this.value; setDirty()">
+          </div>
+          <button class="btn small danger" onclick="removeProject(${i})">Remove</button>
+        </div>
+        <div class="input-group">
+          <label>Bonus amount <span class="hint">Total bonus for completing this project</span></label>
+          <div class="input-with-suffix"><input type="number" value="${p.bonusAmount}" oninput="data.projects[${i}].bonusAmount=+this.value||0; setDirty()"><span class="suffix">$</span></div>
+        </div>
+        <div class="input-group">
+          <label>Bonus includes super <span class="hint">Tick if the bonus amount is already super-inclusive</span></label>
+          <input type="checkbox" ${p.bonusIncludesSuper ? 'checked' : ''} onchange="data.projects[${i}].bonusIncludesSuper=this.checked; setDirty()">
+        </div>
+        <div class="input-group">
+          <label>Status <span class="hint">in_progress / complete / paused</span></label>
+          <input type="text" class="name-input" value="${p.status || ''}" oninput="data.projects[${i}].status=this.value; setDirty()">
+        </div>
+        <div class="input-group">
+          <label>Due date <span class="hint">YYYY-MM-DD</span></label>
+          <input type="text" class="name-input mono" value="${p.dueDate || ''}" oninput="data.projects[${i}].dueDate=this.value; setDirty()">
+        </div>
+        <div style="margin-top:14px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">Assigned to:</div>
+          ${assignedChips}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+function toggleProjectAssign(i, empId, checked) {
+  const p = data.projects[i];
+  const idx = p.assignedTo.indexOf(empId);
+  if (checked && idx === -1) p.assignedTo.push(empId);
+  if (!checked && idx !== -1) p.assignedTo.splice(idx, 1);
+  setDirty();
+}
+function addProject() {
+  data.projects.push({
+    id: 'project_' + Date.now(),
+    name: 'New Project',
+    bonusAmount: 2500,
+    bonusIncludesSuper: true,
+    assignedTo: [],
+    status: 'in_progress',
+    dueDate: ''
+  });
+  setDirty();
+  renderProjects();
+}
+function removeProject(i) {
+  if (!confirm(`Remove project "${data.projects[i].name}"?`)) return;
+  data.projects.splice(i, 1);
+  setDirty();
+  renderProjects();
+}
+
+/* ---------- KPIs ---------- */
+function renderKpis() {
+  const tbody = $('#kpi-body');
+  tbody.innerHTML = (data.kpis.definitions || []).map((k, i) => `
+    <tr>
+      <td><input type="text" class="name-input" value="${k.name}" oninput="data.kpis.definitions[${i}].name=this.value; setDirty()"></td>
+      <td><input type="text" class="name-input" value="${k.unit}" oninput="data.kpis.definitions[${i}].unit=this.value; setDirty()"></td>
+      <td>
+        <select onchange="data.kpis.definitions[${i}].direction=this.value; setDirty()">
+          <option value="higher" ${k.direction === 'higher' ? 'selected' : ''}>Higher is better</option>
+          <option value="lower" ${k.direction === 'lower' ? 'selected' : ''}>Lower is better</option>
+        </select>
+      </td>
+      <td><div class="input-with-suffix"><input type="number" step="0.01" value="${k.defaultWeight}" oninput="data.kpis.definitions[${i}].defaultWeight=+this.value||0; setDirty()"><span class="suffix">dec</span></div></td>
+      <td><input type="text" class="name-input mono" value="${k.id}" oninput="data.kpis.definitions[${i}].id=this.value; setDirty()"></td>
+      <td><button class="icon-btn" onclick="removeKpi(${i})">×</button></td>
+    </tr>
+  `).join('');
+}
+function addKpi() {
+  data.kpis.definitions.push({
+    id: 'kpi_' + Date.now(),
+    name: 'New KPI',
+    unit: '',
+    direction: 'higher',
+    defaultWeight: 0.1
+  });
+  setDirty();
+  renderKpis();
+}
+function removeKpi(i) {
+  if (!confirm('Remove this KPI?')) return;
+  data.kpis.definitions.splice(i, 1);
+  setDirty();
+  renderKpis();
+}
+
+/* ---------- P&L ---------- */
+function renderPL() {
+  const pl = data.companyPL;
+  const months = Object.keys(pl.revenue);
+  const head = $('#pl-head');
+  head.innerHTML = '<tr><th style="text-align:left">Line</th>' +
+    months.map(m => `<th style="text-align:right">${m}</th>`).join('') +
+    '<th style="text-align:right">FY Total</th></tr>';
+
+  const body = $('#pl-body');
+  const lines = [
+    { key: 'revenue', label: 'Revenue', sign: 1 },
+    { key: 'cogs', label: 'COGS', sign: -1 },
+    { key: 'contribExp', label: 'Contribution Expenses', sign: -1 },
+    { key: 'opex', label: 'Operating Expenses', sign: -1 }
+  ];
+  body.innerHTML = lines.map(l => {
+    const total = months.reduce((s, m) => s + (+pl[l.key][m] || 0), 0);
+    return `<tr>
+      <td>${l.label}</td>
+      ${months.map(m => `<td><input type="number" style="max-width:95px;text-align:right;" value="${pl[l.key][m]}" oninput="data.companyPL['${l.key}']['${m}']=+this.value||0; setDirty(); updatePLTotals()"></td>`).join('')}
+      <td style="text-align:right; font-family:'DM Mono',monospace;" data-total="${l.key}">${fmtMoney(total)}</td>
+    </tr>`;
+  }).join('') +
+  `<tr class="totals">
+    <td>Contribution Margin</td>
+    ${months.map(m => `<td style="text-align:right;" data-cm="${m}"></td>`).join('')}
+    <td style="text-align:right;font-family:'DM Mono',monospace;" data-cm-total></td>
+  </tr>
+  <tr class="totals">
+    <td>Net Profit</td>
+    ${months.map(m => `<td style="text-align:right;" data-np="${m}"></td>`).join('')}
+    <td style="text-align:right;font-family:'DM Mono',monospace;" data-np-total></td>
+  </tr>`;
+  updatePLTotals();
+}
+function updatePLTotals() {
+  const pl = data.companyPL;
+  const months = Object.keys(pl.revenue);
+  let cmTotal = 0, npTotal = 0;
+  months.forEach(m => {
+    const cm = (+pl.revenue[m] || 0) - (+pl.cogs[m] || 0) - (+pl.contribExp[m] || 0);
+    const np = cm - (+pl.opex[m] || 0);
+    cmTotal += cm; npTotal += np;
+    const cmCell = document.querySelector(`[data-cm="${m}"]`);
+    const npCell = document.querySelector(`[data-np="${m}"]`);
+    if (cmCell) cmCell.textContent = fmtMoney(cm);
+    if (npCell) npCell.textContent = fmtMoney(np);
+  });
+  const cmT = document.querySelector('[data-cm-total]');
+  const npT = document.querySelector('[data-np-total]');
+  if (cmT) cmT.textContent = fmtMoney(cmTotal);
+  if (npT) npT.textContent = fmtMoney(npTotal);
+  // Update line totals
+  ['revenue', 'cogs', 'contribExp', 'opex'].forEach(k => {
+    const t = document.querySelector(`[data-total="${k}"]`);
+    if (t) t.textContent = fmtMoney(months.reduce((s, m) => s + (+pl[k][m] || 0), 0));
+  });
+}
+
+/* ---------- EXPORT / REVERT ---------- */
+$('#export-btn').addEventListener('click', () => {
+  // Update meta
+  data.meta.lastUpdatedBy = 'nathan';
+  data.meta.effectiveDate = new Date().toISOString().slice(0, 10);
+
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'data.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  original = clone(data);
+  setDirty(false);
+});
+
+$('#revert-btn').addEventListener('click', () => {
+  if (!dirty) return alert('Nothing to revert.');
+  if (!confirm('Discard unsaved changes and reload last-loaded data?')) return;
+  data = clone(original);
+  renderAll();
+  setDirty(false);
+});
+
+load();
+</script>
+
+</body>
+</html>
