@@ -4,7 +4,7 @@
     "companyInitials": "MEC",
     "effectiveDate": "2026-04-22",
     "lastUpdatedBy": "nathan",
-    "schemaVersion": "1.0",
+    "schemaVersion": "1.1",
     "currency": "AUD"
   },
   "globals": {
@@ -23,82 +23,13 @@
     "kpiMinForComm": 0.0
   },
   "planTypes": {
-    "hybrid_rev": {
-      "name": "Revenue-based Hybrid (Talent)",
-      "description": "For Performer/Talent Manager roles (Michael, Tom). Variable comp on revenue bands.",
-      "metricLabel": "Annual Revenue",
-      "metricBasis": "revenue",
-      "inputIncludesGST": false,
-      "bands": [
-        { "min": 0,       "max": 200000, "rate": 0.000 },
-        { "min": 200000,  "max": 300000, "rate": 0.075 },
-        { "min": 300000,  "max": 400000, "rate": 0.125 },
-        { "min": 400000,  "max": 500000, "rate": 0.175 },
-        { "min": 500000,  "max": null,   "rate": 0.250 }
-      ],
-      "productionPct": 0.01,
-      "productionBasis": "revenue"
-    },
-    "gp_bands": {
-      "name": "GP Incremental Bands (Sales)",
-      "description": "For Sales Rep roles (Daniel, Nic). 8 bands from $0 to $550k+.",
-      "metricLabel": "Annual GP Sold",
-      "metricBasis": "gp",
-      "inputIncludesGST": true,
-      "bands": [
-        { "min": 0,       "max": 200000, "rate": 0.000 },
-        { "min": 200000,  "max": 300000, "rate": 0.030 },
-        { "min": 300000,  "max": 350000, "rate": 0.050 },
-        { "min": 350000,  "max": 400000, "rate": 0.080 },
-        { "min": 400000,  "max": 450000, "rate": 0.120 },
-        { "min": 450000,  "max": 500000, "rate": 0.143 },
-        { "min": 500000,  "max": 550000, "rate": 0.172 },
-        { "min": 550000,  "max": null,   "rate": 0.201 }
-      ],
-      "showOldCommissionComparison": true,
-      "oldCommissionRate": 0.035
-    },
-    "gp_bands_senior": {
-      "name": "GP Incremental Bands (Senior Sales)",
-      "description": "For Senior Sales (Dane). Placeholder structure — Nathan to adjust.",
-      "metricLabel": "Annual GP Sold",
-      "metricBasis": "gp",
-      "inputIncludesGST": true,
-      "bands": [
-        { "min": 0,       "max": 200000, "rate": 0.000 },
-        { "min": 200000,  "max": 300000, "rate": 0.030 },
-        { "min": 300000,  "max": 350000, "rate": 0.050 },
-        { "min": 350000,  "max": 400000, "rate": 0.080 },
-        { "min": 400000,  "max": 450000, "rate": 0.120 },
-        { "min": 450000,  "max": 500000, "rate": 0.143 },
-        { "min": 500000,  "max": 550000, "rate": 0.172 },
-        { "min": 550000,  "max": null,   "rate": 0.201 }
-      ],
-      "showOldCommissionComparison": true,
-      "oldCommissionRate": 0.035
-    },
-    "hybrid_gp": {
-      "name": "GP Hybrid + Production (Sales/Producer)",
-      "description": "For Evie & Evie 2.0. GP bands on cash-received GP + 1% production on Event GP.",
-      "metricLabel": "Annual GP Sold",
-      "metricBasis": "gp",
-      "inputIncludesGST": false,
-      "bands": [
-        { "min": 0,       "max": 100000, "rate": 0.000 },
-        { "min": 100000,  "max": 150000, "rate": 0.030 },
-        { "min": 150000,  "max": 175000, "rate": 0.050 },
-        { "min": 175000,  "max": 200000, "rate": 0.080 },
-        { "min": 200000,  "max": null,   "rate": 0.120 }
-      ],
-      "productionPct": 0.01,
-      "productionBasis": "eventGP"
-    },
     "gm": {
       "name": "General Manager (CM + NP)",
       "description": "For Hayley. CM bands above baseline + NP incremental thresholds.",
       "metricLabel": "Contribution Margin + Net Profit",
       "metricBasis": "cm_np",
       "inputIncludesGST": false,
+      "payoutFrequency": "quarterly",
       "cmBaseline": 1093000,
       "cmBands": [
         { "threshold": 1000000, "rate": 0.00 },
@@ -115,11 +46,92 @@
         { "threshold": 1050000, "rate": 0.10 }
       ]
     },
+    "gp_bands_senior": {
+      "name": "Senior Sales Manager (GP Incremental Bands)",
+      "description": "For Senior Sales (Dane). Incremental GP bands + 1% production on Event GP (they produce a small handful of events too).",
+      "metricLabel": "Annual GP Sold",
+      "metricBasis": "gp",
+      "inputIncludesGST": true,
+      "payoutFrequency": "monthly",
+      "bands": [
+        { "min": 0,       "max": 200000, "rate": 0.000 },
+        { "min": 200000,  "max": 300000, "rate": 0.030 },
+        { "min": 300000,  "max": 350000, "rate": 0.050 },
+        { "min": 350000,  "max": 400000, "rate": 0.080 },
+        { "min": 400000,  "max": 450000, "rate": 0.120 },
+        { "min": 450000,  "max": 500000, "rate": 0.143 },
+        { "min": 500000,  "max": 550000, "rate": 0.172 },
+        { "min": 550000,  "max": null,   "rate": 0.201 }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "eventGP",
+      "showOldCommissionComparison": true,
+      "oldCommissionRate": 0.035
+    },
+    "gp_bands": {
+      "name": "Sales Rep (GP Incremental Bands)",
+      "description": "For Sales Reps (Daniel, Nic). Incremental GP bands + 1% production on Event GP (they produce a small handful of events too).",
+      "metricLabel": "Annual GP Sold",
+      "metricBasis": "gp",
+      "inputIncludesGST": true,
+      "payoutFrequency": "monthly",
+      "bands": [
+        { "min": 0,       "max": 200000, "rate": 0.000 },
+        { "min": 200000,  "max": 300000, "rate": 0.030 },
+        { "min": 300000,  "max": 350000, "rate": 0.050 },
+        { "min": 350000,  "max": 400000, "rate": 0.080 },
+        { "min": 400000,  "max": 450000, "rate": 0.120 },
+        { "min": 450000,  "max": 500000, "rate": 0.143 },
+        { "min": 500000,  "max": 550000, "rate": 0.172 },
+        { "min": 550000,  "max": null,   "rate": 0.201 }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "eventGP",
+      "showOldCommissionComparison": true,
+      "oldCommissionRate": 0.035
+    },
+    "hybrid_gp": {
+      "name": "Sales-Producer Hybrid (GP Sales + Production)",
+      "description": "For Evie & Evie 2.0. GP bands on cash-received GP (roughly half the Sales Rep bands — they sell at a lower rate) + 1% production on Event GP.",
+      "metricLabel": "Annual GP Sold",
+      "metricBasis": "gp",
+      "inputIncludesGST": false,
+      "payoutFrequency": "monthly",
+      "bands": [
+        { "min": 0,       "max": 100000, "rate": 0.000 },
+        { "min": 100000,  "max": 150000, "rate": 0.030 },
+        { "min": 150000,  "max": 175000, "rate": 0.050 },
+        { "min": 175000,  "max": 200000, "rate": 0.080 },
+        { "min": 200000,  "max": null,   "rate": 0.120 }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "eventGP",
+      "showOldCommissionComparison": true,
+      "oldCommissionRate": 0.035
+    },
+    "hybrid_rev": {
+      "name": "Talent (Performer-Revenue Hybrid)",
+      "description": "For Performer/Talent Manager roles (Michael, Tom). Variable comp on revenue bands.",
+      "metricLabel": "Annual Revenue",
+      "metricBasis": "revenue",
+      "inputIncludesGST": false,
+      "payoutFrequency": "quarterly",
+      "bands": [
+        { "min": 0,       "max": 200000, "rate": 0.000 },
+        { "min": 200000,  "max": 300000, "rate": 0.075 },
+        { "min": 300000,  "max": 400000, "rate": 0.125 },
+        { "min": 400000,  "max": 500000, "rate": 0.175 },
+        { "min": 500000,  "max": null,   "rate": 0.250 }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "revenue"
+    },
     "base_only": {
       "name": "Base Salary Only",
       "description": "Placeholder plan — no variable comp.",
       "metricLabel": "(none)",
       "metricBasis": "none",
+      "payoutFrequency": "n/a",
       "bands": []
     }
   },
@@ -141,7 +153,9 @@
       "bonusIncludesSuper": true,
       "assignedTo": ["michael"],
       "status": "in_progress",
-      "dueDate": "2026-06-30"
+      "dueDate": "2026-06-30",
+      "dodLink": "",
+      "payoutTrigger": "on_dod_signoff"
     },
     {
       "id": "quoting_tool",
@@ -150,24 +164,34 @@
       "bonusIncludesSuper": true,
       "assignedTo": ["michael"],
       "status": "in_progress",
-      "dueDate": "2026-09-30"
+      "dueDate": "2026-09-30",
+      "dodLink": "",
+      "payoutTrigger": "on_dod_signoff"
     }
   ],
   "employees": [
-    { "id": "michael", "name": "Michael Kourkov", "role": "Performer / Systems Manager", "roleShort": "Talent", "baseSalary": 70000, "baseSalaryIncludesSuper": false, "planType": "hybrid_rev", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "michael.html", "placeholder": false },
-    { "id": "tom", "name": "Tom Bunnett", "role": "Performer / Talent Manager", "roleShort": "Talent", "baseSalary": 91350, "baseSalaryIncludesSuper": false, "planType": "hybrid_rev", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "tom.html", "placeholder": false },
+    { "id": "hayley", "name": "Hayley Wilson", "role": "General Manager", "roleShort": "GM", "baseSalary": 110000, "baseSalaryIncludesSuper": false, "planType": "gm", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "hayley.html", "placeholder": false },
+    { "id": "dane", "name": "Dane McKenzie", "role": "Senior Sales", "roleShort": "Senior Sales", "baseSalary": 92500, "baseSalaryIncludesSuper": false, "planType": "gp_bands_senior", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "dane.html", "placeholder": false },
     { "id": "daniel", "name": "Daniel Steer", "role": "Sales Rep", "roleShort": "Sales", "baseSalary": 75000, "baseSalaryIncludesSuper": false, "planType": "gp_bands", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "daniel.html", "placeholder": false },
     { "id": "nic", "name": "Nic Symons", "role": "Sales Rep", "roleShort": "Sales", "baseSalary": 75000, "baseSalaryIncludesSuper": false, "planType": "gp_bands", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "nic.html", "placeholder": false },
-    { "id": "dane", "name": "Dane McKenzie", "role": "Senior Sales", "roleShort": "Senior Sales", "baseSalary": 92500, "baseSalaryIncludesSuper": false, "planType": "gp_bands_senior", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "dane.html", "placeholder": false },
     { "id": "evie", "name": "Evie Johnston", "role": "Sales / Producer Hybrid", "roleShort": "Hybrid", "baseSalary": 80000, "baseSalaryIncludesSuper": false, "planType": "hybrid_gp", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "evie.html", "placeholder": false },
     { "id": "evie2", "name": "Evie 2.0", "role": "Sales / Producer Hybrid", "roleShort": "Hybrid", "baseSalary": 80000, "baseSalaryIncludesSuper": false, "planType": "hybrid_gp", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "evie2.html", "placeholder": true },
-    { "id": "hayley", "name": "Hayley Wilson", "role": "General Manager", "roleShort": "GM", "baseSalary": 110000, "baseSalaryIncludesSuper": false, "planType": "gm", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "hayley.html", "placeholder": false }
+    { "id": "tom", "name": "Tom Bunnett", "role": "Performer / Talent Manager", "roleShort": "Talent", "baseSalary": 91350, "baseSalaryIncludesSuper": false, "planType": "hybrid_rev", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "tom.html", "placeholder": false },
+    { "id": "michael", "name": "Michael Kourkov", "role": "Performer / Systems Manager", "roleShort": "Talent", "baseSalary": 70000, "baseSalaryIncludesSuper": false, "planType": "hybrid_rev", "planOverrides": null, "kpiAssignments": [], "dashboardFile": "michael.html", "placeholder": false }
   ],
   "companyPL": {
+    "label": "Company P&L (Cash Basis)",
+    "subLabel": "Quarterly company financials. Feeds the company-wide view and can gate variable comp payouts (e.g., 'comm only pays if company NP > X'). Fiscal year starts July.",
     "fiscalYearStart": "2026-07",
-    "revenue":     { "Jul": 0, "Aug": 0, "Sep": 0, "Oct": 0, "Nov": 0, "Dec": 0, "Jan": 0, "Feb": 0, "Mar": 0, "Apr": 0, "May": 0, "Jun": 0 },
-    "cogs":        { "Jul": 0, "Aug": 0, "Sep": 0, "Oct": 0, "Nov": 0, "Dec": 0, "Jan": 0, "Feb": 0, "Mar": 0, "Apr": 0, "May": 0, "Jun": 0 },
-    "contribExp":  { "Jul": 0, "Aug": 0, "Sep": 0, "Oct": 0, "Nov": 0, "Dec": 0, "Jan": 0, "Feb": 0, "Mar": 0, "Apr": 0, "May": 0, "Jun": 0 },
-    "opex":        { "Jul": 0, "Aug": 0, "Sep": 0, "Oct": 0, "Nov": 0, "Dec": 0, "Jan": 0, "Feb": 0, "Mar": 0, "Apr": 0, "May": 0, "Jun": 0 }
+    "xeroIntegration": {
+      "enabled": false,
+      "note": "TODO: create an integration that pulls in directly from Xero. In the meantime, use CSV upload or manual entry."
+    },
+    "quarters": [
+      { "label": "Jul-Sep 2025", "revenue": 0, "cogs": 0, "contribExp": 0, "opex": 0 },
+      { "label": "Oct-Dec 2025", "revenue": 0, "cogs": 0, "contribExp": 0, "opex": 0 },
+      { "label": "Jan-Mar 2026", "revenue": 0, "cogs": 0, "contribExp": 0, "opex": 0 },
+      { "label": "Apr-Jun 2026", "revenue": 0, "cogs": 0, "contribExp": 0, "opex": 0 }
+    ]
   }
 }
