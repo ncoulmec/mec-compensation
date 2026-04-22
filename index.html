@@ -869,6 +869,11 @@ document.addEventListener('input', (ev) => {
     // Re-render employees so super column reflects new rate
     renderEmployees();
   }
+  // Band threshold or rate changed → update the Range/Band Earn/Cumulative derived cells live
+  const bandMatch = path.match(/^planTypes\.([^.]+)\.bands\.(\d+)\.(threshold|rate)$/);
+  if (bandMatch) {
+    updateBandDerivedColumns(bandMatch[1]);
+  }
   if (path.startsWith('projects.') && path.endsWith('.bonusAmount')) {
     const i = +path.split('.')[1];
     const p = data.projects[i];
@@ -1058,14 +1063,22 @@ function renderPlans() {
           <label>Metric Label <span class="hint">What employees see on their dashboard</span></label>
           <input type="text" class="name-input" style="max-width:420px;" value="${plan.metricLabel || ''}" oninput="data.planTypes['${key}'].metricLabel=this.value; setDirty()">
         </div>
-        <div class="input-group">
-          <label>Payout Frequency <span class="hint">How often this plan's variable comp is paid out</span></label>
-          <div style="display: flex; gap: 12px; align-items: center;">
-            <select style="max-width:160px;" onchange="data.planTypes['${key}'].payoutFrequency=this.value; setDirty()">
+        <div style="padding: 10px 0; border-bottom: 1px solid var(--border);">
+          <label style="font-size: 14px; display: block; margin-bottom: 8px;">
+            Payout Frequency <span class="hint" style="display:block;">How often this plan's variable comp is paid out, and what proportion is paid per period (the rest is held for year-end reconciliation)</span>
+          </label>
+          <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+            <select style="min-width: 170px; padding: 7px 10px;" onchange="data.planTypes['${key}'].payoutFrequency=this.value; setDirty()">
               ${freqOptions.map(f => `<option value="${f.value}" ${plan.payoutFrequency === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}
             </select>
-            <span style="font-size:12px;color:var(--muted);">Payout %:</span>
-            ${percentInputHtml(`planTypes.${key}.payoutPercentage`, 0)}
+            <span style="font-size:13px;color:var(--muted);">Payout per period:</span>
+            <div class="input-with-suffix" style="max-width: 110px;">
+              <input type="text" inputmode="decimal"
+                     data-percent-path="planTypes.${key}.payoutPercentage"
+                     value="${((plan.payoutPercentage ?? 1) * 100).toFixed(0)}">
+              <span class="suffix">%</span>
+            </div>
+            <span style="font-size: 11px; color: var(--faint); font-family: var(--mono);">(e.g. 100 = full payout · 75 = 75% per period)</span>
           </div>
         </div>
         <div class="input-group">
@@ -1094,6 +1107,30 @@ function renderPlans() {
       </div>
     `;
     container.appendChild(div);
+  });
+}
+
+// Updates the Range/Band Earn/Cumulative cells in place for a plan's bands table,
+// without re-rendering the whole row (so the user's input focus is preserved).
+function updateBandDerivedColumns(key) {
+  const plan = data.planTypes[key];
+  if (!plan || !plan.bands) return;
+  let cumulative = 0;
+  plan.bands.forEach((b, i) => {
+    const nextThreshold = plan.bands[i + 1]?.threshold;
+    const rangeLabel = nextThreshold !== undefined
+      ? `${fmtMoney(b.threshold)} \u2013 ${fmtMoney(nextThreshold)}`
+      : `${fmtMoney(b.threshold)}+`;
+    const bandSize = nextThreshold !== undefined ? (nextThreshold - b.threshold) : null;
+    const bandEarn = bandSize !== null ? bandSize * (+b.rate || 0) : null;
+    if (bandEarn !== null) cumulative += bandEarn;
+
+    const rangeCell = document.querySelector(`[data-band-range="${key}-${i}"]`);
+    const earnCell = document.querySelector(`[data-band-earn="${key}-${i}"]`);
+    const cumCell = document.querySelector(`[data-band-cum="${key}-${i}"]`);
+    if (rangeCell) rangeCell.textContent = rangeLabel;
+    if (earnCell) earnCell.innerHTML = bandEarn === null ? '<span style="color:var(--faint);">\u2014</span>' : fmtMoney(bandEarn);
+    if (cumCell) cumCell.innerHTML = bandEarn === null ? '<span style="color:var(--faint);">\u2014</span>' : fmtMoney(cumulative);
   });
 }
 
@@ -1127,10 +1164,10 @@ function renderStandardBands(key, plan) {
       <tr>
         <td style="color: var(--muted); font-family: var(--mono); font-size: 12px;">${i + 1}</td>
         <td>${moneyInputHtml(`planTypes.${key}.bands.${i}.threshold`)}</td>
-        <td style="color: var(--faint); font-family: var(--mono); font-size: 12px;">${rangeLabel}</td>
+        <td data-band-range="${key}-${i}" style="color: var(--faint); font-family: var(--mono); font-size: 12px;">${rangeLabel}</td>
         <td>${percentInputHtml(`planTypes.${key}.bands.${i}.rate`, 3)}</td>
-        <td style="font-family: var(--mono); font-size: 12px; text-align: right; color: var(--ink);">${earnTxt}</td>
-        <td style="font-family: var(--mono); font-size: 12px; text-align: right; color: var(--accent); font-weight: 500;">${cumTxt}</td>
+        <td data-band-earn="${key}-${i}" style="font-family: var(--mono); font-size: 12px; text-align: right; color: var(--ink);">${earnTxt}</td>
+        <td data-band-cum="${key}-${i}" style="font-family: var(--mono); font-size: 12px; text-align: right; color: var(--accent); font-weight: 500;">${cumTxt}</td>
         <td style="width:90px;text-align:right;"><button class="btn small danger" onclick="removeBand('${key}', ${i})">Remove</button></td>
       </tr>
     `;
