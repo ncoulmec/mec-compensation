@@ -1059,26 +1059,26 @@ function renderPlans() {
         <span class="chev">›</span>
       </div>
       <div class="plan-body">
-        <div class="input-group">
-          <label>Metric Label <span class="hint">What employees see on their dashboard</span></label>
-          <input type="text" class="name-input" style="max-width:420px;" value="${plan.metricLabel || ''}" oninput="data.planTypes['${key}'].metricLabel=this.value; setDirty()">
+        <div style="padding: 10px 0; border-bottom: 1px solid var(--border);">
+          <label style="font-size: 14px; display: block; margin-bottom: 6px;">Metric Label <span class="hint">What employees see on their dashboard</span></label>
+          <input type="text" class="name-input" style="width:100%; max-width: 640px; padding: 8px 10px;" value="${plan.metricLabel || ''}" oninput="data.planTypes['${key}'].metricLabel=this.value; setDirty()">
         </div>
         <div style="padding: 10px 0; border-bottom: 1px solid var(--border);">
           <label style="font-size: 14px; display: block; margin-bottom: 8px;">
             Payout Frequency <span class="hint" style="display:block;">How often this plan's variable comp is paid out, and what proportion is paid per period (the rest is held for year-end reconciliation)</span>
           </label>
           <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
-            <select style="min-width: 170px; padding: 7px 10px;" onchange="data.planTypes['${key}'].payoutFrequency=this.value; setDirty()">
+            <select style="width: 170px; flex: 0 0 auto; padding: 7px 10px;" onchange="data.planTypes['${key}'].payoutFrequency=this.value; setDirty()">
               ${freqOptions.map(f => `<option value="${f.value}" ${plan.payoutFrequency === f.value ? 'selected' : ''}>${f.label}</option>`).join('')}
             </select>
-            <span style="font-size:13px;color:var(--muted);">Payout per period:</span>
-            <div class="input-with-suffix" style="max-width: 110px;">
+            <span style="font-size:13px;color:var(--muted);white-space:nowrap;">Payout per period:</span>
+            <div class="input-with-suffix" style="width: 90px; flex: 0 0 auto;">
               <input type="text" inputmode="decimal"
                      data-percent-path="planTypes.${key}.payoutPercentage"
                      value="${((plan.payoutPercentage ?? 1) * 100).toFixed(0)}">
               <span class="suffix">%</span>
             </div>
-            <span style="font-size: 11px; color: var(--faint); font-family: var(--mono);">(e.g. 100 = full payout · 75 = 75% per period)</span>
+            <span style="font-size: 11px; color: var(--faint); font-family: var(--mono); white-space: nowrap;">(e.g. 100 = full · 75 = 75% per period)</span>
           </div>
         </div>
         <div class="input-group">

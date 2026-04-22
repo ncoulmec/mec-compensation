@@ -195,15 +195,17 @@
   }
   .scenario-row:last-of-type { border-bottom: none; }
   .scenario-row label { font-size: 13px; color: var(--muted); }
-  .scenario-row label .tooltip-trigger {
+  .tooltip-trigger {
     display: inline-block;
     width: 14px; height: 14px;
     line-height: 14px; text-align: center;
     border-radius: 50%; background: var(--border);
     font-size: 10px; font-weight: 600; color: var(--muted);
     margin-left: 4px; cursor: help; position: relative;
+    text-transform: none; letter-spacing: normal;
+    font-family: 'DM Sans', sans-serif;
   }
-  .scenario-row label .tooltip-trigger:hover::after {
+  .tooltip-trigger:hover::after {
     content: attr(data-tip);
     position: absolute;
     bottom: 100%; left: 0;
@@ -388,6 +390,12 @@
     background: #fff;
   }
   .quarter-cell input:focus { outline: none; border-color: var(--navy); }
+  .quarter-cell input::placeholder {
+    font-size: 10px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--faint);
+    font-weight: 400;
+  }
   .quarter-cell .q-calc {
     font-size: 11px;
     color: var(--muted);
@@ -401,6 +409,17 @@
     font-size: 16px;
     font-weight: 700;
     color: var(--navy);
+  }
+  /* Projected (unentered) quarter cells — highlighted green */
+  .quarter-cell.projected {
+    background: var(--accent-bg);
+    border-color: #c3e4d0;
+  }
+  .quarter-cell.projected .q-pay {
+    color: var(--accent);
+  }
+  .quarter-cell.projected .q-calc {
+    color: var(--accent);
   }
 
   /* Project cards (on Projects tab) */
@@ -566,7 +585,7 @@
         </div>
 
         <div class="scenario-row">
-          <label>KPI Score <span class="tooltip-trigger" data-tip="Your performance score (0 to 1.0). Currently capped at 1.0× until the real KPIs are finalised.">?</span></label>
+          <label>KPI Score <span class="tooltip-trigger" data-tip="Coming soon — KPIs are still being finalised. For now the slider is capped at 1.0×.">?</span></label>
           <input type="range" id="kpi-slider" min="0" max="1" step="0.05" value="1">
           <input type="text" id="kpi-input" class="value-input" value="1.00">
         </div>
@@ -625,8 +644,8 @@
     </div>
 
     <div class="card">
-      <h2>Quarterly Payout <span style="font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: normal; color: var(--muted); margin-left: 8px;">Based on last 365 days of revenue (ex. GST) that you generated from your performance <span class="tooltip-trigger" data-tip="Copy your last 365 Days revenue (ex GST) amount from your Performer Data tab inside of Zoho into each quarter below. Your quarterly bonus will be calculated automatically. Each quarter uses its own independent trailing 12-month figure.">?</span></span></h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 8px 0 12px;">At each quarter-end, enter your trailing 12-month (TTM) revenue. The commission is calculated on that annualised figure, then divided by 4 to get that quarter's payout.</p>
+      <h2>Quarterly Payout <span class="tooltip-trigger" data-tip="Get your last 365 Days Performance Revenue data from the data tab in your Zoho Team Record.">?</span></h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 8px 0 12px;">Based on last 365 days of revenue (ex. GST) that you generated from your performance. Each quarter-end, enter your trailing 12-month revenue — commission is calculated on that annualised figure, then divided by 4. Empty quarters show projected amounts in green based on your Annual Performance Revenue input above.</p>
       <div class="quarter-grid" id="quarter-grid"></div>
       <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px;">
         <span style="color: var(--muted);">Total commission paid across all 4 quarters</span>
@@ -736,8 +755,8 @@ let myProjects = [];
 const scenario = {
   revenue: 150000,
   kpiScore: 1.0,
-  projectsEnabled: {}, // { projectId: bool }
-  quarters: [null, null, null, null] // actual revenue per quarter (optional)
+  projectsEnabled: {}, // { projectId: bool } — default false (unchecked)
+  quarters: [null, null, null, null]
 };
 
 const fmtMoney = (n) => {
@@ -784,8 +803,8 @@ async function load() {
     if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
     myProjects = (data.projects || []).filter(p => (p.assignedTo || []).includes(EMPLOYEE_ID));
 
-    // Initialize project toggles (default all ON)
-    myProjects.forEach(p => { scenario.projectsEnabled[p.id] = true; });
+    // Initialize project toggles (default all OFF — user opts in)
+    myProjects.forEach(p => { scenario.projectsEnabled[p.id] = false; });
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('emp-name').textContent = emp.name;
@@ -884,20 +903,22 @@ function renderQuarterInputs() {
   const quarters = ['End of March', 'End of June', 'End of September', 'End of December'];
   const container = document.getElementById('quarter-grid');
   const pc = document.getElementById('payouts-quarter-grid');
-  const grid = (scopeLabel) => quarters.map((q, i) => `
-    <div class="quarter-cell">
+  const grid = (scopeLabel) => quarters.map((q, i) => {
+    const entered = scenario.quarters[i] != null;
+    return `
+    <div class="quarter-cell ${entered ? '' : 'projected'}" data-qcell="${i}-${scopeLabel}">
       <div class="qh">${q}</div>
       <div style="position: relative;">
         <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
         <input type="text" inputmode="numeric" style="padding-left: 20px;"
-               value="${scenario.quarters[i] == null ? '' : fmtNum(scenario.quarters[i])}"
-               placeholder="Last 365 days revenue"
+               value="${entered ? fmtNum(scenario.quarters[i]) : ''}"
+               placeholder="Last 365 days rev."
                data-quarter="${i}" data-scope="${scopeLabel}">
       </div>
       <div class="q-calc" data-qcalc="${i}-${scopeLabel}">Enter TTM revenue</div>
       <div class="q-pay" data-qpay="${i}-${scopeLabel}">—</div>
     </div>
-  `).join('');
+  `;}).join('');
   container.innerHTML = grid('overview');
   if (pc) pc.innerHTML = grid('payouts');
 
@@ -916,6 +937,10 @@ function renderQuarterInputs() {
       }
       input.setSelectionRange(cursor, cursor);
       syncQuarterInputs(i);
+      // Toggle projected class on both cells for this quarter
+      document.querySelectorAll(`[data-qcell="${i}-overview"], [data-qcell="${i}-payouts"]`).forEach(cell => {
+        cell.classList.toggle('projected', scenario.quarters[i] == null);
+      });
       update();
     });
   });
@@ -1042,11 +1067,15 @@ function update() {
     gb.innerHTML = `<div class="banner info"><span class="dot"></span>Company guardrail: awaiting P&amp;L data. Commission calculation shown below is indicative.</div>`;
   }
 
-  // Metric cards
+  // Metric cards — all show INC-SUPER as the headline, with ex-super + super $ breakdown underneath
+  const baseSuperAmt = r.baseInc - r.base;
+  const commSuperAmt = r.commInc - r.variable;
   document.getElementById('card-base').textContent = fmtMoney(r.baseInc);
-  document.getElementById('card-base-sub').textContent = `${fmtMoney(r.base)} + ${fmtPct(g.superRate, 0)} super`;
+  document.getElementById('card-base-sub').textContent = `${fmtMoney(r.base)} + ${fmtMoney(baseSuperAmt)} super`;
   document.getElementById('card-comm').textContent = fmtMoney(r.commInc);
-  document.getElementById('card-comm-sub').textContent = `${fmtMoney(r.variable)} + ${fmtPct(g.superRate, 0)} super`;
+  document.getElementById('card-comm-sub').textContent = r.variable > 0
+    ? `${fmtMoney(r.variable)} + ${fmtMoney(commSuperAmt)} super`
+    : 'No commission at this revenue';
   document.getElementById('card-projects').textContent = fmtMoney(r.projectsIncSuper);
   const nActive = r.activeProjects.length;
   document.getElementById('card-projects-sub').textContent = nActive > 0
