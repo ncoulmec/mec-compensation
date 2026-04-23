@@ -415,7 +415,7 @@
         <div class="sub" id="ytd-gp-sub">Sum of months entered</div>
       </div>
       <div class="kpi-card">
-        <div class="label">True-Up Balance Fwd</div>
+        <div class="label">True-Up Balance Fwd <span class="tooltip-trigger" data-tip="If you've been paid more commission than the quarterly/annual calculation says you've earned, the excess becomes a running balance that reduces future commissions — never from base salary. See 'What is True-Up?' below the Quarterly True-Up Summary for the full explanation.">?</span></div>
         <div class="value" id="trueup-delta">—</div>
         <div class="sub" id="trueup-delta-sub">Amount owed into future months</div>
       </div>
@@ -1403,7 +1403,7 @@ function update() {
     const projCommInc = (annGrossComm + annProdComm) * r.effectiveKpi;
     const projTotalPackage = r.baseInc + projCommInc;
     projEl.textContent = fmtMoney(projCommInc);
-    projSubEl.innerHTML = `At this pace (${fmtMoney(annGPProj)} GP/yr), total package = <strong>${fmtMoney(projTotalPackage)}</strong> — keep it up!`;
+    projSubEl.innerHTML = `At this pace your total package is <strong>${fmtMoney(projTotalPackage)}</strong> — keep it up!`;
   } else {
     projEl.textContent = '—';
     projSubEl.textContent = 'Enter a month or two to see your year-end projection';

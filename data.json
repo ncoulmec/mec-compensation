@@ -155,7 +155,7 @@
     },
     "hybrid_gp": {
       "name": "Sales-Producer Hybrid (GP Sales + Production)",
-      "description": "For Evie & Evie 2.0. Four-band GP sales structure calibrated so at $150k the new commission matches old 3.5%+super ($5,880), with a small bump at $200k and a healthy bump at $250k. Above $150k the rate flattens to 10% so Evie's stretch doesn't out-pay Sales Reps' stretch. 1% production commission on Event GP drives the bulk of her earnings. Band output is super-INCLUSIVE. Higher event-GP ceiling reflects that Evie produces a large share of the company's events.",
+      "description": "For Evie & Evie 2.0. Five-band monotonic structure with $50k no-commission floor (half the Sales Rep floor). Match at $150k (old 3.5%+super ~$5,880), clear win at $200k (~$12,000 vs old+super $7,840 = +$4,160), and rates continue climbing above $200k at 13% — 2 points under Daniel's 15% top so Evie's stretch stays meaningful without out-paying Sales Rep stretch per dollar. 1% production commission on Event GP drives the bulk of Evie's earnings. Band output is super-INCLUSIVE.",
       "metricLabel": "Annual GP Sold",
       "maxMetricValue": 400000,
       "metricBasis": "gp",
@@ -166,9 +166,10 @@
       "includeProduction": true,
       "bands": [
         { "threshold": 0,      "rate": 0 },
-        { "threshold": 50000,  "rate": 0.03 },
-        { "threshold": 100000, "rate": 0.09 },
-        { "threshold": 150000, "rate": 0.10 }
+        { "threshold": 50000,  "rate": 0.04 },
+        { "threshold": 100000, "rate": 0.08 },
+        { "threshold": 150000, "rate": 0.12 },
+        { "threshold": 200000, "rate": 0.13 }
       ],
       "productionPct": 0.01,
       "productionBasis": "eventGP",
