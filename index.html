@@ -649,19 +649,26 @@
       <div id="globals-simple"></div>
 
       <h3>Margin Multipliers</h3>
-      <p class="intro" style="margin-bottom: 10px;">Commission rates get multiplied by this when realised margin is above each threshold. Rewards margin quality, not just top-line.</p>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 45%">Margin is at least</th>
-            <th style="width: 45%">Multiplier</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="mm-body"></tbody>
-      </table>
-      <div style="margin-top: 12px;">
-        <button class="btn small" onclick="addMarginMult()">+ Add tier</button>
+      <label style="display: block; margin-bottom: 10px; font-size: 14px;">
+        <input type="checkbox" id="mm-enable" onchange="data.globals.marginMultiplierEnabled=this.checked; setDirty(); renderGlobals();" style="margin-right: 8px;">
+        <strong>Use Margin Multipliers</strong>
+        <span class="hint" style="display:block;">When enabled, commission rates scale up with realised margin (rewards margin quality, not just top-line). <strong>Currently off</strong> — keeping it simple. Untick the box above to hide this table entirely.</span>
+      </label>
+      <div id="mm-wrapper">
+        <p class="intro" style="margin-bottom: 10px;">Commission rates get multiplied by this when realised margin is above each threshold.</p>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 45%">Margin is at least</th>
+              <th style="width: 45%">Multiplier</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="mm-body"></tbody>
+        </table>
+        <div style="margin-top: 12px;">
+          <button class="btn small" onclick="addMarginMult()">+ Add tier</button>
+        </div>
       </div>
     </div>
   </section>
@@ -1051,7 +1058,7 @@ function renderEmployees() {
       <td><div class="read-only-cell" data-super="${i}">${fmtMoney(superIncl)}</div></td>
       <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
       <td>${e.placeholder ? '<span class="pill warn">placeholder</span>' : '<span class="pill">active</span>'}</td>
-      <td><span class="mono" style="color: var(--muted); font-size: 12px;">${e.dashboardFile}</span></td>
+      <td><a href="${e.dashboardFile}" target="_blank" style="font-family: var(--mono); font-size: 12px; color: var(--navy); text-decoration: none; border-bottom: 1px dotted var(--navy);" title="Open ${e.name}'s dashboard in a new tab">${e.dashboardFile} ↗</a></td>
     `;
     tbody.appendChild(tr);
     tr.querySelector(`select[data-f="planType"]`).value = e.planType;
@@ -1100,14 +1107,38 @@ function renderPlans() {
     div.setAttribute('data-plan-key', key);
     const isGM = key === 'gm';
     const hasProduction = plan.includeProduction !== undefined ? plan.includeProduction : (plan.productionPct !== undefined);
+
+    // Compute the dynamic header: "{Employee Names} — {Role}"
+    // Pull the list of employees on this plan, show their role from the first, then description underneath.
+    const planEmps = data.employees.filter(e => e.planType === key && !e.placeholder);
+    const placeholderEmps = data.employees.filter(e => e.planType === key && e.placeholder);
+    const primaryName = planEmps.length === 0
+      ? (placeholderEmps.length > 0 ? placeholderEmps.map(e => e.name).join(' & ') + ' (placeholder)' : '(Unassigned)')
+      : planEmps.length === 1
+        ? planEmps[0].name
+        : planEmps.length === 2
+          ? `${planEmps[0].name} & ${planEmps[1].name}`
+          : `${planEmps.slice(0, -1).map(e => e.name).join(', ')} & ${planEmps[planEmps.length - 1].name}`;
+    const primaryRole = planEmps[0]?.role || placeholderEmps[0]?.role || '';
+    // Split plan.name into role + description. Format: "Role (Description)"
+    const nameMatch = String(plan.name || '').match(/^([^(]+?)\s*(?:\((.+)\))?\s*$/);
+    const planDescription = nameMatch?.[2] || '';
+    const headerPrimary = primaryRole
+      ? `<strong style="font-size: 16px; color: var(--ink);">${primaryName}</strong> <span style="color: var(--muted); font-weight: 400;">— ${primaryRole}</span>`
+      : `<strong style="font-size: 16px; color: var(--ink);">${primaryName}</strong>`;
+    const headerSecondary = planDescription ? `<span class="plan-desc">${planDescription}</span>` : '';
+
     div.innerHTML = `
       <div class="plan-header" onclick="if(!event.target.closest('button,input,select')) this.parentElement.classList.toggle('open')">
         <div>
-          ${plan.name}
-          <span class="plan-desc">${plan.description || ''}</span>
+          ${headerPrimary}
+          ${headerSecondary}
         </div>
         <span class="chev">›</span>
-      </div>
+      </div>`;
+
+    // Then append the body (below) by continuing as string — use + append instead of the template
+    div.innerHTML += `
       <div class="plan-body">
         <div style="padding: 10px 0; border-bottom: 1px solid var(--border);">
           <div style="display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-end;">
@@ -1144,10 +1175,6 @@ function renderPlans() {
             </div>
             <span style="font-size: 11px; color: var(--faint); font-family: var(--mono); white-space: nowrap;">(e.g. 100 = full · 75 = 75% per period)</span>
           </div>
-        </div>
-        <div class="input-group">
-          <label>Input Includes GST <span class="hint">Tick if the metric input comes GST-inclusive (auto-strips GST)</span></label>
-          <input type="checkbox" ${plan.inputIncludesGST ? 'checked' : ''} onchange="data.planTypes['${key}'].inputIncludesGST=this.checked; setDirty()">
         </div>
         <div class="input-group">
           <label>Include Projects in this role <span class="hint">When ticked, project bonuses assigned to employees on this plan appear on their dashboards (Projects tab + Overview checkboxes). When unticked, project bonuses are hidden from this role even if assigned.</span></label>
@@ -1350,8 +1377,15 @@ function renderGlobals() {
   const status = current == null ? 'unknown' : current >= threshold ? 'clear' : 'breach';
 
   const guardrailOn = data.globals.guardrailEnabled !== false;
+  const mmOn = data.globals.marginMultiplierEnabled === true;
   el.innerHTML = `
-    ${simpleRow('Super rate', 'superRate', 'Employer super contribution (12% = 0.12)')}
+    <div class="input-group">
+      <label>Super rate <span class="hint">Australian employer super contribution — locked at 12% (legislated). Not editable.</span></label>
+      <div class="input-with-suffix" style="width: 90px; opacity: 0.75;">
+        <input type="text" value="12" readonly disabled style="background: #fafaf7; color: var(--muted); cursor: not-allowed;">
+        <span class="suffix">%</span>
+      </div>
+    </div>
     ${simpleRow('GST rate', 'gstRate', 'For stripping GST from Zoho-sourced GST-inclusive inputs')}
     <div style="padding: 10px 0; border-bottom: 1px solid var(--border);">
       <label style="font-size: 14px; display: block; margin-bottom: 6px;">
@@ -1384,8 +1418,6 @@ function renderGlobals() {
         <div style="font-size: 12px; color: var(--faint); font-style: italic; margin-top: 4px;">Guardrail paused — no margin gating on any dashboard. Enable the checkbox above to turn it on.</div>
       `}
     </div>
-    ${simpleRow('Quarterly payout', 'quarterlyPayoutPct', 'Proportion of variable comp paid each quarter (75% = 0.75)')}
-    ${simpleRow('Year-end holdback', 'yearEndHoldbackPct', 'Proportion held until year-end reconciliation')}
     ${simpleRow('KPI score cap', 'kpiScoreCap', 'Max KPI multiplier on variable comp (100% = cap at 1.0x; 150% = over-achievement allowed)')}
     ${simpleRow('KPI min for comm', 'kpiMinForComm', 'KPI score below this pays no variable comp at all')}
   `;
@@ -1401,6 +1433,14 @@ function renderGlobals() {
     `;
     mm.appendChild(tr);
   });
+  // Enable-toggle state + visual greying
+  const mmEnabled = $('#mm-enable');
+  if (mmEnabled) mmEnabled.checked = data.globals.marginMultiplierEnabled === true;
+  const mmWrap = $('#mm-wrapper');
+  if (mmWrap) {
+    mmWrap.style.opacity = data.globals.marginMultiplierEnabled === true ? '1' : '0.4';
+    mmWrap.style.pointerEvents = data.globals.marginMultiplierEnabled === true ? 'auto' : 'none';
+  }
 }
 function simpleRow(label, field, hint) {
   return `
