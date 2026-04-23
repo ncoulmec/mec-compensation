@@ -633,8 +633,8 @@
         {
           "month": "Apr 2026",
           "commissionPaid": 2500,
-          "gpReceived": 10000,
-          "eventGP": 1000,
+          "gpReceived": null,
+          "eventGP": null,
           "notes": ""
         },
         {
