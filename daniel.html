@@ -888,9 +888,13 @@ function calcGuardrail() {
 function renderMonthlyGrid() {
   const tbody = document.getElementById('monthly-body');
   const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
+  // Lock signal: admin has entered GP or Event GP for that month (commission is then auto-calculated by the plan bands)
   const isLocked = (i) => {
     const ap = actualPayouts[i];
-    return ap && ap.commissionPaid != null && ap.commissionPaid !== '';
+    if (!ap) return false;
+    const gpEntered = ap.gpReceived != null && ap.gpReceived !== '';
+    const evEntered = ap.eventGP != null && ap.eventGP !== '';
+    return gpEntered || evEntered;
   };
   const rowChunks = [];
   actualsMonths.forEach((m, i) => {
@@ -917,10 +921,10 @@ function renderMonthlyGrid() {
   `);
     // Insert quarterly sub-total after every 3rd month (indices 2, 5, 8, 11)
     if (i % 3 === 2) {
-      const q = Math.floor(i / 3) + 1;
+      const q = Math.floor(i / 3);
       rowChunks.push(`
-    <tr class="subtotal" data-qtr-idx="${q - 1}">
-      <td class="mon">Q${q} sub-total</td>
+    <tr class="subtotal" data-qtr-idx="${q}">
+      <td class="mon">Q-Total</td>
       <td class="num" data-cell="qGP">—</td>
       <td class="num" data-cell="qEventGP">—</td>
       <td class="num" data-cell="qGpComm">—</td>
@@ -1010,9 +1014,12 @@ function computeMonthlyRows() {
   const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
   const raw = actualsMonths.map((m, i) => {
     const ap = actualPayouts[i];
-    const locked = ap && ap.commissionPaid != null && ap.commissionPaid !== '';
-    const gp = locked ? (+ap.gpReceived || 0) : (+m.gpReceived || 0);
-    const ev = locked ? (+ap.eventGP || 0) : (+m.eventGP || 0);
+    const gpAdmin = ap && ap.gpReceived != null && ap.gpReceived !== '';
+    const evAdmin = ap && ap.eventGP != null && ap.eventGP !== '';
+    const locked = gpAdmin || evAdmin;
+    // When admin-entered, use admin values; fall back to employee's own entry for any null field
+    const gp = gpAdmin ? (+ap.gpReceived || 0) : (+m.gpReceived || 0);
+    const ev = evAdmin ? (+ap.eventGP || 0) : (+m.eventGP || 0);
     const { total: mGross } = calcBandCommission(gp, mBands);
     return { gp, ev, gpRawInc: mGross * effectiveKpi, prodInc: ev * prodPct * effectiveKpi, locked };
   });
@@ -1097,10 +1104,11 @@ function computeMonthlyRows() {
     annualCapFired = true;
   }
   // Stage 2: if total cash STILL exceeds annual entitled (M12 was already $0 or too small to close
-  // the gap), the residual becomes true-up balance carried forward. This is where extreme chunking
-  // overpayment gets captured.
+  // the gap), the residual becomes true-up balance carried forward. Subtract the existing balance
+  // so we don't double-count overpayment that quarterly TU already captured.
   const totalPaidAfterCap = paid.reduce((a, v) => a + v, 0);
-  const residualOverpay = totalPaidAfterCap - annualEntitled;
+  const targetBalance = totalPaidAfterCap - annualEntitled;   // what balance SHOULD be
+  const residualOverpay = targetBalance - balance;
   if (residualOverpay > 0.01) {
     balance += residualOverpay;
     annualCapFired = true;
