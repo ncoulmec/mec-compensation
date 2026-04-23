@@ -171,6 +171,9 @@
   table.monthly tr.tu-locked td.mon { color: var(--navy); font-weight: 700; }
   table.monthly tr.tu-locked td.input-cell input { background: #f1f5fa; color: var(--muted); cursor: not-allowed; }
   table.monthly th small { display: block; font-weight: 400; color: var(--faint); font-size: 9px; margin-top: 2px; text-transform: none; letter-spacing: 0.03em; }
+  table.monthly tr.subtotal td { background: #f5f3ee; font-weight: 600; color: var(--navy); border-top: 2px solid var(--border); border-bottom: 2px solid var(--border); padding: 9px 10px; font-size: 12px; }
+  table.monthly tr.subtotal td.mon { font-weight: 700; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; color: var(--navy); }
+  table.monthly tr.subtotal td.num { font-family: var(--mono); }
 
   /* Thermometer progress bar for quarterly cards */
   .thermo-wrap { margin-top: 10px; }
@@ -657,11 +660,12 @@ async function load() {
     const maxProd = +plan.maxProductionValue || 400000;
     document.getElementById('gp-slider').max = maxMetric;
     document.getElementById('event-gp-slider').max = maxProd;
-    // Monthly Scenario sandbox sliders use /12 + /12 headroom for convenience
+    // Monthly Scenario sandbox — allow for bigger one-month scenarios than the annual/12 cap
+    // (a really strong month can easily exceed the linear monthly average).
     const mscnGPEl = document.getElementById('mscn-gp-slider');
     const mscnEvEl = document.getElementById('mscn-event-slider');
-    if (mscnGPEl) mscnGPEl.max = Math.ceil(maxMetric / 12 / 1000) * 1000;
-    if (mscnEvEl) mscnEvEl.max = Math.ceil(maxProd / 12 / 1000) * 1000;
+    if (mscnGPEl) mscnGPEl.max = Math.max(80000, Math.ceil(maxMetric / 12 / 1000) * 1000);
+    if (mscnEvEl) mscnEvEl.max = Math.max(40000, Math.ceil(maxProd / 12 / 1000) * 1000);
 
     // Hide guardrail if disabled globally
     if (data.globals.guardrailEnabled === false) {
@@ -888,15 +892,15 @@ function renderMonthlyGrid() {
     const ap = actualPayouts[i];
     return ap && ap.commissionPaid != null && ap.commissionPaid !== '';
   };
-  const rows = actualsMonths.map((m, i) => {
+  const rowChunks = [];
+  actualsMonths.forEach((m, i) => {
     const locked = isLocked(i);
     const ap = actualPayouts[i] || {};
-    // Values shown: admin values when locked, employee values otherwise
     const gpVal = locked ? (ap.gpReceived || 0) : m.gpReceived;
     const evVal = locked ? (ap.eventGP || 0) : m.eventGP;
     const noteAttr = locked && ap.notes ? ` title="Payroll note: ${String(ap.notes).replace(/"/g,'&quot;')}"` : '';
     const lockChip = locked ? `<span style="font-size:10px; color:var(--navy); font-weight:600; margin-left:4px;" title="Locked by payroll admin">🔒</span>` : '';
-    return `
+    rowChunks.push(`
     <tr data-mon-idx="${i}" class="${locked ? 'tu-locked' : ''}"${noteAttr}>
       <td class="mon">${m.month}${lockChip}</td>
       <td class="input-cell">
@@ -910,8 +914,24 @@ function renderMonthlyGrid() {
       <td class="num" data-cell="monTotal">—</td>
       <td class="num" data-cell="monTotalEx">—</td>
     </tr>
-  `;
-  }).join('');
+  `);
+    // Insert quarterly sub-total after every 3rd month (indices 2, 5, 8, 11)
+    if (i % 3 === 2) {
+      const q = Math.floor(i / 3) + 1;
+      rowChunks.push(`
+    <tr class="subtotal" data-qtr-idx="${q - 1}">
+      <td class="mon">Q${q} sub-total</td>
+      <td class="num" data-cell="qGP">—</td>
+      <td class="num" data-cell="qEventGP">—</td>
+      <td class="num" data-cell="qGpComm">—</td>
+      <td class="num" data-cell="qProdComm">—</td>
+      <td class="num" data-cell="qTotal">—</td>
+      <td class="num" data-cell="qTotalEx">—</td>
+    </tr>
+  `);
+    }
+  });
+  const rows = rowChunks.join('');
 
   const totalsRow = `
     <tr class="totals">
@@ -1321,6 +1341,28 @@ function update() {
     const monTotalEx = r2.monTotalInc / (1 + g.superRate);
     row.querySelector('[data-cell="monTotalEx"]').textContent = r2.monTotalInc > 0 ? fmtMoney(monTotalEx) : '—';
   });
+
+  // Quarterly sub-total rows — sum the 3 months in each quarter
+  for (let q = 0; q < 4; q++) {
+    const mi = [q * 3, q * 3 + 1, q * 3 + 2];
+    const qRows = mi.map(i => mRows[i]);
+    const qGP = qRows.reduce((a, r) => a + r.gpReceived, 0);
+    const qEv = qRows.reduce((a, r) => a + r.eventGP, 0);
+    const qGPComm = qRows.reduce((a, r) => a + r.gpCommInc, 0);
+    const qProdComm = qRows.reduce((a, r) => a + r.prodCommInc, 0);
+    const qTotalInc = qRows.reduce((a, r) => a + r.monTotalInc, 0);
+    const qTotalEx = qTotalInc / (1 + g.superRate);
+    const qRow = tbody.querySelector(`tr.subtotal[data-qtr-idx="${q}"]`);
+    if (!qRow) continue;
+    const has = qGP > 0 || qEv > 0 || qTotalInc > 0;
+    qRow.querySelector('[data-cell="qGP"]').textContent = has ? fmtMoney(qGP) : '—';
+    qRow.querySelector('[data-cell="qEventGP"]').textContent = has ? fmtMoney(qEv) : '—';
+    qRow.querySelector('[data-cell="qGpComm"]').textContent = has ? fmtMoney(qGPComm) : '—';
+    qRow.querySelector('[data-cell="qProdComm"]').textContent = has ? fmtMoney(qProdComm) : '—';
+    qRow.querySelector('[data-cell="qTotal"]').textContent = has ? fmtMoney(qTotalInc) : '—';
+    qRow.querySelector('[data-cell="qTotalEx"]').textContent = has ? fmtMoney(qTotalEx) : '—';
+  }
+
   document.getElementById('tot-gp').textContent = fmtMoney(mTot.gpReceived);
   document.getElementById('tot-eventgp').textContent = fmtMoney(mTot.eventGP);
   document.getElementById('tot-gpcomm').textContent = fmtMoney(mTot.gpCommInc);

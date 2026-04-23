@@ -323,7 +323,8 @@ function setDirty(v = true) {
 }
 
 /* ===== GitHub save flow ===== */
-const LS_KEY = 'admin_gh_settings_v1';
+// Shared with MEC Overview (index.html) — set up a PAT once and both pages use it.
+const LS_KEY = 'mec_gh_settings';
 function getGhSettings() { try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch { return null; } }
 function saveGhSettings(s) { localStorage.setItem(LS_KEY, JSON.stringify(s)); renderGhStatus(); }
 function clearGhSettings() { localStorage.removeItem(LS_KEY); renderGhStatus(); }
