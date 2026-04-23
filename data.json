@@ -182,55 +182,22 @@
     },
     "hybrid_rev": {
       "name": "Talent (Performer-Revenue Hybrid)",
-      "description": "For Michael (Performer/Systems Manager). Variable comp on revenue bands. Threshold structure: $70k floor (pay-for-yourself), then $30k increments up to $300k+.",
+      "description": "For Michael (Performer/Systems Manager). Variable comp on revenue bands. $70k floor (pay-for-yourself), then $30k increments up to $190k+. Band rates scaled \u00d7 1.12 in v16 so band output is super-INCLUSIVE (same commission amounts as before, just stated inclusive of super).",
       "metricLabel": "Annual Performance Revenue",
-      "maxMetricValue": 400000,
+      "maxMetricValue": 300000,
       "metricBasis": "revenue",
       "inputIncludesGST": false,
+      "bandsIncludeSuper": true,
       "payoutFrequency": "quarterly",
       "payoutPercentage": 1,
       "includeProduction": false,
       "bands": [
-        {
-          "threshold": 0,
-          "rate": 0
-        },
-        {
-          "threshold": 70000,
-          "rate": 0
-        },
-        {
-          "threshold": 100000,
-          "rate": 0.05
-        },
-        {
-          "threshold": 130000,
-          "rate": 0.125
-        },
-        {
-          "threshold": 160000,
-          "rate": 0.175
-        },
-        {
-          "threshold": 190000,
-          "rate": 0.25
-        },
-        {
-          "threshold": 220000,
-          "rate": 0
-        },
-        {
-          "threshold": 250000,
-          "rate": 0
-        },
-        {
-          "threshold": 280000,
-          "rate": 0
-        },
-        {
-          "threshold": 300000,
-          "rate": 0
-        }
+        { "threshold": 0,      "rate": 0 },
+        { "threshold": 70000,  "rate": 0 },
+        { "threshold": 100000, "rate": 0.056 },
+        { "threshold": 130000, "rate": 0.14 },
+        { "threshold": 160000, "rate": 0.196 },
+        { "threshold": 190000, "rate": 0.28 }
       ],
       "productionPct": 0.01,
       "productionBasis": "revenue",
@@ -238,23 +205,18 @@
     },
     "hybrid_rev_senior": {
       "name": "Talent Senior (Performer-Revenue Hybrid)",
-      "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue \u2192 ~$100k base ex-super equivalent. Nathan to set rates.",
+      "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue \u2192 ~$100k base ex-super equivalent. Rates scaled \u00d7 1.12 in v16 to make band output super-INCLUSIVE while preserving commission amounts.",
       "metricLabel": "Annual Performance Revenue",
       "maxMetricValue": 400000,
       "metricBasis": "revenue",
       "inputIncludesGST": false,
+      "bandsIncludeSuper": true,
       "payoutFrequency": "quarterly",
       "payoutPercentage": 1,
       "includeProduction": false,
       "bands": [
-        {
-          "threshold": 195000,
-          "rate": 0.34600000000000003
-        },
-        {
-          "threshold": 220000,
-          "rate": 0.1
-        }
+        { "threshold": 195000, "rate": 0.38752 },
+        { "threshold": 220000, "rate": 0.112 }
       ],
       "productionPct": 0.01,
       "productionBasis": "revenue",
@@ -388,7 +350,22 @@
       "planOverrides": null,
       "kpiAssignments": [],
       "dashboardFile": "hayley.html",
-      "placeholder": false
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-07",
+        "quarterlyCMNP": [
+          { "quarter": "Q1 FY27 (Jul-Sep 2026)", "cm": 0, "np": 0 },
+          { "quarter": "Q2 FY27 (Oct-Dec 2026)", "cm": 0, "np": 0 },
+          { "quarter": "Q3 FY27 (Jan-Mar 2027)", "cm": 0, "np": 0 },
+          { "quarter": "Q4 FY27 (Apr-Jun 2027)", "cm": 0, "np": 0 }
+        ]
+      },
+      "actualPayouts": [
+        { "quarter": "Q1 FY27 (Jul-Sep 2026)", "commissionPaid": null, "cm": null, "np": null, "notes": "" },
+        { "quarter": "Q2 FY27 (Oct-Dec 2026)", "commissionPaid": null, "cm": null, "np": null, "notes": "" },
+        { "quarter": "Q3 FY27 (Jan-Mar 2027)", "commissionPaid": null, "cm": null, "np": null, "notes": "" },
+        { "quarter": "Q4 FY27 (Apr-Jun 2027)", "commissionPaid": null, "cm": null, "np": null, "notes": "" }
+      ]
     },
     {
       "id": "dane",
@@ -621,7 +598,38 @@
       "planOverrides": null,
       "kpiAssignments": [],
       "dashboardFile": "tom.html",
-      "placeholder": false
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "monthlyGP": [
+          { "month": "Apr 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "May 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jun 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jul 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Aug 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Sep 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Oct 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Nov 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Dec 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jan 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Feb 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Mar 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 }
+        ]
+      },
+      "actualPayouts": [
+        { "month": "Apr 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "May 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Jun 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Jul 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Aug 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Sep 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Oct 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Nov 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Dec 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Jan 2027", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Feb 2027", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Mar 2027", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" }
+      ]
     },
     {
       "id": "michael",
@@ -634,7 +642,38 @@
       "planOverrides": null,
       "kpiAssignments": [],
       "dashboardFile": "michael.html",
-      "placeholder": false
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "monthlyGP": [
+          { "month": "Apr 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "May 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jun 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jul 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Aug 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Sep 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Oct 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Nov 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Dec 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jan 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Feb 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Mar 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 }
+        ]
+      },
+      "actualPayouts": [
+        { "month": "Apr 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "May 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Jun 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Jul 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Aug 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Sep 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Oct 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Nov 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Dec 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Jan 2027", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Feb 2027", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Mar 2027", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" }
+      ]
     }
   ],
   "companyPL": {

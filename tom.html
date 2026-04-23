@@ -1016,13 +1016,17 @@ function calcAll() {
     }
   });
 
+  // v16 super model: band output is super-INCLUSIVE (bandsIncludeSuper=true).
   const base = emp.baseSalary;
   const baseInc = base * (1 + g.superRate);
-  const commInc = variable * (1 + g.superRate);
-  const subtotalExSuper = base + variable + projectsExSuper;
-  const superOnPay = (base + variable) * g.superRate;
+  const baseSuper = base * g.superRate;
+  const commInc = variable;                         // already inc-super
+  const variableEx = variable / (1 + g.superRate);  // ex-super portion
+  const commSuperAmt = variable - variableEx;       // super portion embedded
+  const subtotalExSuper = base + variableEx + projectsExSuper;
   const superOnProjects = projectsIncSuper - projectsExSuper;
-  const totalSuper = superOnPay + superOnProjects;
+  const totalSuper = baseSuper + commSuperAmt + superOnProjects;
+  const superOnPay = baseSuper + commSuperAmt;
   const totalPackage = subtotalExSuper + totalSuper;
 
   // Progress to next tier
@@ -1047,9 +1051,9 @@ function calcAll() {
   }
 
   return {
-    bandComm, production, preKpi, effectiveKpi, variable, breakdown,
+    bandComm, production, preKpi, effectiveKpi, variable, variableEx, commSuperAmt, breakdown,
     projectsIncSuper, projectsExSuper, activeProjects,
-    base, baseInc, commInc,
+    base, baseInc, baseSuper, commInc,
     subtotalExSuper, superOnPay, superOnProjects, totalSuper, totalPackage,
     nextTier, progressPct, toGo, contextMsg,
   };
@@ -1095,12 +1099,11 @@ function update() {
 
   // Metric cards — all show INC-SUPER as the headline, with ex-super + super $ breakdown underneath
   const baseSuperAmt = r.baseInc - r.base;
-  const commSuperAmt = r.commInc - r.variable;
   document.getElementById('card-base').textContent = fmtMoney(r.baseInc);
   document.getElementById('card-base-sub').textContent = `${fmtMoney(r.base)} + ${fmtMoney(baseSuperAmt)} super`;
   document.getElementById('card-comm').textContent = fmtMoney(r.commInc);
   document.getElementById('card-comm-sub').textContent = r.variable > 0
-    ? `${fmtMoney(r.variable)} + ${fmtMoney(commSuperAmt)} super`
+    ? `${fmtMoney(r.variableEx)} + ${fmtMoney(r.commSuperAmt)} super`
     : 'No commission at this revenue';
   document.getElementById('card-projects').textContent = fmtMoney(r.projectsIncSuper);
   const nActive = r.activeProjects.length;
@@ -1179,16 +1182,16 @@ function renderBreakdown(r) {
   const g = data.globals;
   const table = document.getElementById('breakdown-table');
   let rows = `
-    <tr><td>Base salary</td><td>${fmtMoney(r.base)}</td></tr>
-    <tr class="plus"><td>Performance revenue bonus ${r.effectiveKpi < 1 ? `<span class="pill-mini">KPI ${(r.effectiveKpi*100).toFixed(0)}%</span>` : ''}</td><td>+ ${fmtMoney(r.variable)}</td></tr>
+    <tr><td>Base salary (ex-super)</td><td>${fmtMoney(r.base)}</td></tr>
+    <tr class="plus"><td>Performance revenue bonus (ex-super portion) ${r.effectiveKpi < 1 ? `<span class="pill-mini">KPI ${(r.effectiveKpi*100).toFixed(0)}%</span>` : ''}</td><td>+ ${fmtMoney(r.variableEx)}</td></tr>
   `;
   r.activeProjects.forEach(p => {
     const ex = p.bonusIncludesSuper ? p.bonusAmount / (1 + g.superRate) : p.bonusAmount;
-    rows += `<tr class="plus"><td>${p.name} milestone</td><td>+ ${fmtMoney(ex)}</td></tr>`;
+    rows += `<tr class="plus"><td>${p.name} milestone (ex-super)</td><td>+ ${fmtMoney(ex)}</td></tr>`;
   });
-  rows += `<tr class="subtotal"><td>Subtotal before super</td><td>${fmtMoney(r.subtotalExSuper)}</td></tr>`;
-  rows += `<tr class="plus"><td>Superannuation (${fmtPct(g.superRate, 0)})</td><td>+ ${fmtMoney(r.totalSuper)}</td></tr>`;
-  rows += `<tr class="total"><td>Total package</td><td>${fmtMoney(r.totalPackage)}</td></tr>`;
+  rows += `<tr class="subtotal"><td>Subtotal ex-super</td><td>${fmtMoney(r.subtotalExSuper)}</td></tr>`;
+  rows += `<tr class="plus"><td>Superannuation (total)</td><td>+ ${fmtMoney(r.totalSuper)}</td></tr>`;
+  rows += `<tr class="total"><td>Total package (inc. super)</td><td>${fmtMoney(r.totalPackage)}</td></tr>`;
   table.innerHTML = rows;
 }
 
