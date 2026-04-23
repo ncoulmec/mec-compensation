@@ -135,9 +135,9 @@
               <th>Month</th>
               <th class="num">GP Received<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Net of refunds</small></th>
               <th class="num">Event GP<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Produced</small></th>
-              <th class="num" style="background:#f5faf7;">GP Commission<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · inc. super</small></th>
-              <th class="num" style="background:#f5faf7;">Production<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · inc. super</small></th>
-              <th class="num" style="background:#f5faf7;">Pay this month<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Inc. super</small></th>
+              <th class="num" style="background:#f5faf7;">GP Commission<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · ex super</small></th>
+              <th class="num" style="background:#f5faf7;">Production<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · ex super</small></th>
+              <th class="num" style="background:#f5faf7;">Pay this month<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Ex super \u2014 enter into Xero</small></th>
               <th>Notes</th>
               <th></th>
             </tr>
@@ -300,13 +300,19 @@ function computePayouts(emp) {
   if (targetBal - balance > 0.01) balance = targetBal;
 
   return {
-    rows: raw.map((r, i) => ({
-      gp: r.gp, ev: r.ev,
-      gpComm: paid[i],                     // cash-paid GP commission (after TU)
-      gpCommRaw: r.gpRaw,                  // raw before TU
-      prodComm: r.prodInc,
-      cash: paid[i] + r.prodInc,           // total cash this month (inc super)
-    })),
+    rows: raw.map((r, i) => {
+      const gpCommInc = paid[i];                        // cash-paid GP commission after TU (inc super)
+      const prodCommInc = r.prodInc;                    // production commission (inc super)
+      const totalInc = gpCommInc + prodCommInc;
+      return {
+        gp: r.gp, ev: r.ev,
+        gpCommInc, gpCommRaw: r.gpRaw,
+        gpCommEx: gpCommInc / (1 + sr),                 // ex super (Xero entry)
+        prodCommInc, prodCommEx: prodCommInc / (1 + sr),
+        cashInc: totalInc,
+        cashEx: totalInc / (1 + sr),                    // ex super (what goes in Xero)
+      };
+    }),
     balanceEnd: balance,
     annualEnt,
   };
@@ -389,27 +395,27 @@ function recalcRow(emp) {
   computedRows.forEach((r, i) => {
     const tr = body.querySelector(`tr[data-idx="${i}"]`);
     if (!tr) return;
-    tr.querySelector('[data-cell="gpComm"]').textContent = r.gpComm > 0 ? fmtMoney(r.gpComm) : (r.gpCommRaw > 0 ? '$0 (TU offset)' : '—');
-    tr.querySelector('[data-cell="prodComm"]').textContent = r.prodComm > 0 ? fmtMoney(r.prodComm) : '—';
-    tr.querySelector('[data-cell="cash"]').textContent = r.cash > 0 ? fmtMoney(r.cash) : '—';
+    tr.querySelector('[data-cell="gpComm"]').textContent = r.gpCommEx > 0 ? fmtMoney(r.gpCommEx) : (r.gpCommRaw > 0 ? '$0 (TU offset)' : '—');
+    tr.querySelector('[data-cell="prodComm"]').textContent = r.prodCommEx > 0 ? fmtMoney(r.prodCommEx) : '—';
+    tr.querySelector('[data-cell="cash"]').textContent = r.cashEx > 0 ? fmtMoney(r.cashEx) : '—';
   });
 }
 
 function renderYTD(emp) {
-  const { rows, balanceEnd, annualEnt } = computePayouts(emp);
+  const { rows, balanceEnd } = computePayouts(emp);
   const sums = rows.reduce((a, r) => ({
-    cash: a.cash + r.cash,
-    gpComm: a.gpComm + r.gpComm,
-    prodComm: a.prodComm + r.prodComm,
+    cashEx: a.cashEx + r.cashEx,
     gp: a.gp + r.gp,
     ev: a.ev + r.ev,
     filled: a.filled + (r.gp > 0 || r.ev > 0 ? 1 : 0),
-  }), { cash: 0, gpComm: 0, prodComm: 0, gp: 0, ev: 0, filled: 0 });
+  }), { cashEx: 0, gp: 0, ev: 0, filled: 0 });
+  const sr = data.globals.superRate || 0.12;
+  const balanceEx = balanceEnd / (1 + sr);
   $('#ytd-row').innerHTML = `
     <div class="kpi-card"><div class="label">Months entered</div><div class="value">${sums.filled} / 12</div><div class="sub">Locked on employee dashboard</div></div>
-    <div class="kpi-card"><div class="label">YTD Cash Paid</div><div class="value">${fmtMoney(sums.cash)}</div><div class="sub">Computed · inc. super</div></div>
+    <div class="kpi-card"><div class="label">YTD Paid (Xero ex-super)</div><div class="value">${fmtMoney(sums.cashEx)}</div><div class="sub">Sum of monthly payouts</div></div>
     <div class="kpi-card"><div class="label">YTD GP Received</div><div class="value">${fmtMoney(sums.gp)}</div><div class="sub">Event GP: ${fmtMoney(sums.ev)}</div></div>
-    <div class="kpi-card"><div class="label">True-up balance fwd</div><div class="value">${fmtMoney(balanceEnd)}</div><div class="sub">${balanceEnd > 0.5 ? 'Rolls to next fiscal year' : 'Even — no carry-forward'}</div></div>
+    <div class="kpi-card"><div class="label">True-up balance fwd</div><div class="value">${fmtMoney(balanceEx)}</div><div class="sub">${balanceEnd > 0.5 ? 'Ex super · rolls to next FY' : 'Even — no carry-forward'}</div></div>
   `;
 }
 
