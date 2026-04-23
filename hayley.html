@@ -196,11 +196,14 @@
         <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Company CM and NP annual projections. See the Company P&amp;L in MEC Overview for historical reference.</p>
 
         <div class="scenario-row">
-          <label>Company CM (annual) <span class="tooltip-trigger" data-tip="Contribution Margin = Revenue − Cost of Sales − Contribution Expenses. Your baseline is $1,093,000 — bonus accrues on CM above that baseline, at the matched band rate.">?</span></label>
-          <input type="range" id="cm-slider" min="1000000" max="2000000" step="10000" value="1200000">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="cm-input" class="value-input" style="padding-left: 22px;" value="1,200,000">
+          <label>Company CM (annual) <span class="tooltip-trigger" data-tip="Contribution Margin = Revenue − Cost of Sales − Contribution Expenses. $1M is the commission floor; hit $1.1M (your rounded baseline) and you've earned $10,000 exactly; above that, growth bands keep climbing.">?</span></label>
+          <input type="range" id="cm-slider" min="900000" max="1600000" step="10000" value="1200000">
+          <div style="display: flex; flex-direction: column; gap: 4px; align-items: stretch;">
+            <div style="position: relative;">
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+              <input type="text" inputmode="numeric" id="cm-input" class="value-input" style="padding-left: 22px;" value="1,200,000">
+            </div>
+            <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); text-align: right;">LTM: <span id="cm-ltm-chip" style="color:var(--navy);font-weight:600;">—</span> · Baseline: <span style="color:var(--navy);font-weight:600;">$1.1M</span></div>
           </div>
         </div>
 
@@ -230,8 +233,8 @@
     </div>
 
     <div class="card">
-      <h2>CM Bands — Maintenance + Incremental Growth</h2>
-      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 14px;">If company CM hits or exceeds <strong>$1,093,000</strong> (last year's baseline) you earn a <strong>flat $10,000 maintenance bonus</strong>. On top of that, each rate below applies to the slice of CM earned within that band — cumulative growth climb above baseline. Highlighted row is your current slice.</p>
+      <h2>CM Bands — Incremental</h2>
+      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 14px;">Commission starts accruing at <strong>$1,000,000</strong> CM. You hit <strong>$10,000 commission</strong> exactly at <strong>$1,100,000</strong> (your baseline — rounded from last year's LTM of ~$1.11M). Above that, rates escalate every $100k. Highlighted row is your current slice.</p>
       <table class="bands">
         <thead>
           <tr>
@@ -496,12 +499,12 @@ function wireInputs() {
   kpiInput.addEventListener('input', () => syncKpi(kpiInput.value));
 }
 
-/* CM incentive: $10k maintenance bonus if CM ≥ baseline + incremental band growth above baseline.
-   Output is super-INCLUSIVE. */
+/* CM incentive: incremental band calc on CM directly. Bands start earning at $1M ($0 floor),
+   hit $10k at the $1.1M baseline, then climb through escalating rates. Output super-INCLUSIVE. */
 function calcCMIncentive(cm) {
-  if (!plan.cmBands) return { earning: 0, maintenance: 0, growth: 0, activeBand: null, breakdown: [] };
+  if (!plan.cmBands) return { earning: 0, activeBand: null, breakdown: [], maintenanceHit: false };
   const sorted = [...plan.cmBands].sort((a, b) => a.threshold - b.threshold);
-  let growth = 0;
+  let total = 0;
   const breakdown = [];
   let activeBand = null;
   for (let i = 0; i < sorted.length; i++) {
@@ -509,12 +512,23 @@ function calcCMIncentive(cm) {
     const next = i + 1 < sorted.length ? sorted[i + 1].threshold : Infinity;
     const inBand = Math.max(0, Math.min(cm, next) - b.threshold);
     const earn = inBand * b.rate;
-    growth += earn;
+    total += earn;
     if (cm > b.threshold && (i === sorted.length - 1 || cm < next)) activeBand = b;
-    breakdown.push({ min: b.threshold, max: next === Infinity ? null : next, rate: b.rate, earn, cumulative: growth, active: cm > b.threshold && (i === sorted.length - 1 || cm < next) });
+    breakdown.push({ min: b.threshold, max: next === Infinity ? null : next, rate: b.rate, earn, cumulative: total, active: cm > b.threshold && (i === sorted.length - 1 || cm < next) });
   }
-  const maintenance = (cm >= (plan.cmBaseline || 0)) ? (plan.cmMaintenanceBonus || 0) : 0;
-  return { earning: maintenance + growth, maintenance, growth, activeBand, breakdown };
+  return { earning: total, activeBand, breakdown, maintenanceHit: cm >= (plan.cmBaseline || 0) };
+}
+
+// Compute LTM CM from the last 4 complete quarters in companyPL. Displayed to Hayley as reference.
+function computeLTMCM() {
+  const pl = data.companyPL;
+  if (!pl || !Array.isArray(pl.quarters) || pl.quarters.length === 0) return null;
+  const totals = pl.quarters.reduce((a, q) => ({
+    rev: a.rev + (+q.revenue || 0),
+    cogs: a.cogs + (+q.cogs || 0),
+    ce: a.ce + (+q.contribExp || 0),
+  }), { rev: 0, cogs: 0, ce: 0 });
+  return totals.rev - totals.cogs - totals.ce;
 }
 
 /* NP kicker: pick highest matching npBonuses threshold ≤ NP, return its flat $ bonus.
@@ -653,43 +667,38 @@ function update() {
   document.getElementById('card-base').textContent = fmtMoney(r.baseInc);
   document.getElementById('card-base-sub').textContent = `${fmtMoney(r.base)} + ${fmtMoney(r.baseSuper)} super`;
 
+  // LTM CM chip under CM slider
+  const ltmCM = computeLTMCM();
+  const ltmChip = document.getElementById('cm-ltm-chip');
+  if (ltmChip) ltmChip.textContent = ltmCM ? fmtMoney(ltmCM) : 'n/a';
+
+  // CM card — ex-super + super pattern (matches Daniel)
   document.getElementById('card-cm').textContent = fmtMoney(r.cmIncGross);
-  const cmActiveRate = r.cmCalc.activeBand ? r.cmCalc.activeBand.rate : 0;
-  const maintEff = r.cmCalc.maintenance * r.effectiveKpi;
-  const growthEff = r.cmCalc.growth * r.effectiveKpi;
   let cmSubText;
   if (r.cmIncGross === 0) {
-    cmSubText = `Below baseline ${fmtMoney(plan.cmBaseline || 0)} — no CM incentive yet`;
-  } else if (growthEff < 0.5) {
-    cmSubText = `${fmtMoney(maintEff)} maintenance · CM baseline held ✓`;
+    cmSubText = scenario.cm < 1000000 ? 'Below $1M floor — no commission' : 'Commission accruing — hit $1.1M for $10k';
   } else {
-    cmSubText = `${fmtMoney(maintEff)} maintenance + ${fmtMoney(growthEff)} growth · ${fmtPct(cmActiveRate, 1)} marginal`;
+    const maintHit = r.cmCalc.maintenanceHit ? ' · Baseline hit ✓' : '';
+    cmSubText = `${fmtMoney(r.cmIncEx)} + ${fmtMoney(r.cmIncSuperPart)} super${maintHit}`;
   }
   document.getElementById('card-cm-sub').textContent = cmSubText;
 
+  // NP card — ex-super + super pattern
   document.getElementById('card-np').textContent = fmtMoney(r.npIncGross);
   document.getElementById('card-np-sub').textContent = r.npIncGross > 0
-    ? `Kicker · ${fmtMoney(r.npIncEx)} + ${fmtMoney(r.npIncSuperPart)} super · ${r.npProportionPct.toFixed(1)}% of total comm`
+    ? `${fmtMoney(r.npIncEx)} + ${fmtMoney(r.npIncSuperPart)} super`
     : (scenario.np < (plan.npBonuses?.[0]?.threshold || 850000) ? 'Below first NP milestone' : 'Hit an NP milestone for a kicker bonus');
 
   document.getElementById('card-total').textContent = fmtMoney(r.totalPackage);
   document.getElementById('card-total-sub').textContent = `${fmtMoney(r.subtotalExSuper)} + ${fmtMoney(r.totalSuper)} super`;
 
-  // Breakdown — split CM into maintenance + growth for clarity
-  const maintInc = r.cmCalc.maintenance * r.effectiveKpi;
-  const growthInc = r.cmCalc.growth * r.effectiveKpi;
+  // Breakdown
   const table = document.getElementById('breakdown-table');
-  const maintRow = maintInc > 0
-    ? `<tr class="plus"><td>CM Maintenance Bonus (inc. super) — CM ≥ ${fmtMoney(plan.cmBaseline)} baseline</td><td>+ ${fmtMoney(maintInc)}</td></tr>`
-    : `<tr class="plus" style="color:var(--faint);"><td>CM Maintenance Bonus — only paid if CM ≥ ${fmtMoney(plan.cmBaseline)}</td><td>—</td></tr>`;
-  const growthRow = growthInc > 0
-    ? `<tr class="plus"><td>CM Growth Incentive (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI)</td><td>+ ${fmtMoney(growthInc)}</td></tr>`
-    : '';
+  const maintainedBadge = r.cmCalc.maintenanceHit ? ` <span style="color:var(--accent); font-weight:600;">✓ baseline hit</span>` : '';
   table.innerHTML = `
     <tr><td>Base salary (ex-super)</td><td>${fmtMoney(r.base)}</td></tr>
     <tr class="plus"><td>Super on base (${fmtPct(g.superRate, 0)})</td><td>+ ${fmtMoney(r.baseSuper)}</td></tr>
-    ${maintRow}
-    ${growthRow}
+    <tr class="plus"><td>CM Incentive (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI)${maintainedBadge}</td><td>+ ${fmtMoney(r.cmIncGross)}</td></tr>
     <tr class="plus"><td>NP Kicker (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI) — tied to net profit</td><td>+ ${fmtMoney(r.npIncGross)}</td></tr>
     <tr class="total"><td>Total package</td><td>${fmtMoney(r.totalPackage)}</td></tr>
   `;

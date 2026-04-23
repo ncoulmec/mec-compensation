@@ -44,7 +44,7 @@
   "planTypes": {
     "gm": {
       "name": "General Manager (CM-driven + NP kicker)",
-      "description": "For Hayley. $10k maintenance bonus if CM >= last year's baseline ($1,093k), plus incremental growth bands above that baseline, plus a small flat-dollar NP kicker at milestones. Band output is super-INCLUSIVE. Quarterly 75/25 payout.",
+      "description": "For Hayley. $1M no-commission floor; $10k maintenance hit at $1,100,000 (round-down from LTM CM ~$1,111k); then escalating growth bands. Dashboard shows LTM CM live from companyPL. NP incremental bonuses are more lucrative with bands extending to $1.3M. Band output is super-INCLUSIVE. Quarterly 75/25 payout (being reviewed \u2014 may switch to quarterly TU like Sales team).",
       "metricLabel": "Contribution Margin (primary) + Net Profit kicker",
       "maxMetricValue": 1500000,
       "metricBasis": "cm_np",
@@ -53,22 +53,24 @@
       "payoutFrequency": "quarterly",
       "payoutPercentage": 0.75,
       "includeProduction": false,
-      "cmBaseline": 1093000,
-      "cmMaintenanceBonus": 10000,
+      "cmBaseline": 1100000,
       "cmBands": [
         { "threshold": 0,       "rate": 0 },
-        { "threshold": 1093000, "rate": 0.05 },
-        { "threshold": 1200000, "rate": 0.10 },
-        { "threshold": 1300000, "rate": 0.12 },
-        { "threshold": 1400000, "rate": 0.14 }
+        { "threshold": 1000000, "rate": 0.10 },
+        { "threshold": 1100000, "rate": 0.12 },
+        { "threshold": 1200000, "rate": 0.14 },
+        { "threshold": 1300000, "rate": 0.16 },
+        { "threshold": 1400000, "rate": 0.18 }
       ],
       "npBonuses": [
-        { "threshold": 850000,  "bonus": 200 },
-        { "threshold": 900000,  "bonus": 400 },
-        { "threshold": 950000,  "bonus": 800 },
-        { "threshold": 1000000, "bonus": 1200 },
-        { "threshold": 1050000, "bonus": 1500 },
-        { "threshold": 1100000, "bonus": 2000 }
+        { "threshold": 850000,  "bonus": 1000 },
+        { "threshold": 900000,  "bonus": 2000 },
+        { "threshold": 950000,  "bonus": 3000 },
+        { "threshold": 1000000, "bonus": 4500 },
+        { "threshold": 1050000, "bonus": 6000 },
+        { "threshold": 1100000, "bonus": 8000 },
+        { "threshold": 1200000, "bonus": 11000 },
+        { "threshold": 1300000, "bonus": 15000 }
       ],
       "includeProjects": false
     },
