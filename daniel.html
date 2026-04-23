@@ -165,6 +165,8 @@
   table.monthly tr.totals td { background: var(--navy); color: #fff; font-weight: 700; font-size: 14px; padding: 14px 10px; border-bottom: none; }
   table.monthly tr.totals td.num { color: #fff; }
   table.monthly tr.totals td.mon { color: #fff; font-weight: 700; }
+  table.monthly tr.tu-capped td { background: #fef5e6; }
+  table.monthly tr.tu-capped td.mon { color: var(--warn); font-weight: 700; }
 
   .yt-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
   @media (max-width: 900px) { .yt-row { grid-template-columns: repeat(2, 1fr); } }
@@ -253,18 +255,24 @@
         <div class="scenario-row">
           <label>Annual GP Sold <span class="tooltip-trigger" data-tip="Enter your Annual GP Sold (ex. GST) for the last 365 days from your personal Zoho dashboard.">?</span></label>
           <input type="range" id="gp-slider" min="0" max="600000" step="5000" value="300000">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="gp-input" class="value-input" style="padding-left: 22px;" value="300,000">
+          <div style="display: flex; flex-direction: column; gap: 4px; align-items: stretch;">
+            <div style="position: relative;">
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+              <input type="text" inputmode="numeric" id="gp-input" class="value-input" style="padding-left: 22px;" value="300,000">
+            </div>
+            <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); text-align: right;">÷ 12 = <span id="gp-monthly-chip" style="color:var(--navy);font-weight:600;">$25,000</span>/mo</div>
           </div>
         </div>
 
         <div class="scenario-row">
-          <label>Event GP Produced (annual) <span class="tooltip-trigger" data-tip="Gross profit on bookings whose event date has passed. Drives the 1% production commission on top of your band commission.">?</span></label>
+          <label>Annual Event GP Produced <span class="tooltip-trigger" data-tip="Gross profit on bookings whose event date has passed. Drives the 1% production commission on top of your band commission.">?</span></label>
           <input type="range" id="event-gp-slider" min="0" max="200000" step="1000" value="0">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="event-gp-input" class="value-input" style="padding-left: 22px;" value="0">
+          <div style="display: flex; flex-direction: column; gap: 4px; align-items: stretch;">
+            <div style="position: relative;">
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+              <input type="text" inputmode="numeric" id="event-gp-input" class="value-input" style="padding-left: 22px;" value="0">
+            </div>
+            <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); text-align: right;">÷ 12 = <span id="event-gp-monthly-chip" style="color:var(--navy);font-weight:600;">$0</span>/mo</div>
           </div>
         </div>
 
@@ -373,7 +381,7 @@
         <div class="sub" id="ytd-gp-sub">Sum of months entered</div>
       </div>
       <div class="kpi-card">
-        <div class="label">YTD GP Commission</div>
+        <div class="label">YTD GP Commission Paid</div>
         <div class="value" id="ytd-gp-comm">—</div>
         <div class="sub" id="ytd-gp-comm-sub">— + super</div>
       </div>
@@ -383,15 +391,62 @@
         <div class="sub" id="ytd-prod-comm-sub">1% of YTD Event GP</div>
       </div>
       <div class="kpi-card inverted">
-        <div class="label">YTD Total Earned (inc. super)</div>
-        <div class="value" id="ytd-total">—</div>
-        <div class="sub" id="ytd-total-sub">Base YTD + commissions YTD</div>
+        <div class="label">Annual True-Up Delta</div>
+        <div class="value" id="trueup-delta">—</div>
+        <div class="sub" id="trueup-delta-sub">Entitled − paid (at current GP)</div>
+      </div>
+    </div>
+
+    <!-- Monthly Scenario — sandbox slider for one month -->
+    <div class="card">
+      <h2>Monthly Scenario <span class="tooltip-trigger" data-tip="Play with single-month numbers without touching the monthly grid below. Useful for 'what if I sell $X this month' projections. Uses monthly bands (annual ÷ 12); shows raw monthly commission before any quarterly true-up.">?</span></h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 10px;">A sandbox for one month's performance. Move the sliders to see what you'd earn — this doesn't affect the Monthly Payout grid below. <strong>Raw monthly commission shown</strong> (before any quarterly true-up adjustment).</p>
+
+      <div class="two-col" style="margin-bottom: 0;">
+        <div>
+          <div class="scenario-row">
+            <label>This month's GP Received</label>
+            <input type="range" id="mscn-gp-slider" min="0" max="80000" step="500" value="25000">
+            <div style="position: relative;">
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+              <input type="text" inputmode="numeric" id="mscn-gp-input" class="value-input" style="padding-left: 22px;" value="25,000">
+            </div>
+          </div>
+          <div class="scenario-row">
+            <label>This month's Event GP Produced</label>
+            <input type="range" id="mscn-event-slider" min="0" max="30000" step="500" value="0">
+            <div style="position: relative;">
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+              <input type="text" inputmode="numeric" id="mscn-event-input" class="value-input" style="padding-left: 22px;" value="0">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+            <div class="kpi-card" style="margin: 0; padding: 14px 18px;">
+              <div class="label" style="font-size: 11px;">GP Commission</div>
+              <div class="value" id="mscn-gpcomm" style="font-size: 22px;">—</div>
+              <div class="sub" id="mscn-gpcomm-sub">—</div>
+            </div>
+            <div class="kpi-card" style="margin: 0; padding: 14px 18px;">
+              <div class="label" style="font-size: 11px;">Production</div>
+              <div class="value" id="mscn-prodcomm" style="font-size: 22px;">—</div>
+              <div class="sub" id="mscn-prodcomm-sub">—</div>
+            </div>
+          </div>
+          <div class="kpi-card inverted" style="margin: 12px 0 0; padding: 14px 18px;">
+            <div class="label" style="font-size: 11px;">Monthly Commission Total (inc. super)</div>
+            <div class="value" id="mscn-total" style="font-size: 26px;">—</div>
+            <div class="sub" id="mscn-total-sub">Raw monthly — before quarterly true-up</div>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Monthly Payout <span class="tooltip-trigger" data-tip="Commission is paid monthly based on real GP Received and Event GP Produced. Each month's commission is calculated incrementally on the cumulative YTD GP so you climb through bands as the year progresses.">?</span></h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Enter each month's GP Received and Event GP Produced. GP commission is calculated against the <strong>monthly bands</strong> (annual thresholds ÷ 12 — see the Commission Bands table above) so you're paid from month one once you clear the monthly floor. Each month stands alone. Production commission is a flat 1% of Event GP. All commission figures are inc. super.</p>
+      <h2>Monthly Payout <span class="tooltip-trigger" data-tip="Monthly bands pay each month for cash flow. Months 3/6/9/12 are capped so the quarter's total equals what you'd earn at quarterly bands on the quarter's GP — any overpayment in months 1-2 absorbs into month 3. Month 12 also capped at annual entitlement. No clawback.">?</span></h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Each month's GP Received runs through the monthly bands (annual ÷ 12). At the end of each quarter the third month is capped so the quarter total matches <strong>quarterly bands on quarterly GP</strong>. Month 12 also capped against annual entitlement. If you're ever overpaid, the cap sets that month's commission to $0 — no deduction from your paycheck. Each quarter reconciles on its own.</p>
       <div style="overflow-x: auto;">
         <table class="monthly" id="monthly-table">
           <thead>
@@ -407,7 +462,14 @@
           <tbody id="monthly-body"></tbody>
         </table>
       </div>
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Totals row shows the annual sum. With monthly-independent bands, front-loaded sales can produce a larger total here than the annual band calc on the full-year GP — year-end reconciliation is at Nathan's discretion.</p>
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Months 3 / 6 / 9 / 12 are quarterly true-up months. Month 12 is also the annual true-up month. If a cap fires, that row is highlighted with a note.</p>
+    </div>
+
+    <!-- Quarterly summary strip -->
+    <div class="card">
+      <h2>Quarterly True-Up Summary</h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Each quarter's entitled commission (quarterly bands on quarterly GP) vs what's been paid across its three months.</p>
+      <div id="quarterly-strip" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;"></div>
     </div>
   </section>
 
@@ -481,7 +543,7 @@
    ============================================================ */
 
 const EMPLOYEE_ID = 'daniel';
-const ACTUALS_LS_KEY = `dashboard-${EMPLOYEE_ID}-actuals-v1`;
+const ACTUALS_LS_KEY = `dashboard-${EMPLOYEE_ID}-actuals-v2`;
 
 let data = null;
 let emp = null;
@@ -492,6 +554,9 @@ const scenario = {
   gp: 300000,
   eventGP: 0,
   kpiScore: 1.0,
+  // Monthly Scenario sandbox (Actual section)
+  mscnGP: 25000,
+  mscnEvent: 0,
 };
 
 const fmtMoney = (n) => {
@@ -577,9 +642,9 @@ async function load() {
 }
 
 function defaultMonths() {
-  // Fallback FY Jul 2025 → Jun 2026
-  const labels = ['Jul 2025','Aug 2025','Sep 2025','Oct 2025','Nov 2025','Dec 2025',
-                  'Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026'];
+  // Daniel's comp year: Apr 2026 → Mar 2027. Quarters are Apr-Jun, Jul-Sep, Oct-Dec, Jan-Mar.
+  const labels = ['Apr 2026','May 2026','Jun 2026','Jul 2026','Aug 2026','Sep 2026',
+                  'Oct 2026','Nov 2026','Dec 2026','Jan 2027','Feb 2027','Mar 2027'];
   return labels.map(m => ({ month: m, gpReceived: 0, eventGP: 0, revenueReceivedIncGST: 0 }));
 }
 
@@ -625,6 +690,20 @@ function wireInputs() {
   };
   syncMoney(gpSlider, gpInput, 'gp');
   syncMoney(eventSlider, eventInput, 'eventGP');
+
+  // Monthly Scenario sandbox sliders
+  const mscnGPSlider = document.getElementById('mscn-gp-slider');
+  const mscnGPInput = document.getElementById('mscn-gp-input');
+  const mscnEvSlider = document.getElementById('mscn-event-slider');
+  const mscnEvInput = document.getElementById('mscn-event-input');
+  if (mscnGPSlider && mscnGPInput) {
+    mscnGPSlider.value = scenario.mscnGP;
+    mscnGPInput.value = fmtNum(scenario.mscnGP);
+    mscnEvSlider.value = scenario.mscnEvent;
+    mscnEvInput.value = fmtNum(scenario.mscnEvent);
+    syncMoney(mscnGPSlider, mscnGPInput, 'mscnGP');
+    syncMoney(mscnEvSlider, mscnEvInput, 'mscnEvent');
+  }
 
   const syncKpi = (val) => {
     scenario.kpiScore = Math.max(0, Math.min(+val || 0, data.globals.kpiScoreCap || 1));
@@ -808,47 +887,117 @@ function renderMonthlyGrid() {
   });
 }
 
-// Monthly commission: each month runs its GP through MONTHLY bands (annual thresholds ÷ 12, same rates).
-// Each month is independent — no YTD carry. Band output is already super-inclusive.
+// Monthly / quarterly band scaling: annual thresholds ÷ 12 or ÷ 4, rates unchanged.
+// Monthly bands feed the per-month payout. Quarterly bands feed the quarterly true-up cap.
 function monthlyBands() {
-  // Lazily build monthly-scale bands from the annual plan.bands
   return [...plan.bands].sort((a, b) => a.threshold - b.threshold).map(b => ({
     threshold: b.threshold / 12,
     rate: b.rate
   }));
 }
+function quarterlyBands() {
+  return [...plan.bands].sort((a, b) => a.threshold - b.threshold).map(b => ({
+    threshold: b.threshold / 4,
+    rate: b.rate
+  }));
+}
 
+// Compute monthly rows with quarterly true-up + annual true-up caps.
+// Semantics:
+//   - Months 1,2 of each quarter: pay = monthly bands × KPI (raw).
+//   - Month 3 of each quarter (months 3,6,9,12): pay = max(0, quarterly_entitled − sum(m1,m2)).
+//     If m1+m2 already ≥ quarterly_entitled, m3 = 0 (company absorbs the excess within that quarter).
+//   - Month 12 additionally capped by annual: pay = min(quarterly_pay, max(0, annual_entitled − YTD_paid_through_m11)).
+//   - Production commission is NOT part of the true-up — it's a flat 1% per month, super-inc, never capped.
 function computeMonthlyRows() {
   const g = data.globals;
   const sr = g.superRate;
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, 0), g.kpiScoreCap || 1);
   const prodPct = plan.includeProduction ? (plan.productionPct || 0) : 0;
   const mBands = monthlyBands();
+  const qBands = quarterlyBands();
 
+  // Pass 1: raw monthly GP commission (before any cap) + production commission
+  const raw = actualsMonths.map((m) => {
+    const gp = +m.gpReceived || 0;
+    const ev = +m.eventGP || 0;
+    const { total: mGross } = calcBandCommission(gp, mBands);
+    const gpRawInc = mGross * effectiveKpi;                   // raw monthly GP comm, inc-super
+    const prodInc = ev * prodPct * effectiveKpi;              // production, inc-super
+    return { gp, ev, gpRawInc, prodInc };
+  });
+
+  // Pass 2: apply quarterly caps on months 3, 6, 9, 12
+  const paid = raw.map(r => r.gpRawInc); // mutable — will cap m3/6/9/12
+  const quarters = [];
+  for (let q = 0; q < 4; q++) {
+    const mi = [q * 3, q * 3 + 1, q * 3 + 2]; // month indices
+    const qGP = mi.reduce((a, i) => a + raw[i].gp, 0);
+    const { total: qGrossEnt } = calcBandCommission(qGP, qBands);
+    const qEntitled = qGrossEnt * effectiveKpi; // quarter's GP-commission entitlement, inc-super
+    const m12Raw = paid[mi[0]] + paid[mi[1]];
+    // Cap month 3 of quarter
+    const m3Capped = Math.max(0, qEntitled - m12Raw);
+    paid[mi[2]] = m3Capped;
+    const rawPaidInQ = raw[mi[0]].gpRawInc + raw[mi[1]].gpRawInc + raw[mi[2]].gpRawInc;
+    const actualPaidInQ = paid[mi[0]] + paid[mi[1]] + paid[mi[2]];
+    quarters.push({
+      idx: q,
+      label: `Q${q + 1}`,
+      monthsLabel: `${actualsMonths[mi[0]].month.split(' ')[0]}–${actualsMonths[mi[2]].month.split(' ')[0]}`,
+      qGP,
+      qEntitled,
+      rawPaidInQ,
+      actualPaidInQ,
+      absorbed: Math.max(0, rawPaidInQ - qEntitled), // company absorbed this much
+      bonus: Math.max(0, qEntitled - rawPaidInQ),    // month 3 top-up amount (already baked into paid[])
+      deltaAfterReconciliation: qEntitled - actualPaidInQ, // should be ≤ 0 when capped
+      m3Capped: raw[mi[2]].gpRawInc > 0 && m3Capped === 0,
+    });
+  }
+
+  // Pass 3: annual cap on month 12 (on top of quarterly cap)
+  const annualGP = actualsMonths.reduce((a, m) => a + (+m.gpReceived || 0), 0);
+  const { total: annualGrossEnt } = calcBandCommission(annualGP, plan.bands);
+  const annualEntitled = annualGrossEnt * effectiveKpi;
+  const paidM1to11 = paid.slice(0, 11).reduce((a, v) => a + v, 0);
+  const annualAllowedM12 = Math.max(0, annualEntitled - paidM1to11);
+  const m12BeforeAnnualCap = paid[11];
+  if (m12BeforeAnnualCap > annualAllowedM12) {
+    paid[11] = annualAllowedM12;
+  }
+  const annualCapFired = m12BeforeAnnualCap > annualAllowedM12;
+  const totalPaidAnnual = paid.reduce((a, v) => a + v, 0);
+
+  // Assemble output rows
   const rows = actualsMonths.map((m, i) => {
-    const gpThisMonth = +m.gpReceived || 0;
-    const eventGPThisMonth = +m.eventGP || 0;
-
-    // Monthly GP commission — pure monthly band calc, super-inclusive
-    const { total: monthBandGross } = calcBandCommission(gpThisMonth, mBands);
-    const gpCommInc = monthBandGross * effectiveKpi;                 // inc-super
-    const gpCommEx = gpCommInc / (1 + sr);                            // ex-super portion
+    const r = raw[i];
+    const gpCommInc = paid[i];
+    const gpCommEx = gpCommInc / (1 + sr);
     const gpCommSuper = gpCommInc - gpCommEx;
-
-    // Production commission — 1% of Event GP, super-inclusive
-    const prodCommInc = eventGPThisMonth * prodPct * effectiveKpi;
+    const prodCommInc = r.prodInc;
     const prodCommEx = prodCommInc / (1 + sr);
     const prodCommSuper = prodCommInc - prodCommEx;
-
     const monTotalInc = gpCommInc + prodCommInc;
+    const quarterIdx = Math.floor(i / 3);
+    const monthInQuarter = i % 3; // 0, 1, 2
+    const isQuarterEnd = monthInQuarter === 2;
+    const isAnnualEnd = i === 11;
+    const wasCapped = gpCommInc < r.gpRawInc - 0.01;
     return {
       idx: i,
       month: m.month,
-      gpReceived: gpThisMonth,
-      eventGP: eventGPThisMonth,
+      gpReceived: r.gp,
+      eventGP: r.ev,
       gpCommInc, gpCommEx, gpCommSuper,
       prodCommInc, prodCommEx, prodCommSuper,
-      monTotalInc
+      monTotalInc,
+      rawMonthlyGPComm: r.gpRawInc,
+      isQuarterEnd,
+      isAnnualEnd,
+      quarterIdx,
+      wasCapped,
+      annualCapFired: isAnnualEnd && annualCapFired,
     };
   });
 
@@ -862,9 +1011,37 @@ function computeMonthlyRows() {
     prodCommEx: a.prodCommEx + r.prodCommEx,
     prodCommSuper: a.prodCommSuper + r.prodCommSuper,
     monTotalInc: a.monTotalInc + r.monTotalInc,
-  }), { gpReceived: 0, eventGP: 0, gpCommInc: 0, gpCommEx: 0, gpCommSuper: 0, prodCommInc: 0, prodCommEx: 0, prodCommSuper: 0, monTotalInc: 0 });
+    rawMonthlyGPComm: a.rawMonthlyGPComm + r.rawMonthlyGPComm,
+  }), { gpReceived: 0, eventGP: 0, gpCommInc: 0, gpCommEx: 0, gpCommSuper: 0, prodCommInc: 0, prodCommEx: 0, prodCommSuper: 0, monTotalInc: 0, rawMonthlyGPComm: 0 });
 
-  return { rows, totals };
+  const annualSummary = {
+    annualGP,
+    annualEntitled,
+    paidTotal: totalPaidAnnual,
+    delta: annualEntitled - totalPaidAnnual,   // +ve = bonus at year-end, -ve = overpaid (absorbed)
+    annualCapFired,
+  };
+
+  return { rows, totals, quarters, annualSummary };
+}
+
+// Monthly Scenario sandbox — same monthly band calc as a single month, no cap
+function computeMonthlyScenario() {
+  const g = data.globals;
+  const sr = g.superRate;
+  const effectiveKpi = Math.min(Math.max(scenario.kpiScore, 0), g.kpiScoreCap || 1);
+  const prodPct = plan.includeProduction ? (plan.productionPct || 0) : 0;
+  const mBands = monthlyBands();
+  const { total: mGross } = calcBandCommission(scenario.mscnGP, mBands);
+  const gpInc = mGross * effectiveKpi;
+  const gpEx = gpInc / (1 + sr);
+  const prodInc = scenario.mscnEvent * prodPct * effectiveKpi;
+  const prodEx = prodInc / (1 + sr);
+  return {
+    gpInc, gpEx, gpSuper: gpInc - gpEx,
+    prodInc, prodEx, prodSuper: prodInc - prodEx,
+    totalInc: gpInc + prodInc,
+  };
 }
 
 function update() {
@@ -998,14 +1175,24 @@ function update() {
     banner.textContent = `Your commission is paid ${freq} — ${(payoutPct*100).toFixed(0)}% paid out each period, ${((1-payoutPct)*100).toFixed(0)}% reconciled at year-end.`;
   }
 
+  // /12 chips in Scenario Inputs (Planning)
+  const gpChip = document.getElementById('gp-monthly-chip');
+  if (gpChip) gpChip.textContent = fmtMoney(scenario.gp / 12);
+  const evChip = document.getElementById('event-gp-monthly-chip');
+  if (evChip) evChip.textContent = fmtMoney(scenario.eventGP / 12);
+
   // ===== ACTUAL =====
-  const { rows: mRows, totals: mTot } = computeMonthlyRows();
+  const { rows: mRows, totals: mTot, quarters: qSummary, annualSummary } = computeMonthlyRows();
   const tbody = document.getElementById('monthly-body');
   // Update the calc cells per row (leave inputs untouched so caret/focus survives)
   mRows.forEach(r2 => {
     const row = tbody.querySelector(`tr[data-mon-idx="${r2.idx}"]`);
     if (!row) return;
-    row.querySelector('[data-cell="gpComm"]').textContent = r2.gpCommInc > 0 ? fmtMoney(r2.gpCommInc) : '—';
+    row.classList.toggle('tu-capped', r2.wasCapped);
+    const mLabel = (r2.isAnnualEnd && r2.annualCapFired) ? ' 🔒 annual TU' : (r2.isQuarterEnd && r2.wasCapped ? ' 🔒 quarter TU' : '');
+    const gpCommCell = row.querySelector('[data-cell="gpComm"]');
+    gpCommCell.textContent = r2.gpCommInc > 0 ? fmtMoney(r2.gpCommInc) + mLabel : (r2.isQuarterEnd && r2.wasCapped ? '$0 🔒 TU' : '—');
+    gpCommCell.title = r2.wasCapped ? `Raw monthly calc: ${fmtMoney(r2.rawMonthlyGPComm)}. Capped by true-up.` : '';
     row.querySelector('[data-cell="prodComm"]').textContent = r2.prodCommInc > 0 ? fmtMoney(r2.prodCommInc) : '—';
     row.querySelector('[data-cell="monTotal"]').textContent = r2.monTotalInc > 0 ? fmtMoney(r2.monTotalInc) : '—';
   });
@@ -1029,17 +1216,58 @@ function update() {
     ? `${fmtMoney(mTot.prodCommEx)} + ${fmtMoney(mTot.prodCommSuper)} super`
     : '1% of Event GP';
 
-  // YTD total earned = Base YTD (pro-rata by months elapsed with entries) + commission YTD, all inc. super
-  // Simpler: use the sum of monthly totals for commissions, and full annual base pro-rata'd by # months with data
-  const monthsWithData = actualsMonths.filter(m => (+m.gpReceived || 0) > 0 || (+m.eventGP || 0) > 0).length;
-  const baseYTDExSuper = r.base * (monthsWithData / 12);
-  const baseYTDSuper = baseYTDExSuper * g.superRate;
-  const baseYTDInc = baseYTDExSuper + baseYTDSuper;
-  const ytdTotal = baseYTDInc + mTot.monTotalInc;
-  document.getElementById('ytd-total').textContent = fmtMoney(ytdTotal);
-  document.getElementById('ytd-total-sub').textContent = monthsWithData > 0
-    ? `Base pro-rata (${monthsWithData}/12) ${fmtMoney(baseYTDInc)} + comm ${fmtMoney(mTot.monTotalInc)}`
-    : 'Enter monthly GP to see earnings';
+  // True-Up Delta card (annual)
+  const tuEl = document.getElementById('trueup-delta');
+  const tuSub = document.getElementById('trueup-delta-sub');
+  const annDelta = annualSummary.delta;
+  if (annualSummary.annualGP === 0) {
+    tuEl.textContent = '—';
+    tuSub.textContent = 'Enter monthly GP to project';
+  } else if (annDelta >= 0) {
+    tuEl.textContent = '+' + fmtMoney(annDelta);
+    tuSub.textContent = `Entitled ${fmtMoney(annualSummary.annualEntitled)} − paid ${fmtMoney(annualSummary.paidTotal)} = bonus due at year-end`;
+  } else {
+    tuEl.textContent = '−' + fmtMoney(-annDelta);
+    tuSub.textContent = `Overpaid by this amount — company absorbs after quarterly TUs`;
+  }
+
+  // Monthly Scenario card (sandbox)
+  const ms = computeMonthlyScenario();
+  const mEl = (id) => document.getElementById(id);
+  if (mEl('mscn-gpcomm')) {
+    mEl('mscn-gpcomm').textContent = ms.gpInc > 0 ? fmtMoney(ms.gpInc) : '—';
+    mEl('mscn-gpcomm-sub').textContent = ms.gpInc > 0
+      ? `${fmtMoney(ms.gpEx)} + ${fmtMoney(ms.gpSuper)} super`
+      : 'Below monthly floor';
+    mEl('mscn-prodcomm').textContent = ms.prodInc > 0 ? fmtMoney(ms.prodInc) : '—';
+    mEl('mscn-prodcomm-sub').textContent = ms.prodInc > 0
+      ? `${fmtMoney(ms.prodEx)} + ${fmtMoney(ms.prodSuper)} super`
+      : '1% of Event GP';
+    mEl('mscn-total').textContent = fmtMoney(ms.totalInc);
+    mEl('mscn-total-sub').textContent = `Raw monthly — subject to quarterly true-up in actual payout`;
+  }
+
+  // Quarterly summary strip
+  const qStrip = document.getElementById('quarterly-strip');
+  if (qStrip) {
+    qStrip.innerHTML = qSummary.map((q, i) => {
+      const isPositive = q.deltaAfterReconciliation >= -0.01;
+      const absorbedNote = q.absorbed > 0.01
+        ? `<div style="font-size:11px; color:var(--danger); font-family:var(--mono); margin-top:6px;">Absorbed by co.: ${fmtMoney(q.absorbed)}</div>`
+        : '';
+      const capNote = q.m3Capped
+        ? `<div style="font-size:11px; color:var(--warn); font-family:var(--mono); margin-top:6px;">Month 3 capped to \$0</div>`
+        : '';
+      return `
+        <div style="background:#fafaf7; border:1px solid var(--border); border-radius:10px; padding:14px 16px;">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">${q.label} <span style="font-weight:400;">· ${q.monthsLabel}</span></div>
+          <div style="font-family:var(--mono); font-size:18px; font-weight:700; color:var(--ink); margin-top:6px;">${fmtMoney(q.actualPaidInQ)}</div>
+          <div style="font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:2px;">GP ${fmtMoney(q.qGP)} · Entitled ${fmtMoney(q.qEntitled)}</div>
+          ${absorbedNote}${capNote}
+        </div>
+      `;
+    }).join('');
+  }
 }
 
 function renderBreakdown(r) {

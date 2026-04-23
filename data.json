@@ -149,7 +149,7 @@
     },
     "gp_bands": {
       "name": "Sales Rep (GP Incremental Bands)",
-      "description": "For Sales Reps (Daniel, Nic). Flat-step GP bands calibrated so $300k GP \u2248 old 3.5% flat rate, with ~$6,750 extra per $50k above. Band output is super-INCLUSIVE. Plus 1% production commission on Event GP (also super-inclusive).",
+      "description": "For Sales Reps (Daniel, Nic). Flat-step GP bands calibrated so $300k GP \u2248 old 3.5% flat rate, stretch accelerates past $400k. Band output is super-INCLUSIVE. Plus 1% production commission on Event GP (also super-inclusive). Quarterly true-up reconciles overpayment via caps on months 3/6/9/12.",
       "metricLabel": "Annual GP Sold",
       "metricBasis": "gp",
       "inputIncludesGST": true,
@@ -164,11 +164,15 @@
         },
         {
           "threshold": 200000,
-          "rate": 0.105
+          "rate": 0.1
         },
         {
           "threshold": 300000,
           "rate": 0.135
+        },
+        {
+          "threshold": 400000,
+          "rate": 0.15
         }
       ],
       "productionPct": 0.01,
@@ -176,6 +180,7 @@
       "productionIncludesSuper": true,
       "showOldCommissionComparison": true,
       "oldCommissionRate": 0.035,
+      "trueUpMode": "quarterly_positive_plus_annual",
       "includeProjects": false
     },
     "hybrid_gp": {
@@ -449,20 +454,20 @@
       "dashboardFile": "daniel.html",
       "placeholder": false,
       "actuals": {
-        "fiscalYearStart": "2025-07",
+        "fiscalYearStart": "2026-04",
         "monthlyGP": [
-          { "month": "Jul 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
-          { "month": "Aug 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
-          { "month": "Sep 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
-          { "month": "Oct 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
-          { "month": "Nov 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
-          { "month": "Dec 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
-          { "month": "Jan 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
-          { "month": "Feb 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
-          { "month": "Mar 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
           { "month": "Apr 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
           { "month": "May 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
-          { "month": "Jun 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 }
+          { "month": "Jun 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jul 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Aug 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Sep 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Oct 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Nov 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Dec 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jan 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Feb 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Mar 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 }
         ]
       }
     },
