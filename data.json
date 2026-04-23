@@ -43,59 +43,32 @@
   },
   "planTypes": {
     "gm": {
-      "name": "General Manager (CM + NP)",
-      "description": "For Hayley. CM bands above baseline + NP incremental thresholds.",
-      "metricLabel": "Contribution Margin + Net Profit",
+      "name": "General Manager (CM-driven + NP kicker)",
+      "description": "For Hayley. $10k maintenance bonus if CM >= last year's baseline ($1,093k), plus incremental growth bands above that baseline, plus a small flat-dollar NP kicker at milestones. Band output is super-INCLUSIVE. Quarterly 75/25 payout.",
+      "metricLabel": "Contribution Margin (primary) + Net Profit kicker",
       "maxMetricValue": 1500000,
       "metricBasis": "cm_np",
       "inputIncludesGST": false,
+      "bandsIncludeSuper": true,
       "payoutFrequency": "quarterly",
       "payoutPercentage": 0.75,
       "includeProduction": false,
       "cmBaseline": 1093000,
+      "cmMaintenanceBonus": 10000,
       "cmBands": [
-        {
-          "threshold": 1000000,
-          "rate": 0
-        },
-        {
-          "threshold": 1100000,
-          "rate": 0.02
-        },
-        {
-          "threshold": 1200000,
-          "rate": 0.03
-        },
-        {
-          "threshold": 1300000,
-          "rate": 0.04
-        },
-        {
-          "threshold": 1400000,
-          "rate": 0.05
-        }
+        { "threshold": 0,       "rate": 0 },
+        { "threshold": 1093000, "rate": 0.05 },
+        { "threshold": 1200000, "rate": 0.10 },
+        { "threshold": 1300000, "rate": 0.12 },
+        { "threshold": 1400000, "rate": 0.14 }
       ],
-      "npBands": [
-        {
-          "threshold": 850000,
-          "rate": 0.05
-        },
-        {
-          "threshold": 900000,
-          "rate": 0.07
-        },
-        {
-          "threshold": 950000,
-          "rate": 0.08
-        },
-        {
-          "threshold": 1000000,
-          "rate": 0.1
-        },
-        {
-          "threshold": 1050000,
-          "rate": 0.1
-        }
+      "npBonuses": [
+        { "threshold": 850000,  "bonus": 200 },
+        { "threshold": 900000,  "bonus": 400 },
+        { "threshold": 950000,  "bonus": 800 },
+        { "threshold": 1000000, "bonus": 1200 },
+        { "threshold": 1050000, "bonus": 1500 },
+        { "threshold": 1100000, "bonus": 2000 }
       ],
       "includeProjects": false
     },
