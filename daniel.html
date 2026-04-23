@@ -167,6 +167,10 @@
   table.monthly tr.totals td.mon { color: #fff; font-weight: 700; }
   table.monthly tr.tu-capped td { background: #fef5e6; }
   table.monthly tr.tu-capped td.mon { color: var(--warn); font-weight: 700; }
+  table.monthly tr.tu-locked td { background: #eef4fa; }
+  table.monthly tr.tu-locked td.mon { color: var(--navy); font-weight: 700; }
+  table.monthly tr.tu-locked td.input-cell input { background: #f1f5fa; color: var(--muted); cursor: not-allowed; }
+  table.monthly th small { display: block; font-weight: 400; color: var(--faint); font-size: 9px; margin-top: 2px; text-transform: none; letter-spacing: 0.03em; }
 
   /* Thermometer progress bar for quarterly cards */
   .thermo-wrap { margin-top: 10px; }
@@ -174,9 +178,9 @@
   .thermo-green { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 999px 0 0 999px; }
   .thermo-green.full { border-radius: 999px; }
   .thermo-amber { position: absolute; top: 0; bottom: 0; background: var(--warn); border-radius: 0 999px 999px 0; }
-  .thermo-marker { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--navy); z-index: 2; }
-  .thermo-marker::after { content: "100%"; position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 9px; font-family: var(--mono); color: var(--navy); font-weight: 600; white-space: nowrap; }
-  .thermo-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--faint); font-family: var(--mono); margin-top: 4px; }
+  .thermo-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--navy); z-index: 2; }
+  .thermo-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--faint); font-family: var(--mono); margin-top: 6px; }
+  .thermo-scale .entitled-label { color: var(--navy); font-weight: 600; }
 
   /* Help / What is TU? */
   details.tu-help { background: #fafaf7; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-top: 18px; }
@@ -470,10 +474,11 @@
             <tr>
               <th>Month</th>
               <th class="num">GP Received</th>
-              <th class="num">Event GP Produced</th>
-              <th class="num">GP Commission <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
-              <th class="num">Production Commission <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
-              <th class="num">Monthly Total <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
+              <th class="num">Event GP<br>Produced</th>
+              <th class="num">GP<br>Commission<small>Inc. Super</small></th>
+              <th class="num">Production<br>Commission<small>Inc. Super</small></th>
+              <th class="num">Monthly<br>Total<small>Inc. Super</small></th>
+              <th class="num">Monthly<br>Total<small>Ex. Super</small></th>
             </tr>
           </thead>
           <tbody id="monthly-body"></tbody>
@@ -878,20 +883,35 @@ function calcGuardrail() {
 // --- Monthly grid rendering + actuals-driven calculation ---
 function renderMonthlyGrid() {
   const tbody = document.getElementById('monthly-body');
-  const rows = actualsMonths.map((m, i) => `
-    <tr data-mon-idx="${i}">
-      <td class="mon">${m.month}</td>
+  const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
+  const isLocked = (i) => {
+    const ap = actualPayouts[i];
+    return ap && ap.commissionPaid != null && ap.commissionPaid !== '';
+  };
+  const rows = actualsMonths.map((m, i) => {
+    const locked = isLocked(i);
+    const ap = actualPayouts[i] || {};
+    // Values shown: admin values when locked, employee values otherwise
+    const gpVal = locked ? (ap.gpReceived || 0) : m.gpReceived;
+    const evVal = locked ? (ap.eventGP || 0) : m.eventGP;
+    const noteAttr = locked && ap.notes ? ` title="Payroll note: ${String(ap.notes).replace(/"/g,'&quot;')}"` : '';
+    const lockChip = locked ? `<span style="font-size:10px; color:var(--navy); font-weight:600; margin-left:4px;" title="Locked by payroll admin">🔒</span>` : '';
+    return `
+    <tr data-mon-idx="${i}" class="${locked ? 'tu-locked' : ''}"${noteAttr}>
+      <td class="mon">${m.month}${lockChip}</td>
       <td class="input-cell">
-        <input type="text" inputmode="numeric" data-field="gpReceived" data-idx="${i}" value="${m.gpReceived ? fmtNum(m.gpReceived) : ''}" placeholder="0">
+        <input type="text" inputmode="numeric" data-field="gpReceived" data-idx="${i}" value="${gpVal ? fmtNum(gpVal) : ''}" placeholder="0" ${locked ? 'disabled' : ''}>
       </td>
       <td class="input-cell">
-        <input type="text" inputmode="numeric" data-field="eventGP" data-idx="${i}" value="${m.eventGP ? fmtNum(m.eventGP) : ''}" placeholder="0">
+        <input type="text" inputmode="numeric" data-field="eventGP" data-idx="${i}" value="${evVal ? fmtNum(evVal) : ''}" placeholder="0" ${locked ? 'disabled' : ''}>
       </td>
       <td class="num plus" data-cell="gpComm">—</td>
       <td class="num plus" data-cell="prodComm">—</td>
       <td class="num" data-cell="monTotal">—</td>
+      <td class="num" data-cell="monTotalEx">—</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   const totalsRow = `
     <tr class="totals">
@@ -901,6 +921,7 @@ function renderMonthlyGrid() {
       <td class="num" id="tot-gpcomm">—</td>
       <td class="num" id="tot-prodcomm">—</td>
       <td class="num" id="tot-total">—</td>
+      <td class="num" id="tot-total-ex">—</td>
     </tr>
   `;
 
@@ -965,11 +986,15 @@ function computeMonthlyRows() {
   const qBands = quarterlyBands();
 
   // Raw monthly commissions (before offset/cap)
-  const raw = actualsMonths.map(m => {
-    const gp = +m.gpReceived || 0;
-    const ev = +m.eventGP || 0;
+  // If admin has entered actualPayouts for a month, admin's GP/eventGP take precedence — that's the "locked" row.
+  const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
+  const raw = actualsMonths.map((m, i) => {
+    const ap = actualPayouts[i];
+    const locked = ap && ap.commissionPaid != null && ap.commissionPaid !== '';
+    const gp = locked ? (+ap.gpReceived || 0) : (+m.gpReceived || 0);
+    const ev = locked ? (+ap.eventGP || 0) : (+m.eventGP || 0);
     const { total: mGross } = calcBandCommission(gp, mBands);
-    return { gp, ev, gpRawInc: mGross * effectiveKpi, prodInc: ev * prodPct * effectiveKpi };
+    return { gp, ev, gpRawInc: mGross * effectiveKpi, prodInc: ev * prodPct * effectiveKpi, locked };
   });
 
   let balance = 0;                  // >0 = rep owes future commissions (overpaid); carries between quarters/years
@@ -1293,12 +1318,15 @@ function update() {
     gpCommCell.title = r2.wasCapped ? `Raw monthly calc: ${fmtMoney(r2.rawMonthlyGPComm)}. Capped by true-up.` : '';
     row.querySelector('[data-cell="prodComm"]').textContent = r2.prodCommInc > 0 ? fmtMoney(r2.prodCommInc) : '—';
     row.querySelector('[data-cell="monTotal"]').textContent = r2.monTotalInc > 0 ? fmtMoney(r2.monTotalInc) : '—';
+    const monTotalEx = r2.monTotalInc / (1 + g.superRate);
+    row.querySelector('[data-cell="monTotalEx"]').textContent = r2.monTotalInc > 0 ? fmtMoney(monTotalEx) : '—';
   });
   document.getElementById('tot-gp').textContent = fmtMoney(mTot.gpReceived);
   document.getElementById('tot-eventgp').textContent = fmtMoney(mTot.eventGP);
   document.getElementById('tot-gpcomm').textContent = fmtMoney(mTot.gpCommInc);
   document.getElementById('tot-prodcomm').textContent = fmtMoney(mTot.prodCommInc);
   document.getElementById('tot-total').textContent = fmtMoney(mTot.monTotalInc);
+  document.getElementById('tot-total-ex').textContent = fmtMoney(mTot.monTotalInc / (1 + g.superRate));
 
   // YTD summary cards — all headlines super-inclusive
   document.getElementById('ytd-gp').textContent = fmtMoney(mTot.gpReceived);
@@ -1363,27 +1391,45 @@ function update() {
       const amberEnd = paidPct;
       const amberPct = Math.max(0, amberEnd - amberStart);
 
-      const empty = q.qGP === 0;
+      const empty = q.qGP === 0 && q.balanceStart === 0 && q.balanceEnd === 0;
 
-      // Running balance note below the bar
-      let balanceNote = '';
-      if (q.balanceStart > 0.5 && q.balanceEnd < 0.5) {
-        balanceNote = `<span style="color:var(--accent);">True-up from prior balance: ${fmtMoney(q.balanceStart)} worked off this quarter.</span>`;
-      } else if (q.balanceEnd > 0.5 && q.balanceChange > 0.5) {
-        balanceNote = `<span style="color:var(--warn);">True-up forward: ${fmtMoney(q.balanceEnd)} → applies to next quarter's commissions</span>`;
-      } else if (q.balanceEnd > 0.5 && q.balanceChange < -0.5) {
-        balanceNote = `<span style="color:var(--accent);">True-up balance reduced by ${fmtMoney(-q.balanceChange)} this quarter (${fmtMoney(q.balanceEnd)} remains)</span>`;
-      } else if (Math.abs(q.qEntitled - q.qPaidNet) < 0.5 && q.balanceEnd < 0.5) {
-        balanceNote = `<span style="color:var(--accent);">On target — paid matches entitled.</span>`;
-      } else if (q.qPaidNet > q.qEntitled) {
-        balanceNote = `<span style="color:var(--muted);">Paid ${fmtMoney(q.qPaidNet)} of ${fmtMoney(q.qEntitled)} entitled</span>`;
+      // Three-line Earned → True-up → Paid story
+      // "Earned" = quarterly entitled (what you earned this quarter based on bands)
+      // "True-up" = adjustment applied (+ = top-up from past, − = removed and rolled forward)
+      // "Paid" = actual cash paid (qCash in quarter)
+      const earned = q.qEntitled;
+      const paidCash = q.qCash != null ? q.qCash : q.qPaidNet;
+      // True-up amount = paid - earned (positive = overpaid this Q → goes to balance; negative = rep got less because balance offset)
+      const tuAmount = paidCash - earned;
+
+      let tuLine;
+      if (Math.abs(tuAmount) < 0.5) {
+        tuLine = `<div style="color:var(--muted);">True-up: <strong>$0</strong> (no adjustment)</div>`;
+      } else if (tuAmount > 0) {
+        // paid > earned means quarter overpaid (balance grew). But this only happens when raw m1 cash > q entitled.
+        // So the extra cash becomes true-up forward.
+        tuLine = `<div style="color:var(--warn);">True-up forward: <strong>+${fmtMoney(tuAmount)}</strong> (rolls to future commissions)</div>`;
+      } else {
+        // paid < earned means rep received less cash because old balance was worked off
+        tuLine = `<div style="color:var(--accent);">True-up taken: <strong>−${fmtMoney(-tuAmount)}</strong> (offsets prior balance)</div>`;
       }
+
+      const storyBlock = empty ? '' : `
+        <div style="font-size:12px; font-family:var(--mono); margin-top:10px; line-height:1.7; border-top:1px solid var(--border); padding-top:10px;">
+          <div>You earned: <strong>${fmtMoney(earned)}</strong></div>
+          ${tuLine}
+          <div style="margin-top:4px; font-weight:700; color:var(--ink);">Cash paid: ${fmtMoney(paidCash)}</div>
+        </div>
+      `;
+
+      const carryLine = q.balanceEnd > 0.5
+        ? `<div style="font-size:11px; font-family:var(--mono); color:var(--warn); margin-top:6px;">Balance into next quarter: ${fmtMoney(q.balanceEnd)}</div>`
+        : '';
 
       return `
         <div style="background:#fafaf7; border:1px solid var(--border); border-radius:10px; padding:14px 16px;">
           <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">${q.label} <span style="font-weight:400;">· ${q.monthsLabel}</span></div>
-          <div style="font-family:var(--mono); font-size:16px; font-weight:700; color:var(--ink); margin-top:6px;">${empty ? '—' : fmtMoney(q.qPaidNet)}</div>
-          <div style="font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:2px;">GP ${fmtMoney(q.qGP)} · Entitled ${fmtMoney(q.qEntitled)}</div>
+          <div style="font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:6px;">GP ${fmtMoney(q.qGP)} · Entitled <span class="entitled-label" style="color:var(--navy); font-weight:600;">${fmtMoney(q.qEntitled)}</span></div>
           ${empty ? '' : `
           <div class="thermo-wrap">
             <div class="thermo-track">
@@ -1394,7 +1440,8 @@ function update() {
             <div class="thermo-scale"><span>$0</span><span>Over</span></div>
           </div>
           `}
-          ${balanceNote ? `<div style="font-size:11px; font-family:var(--mono); margin-top:8px; line-height:1.4;">${balanceNote}</div>` : ''}
+          ${storyBlock}
+          ${carryLine}
         </div>
       `;
     }).join('');

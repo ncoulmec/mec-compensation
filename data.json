@@ -467,7 +467,21 @@
           { "month": "Feb 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
           { "month": "Mar 2027", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 }
         ]
-      }
+      },
+      "actualPayouts": [
+        { "month": "Apr 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "May 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Jun 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Jul 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Aug 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Sep 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Oct 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Nov 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Dec 2026", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Jan 2027", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Feb 2027", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" },
+        { "month": "Mar 2027", "commissionPaid": null, "gpReceived": null, "eventGP": null, "notes": "" }
+      ]
     },
     {
       "id": "nic",
