@@ -46,6 +46,7 @@
       "name": "General Manager (CM + NP)",
       "description": "For Hayley. CM bands above baseline + NP incremental thresholds.",
       "metricLabel": "Contribution Margin + Net Profit",
+      "maxMetricValue": 1500000,
       "metricBasis": "cm_np",
       "inputIncludesGST": false,
       "payoutFrequency": "quarterly",
@@ -102,6 +103,7 @@
       "name": "Senior Sales Manager (GP Incremental Bands)",
       "description": "For Senior Sales (Dane). Incremental GP bands + 1% production on Event GP (they produce a small handful of events too).",
       "metricLabel": "Annual GP Sold",
+      "maxMetricValue": 800000,
       "metricBasis": "gp",
       "inputIncludesGST": true,
       "payoutFrequency": "monthly",
@@ -143,14 +145,16 @@
       ],
       "productionPct": 0.01,
       "productionBasis": "eventGP",
+      "maxProductionValue": 400000,
       "showOldCommissionComparison": true,
       "oldCommissionRate": 0.035,
       "includeProjects": false
     },
     "gp_bands": {
       "name": "Sales Rep (GP Incremental Bands)",
-      "description": "For Sales Reps (Daniel, Nic). Flat-step GP bands calibrated so $300k GP \u2248 old 3.5% flat rate, stretch accelerates past $400k. Band output is super-INCLUSIVE. Plus 1% production commission on Event GP (also super-inclusive). Quarterly true-up reconciles overpayment via caps on months 3/6/9/12.",
+      "description": "For Sales Reps (Daniel, Nic). Five-band structure: true no-commission floor at $100k, soft start from $100-200k, ramps through $200-300k so $300k matches old 3.5% flat, accelerates past $400k. Band output is super-INCLUSIVE. 1% production commission on Event GP (also super-inclusive). Quarterly true-ups net against a running balance that carries forward (no clawback from base).",
       "metricLabel": "Annual GP Sold",
+      "maxMetricValue": 600000,
       "metricBasis": "gp",
       "inputIncludesGST": true,
       "bandsIncludeSuper": true,
@@ -158,35 +162,26 @@
       "payoutPercentage": 1,
       "includeProduction": true,
       "bands": [
-        {
-          "threshold": 0,
-          "rate": 0
-        },
-        {
-          "threshold": 200000,
-          "rate": 0.1
-        },
-        {
-          "threshold": 300000,
-          "rate": 0.135
-        },
-        {
-          "threshold": 400000,
-          "rate": 0.15
-        }
+        { "threshold": 0,      "rate": 0 },
+        { "threshold": 100000, "rate": 0.025 },
+        { "threshold": 200000, "rate": 0.08 },
+        { "threshold": 300000, "rate": 0.135 },
+        { "threshold": 400000, "rate": 0.15 }
       ],
       "productionPct": 0.01,
       "productionBasis": "eventGP",
+      "maxProductionValue": 400000,
       "productionIncludesSuper": true,
       "showOldCommissionComparison": true,
       "oldCommissionRate": 0.035,
-      "trueUpMode": "quarterly_positive_plus_annual",
+      "trueUpMode": "quarterly_carry_forward",
       "includeProjects": false
     },
     "hybrid_gp": {
       "name": "Sales-Producer Hybrid (GP Sales + Production)",
-      "description": "For Evie & Evie 2.0. GP bands on cash-received GP (roughly half the Sales Rep bands \u2014 they sell at a lower rate) + 1% production on Event GP.",
+      "description": "For Evie & Evie 2.0. GP bands on cash-received GP (roughly half the Sales Rep bands \u2014 they sell at a lower rate) + 1% production on Event GP. Higher metric ceiling reflects that they produce a lot more GP.",
       "metricLabel": "Annual GP Sold",
+      "maxMetricValue": 1200000,
       "metricBasis": "gp",
       "inputIncludesGST": false,
       "payoutFrequency": "monthly",
@@ -216,6 +211,7 @@
       ],
       "productionPct": 0.01,
       "productionBasis": "eventGP",
+      "maxProductionValue": 600000,
       "showOldCommissionComparison": true,
       "oldCommissionRate": 0.035,
       "includeProjects": false
@@ -224,6 +220,7 @@
       "name": "Talent (Performer-Revenue Hybrid)",
       "description": "For Michael (Performer/Systems Manager). Variable comp on revenue bands. Threshold structure: $70k floor (pay-for-yourself), then $30k increments up to $300k+.",
       "metricLabel": "Annual Performance Revenue",
+      "maxMetricValue": 400000,
       "metricBasis": "revenue",
       "inputIncludesGST": false,
       "payoutFrequency": "quarterly",
@@ -279,6 +276,7 @@
       "name": "Talent Senior (Performer-Revenue Hybrid)",
       "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue \u2192 ~$100k base ex-super equivalent. Nathan to set rates.",
       "metricLabel": "Annual Performance Revenue",
+      "maxMetricValue": 400000,
       "metricBasis": "revenue",
       "inputIncludesGST": false,
       "payoutFrequency": "quarterly",

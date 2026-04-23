@@ -1110,8 +1110,22 @@ function renderPlans() {
       </div>
       <div class="plan-body">
         <div style="padding: 10px 0; border-bottom: 1px solid var(--border);">
-          <label style="font-size: 14px; display: block; margin-bottom: 6px;">Metric Label <span class="hint">What employees see on their dashboard</span></label>
-          <input type="text" class="name-input" style="width:100%; max-width: 640px; padding: 8px 10px;" value="${plan.metricLabel || ''}" oninput="data.planTypes['${key}'].metricLabel=this.value; setDirty()">
+          <div style="display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-end;">
+            <div style="flex: 2 1 320px; min-width: 260px;">
+              <label style="font-size: 14px; display: block; margin-bottom: 6px;">Metric Label <span class="hint">What employees see on their dashboard</span></label>
+              <input type="text" class="name-input" style="width:100%; padding: 8px 10px;" value="${plan.metricLabel || ''}" oninput="data.planTypes['${key}'].metricLabel=this.value; setDirty()">
+            </div>
+            <div style="flex: 0 0 180px;">
+              <label style="font-size: 14px; display: block; margin-bottom: 6px;">Maximum Metric Value <span class="hint">Slider max on employee dashboard</span></label>
+              ${moneyInputHtml(`planTypes.${key}.maxMetricValue`, '0')}
+            </div>
+            ${hasProduction ? `
+              <div style="flex: 0 0 180px;">
+                <label style="font-size: 14px; display: block; margin-bottom: 6px;">Maximum Production Value <span class="hint">Event GP slider max</span></label>
+                ${moneyInputHtml(`planTypes.${key}.maxProductionValue`, '0')}
+              </div>
+            ` : ''}
+          </div>
         </div>
         <div style="padding: 10px 0; border-bottom: 1px solid var(--border);">
           <label style="font-size: 14px; display: block; margin-bottom: 8px;">
