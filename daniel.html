@@ -333,10 +333,11 @@
         <thead>
           <tr>
             <th style="width: 40px;">Band</th>
-            <th>GP Range</th>
+            <th>Annual GP Range</th>
+            <th>Monthly GP Range</th>
             <th style="text-align: right;">Rate</th>
-            <th style="text-align: right;">Band Earn</th>
-            <th style="text-align: right;">Cumulative</th>
+            <th style="text-align: right;">Band Earn <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
+            <th style="text-align: right;">Cumulative <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
           </tr>
         </thead>
         <tbody id="bands-body"></tbody>
@@ -390,23 +391,23 @@
 
     <div class="card">
       <h2>Monthly Payout <span class="tooltip-trigger" data-tip="Commission is paid monthly based on real GP Received and Event GP Produced. Each month's commission is calculated incrementally on the cumulative YTD GP so you climb through bands as the year progresses.">?</span></h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Enter each month's GP Received (ex. GST) and Event GP Produced. The monthly GP commission is calculated on the portion of YTD GP that falls within each band (incremental). Production commission is a flat 1% of Event GP.</p>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Enter each month's GP Received and Event GP Produced. GP commission is calculated against the <strong>monthly bands</strong> (annual thresholds ÷ 12 — see the Commission Bands table above) so you're paid from month one once you clear the monthly floor. Each month stands alone. Production commission is a flat 1% of Event GP. All commission figures are inc. super.</p>
       <div style="overflow-x: auto;">
         <table class="monthly" id="monthly-table">
           <thead>
             <tr>
               <th>Month</th>
-              <th class="num">GP Received (ex. GST)</th>
+              <th class="num">GP Received</th>
               <th class="num">Event GP Produced</th>
-              <th class="num">GP Commission</th>
-              <th class="num">Production Commission</th>
-              <th class="num">Monthly Total (inc. super)</th>
+              <th class="num">GP Commission <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
+              <th class="num">Production Commission <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
+              <th class="num">Monthly Total <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
             </tr>
           </thead>
           <tbody id="monthly-body"></tbody>
         </table>
       </div>
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Totals row shows the sum of all 12 months. Commission figures in the totals row are super-inclusive.</p>
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Totals row shows the annual sum. With monthly-independent bands, front-loaded sales can produce a larger total here than the annual band calc on the full-year GP — year-end reconciliation is at Nathan's discretion.</p>
     </div>
   </section>
 
@@ -463,11 +464,11 @@
 
     <div class="super-card">
       <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px;">Superannuation &amp; Total Package (Planning)</h2>
-      <div class="super-line"><span>Base salary</span><span id="spr-base">—</span></div>
-      <div class="super-line"><span>+ GP Commission</span><span id="spr-comm" class="plus-line">—</span></div>
-      <div class="super-line"><span>+ Production Commission (1%)</span><span id="spr-prod" class="plus-line">—</span></div>
-      <div class="super-line muted"><span>Subtotal (ex-super)</span><span id="spr-subtotal">—</span></div>
-      <div class="super-line"><span id="spr-super-label">+ Superannuation (12%)</span><span id="spr-super" class="plus-line">—</span></div>
+      <div class="super-line"><span>Base salary (ex-super)</span><span id="spr-base">—</span></div>
+      <div class="super-line"><span>+ GP Commission (ex-super portion)</span><span id="spr-comm" class="plus-line">—</span></div>
+      <div class="super-line"><span>+ Production Commission (ex-super portion)</span><span id="spr-prod" class="plus-line">—</span></div>
+      <div class="super-line muted"><span>Subtotal ex-super</span><span id="spr-subtotal">—</span></div>
+      <div class="super-line"><span id="spr-super-label">+ Superannuation (total)</span><span id="spr-super" class="plus-line">—</span></div>
       <div class="super-line total"><span>Total package (inc. super)</span><span id="spr-total">—</span></div>
     </div>
   </section>
@@ -660,29 +661,41 @@ function calcBandCommission(metric, bands) {
   return { total, breakdown };
 }
 
-// Planning-side calculation (no margin multiplier)
+// Planning-side calculation.
+// IMPORTANT: band output and production commission are ALREADY super-inclusive (gross).
+// ex-super portion = gross / (1 + superRate). super portion = gross − ex.
 function calcAll() {
   const g = data.globals;
-  const { total: bandComm, breakdown } = calcBandCommission(scenario.gp, plan.bands);
+  const sr = g.superRate;
+  const { total: bandCommGross, breakdown } = calcBandCommission(scenario.gp, plan.bands);
 
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, 0), g.kpiScoreCap || 1);
-  const bandCommKpi = bandComm * effectiveKpi;
-  const production = (plan.includeProduction ? (plan.productionPct || 0) : 0) * scenario.eventGP;
-  const productionKpi = production * effectiveKpi;
+  const commGross = bandCommGross * effectiveKpi;               // inc-super
+  const commEx = commGross / (1 + sr);                          // ex-super portion
+  const commSuper = commGross - commEx;                         // super portion
 
-  const variable = bandCommKpi + productionKpi; // ex-super variable comp
+  const prodGrossRaw = (plan.includeProduction ? (plan.productionPct || 0) : 0) * scenario.eventGP;
+  const prodGross = prodGrossRaw * effectiveKpi;                // inc-super
+  const prodEx = prodGross / (1 + sr);
+  const prodSuper = prodGross - prodEx;
 
-  const base = emp.baseSalary;
-  const baseSuper = base * g.superRate;
+  const base = emp.baseSalary;                                  // ex-super
+  const baseSuper = base * sr;
   const baseInc = base + baseSuper;
-  const commSuper = bandCommKpi * g.superRate;
-  const commInc = bandCommKpi + commSuper;
-  const prodSuper = productionKpi * g.superRate;
-  const prodInc = productionKpi + prodSuper;
 
-  const subtotalExSuper = base + variable;
-  const totalSuper = subtotalExSuper * g.superRate;
-  const totalPackage = subtotalExSuper + totalSuper;
+  // Subtotal (ex-super) = base + ex-super portion of commissions
+  const subtotalExSuper = base + commEx + prodEx;
+  // Total super = super on base + super embedded in commissions
+  const totalSuper = baseSuper + commSuper + prodSuper;
+  const totalPackage = subtotalExSuper + totalSuper;            // = baseInc + commGross + prodGross
+
+  // Legacy aliases for the UI code that already refers to these names
+  const bandCommKpi = commEx;         // ex-super commission (post-KPI)
+  const commInc = commGross;          // gross commission
+  const variable = commEx + prodEx;   // ex-super variable comp
+  const productionKpi = prodEx;       // ex-super production
+  const prodInc = prodGross;
+  const production = prodGrossRaw / (1 + sr); // ex-super pre-KPI (legacy usage)
 
   // Progress to next tier
   let nextTier = null, progressPct = 100, toGo = 0;
@@ -699,24 +712,26 @@ function calcAll() {
     }
   }
 
-  // Old vs new
+  // Old vs new — also treat old 3.5% as inc-super for apples-to-apples
   const oldRate = plan.oldCommissionRate || 0.035;
-  const oldComm = scenario.gp * oldRate;
+  const oldComm = scenario.gp * oldRate;  // inc-super, matches the comparison
 
   // Context message
   let contextMsg = '';
   if (nextTier) {
-    contextMsg = `At ${fmtMoney(scenario.gp)} GP, your variable comp is ${fmtMoney(variable)} (ex-super). Grow to ${fmtMoney(nextTier.threshold)} to unlock the ${fmtPct(nextTier.rate, 1)} tier.`;
+    contextMsg = `At ${fmtMoney(scenario.gp)} GP, your commission is ${fmtMoney(commGross)} (inc. super). Grow to ${fmtMoney(nextTier.threshold)} to unlock the ${fmtPct(nextTier.rate, 1)} tier.`;
   }
 
   return {
-    bandComm, bandCommKpi, commSuper, commInc,
-    production, productionKpi, prodSuper, prodInc,
-    effectiveKpi, variable, breakdown,
+    bandCommGross, commGross, commEx, commSuper,
+    prodGross, prodEx, prodSuper,
+    effectiveKpi, breakdown,
     base, baseSuper, baseInc,
     subtotalExSuper, totalSuper, totalPackage,
     nextTier, progressPct, toGo, contextMsg,
-    oldComm
+    oldComm,
+    // legacy aliases
+    bandCommKpi, commInc, production, productionKpi, prodInc, variable
   };
 }
 
@@ -793,35 +808,46 @@ function renderMonthlyGrid() {
   });
 }
 
-// Incremental monthly GP commission: the slice of cumulative YTD GP added by this month,
-// priced through the incremental band table. Sum of all 12 monthly GP-commissions = annual commission at total YTD GP.
+// Monthly commission: each month runs its GP through MONTHLY bands (annual thresholds ÷ 12, same rates).
+// Each month is independent — no YTD carry. Band output is already super-inclusive.
+function monthlyBands() {
+  // Lazily build monthly-scale bands from the annual plan.bands
+  return [...plan.bands].sort((a, b) => a.threshold - b.threshold).map(b => ({
+    threshold: b.threshold / 12,
+    rate: b.rate
+  }));
+}
+
 function computeMonthlyRows() {
   const g = data.globals;
+  const sr = g.superRate;
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, 0), g.kpiScoreCap || 1);
   const prodPct = plan.includeProduction ? (plan.productionPct || 0) : 0;
-  const sr = g.superRate;
+  const mBands = monthlyBands();
 
-  let runningGP = 0;
-  let lastCumComm = 0;
   const rows = actualsMonths.map((m, i) => {
     const gpThisMonth = +m.gpReceived || 0;
     const eventGPThisMonth = +m.eventGP || 0;
-    runningGP += gpThisMonth;
-    const { total: cumComm } = calcBandCommission(runningGP, plan.bands);
-    const gpCommExSuper = (cumComm - lastCumComm) * effectiveKpi;
-    lastCumComm = cumComm;
-    const prodCommExSuper = eventGPThisMonth * prodPct * effectiveKpi;
-    const gpCommInc = gpCommExSuper * (1 + sr);
-    const prodCommInc = prodCommExSuper * (1 + sr);
+
+    // Monthly GP commission — pure monthly band calc, super-inclusive
+    const { total: monthBandGross } = calcBandCommission(gpThisMonth, mBands);
+    const gpCommInc = monthBandGross * effectiveKpi;                 // inc-super
+    const gpCommEx = gpCommInc / (1 + sr);                            // ex-super portion
+    const gpCommSuper = gpCommInc - gpCommEx;
+
+    // Production commission — 1% of Event GP, super-inclusive
+    const prodCommInc = eventGPThisMonth * prodPct * effectiveKpi;
+    const prodCommEx = prodCommInc / (1 + sr);
+    const prodCommSuper = prodCommInc - prodCommEx;
+
     const monTotalInc = gpCommInc + prodCommInc;
     return {
       idx: i,
       month: m.month,
       gpReceived: gpThisMonth,
       eventGP: eventGPThisMonth,
-      runningGP,
-      gpCommExSuper, gpCommInc,
-      prodCommExSuper, prodCommInc,
+      gpCommInc, gpCommEx, gpCommSuper,
+      prodCommInc, prodCommEx, prodCommSuper,
       monTotalInc
     };
   });
@@ -829,12 +855,14 @@ function computeMonthlyRows() {
   const totals = rows.reduce((a, r) => ({
     gpReceived: a.gpReceived + r.gpReceived,
     eventGP: a.eventGP + r.eventGP,
-    gpCommExSuper: a.gpCommExSuper + r.gpCommExSuper,
     gpCommInc: a.gpCommInc + r.gpCommInc,
-    prodCommExSuper: a.prodCommExSuper + r.prodCommExSuper,
+    gpCommEx: a.gpCommEx + r.gpCommEx,
+    gpCommSuper: a.gpCommSuper + r.gpCommSuper,
     prodCommInc: a.prodCommInc + r.prodCommInc,
+    prodCommEx: a.prodCommEx + r.prodCommEx,
+    prodCommSuper: a.prodCommSuper + r.prodCommSuper,
     monTotalInc: a.monTotalInc + r.monTotalInc,
-  }), { gpReceived: 0, eventGP: 0, gpCommExSuper: 0, gpCommInc: 0, prodCommExSuper: 0, prodCommInc: 0, monTotalInc: 0 });
+  }), { gpReceived: 0, eventGP: 0, gpCommInc: 0, gpCommEx: 0, gpCommSuper: 0, prodCommInc: 0, prodCommEx: 0, prodCommSuper: 0, monTotalInc: 0 });
 
   return { rows, totals };
 }
@@ -863,14 +891,14 @@ function update() {
   document.getElementById('card-base').textContent = fmtMoney(r.baseInc);
   document.getElementById('card-base-sub').textContent = `${fmtMoney(r.base)} + ${fmtMoney(r.baseSuper)} super`;
 
-  document.getElementById('card-comm').textContent = fmtMoney(r.commInc);
-  document.getElementById('card-comm-sub').textContent = r.bandCommKpi > 0
-    ? `${fmtMoney(r.bandCommKpi)} + ${fmtMoney(r.commSuper)} super`
+  document.getElementById('card-comm').textContent = fmtMoney(r.commGross);
+  document.getElementById('card-comm-sub').textContent = r.commGross > 0
+    ? `${fmtMoney(r.commEx)} + ${fmtMoney(r.commSuper)} super`
     : 'No commission at this level';
 
-  document.getElementById('card-production').textContent = fmtMoney(r.prodInc);
-  document.getElementById('card-production-sub').textContent = r.productionKpi > 0
-    ? `${fmtMoney(r.productionKpi)} + ${fmtMoney(r.prodSuper)} super`
+  document.getElementById('card-production').textContent = fmtMoney(r.prodGross);
+  document.getElementById('card-production-sub').textContent = r.prodGross > 0
+    ? `${fmtMoney(r.prodEx)} + ${fmtMoney(r.prodSuper)} super`
     : '1% of Event GP';
 
   document.getElementById('card-total').textContent = fmtMoney(r.totalPackage);
@@ -883,7 +911,7 @@ function update() {
   document.getElementById('calc-kpi').textContent = `${scenario.kpiScore.toFixed(2)} KPI`;
   document.getElementById('calc-eff').textContent = `${fmtPct(bandRate * r.effectiveKpi, 2)} effective`;
   document.getElementById('calc-note').textContent = activeBand
-    ? `You're in band ${r.breakdown.indexOf(activeBand) + 1} · rate applies to GP earned within this band only`
+    ? `You're in band ${r.breakdown.indexOf(activeBand) + 1} · rate is super-inclusive (applies to GP within this band only)`
     : `Below the first commission band`;
 
   // Progress to next tier
@@ -911,24 +939,28 @@ function update() {
     document.getElementById('context-msg').style.display = 'none';
   }
 
-  // Old vs new comparison
+  // Old vs new comparison — both treated as super-inclusive for apples-to-apples
   document.getElementById('old-comm').textContent = fmtMoney(r.oldComm);
-  document.getElementById('new-comm').textContent = fmtMoney(r.variable);
-  document.getElementById('new-comm-sub').textContent = `Bands × ${r.effectiveKpi.toFixed(2)} KPI (ex-super)`;
-  const delta = r.variable - r.oldComm;
+  document.getElementById('new-comm').textContent = fmtMoney(r.commGross);
+  document.getElementById('new-comm-sub').textContent = `Bands × ${r.effectiveKpi.toFixed(2)} KPI (inc. super)`;
+  const delta = r.commGross - r.oldComm;
   const deltaEl = document.getElementById('delta-val');
   const arrow = document.getElementById('delta-arrow');
   deltaEl.textContent = (delta >= 0 ? '+' : '') + fmtMoney(delta);
   deltaEl.classList.toggle('negative', delta < 0);
   arrow.textContent = delta > 0 ? '▲' : delta < 0 ? '▼' : '→';
 
-  // Bands table
+  // Bands table — show both annual and monthly (÷12) ranges
   const body = document.getElementById('bands-body');
   body.innerHTML = r.breakdown.map((b, i) => {
-    const rangeTxt = b.max === null ? `${fmtMoney(b.min)}+` : `${fmtMoney(b.min)} – ${fmtMoney(b.max)}`;
+    const rangeAnnual = b.max === null ? `${fmtMoney(b.min)}+` : `${fmtMoney(b.min)} – ${fmtMoney(b.max)}`;
+    const rangeMonthly = b.max === null
+      ? `${fmtMoney(b.min / 12)}+`
+      : `${fmtMoney(b.min / 12)} – ${fmtMoney(b.max / 12)}`;
     return `<tr class="${b.active ? 'active' : ''}">
       <td class="band-num">${i + 1}</td>
-      <td>${rangeTxt}</td>
+      <td>${rangeAnnual}</td>
+      <td style="color:var(--muted);font-family:var(--mono);font-size:12px;">${rangeMonthly}</td>
       <td class="num">${fmtPct(b.rate, 2)}</td>
       <td class="num">${b.active ? fmtMoney(b.earn) : '—'}</td>
       <td class="num">${b.active ? fmtMoney(b.cumulative) : '—'}</td>
@@ -937,21 +969,22 @@ function update() {
 
   // Production note
   document.getElementById('production-note').textContent = plan.includeProduction
-    ? `+ ${fmtPct(plan.productionPct, 2)} production commission on Event GP ($${fmtNum(scenario.eventGP)}) = ${fmtMoney(r.production)} ex-super · Total variable (ex-super, post-KPI): ${fmtMoney(r.variable)}`
+    ? `+ ${fmtPct(plan.productionPct, 2)} production commission on Event GP ($${fmtNum(scenario.eventGP)}) = ${fmtMoney(r.prodGross)} inc. super · Total commission (inc. super, post-KPI): ${fmtMoney(r.commGross + r.prodGross)}`
     : '';
 
-  // KPI tab
+  // KPI tab — showing gross commission figures (inc. super)
   document.getElementById('kpi-big').textContent = scenario.kpiScore.toFixed(2);
-  document.getElementById('kpi-before').textContent = fmtMoney(r.bandComm + r.production);
+  const preKpiGross = (r.bandCommGross) + ((plan.includeProduction ? (plan.productionPct || 0) : 0) * scenario.eventGP);
+  document.getElementById('kpi-before').textContent = fmtMoney(preKpiGross);
   document.getElementById('kpi-mult').textContent = `× ${scenario.kpiScore.toFixed(2)}`;
-  document.getElementById('kpi-after').textContent = fmtMoney(r.variable);
+  document.getElementById('kpi-after').textContent = fmtMoney(r.commGross + r.prodGross);
 
-  // Super card (Payouts tab)
+  // Super card (Payouts tab) — ex-super portions built up, super added as one line
   document.getElementById('spr-base').textContent = fmtMoney(r.base);
-  document.getElementById('spr-comm').textContent = `+ ${fmtMoney(r.bandCommKpi)}`;
-  document.getElementById('spr-prod').textContent = `+ ${fmtMoney(r.productionKpi)}`;
+  document.getElementById('spr-comm').textContent = `+ ${fmtMoney(r.commEx)}`;
+  document.getElementById('spr-prod').textContent = `+ ${fmtMoney(r.prodEx)}`;
   document.getElementById('spr-subtotal').textContent = fmtMoney(r.subtotalExSuper);
-  document.getElementById('spr-super-label').textContent = `+ Superannuation (${fmtPct(g.superRate, 0)})`;
+  document.getElementById('spr-super-label').textContent = `+ Superannuation (${fmtPct(g.superRate, 0)} on base + embedded in commission)`;
   document.getElementById('spr-super').textContent = `+ ${fmtMoney(r.totalSuper)}`;
   document.getElementById('spr-total').textContent = fmtMoney(r.totalPackage);
 
@@ -982,18 +1015,18 @@ function update() {
   document.getElementById('tot-prodcomm').textContent = fmtMoney(mTot.prodCommInc);
   document.getElementById('tot-total').textContent = fmtMoney(mTot.monTotalInc);
 
-  // YTD summary cards
+  // YTD summary cards — all headlines super-inclusive
   document.getElementById('ytd-gp').textContent = fmtMoney(mTot.gpReceived);
   document.getElementById('ytd-gp-sub').textContent = `Event GP: ${fmtMoney(mTot.eventGP)}`;
 
   document.getElementById('ytd-gp-comm').textContent = fmtMoney(mTot.gpCommInc);
-  document.getElementById('ytd-gp-comm-sub').textContent = mTot.gpCommExSuper > 0
-    ? `${fmtMoney(mTot.gpCommExSuper)} + ${fmtMoney(mTot.gpCommInc - mTot.gpCommExSuper)} super`
+  document.getElementById('ytd-gp-comm-sub').textContent = mTot.gpCommInc > 0
+    ? `${fmtMoney(mTot.gpCommEx)} + ${fmtMoney(mTot.gpCommSuper)} super`
     : 'No GP commission yet';
 
   document.getElementById('ytd-prod-comm').textContent = fmtMoney(mTot.prodCommInc);
-  document.getElementById('ytd-prod-comm-sub').textContent = mTot.prodCommExSuper > 0
-    ? `${fmtMoney(mTot.prodCommExSuper)} + ${fmtMoney(mTot.prodCommInc - mTot.prodCommExSuper)} super`
+  document.getElementById('ytd-prod-comm-sub').textContent = mTot.prodCommInc > 0
+    ? `${fmtMoney(mTot.prodCommEx)} + ${fmtMoney(mTot.prodCommSuper)} super`
     : '1% of Event GP';
 
   // YTD total earned = Base YTD (pro-rata by months elapsed with entries) + commission YTD, all inc. super
@@ -1012,12 +1045,12 @@ function update() {
 function renderBreakdown(r) {
   const g = data.globals;
   const table = document.getElementById('breakdown-table');
+  // Commission and Production are inc. super (gross). Base is ex-super.
   table.innerHTML = `
-    <tr><td>Base salary</td><td>${fmtMoney(r.base)}</td></tr>
-    <tr class="plus"><td>GP commission (× ${r.effectiveKpi.toFixed(2)} KPI)</td><td>+ ${fmtMoney(r.bandCommKpi)}</td></tr>
-    <tr class="plus"><td>Production commission (1% of Event GP)</td><td>+ ${fmtMoney(r.productionKpi)}</td></tr>
-    <tr class="subtotal"><td>Subtotal before super</td><td>${fmtMoney(r.subtotalExSuper)}</td></tr>
-    <tr class="plus"><td>Superannuation (${fmtPct(g.superRate, 0)})</td><td>+ ${fmtMoney(r.totalSuper)}</td></tr>
+    <tr><td>Base salary (ex-super)</td><td>${fmtMoney(r.base)}</td></tr>
+    <tr class="plus"><td>Super on base (${fmtPct(g.superRate, 0)})</td><td>+ ${fmtMoney(r.baseSuper)}</td></tr>
+    <tr class="plus"><td>GP commission (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI)</td><td>+ ${fmtMoney(r.commGross)}</td></tr>
+    <tr class="plus"><td>Production commission (inc. super, 1% of Event GP)</td><td>+ ${fmtMoney(r.prodGross)}</td></tr>
     <tr class="total"><td>Total package</td><td>${fmtMoney(r.totalPackage)}</td></tr>
   `;
 }

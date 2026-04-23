@@ -149,10 +149,11 @@
     },
     "gp_bands": {
       "name": "Sales Rep (GP Incremental Bands)",
-      "description": "For Sales Reps (Daniel, Nic). Incremental GP bands + 1% production on Event GP (they produce a small handful of events too).",
+      "description": "For Sales Reps (Daniel, Nic). Flat-step GP bands calibrated so $300k GP \u2248 old 3.5% flat rate, with ~$6,750 extra per $50k above. Band output is super-INCLUSIVE. Plus 1% production commission on Event GP (also super-inclusive).",
       "metricLabel": "Annual GP Sold",
       "metricBasis": "gp",
       "inputIncludesGST": true,
+      "bandsIncludeSuper": true,
       "payoutFrequency": "monthly",
       "payoutPercentage": 1,
       "includeProduction": true,
@@ -163,35 +164,16 @@
         },
         {
           "threshold": 200000,
-          "rate": 0.03
+          "rate": 0.105
         },
         {
           "threshold": 300000,
-          "rate": 0.05
-        },
-        {
-          "threshold": 350000,
-          "rate": 0.08
-        },
-        {
-          "threshold": 400000,
-          "rate": 0.12
-        },
-        {
-          "threshold": 450000,
-          "rate": 0.143
-        },
-        {
-          "threshold": 500000,
-          "rate": 0.172
-        },
-        {
-          "threshold": 550000,
-          "rate": 0.201
+          "rate": 0.135
         }
       ],
       "productionPct": 0.01,
       "productionBasis": "eventGP",
+      "productionIncludesSuper": true,
       "showOldCommissionComparison": true,
       "oldCommissionRate": 0.035,
       "includeProjects": false
