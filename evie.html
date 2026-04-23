@@ -341,12 +341,12 @@
     <!-- Old vs New commission comparison -->
     <div class="compare-card">
       <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Old vs New Commission</h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 0;">Side-by-side comparison at your current planned scenario. The old plan paid a flat rate on all GP — the new plan uses incremental bands so higher GP earners land in higher rate tiers.</p>
+      <p style="font-size: 13px; color: var(--muted); margin: 0;">Side-by-side comparison at your current planned scenario, both figures super-inclusive for a fair apples-to-apples match. The old plan paid a flat rate ex-super with 12% super added on top; the new plan uses incremental bands whose output is already super-inclusive.</p>
       <div class="compare-grid">
         <div class="compare-col old">
           <div class="label">Old plan (<span id="old-rate">3.5%</span> flat)</div>
-          <div class="val" id="old-comm">—</div>
-          <div class="sub">Flat rate × Annual GP</div>
+          <div class="val"><span id="old-comm">—</span><span style="font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 4px;">+ super</span></div>
+          <div class="sub" id="old-comm-sub">= $— inc. super</div>
         </div>
         <div class="compare-arrow">
           <div id="delta-arrow">→</div>
@@ -355,7 +355,7 @@
         <div class="compare-col new">
           <div class="label">New plan (incremental bands)</div>
           <div class="val" id="new-comm">—</div>
-          <div class="sub" id="new-comm-sub">—</div>
+          <div class="sub" id="new-comm-sub">inc. super · bands already include 12%</div>
         </div>
       </div>
     </div>
@@ -399,25 +399,25 @@
     </div>
 
     <div class="yt-row">
+      <div class="kpi-card inverted">
+        <div class="label">YTD Commission Paid</div>
+        <div class="value" id="ytd-cash">—</div>
+        <div class="sub" id="ytd-cash-sub">Nothing paid yet — enter monthly GP below</div>
+      </div>
+      <div class="kpi-card" style="border-left: 3px solid var(--accent); background: var(--accent-bg);">
+        <div class="label">Projected Annual Commission</div>
+        <div class="value" id="ytd-projection" style="color: var(--accent);">—</div>
+        <div class="sub" id="ytd-projection-sub">Enter a month or two to see your year-end projection</div>
+      </div>
       <div class="kpi-card">
         <div class="label">YTD GP Received</div>
         <div class="value" id="ytd-gp">—</div>
         <div class="sub" id="ytd-gp-sub">Sum of months entered</div>
       </div>
       <div class="kpi-card">
-        <div class="label">YTD GP Commission Paid</div>
-        <div class="value" id="ytd-gp-comm">—</div>
-        <div class="sub" id="ytd-gp-comm-sub">— + super</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">YTD Production Commission</div>
-        <div class="value" id="ytd-prod-comm">—</div>
-        <div class="sub" id="ytd-prod-comm-sub">1% of YTD Event GP</div>
-      </div>
-      <div class="kpi-card inverted">
-        <div class="label">Annual True-Up Delta</div>
+        <div class="label">True-Up Balance Fwd</div>
         <div class="value" id="trueup-delta">—</div>
-        <div class="sub" id="trueup-delta-sub">Entitled − paid (at current GP)</div>
+        <div class="sub" id="trueup-delta-sub">Amount owed into future months</div>
       </div>
     </div>
 
@@ -577,7 +577,7 @@
 
 <script>
 /* ============================================================
-   Employee Compensation Dashboard — Evie Johnston
+   Employee Compensation Dashboard — Evie Johnston (Sales Rep, gp_bands)
    Planning + Actual split, no margin multiplier, super-inclusive everywhere.
    ============================================================ */
 
@@ -1267,11 +1267,15 @@ function update() {
     document.getElementById('context-msg').style.display = 'none';
   }
 
-  // Old vs new comparison — both treated as super-inclusive for apples-to-apples
+  // Old vs new comparison.
+  // Old plan was ex-super (3.5% × GP), with 12% super added on top at payroll → inc-super = old × 1.12.
+  // New plan bands produce inc-super directly. Compare inc-super vs inc-super for a fair delta.
+  const oldIncSuper = r.oldComm * (1 + g.superRate);
   document.getElementById('old-comm').textContent = fmtMoney(r.oldComm);
+  document.getElementById('old-comm-sub').textContent = `= ${fmtMoney(oldIncSuper)} inc. super`;
   document.getElementById('new-comm').textContent = fmtMoney(r.commGross);
-  document.getElementById('new-comm-sub').textContent = `Bands × ${r.effectiveKpi.toFixed(2)} KPI (inc. super)`;
-  const delta = r.commGross - r.oldComm;
+  document.getElementById('new-comm-sub').textContent = `Bands × ${r.effectiveKpi.toFixed(2)} KPI · already inc. super`;
+  const delta = r.commGross - oldIncSuper;
   const deltaEl = document.getElementById('delta-val');
   const arrow = document.getElementById('delta-arrow');
   deltaEl.textContent = (delta >= 0 ? '+' : '') + fmtMoney(delta);
@@ -1378,36 +1382,49 @@ function update() {
   document.getElementById('tot-total').textContent = fmtMoney(mTot.monTotalInc);
   document.getElementById('tot-total-ex').textContent = fmtMoney(mTot.monTotalInc / (1 + g.superRate));
 
-  // YTD summary cards — all headlines super-inclusive
+  // Months with data = any month where GP or Event GP is non-zero (employee or admin entered)
+  const monthsWithData = mRows.filter(row => row.gpReceived > 0 || row.eventGP > 0).length;
+
+  // YTD summary cards — prominent: YTD Commission Paid + Projection
+  document.getElementById('ytd-cash').textContent = fmtMoney(mTot.monTotalInc);
+  document.getElementById('ytd-cash-sub').textContent = monthsWithData > 0
+    ? `${monthsWithData}/12 months · ${fmtMoney(mTot.gpCommInc)} GP + ${fmtMoney(mTot.prodCommInc)} production`
+    : 'Nothing paid yet — enter monthly GP below';
+
+  // Projection: annualise YTD based on months with data, re-run through bands + production
+  const projEl = document.getElementById('ytd-projection');
+  const projSubEl = document.getElementById('ytd-projection-sub');
+  if (monthsWithData > 0) {
+    const annGPProj = (mTot.gpReceived / monthsWithData) * 12;
+    const annEvProj = (mTot.eventGP / monthsWithData) * 12;
+    const { total: annGrossComm } = calcBandCommission(annGPProj, plan.bands);
+    const prodPct = plan.includeProduction ? (plan.productionPct || 0) : 0;
+    const annProdComm = annEvProj * prodPct;
+    const projCommInc = (annGrossComm + annProdComm) * r.effectiveKpi;
+    const projTotalPackage = r.baseInc + projCommInc;
+    projEl.textContent = fmtMoney(projCommInc);
+    projSubEl.innerHTML = `At this pace (${fmtMoney(annGPProj)} GP/yr), total package = <strong>${fmtMoney(projTotalPackage)}</strong> — keep it up!`;
+  } else {
+    projEl.textContent = '—';
+    projSubEl.textContent = 'Enter a month or two to see your year-end projection';
+  }
+
   document.getElementById('ytd-gp').textContent = fmtMoney(mTot.gpReceived);
   document.getElementById('ytd-gp-sub').textContent = `Event GP: ${fmtMoney(mTot.eventGP)}`;
 
-  document.getElementById('ytd-gp-comm').textContent = fmtMoney(mTot.gpCommInc);
-  document.getElementById('ytd-gp-comm-sub').textContent = mTot.gpCommInc > 0
-    ? `${fmtMoney(mTot.gpCommEx)} + ${fmtMoney(mTot.gpCommSuper)} super`
-    : 'No GP commission yet';
-
-  document.getElementById('ytd-prod-comm').textContent = fmtMoney(mTot.prodCommInc);
-  document.getElementById('ytd-prod-comm-sub').textContent = mTot.prodCommInc > 0
-    ? `${fmtMoney(mTot.prodCommEx)} + ${fmtMoney(mTot.prodCommSuper)} super`
-    : '1% of Event GP';
-
-  // True-Up Delta card (annual): shows the running balance carrying forward
+  // True-Up Balance Fwd card — small/standard, amount owed into future months
   const tuEl = document.getElementById('trueup-delta');
   const tuSub = document.getElementById('trueup-delta-sub');
-  const annDelta = annualSummary.delta;
+  const bal = annualSummary.yearEndBalance;
   if (annualSummary.annualGP === 0) {
     tuEl.textContent = '—';
-    tuSub.textContent = 'Enter monthly GP to project';
-  } else if (Math.abs(annDelta) < 1) {
+    tuSub.textContent = 'No data yet';
+  } else if (bal < 0.5) {
     tuEl.textContent = fmtMoney(0);
-    tuSub.textContent = `Paid ${fmtMoney(annualSummary.paidTotal)} = entitled ${fmtMoney(annualSummary.annualEntitled)} — all even.`;
-  } else if (annDelta > 0) {
-    tuEl.textContent = '+' + fmtMoney(annDelta);
-    tuSub.textContent = `Entitled ${fmtMoney(annualSummary.annualEntitled)} − paid ${fmtMoney(annualSummary.paidTotal)} → top-up due`;
+    tuSub.textContent = `All even · paid matches entitled so far`;
   } else {
-    tuEl.textContent = fmtMoney(annualSummary.yearEndBalance);
-    tuSub.textContent = `True-up balance carrying forward — offsets next year's first commissions`;
+    tuEl.textContent = fmtMoney(bal);
+    tuSub.textContent = `Offsets future commissions until worked off`;
   }
 
   // Monthly Scenario card (sandbox)
