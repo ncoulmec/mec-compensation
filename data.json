@@ -465,7 +465,24 @@
       "planOverrides": null,
       "kpiAssignments": [],
       "dashboardFile": "daniel.html",
-      "placeholder": false
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2025-07",
+        "monthlyGP": [
+          { "month": "Jul 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Aug 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Sep 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Oct 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Nov 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Dec 2025", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jan 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Feb 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Mar 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Apr 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "May 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 },
+          { "month": "Jun 2026", "gpReceived": 0, "eventGP": 0, "revenueReceivedIncGST": 0 }
+        ]
+      }
     },
     {
       "id": "nic",
