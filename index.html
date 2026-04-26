@@ -1058,7 +1058,7 @@ function renderEmployees() {
       <td><div class="read-only-cell" data-super="${i}">${fmtMoney(superIncl)}</div></td>
       <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
       <td>${e.placeholder ? '<span class="pill warn">placeholder</span>' : '<span class="pill">active</span>'}</td>
-      <td><a href="${e.dashboardFile}" target="_blank" style="font-family: var(--mono); font-size: 12px; color: var(--navy); text-decoration: none; border-bottom: 1px dotted var(--navy);" title="Open ${e.name}'s dashboard in a new tab">${e.dashboardFile} ↗</a></td>
+      <td><a href="${e.dashboardFile}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 12px; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open ${e.name}'s dashboard in a new tab">Open dashboard ↗</a></td>
     `;
     tbody.appendChild(tr);
     tr.querySelector(`select[data-f="planType"]`).value = e.planType;
@@ -1638,9 +1638,12 @@ function renderPL() {
   $('#pl-label').textContent = pl.label || 'Company P&L (Cash Basis)';
   $('#pl-sublabel').textContent = pl.subLabel || 'Quarterly company financials. Feeds the company-wide view and can gate variable comp payouts (e.g., "comm only pays if company NP > X"). Fiscal year starts July.';
 
+  // Display order: most-recent (last) first, oldest last. Storage order stays unchanged.
+  const dq = quarters.map((q, i) => ({ q, i })).reverse();
+
   const head = $('#pl-head');
   head.innerHTML = '<tr><th style="text-align:left;min-width:180px;"></th>' +
-    quarters.map((q, i) => `<th style="text-align:center;min-width:150px;"><input type="text" class="mono" style="width:100%;text-align:center;background:transparent;border:none;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;" value="${q.label}" onblur="data.companyPL.quarters[${i}].label=this.value; setDirty()"></th>`).join('') +
+    dq.map(({ q, i }) => `<th style="text-align:center;min-width:150px;"><input type="text" class="mono" style="width:100%;text-align:center;background:transparent;border:none;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;" value="${q.label}" onblur="data.companyPL.quarters[${i}].label=this.value; setDirty()"></th>`).join('') +
     '<th style="text-align:right;min-width:110px;">LTM Total</th></tr>';
 
   const body = $('#pl-body');
@@ -1655,23 +1658,23 @@ function renderPL() {
     const total = quarters.reduce((s, q) => s + (+q[l.key] || 0), 0);
     return `<tr>
       <td>${l.label}</td>
-      ${quarters.map((q, i) => `<td style="min-width:150px;text-align:center;"><div style="margin: 0 auto; max-width: 130px;">${moneyInputHtml(`companyPL.quarters.${i}.${l.key}`)}</div></td>`).join('')}
+      ${dq.map(({ q, i }) => `<td style="min-width:150px;text-align:center;"><div style="margin: 0 auto; max-width: 130px;">${moneyInputHtml(`companyPL.quarters.${i}.${l.key}`)}</div></td>`).join('')}
       <td style="text-align:right; font-family:'DM Mono',monospace; font-weight:600;" data-total="${l.key}">${fmtMoney(total)}</td>
     </tr>`;
   }).join('') +
   `<tr class="totals">
     <td>Gross Profit</td>
-    ${quarters.map((q, i) => `<td style="text-align:center;" data-gp="${i}"></td>`).join('')}
+    ${dq.map(({ q, i }) => `<td style="text-align:center;" data-gp="${i}"></td>`).join('')}
     <td style="text-align:right;font-family:'DM Mono',monospace;" data-gp-total></td>
   </tr>
   <tr class="totals">
     <td>Contribution Margin <span class="tooltip-help" ${yoyTip}>?</span></td>
-    ${quarters.map((q, i) => `<td style="text-align:center;" data-cm="${i}"></td>`).join('')}
+    ${dq.map(({ q, i }) => `<td style="text-align:center;" data-cm="${i}"></td>`).join('')}
     <td style="text-align:right;font-family:'DM Mono',monospace;" data-cm-total></td>
   </tr>
   <tr class="totals">
     <td>Net Profit <span class="tooltip-help" ${yoyTip}>?</span></td>
-    ${quarters.map((q, i) => `<td style="text-align:center;" data-np="${i}"></td>`).join('')}
+    ${dq.map(({ q, i }) => `<td style="text-align:center;" data-np="${i}"></td>`).join('')}
     <td style="text-align:right;font-family:'DM Mono',monospace;" data-np-total></td>
   </tr>`;
 
@@ -1759,8 +1762,11 @@ function renderHistoricalPL() {
   const body = $('#pl-hist-body');
   if (!head || !body) return;
 
+  // Reverse display: most-recent historical quarter on the left
+  const dh = hist.map((q, i) => ({ q, i })).reverse();
+
   head.innerHTML = '<tr><th style="text-align:left;min-width:180px;"></th>' +
-    hist.map((q, i) => `<th style="text-align:center;min-width:150px;"><input type="text" class="mono" style="width:100%;text-align:center;background:transparent;border:none;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;" value="${q.label}" onblur="data.companyPL.historicalQuarters[${i}].label=this.value; setDirty()"></th>`).join('') +
+    dh.map(({ q, i }) => `<th style="text-align:center;min-width:150px;"><input type="text" class="mono" style="width:100%;text-align:center;background:transparent;border:none;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;" value="${q.label}" onblur="data.companyPL.historicalQuarters[${i}].label=this.value; setDirty()"></th>`).join('') +
     '</tr>';
 
   const lines = [
@@ -1771,19 +1777,19 @@ function renderHistoricalPL() {
   ];
   body.innerHTML = lines.map(l => `<tr>
       <td style="color: var(--muted);">${l.label}</td>
-      ${hist.map((q, i) => `<td style="min-width:150px;text-align:center;"><div style="margin: 0 auto; max-width: 130px;">${moneyInputHtml(`companyPL.historicalQuarters.${i}.${l.key}`)}</div></td>`).join('')}
+      ${dh.map(({ q, i }) => `<td style="min-width:150px;text-align:center;"><div style="margin: 0 auto; max-width: 130px;">${moneyInputHtml(`companyPL.historicalQuarters.${i}.${l.key}`)}</div></td>`).join('')}
     </tr>`).join('') +
   `<tr class="totals">
      <td>Gross Profit</td>
-     ${hist.map((q, i) => `<td style="text-align:center;font-family:'DM Mono',monospace;" data-hist-gp="${i}"></td>`).join('')}
+     ${dh.map(({ q, i }) => `<td style="text-align:center;font-family:'DM Mono',monospace;" data-hist-gp="${i}"></td>`).join('')}
    </tr>
    <tr class="totals">
      <td>Contribution Margin</td>
-     ${hist.map((q, i) => `<td style="text-align:center;font-family:'DM Mono',monospace;" data-hist-cm="${i}"></td>`).join('')}
+     ${dh.map(({ q, i }) => `<td style="text-align:center;font-family:'DM Mono',monospace;" data-hist-cm="${i}"></td>`).join('')}
    </tr>
    <tr class="totals">
      <td>Net Profit</td>
-     ${hist.map((q, i) => `<td style="text-align:center;font-family:'DM Mono',monospace;" data-hist-np="${i}"></td>`).join('')}
+     ${dh.map(({ q, i }) => `<td style="text-align:center;font-family:'DM Mono',monospace;" data-hist-np="${i}"></td>`).join('')}
    </tr>`;
   updateHistoricalTotals();
 }

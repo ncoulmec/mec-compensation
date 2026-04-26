@@ -57,20 +57,18 @@
       "cmBands": [
         { "threshold": 0,       "rate": 0 },
         { "threshold": 1000000, "rate": 0.10 },
-        { "threshold": 1100000, "rate": 0.12 },
-        { "threshold": 1200000, "rate": 0.14 },
-        { "threshold": 1300000, "rate": 0.16 },
-        { "threshold": 1400000, "rate": 0.18 }
+        { "threshold": 1300000, "rate": 0.15 },
+        { "threshold": 1500000, "rate": 0.20 }
       ],
       "npBonuses": [
-        { "threshold": 850000,  "bonus": 1000 },
-        { "threshold": 900000,  "bonus": 2000 },
-        { "threshold": 950000,  "bonus": 3000 },
-        { "threshold": 1000000, "bonus": 4500 },
-        { "threshold": 1050000, "bonus": 6000 },
-        { "threshold": 1100000, "bonus": 8000 },
-        { "threshold": 1200000, "bonus": 11000 },
-        { "threshold": 1300000, "bonus": 15000 }
+        { "threshold": 900000,  "bonus": 1000 },
+        { "threshold": 950000,  "bonus": 2000 },
+        { "threshold": 1000000, "bonus": 3000 },
+        { "threshold": 1100000, "bonus": 5000 },
+        { "threshold": 1200000, "bonus": 10000 },
+        { "threshold": 1300000, "bonus": 17000 },
+        { "threshold": 1400000, "bonus": 24000 },
+        { "threshold": 1500000, "bonus": 30000 }
       ],
       "includeProjects": false
     },
@@ -168,7 +166,7 @@
       "includeProduction": false,
       "bands": [
         { "threshold": 0,      "rate": 0 },
-        { "threshold": 70000,  "rate": 0 },
+        { "threshold": 70000,  "rate": 0.1667 },
         { "threshold": 100000, "rate": 0.056 },
         { "threshold": 130000, "rate": 0.14 },
         { "threshold": 160000, "rate": 0.196 },
@@ -327,19 +325,19 @@
       "dashboardFile": "hayley.html",
       "placeholder": false,
       "actuals": {
-        "fiscalYearStart": "2026-07",
+        "fiscalYearStart": "2026-04",
         "quarterlyCMNP": [
-          { "quarter": "Q1 FY27 (Jul-Sep 2026)", "cm": 0, "np": 0 },
-          { "quarter": "Q2 FY27 (Oct-Dec 2026)", "cm": 0, "np": 0 },
-          { "quarter": "Q3 FY27 (Jan-Mar 2027)", "cm": 0, "np": 0 },
-          { "quarter": "Q4 FY27 (Apr-Jun 2027)", "cm": 0, "np": 0 }
+          { "quarter": "Apr-Jun 2026", "cm": 0, "np": 0, "plLabel": "Apr-Jun 2026" },
+          { "quarter": "Jul-Sep 2026", "cm": 0, "np": 0, "plLabel": "Jul-Sep 2026" },
+          { "quarter": "Oct-Dec 2026", "cm": 0, "np": 0, "plLabel": "Oct-Dec 2026" },
+          { "quarter": "Jan-Mar 2027", "cm": 0, "np": 0, "plLabel": "Jan-Mar 2027" }
         ]
       },
       "actualPayouts": [
-        { "quarter": "Q1 FY27 (Jul-Sep 2026)", "commissionPaid": null, "cm": null, "np": null, "notes": "" },
-        { "quarter": "Q2 FY27 (Oct-Dec 2026)", "commissionPaid": null, "cm": null, "np": null, "notes": "" },
-        { "quarter": "Q3 FY27 (Jan-Mar 2027)", "commissionPaid": null, "cm": null, "np": null, "notes": "" },
-        { "quarter": "Q4 FY27 (Apr-Jun 2027)", "commissionPaid": null, "cm": null, "np": null, "notes": "" }
+        { "quarter": "Apr-Jun 2026", "commissionPaid": null, "cm": null, "np": null, "notes": "" },
+        { "quarter": "Jul-Sep 2026", "commissionPaid": null, "cm": null, "np": null, "notes": "" },
+        { "quarter": "Oct-Dec 2026", "commissionPaid": null, "cm": null, "np": null, "notes": "" },
+        { "quarter": "Jan-Mar 2027", "commissionPaid": null, "cm": null, "np": null, "notes": "" }
       ]
     },
     {

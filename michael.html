@@ -817,8 +817,8 @@ async function load() {
     // Initialize project toggles (default all OFF — user opts in)
     myProjects.forEach(p => { scenario.projectsEnabled[p.id] = false; });
 
-    // Hide Projects tab if plan has no projects
-    if (!plan.includeProjects) {
+    // Hide Projects tab if plan excludes projects, OR if no projects are assigned to this employee.
+    if (!plan.includeProjects || myProjects.length === 0) {
       const projTab = document.querySelector('[data-tab="projects"]');
       if (projTab) projTab.style.display = 'none';
     }

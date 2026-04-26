@@ -406,18 +406,25 @@ async function load() {
     if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
 
     const baseline = (emp.actuals && Array.isArray(emp.actuals.quarterlyCMNP)) ? emp.actuals.quarterlyCMNP : defaultQuarters();
-    actualsQuarters = baseline.map(q => ({
-      quarter: q.quarter,
-      cm: +q.cm || 0,
-      np: +q.np || 0,
-    }));
+    actualsQuarters = baseline.map(q => {
+      // Auto-pull from MEC Overview P&L when a matching quarter label exists
+      const pl = lookupPLQuarter(q.plLabel || q.quarter);
+      return {
+        quarter: q.quarter,
+        cm: pl ? pl.cm : (+q.cm || 0),
+        np: pl ? pl.np : (+q.np || 0),
+        autoFromPL: !!pl,
+      };
+    });
+    // localStorage overrides apply only to NON-auto quarters (P&L data is source of truth when present)
     try {
       const saved = JSON.parse(localStorage.getItem(ACTUALS_LS_KEY) || 'null');
       if (saved && Array.isArray(saved) && saved.length === actualsQuarters.length) {
-        actualsQuarters = saved.map((q, i) => ({
-          quarter: actualsQuarters[i].quarter,
-          cm: +q.cm || 0,
-          np: +q.np || 0,
+        actualsQuarters = actualsQuarters.map((q, i) => q.autoFromPL ? q : ({
+          quarter: q.quarter,
+          cm: +saved[i].cm || 0,
+          np: +saved[i].np || 0,
+          autoFromPL: false,
         }));
       }
     } catch (e) {}
@@ -440,11 +447,27 @@ async function load() {
 
 function defaultQuarters() {
   return [
-    { quarter: 'Q1 FY27 (Jul-Sep 2026)', cm: 0, np: 0 },
-    { quarter: 'Q2 FY27 (Oct-Dec 2026)', cm: 0, np: 0 },
-    { quarter: 'Q3 FY27 (Jan-Mar 2027)', cm: 0, np: 0 },
-    { quarter: 'Q4 FY27 (Apr-Jun 2027)', cm: 0, np: 0 },
+    { quarter: 'Apr-Jun 2026', cm: 0, np: 0 },
+    { quarter: 'Jul-Sep 2026', cm: 0, np: 0 },
+    { quarter: 'Oct-Dec 2026', cm: 0, np: 0 },
+    { quarter: 'Jan-Mar 2027', cm: 0, np: 0 },
   ];
+}
+
+// Find a quarter's CM and NP across all P&L sections by matching the label.
+function lookupPLQuarter(label) {
+  if (!data.companyPL) return null;
+  const pools = [data.companyPL.currentQuarter, ...(data.companyPL.quarters || []), ...(data.companyPL.historicalQuarters || [])];
+  const match = pools.find(q => q && q.label === label);
+  if (!match) return null;
+  const rev = +match.revenue || 0;
+  const cogs = +match.cogs || 0;
+  const ce = +match.contribExp || 0;
+  const ox = +match.opex || 0;
+  if (rev === 0) return null;
+  const cm = rev - cogs - ce;
+  const np = cm - ox;
+  return { cm, np, plRow: match };
 }
 
 function saveActualsLocal() {
@@ -584,15 +607,20 @@ function calcAll() {
 
 function renderQuarterlyGrid() {
   const tbody = document.getElementById('quarterly-body');
-  const rows = actualsQuarters.map((q, i) => `
-    <tr data-qtr-idx="${i}">
-      <td class="qtr">${q.quarter}</td>
-      <td class="input-cell"><input type="text" inputmode="numeric" data-field="cm" data-idx="${i}" value="${q.cm ? fmtNum(q.cm) : ''}" placeholder="0"></td>
-      <td class="input-cell"><input type="text" inputmode="numeric" data-field="np" data-idx="${i}" value="${q.np ? fmtNum(q.np) : ''}" placeholder="0"></td>
+  const rows = actualsQuarters.map((q, i) => {
+    const auto = q.autoFromPL;
+    const lockChip = auto ? `<span style="font-size:10px; color:var(--accent); font-weight:600; margin-left:4px;" title="Auto-pulled from MEC Group P&amp;L — read-only here, edit on the Overview's P&amp;L tab">🔗 P&amp;L</span>` : '';
+    const inputAttrs = auto ? 'disabled style="background:#f5faf7; color:var(--muted); cursor:not-allowed;"' : '';
+    return `
+    <tr data-qtr-idx="${i}"${auto ? ' class="auto-pl"' : ''}>
+      <td class="qtr">${q.quarter}${lockChip}</td>
+      <td class="input-cell"><input type="text" inputmode="numeric" data-field="cm" data-idx="${i}" value="${q.cm ? fmtNum(q.cm) : ''}" placeholder="0" ${inputAttrs}></td>
+      <td class="input-cell"><input type="text" inputmode="numeric" data-field="np" data-idx="${i}" value="${q.np ? fmtNum(q.np) : ''}" placeholder="0" ${inputAttrs}></td>
       <td class="num" data-cell="annual">—</td>
       <td class="num plus" data-cell="qpayout">—</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   const totalsRow = `
     <tr class="totals">

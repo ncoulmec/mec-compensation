@@ -324,7 +324,10 @@ function selectEmployee(id) {
   if (!emp) return;
   const plan = data.planTypes[emp.planType];
   ensureActualPayouts(emp);
-  $('#emp-context').innerHTML = `${emp.role} · Plan: <strong>${plan.name}</strong> · Base $${fmtNum(emp.baseSalary)} ex-super`;
+  const dashLink = emp.dashboardFile
+    ? `<a href="${emp.dashboardFile}" target="_blank" class="btn primary" style="margin-left: 14px; padding: 6px 12px; font-size: 12px; text-decoration: none;">Open ${emp.name.split(' ')[0]}'s dashboard ↗</a>`
+    : '';
+  $('#emp-context').innerHTML = `${emp.role} · Plan: <strong>${plan.name}</strong> · Base $${fmtNum(emp.baseSalary)} ex-super ${dashLink}`;
   renderGrid(emp);
   renderYTD(emp);
 }
