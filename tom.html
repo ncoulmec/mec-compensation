@@ -673,7 +673,6 @@
         <div class="rate-calc" id="rate-calc">
           <div>
             <span class="chip" id="calc-band">—</span>
-            <span class="tooltip-trigger" data-tip="The 16.67% kicker on the $70k–$100k band is a special rate Nathan put in place to accelerate Tom past $100k revenue and unlock the $5,000 milestone. It's higher than the surrounding bands by design — once you clear that threshold, the bands return to their normal incremental rates.">?</span>
             <span style="color: var(--muted);">×</span>
             <span class="chip" id="calc-kpi">1.00 KPI</span>
             <span style="color: var(--muted);">=</span>
@@ -1365,10 +1364,15 @@ function update() {
     const rangeTxt = b.max === null
       ? `${fmtMoney(b.min)}+`
       : `${fmtMoney(b.min)} – ${fmtMoney(b.max)}`;
+    // Special tooltip on the kicker band ($195k–$220k @ 38.75%) — explains it's a Nathan-approved boost.
+    const isKickerBand = b.min === 195000 && b.max === 220000;
+    const rateCell = isKickerBand
+      ? `<td class="num">${fmtPct(b.rate, 2)} <span class="tooltip-trigger" data-tip="Special rate Nathan approved to accelerate Tom past the $220k milestone. Higher than surrounding bands by design — beyond $220k, the rate returns to the standard 10% incremental.">?</span></td>`
+      : `<td class="num">${fmtPct(b.rate, 2)}</td>`;
     return `<tr class="${b.active ? 'active' : ''}">
       <td class="band-num">${i + 1}</td>
       <td>${rangeTxt}</td>
-      <td class="num">${fmtPct(b.rate, 2)}</td>
+      ${rateCell}
       <td class="num">${b.active ? fmtMoney(b.earn) : '—'}</td>
       <td class="num">${b.active ? fmtMoney(b.cumulative) : '—'}</td>
     </tr>`;

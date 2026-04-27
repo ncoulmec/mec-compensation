@@ -630,7 +630,6 @@
         <tbody id="emp-body"></tbody>
         <tfoot id="emp-foot"></tfoot>
       </table>
-      <p style="margin-top: 8px; font-size: 12px; color: var(--muted);">Production Gates (e.g. Evie's $400k) now live on the <strong>Plan Types</strong> tab against the relevant hybrid plan.</p>
     </div>
   </section>
 
@@ -1326,9 +1325,9 @@ function renderPlans() {
                 ${moneyInputHtml(`planTypes.${key}.maxProductionValue`, '0')}
               </div>
             ` : ''}
-            ${(key.includes('hybrid')) ? `
+            ${(key === 'hybrid_gp') ? `
               <div style="flex: 0 0 220px;">
-                <label style="font-size: 14px; display: block; margin-bottom: 6px;">Production Gate <span class="hint">Minimum annual GP-Sold required for sales commission to flow. $0 disables the gate. Applies to every employee on this plan.</span></label>
+                <label style="font-size: 14px; display: block; margin-bottom: 6px;">Production Gate Minimum <span style="display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 50%; background: var(--border); font-size: 10px; font-weight: 600; color: var(--muted); cursor: help;" title="Minimum annual GP-Sold required for sales commission to flow. $0 disables the gate. Applies to every employee on this plan.">?</span></label>
                 ${moneyInputHtml(`planTypes.${key}.minProductionGP`, '0')}
               </div>
             ` : ''}
@@ -2713,7 +2712,7 @@ function renderFinancialPlanning() {
         <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy); margin-top: 4px;">Team Target Total: ${fmtMoney(totalOnTrack)} <span style="font-size:11px; color: var(--muted); font-weight: 500;">(Zoho)</span></div>
         <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px;">+ Non-Zoho baseline GP ${fmtMoney(nonZohoBaselineGP)} <span style="color: var(--faint);">(production fees, retainers, ad-hoc — held constant from Xero LTM)</span></div>
       </div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected GP <span style="color: var(--faint); font-size: 11px;">= Team Target ${fmtMoney(totalOnTrack)} + Non-Zoho ${fmtMoney(nonZohoBaselineGP)}</span></span><span>${fmtMoney(projGP)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected GP (Xero) <span style="color: var(--faint); font-size: 11px;">= Team Target ${fmtMoney(totalOnTrack)} + Non-Zoho ${fmtMoney(nonZohoBaselineGP)}</span></span><span>${fmtMoney(projGP)}</span></div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected Revenue <span style="color: var(--faint); font-size: 11px;">= Projected GP ÷ GM (${(gmXero*100).toFixed(1)}%)</span></span><span>${fmtMoney(projRevenue)}</span></div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected CM <span style="color: var(--faint); font-size: 11px;">= Revenue × ${(ltm.cm/ltm.revenue*100).toFixed(1)}% LTM CM ratio</span></span><span>${fmtMoney(projCM)}</span></div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected NP <span style="color: var(--faint); font-size: 11px;">= Revenue × ${(ltm.np/ltm.revenue*100).toFixed(1)}% LTM NM ratio</span></span><span>${fmtMoney(projNP)}</span></div>

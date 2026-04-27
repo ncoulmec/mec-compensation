@@ -234,20 +234,24 @@
           "rate": 0.0
         },
         {
-          "threshold": 75000,
-          "rate": 0.03
+          "threshold": 50000,
+          "rate": 0.04
         },
         {
-          "threshold": 125000,
-          "rate": 0.05
-        },
-        {
-          "threshold": 175000,
+          "threshold": 100000,
           "rate": 0.08
         },
         {
-          "threshold": 225000,
+          "threshold": 150000,
           "rate": 0.11
+        },
+        {
+          "threshold": 200000,
+          "rate": 0.12
+        },
+        {
+          "threshold": 250000,
+          "rate": 0.13
         }
       ],
       "productionPct": 0.01,
@@ -277,29 +281,20 @@
           "rate": 0.0
         },
         {
-          "threshold": 70000,
-          "rate": 0.1667
-        },
-        {
           "threshold": 100000,
-          "rate": 0.18
-        },
-        {
-          "threshold": 130000,
-          "rate": 0.21
-        },
-        {
-          "threshold": 160000,
-          "rate": 0.25
-        },
-        {
-          "threshold": 190000,
-          "rate": 0.28
+          "rate": 0.1
         }
       ],
       "productionPct": 0.01,
       "productionBasis": "revenue",
-      "includeProjects": true
+      "includeProjects": true,
+      "flatBonuses": [
+        {
+          "threshold": 100000,
+          "amount": 5000,
+          "label": "$5,000 milestone bonus at $100k revenue"
+        }
+      ]
     },
     "hybrid_rev_senior": {
       "name": "Talent Senior (Performer-Revenue Hybrid)",
@@ -319,7 +314,7 @@
         },
         {
           "threshold": 220000,
-          "rate": 0.112
+          "rate": 0.1
         }
       ],
       "productionPct": 0.01,

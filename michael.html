@@ -554,6 +554,7 @@
 <nav class="tabs">
   <div class="tabs-inner" id="tab-bar">
     <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="planning">Planning</button>
     <button class="tab-btn" data-tab="projects">Projects</button>
     <button class="tab-btn" data-tab="kpi">KPI (Draft)</button>
     <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
@@ -704,6 +705,96 @@
       <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; color: var(--muted); margin-top: 2px;" id="q-holdback-row">
         <span>Year-end reconciliation (if payout % &lt; 100)</span>
         <span id="q-total-heldback">—</span>
+      </div>
+      <div id="annual-trueup-card" style="display: none; margin-top: 18px; padding: 14px 18px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div>
+            <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🎯 Annual True-Up</div>
+            <div style="font-size: 12px; color: var(--ink); margin-top: 4px;" id="trueup-explainer">If you finish the year above your quarterly run-rate, this true-up tops you up to the full annual commission entitlement.</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Catch-up payment</div>
+            <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #1f5e3c;" id="trueup-amount">—</div>
+            <div style="font-size: 10px; color: var(--muted); font-family: var(--mono);" id="trueup-detail">&nbsp;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Planning — gigs & avg revenue per gig -->
+  <section class="panel" id="panel-planning">
+    <div style="margin-bottom: 18px;">
+      <h2 style="margin: 0 0 4px;">Gig Planning</h2>
+      <p style="color: var(--muted); font-size: 14px; margin: 0;">Break down your annual revenue into number of gigs × average revenue per gig. Edit any field — the others recalculate automatically. Use this to plan how many gigs you need to take on at what rate to hit each commission tier.</p>
+    </div>
+
+    <div style="margin: 0 0 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      <a class="btn small" href="https://crm.zoho.com/crm/org657079535/tab/CustomModule3/2877869000071356498/canvas/2877869000056971016" target="_blank" rel="noopener" style="text-decoration: none; background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Get My Current Zoho Data ↗</a>
+      <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Pull last-12 months of gigs + revenue from your Zoho team record.</span>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3 style="margin: 0 0 4px;">Planning <span style="font-size: 11px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em;">forecast</span></h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Forward-looking — what you're aiming for this year.</p>
+        <div class="scenario-row">
+          <label>Number of Gigs</label>
+          <input type="range" id="plan-gigs-slider" min="0" max="200" step="1" value="40">
+          <input type="text" inputmode="numeric" id="plan-gigs-input" class="value-input" value="40">
+        </div>
+        <div class="scenario-row">
+          <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
+          <input type="range" id="plan-avg-slider" min="0" max="20000" step="100" value="3750">
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+            <input type="text" inputmode="numeric" id="plan-avg-input" class="value-input" style="padding-left: 22px;" value="3,750">
+          </div>
+        </div>
+        <div class="scenario-row">
+          <label style="font-weight: 600;">Total Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Gigs × Avg)</span></label>
+          <input type="range" id="plan-rev-slider" min="0" max="400000" step="1000" value="150000">
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+            <input type="text" inputmode="numeric" id="plan-rev-input" class="value-input" style="padding-left: 22px;" value="150,000">
+          </div>
+        </div>
+        <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
+          <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this revenue, you earn</div>
+          <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
+            <div><div style="font-size: 10px; color: var(--muted);">COMMISSION (inc super)</div><div id="plan-comm" style="font-size: 18px; font-weight: 700; color: var(--accent);">—</div></div>
+            <div><div style="font-size: 10px; color: var(--muted);">TOTAL PACKAGE</div><div id="plan-total" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 4px;">Actual Data <span style="font-size: 11px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em;">to date</span></h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">What you've actually delivered. Edits persist on this device.</p>
+        <div class="scenario-row">
+          <label>Gigs delivered</label>
+          <input type="range" id="actual-gigs-slider" min="0" max="200" step="1" value="0">
+          <input type="text" inputmode="numeric" id="actual-gigs-input" class="value-input" value="0">
+        </div>
+        <div class="scenario-row">
+          <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
+          <input type="range" id="actual-avg-slider" min="0" max="20000" step="100" value="0">
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+            <input type="text" inputmode="numeric" id="actual-avg-input" class="value-input" style="padding-left: 22px;" value="0">
+          </div>
+        </div>
+        <div class="scenario-row">
+          <label style="font-weight: 600;">Revenue YTD</label>
+          <input type="range" id="actual-rev-slider" min="0" max="400000" step="1000" value="0">
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+            <input type="text" inputmode="numeric" id="actual-rev-input" class="value-input" style="padding-left: 22px;" value="0">
+          </div>
+        </div>
+        <div style="margin-top: 14px; padding: 14px; background: #f6f8fc; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--muted); font-family: var(--mono);" id="actual-summary">
+          Enter gigs delivered above to see commission earned to date.
+        </div>
       </div>
     </div>
   </section>
@@ -979,6 +1070,79 @@ function wireInputs() {
   kpiSlider.addEventListener('input', () => syncKpi(kpiSlider.value));
   kpiSlider2.addEventListener('input', () => syncKpi(kpiSlider2.value));
   kpiInput.addEventListener('input', () => syncKpi(kpiInput.value));
+
+  // === GIG PLANNING TAB ===
+  // Bidirectional sync: edit any of {gigs, avgPerGig, totalRevenue} → other two recalculate
+  // and the commission projection at the bottom updates live.
+  wireGigPlanning('plan-', { gigs: 40, avg: 3750, rev: 150000 }, (totalRev) => {
+    const { total: bandComm } = calcBandCommission(totalRev, plan.bands);
+    const sr = data.globals.superRate || 0.12;
+    const baseInc = (emp.baseSalary || 0) * (1 + sr);
+    document.getElementById('plan-comm').textContent = fmtMoney(bandComm);
+    document.getElementById('plan-total').textContent = fmtMoney(baseInc + bandComm);
+  });
+  wireGigPlanning('actual-', { gigs: 0, avg: 0, rev: 0 }, (totalRev) => {
+    const summary = document.getElementById('actual-summary');
+    if (totalRev > 0) {
+      const { total: bandComm } = calcBandCommission(totalRev, plan.bands);
+      const sr = data.globals.superRate || 0.12;
+      const baseInc = (emp.baseSalary || 0) * (1 + sr);
+      summary.innerHTML = `Revenue YTD <strong style="color: var(--ink);">${fmtMoney(totalRev)}</strong> · Commission earned <strong style="color: var(--accent);">${fmtMoney(bandComm)}</strong> · Total package YTD <strong style="color: var(--navy);">${fmtMoney(baseInc + bandComm)}</strong>`;
+    } else {
+      summary.textContent = 'Enter gigs delivered above to see commission earned to date.';
+    }
+  });
+}
+
+// Wire a planning section (Gigs ↔ Avg per Gig ↔ Total Revenue trio).
+// `prefix` is the input ID prefix (e.g. 'plan-' or 'actual-').
+// `defaults` initial values. `onChange` receives the current totalRev.
+function wireGigPlanning(prefix, defaults, onChange) {
+  const gSlider = document.getElementById(prefix + 'gigs-slider');
+  const gInput = document.getElementById(prefix + 'gigs-input');
+  const aSlider = document.getElementById(prefix + 'avg-slider');
+  const aInput = document.getElementById(prefix + 'avg-input');
+  const rSlider = document.getElementById(prefix + 'rev-slider');
+  const rInput = document.getElementById(prefix + 'rev-input');
+  if (!gSlider) return;
+
+  let state = { gigs: defaults.gigs, avg: defaults.avg, rev: defaults.rev };
+
+  const renderAll = () => {
+    gSlider.value = state.gigs; gInput.value = fmtNum(state.gigs);
+    aSlider.value = state.avg; aInput.value = fmtNum(state.avg);
+    rSlider.value = Math.min(state.rev, +rSlider.max); rInput.value = fmtNum(state.rev);
+    onChange(state.rev);
+  };
+
+  // When gigs changes, recalc revenue from gigs × avg
+  const onGigsEdit = (val) => {
+    state.gigs = Math.max(0, parseNum(val) || 0);
+    state.rev = state.gigs * state.avg;
+    renderAll();
+  };
+  // When avg changes, recalc revenue from gigs × avg
+  const onAvgEdit = (val) => {
+    state.avg = Math.max(0, parseNum(val) || 0);
+    state.rev = state.gigs * state.avg;
+    renderAll();
+  };
+  // When revenue changes, recalc avg from rev / gigs (so gigs stays fixed, avg adjusts)
+  const onRevEdit = (val) => {
+    state.rev = Math.max(0, parseNum(val) || 0);
+    if (state.gigs > 0) state.avg = Math.round(state.rev / state.gigs);
+    else state.avg = 0;
+    renderAll();
+  };
+
+  gSlider.addEventListener('input', () => onGigsEdit(gSlider.value));
+  gInput.addEventListener('input', () => onGigsEdit(gInput.value));
+  aSlider.addEventListener('input', () => onAvgEdit(aSlider.value));
+  aInput.addEventListener('input', () => onAvgEdit(aInput.value));
+  rSlider.addEventListener('input', () => onRevEdit(rSlider.value));
+  rInput.addEventListener('input', () => onRevEdit(rInput.value));
+
+  renderAll();
 }
 
 function renderProjectToggles() {
@@ -1087,6 +1251,20 @@ function calcBandCommission(revenue, bands) {
       cumulative: totalComm,
       active: revenue > b.threshold,
       partial: revenue > b.threshold && revenue < nextThreshold
+    });
+  }
+  // Flat milestone bonuses ("kickers"): fire when metric crosses a threshold (e.g. $5k at $100k for Michael)
+  if (plan && Array.isArray(plan.flatBonuses)) {
+    plan.flatBonuses.forEach(k => {
+      if (revenue >= k.threshold) {
+        totalComm += k.amount;
+        breakdown.push({
+          min: k.threshold, max: k.threshold, rate: null,
+          earn: k.amount, cumulative: totalComm,
+          active: true, partial: false,
+          isKicker: true, kickerLabel: k.label
+        });
+      }
     });
   }
   return { total: totalComm, breakdown };
@@ -1384,6 +1562,39 @@ function updateQuarterlyDisplay(r) {
   if (heldRow) heldRow.style.display = holdbackPct > 0 ? 'flex' : 'none';
   const heldEl = document.getElementById('q-total-heldback');
   if (heldEl) heldEl.textContent = fmtMoney(totalHeld);
+
+  // === ANNUAL TRUE-UP ===
+  // If Michael finishes the year at higher TTM than his quarterly run-rate suggests,
+  // pay the difference. Same shape as Tom's true-up.
+  const trueupCard = document.getElementById('annual-trueup-card');
+  if (trueupCard) {
+    const allEntered = scenario.quarters.every(q => q != null && q > 0);
+    if (allEntered) {
+      const finalTTM = scenario.quarters[scenario.quarters.length - 1];
+      const { total: finalBand } = calcBandCommission(finalTTM, plan.bands);
+      const finalProd = (plan.includeProduction ? (plan.productionPct || 0) : 0) * finalTTM;
+      const annualEntitlement = (finalBand + finalProd) * r.effectiveKpi;
+      const annualEntitlementAtPayoutPct = annualEntitlement * payoutPct;
+      const trueup = Math.max(0, annualEntitlementAtPayoutPct - totalPaidAllQuarters);
+      trueupCard.style.display = 'block';
+      document.getElementById('trueup-amount').textContent = fmtMoney(trueup);
+      const trueupDetail = document.getElementById('trueup-detail');
+      const trueupExplainer = document.getElementById('trueup-explainer');
+      if (trueup > 0) {
+        trueupDetail.innerHTML = `Annual entitlement <strong>${fmtMoney(annualEntitlementAtPayoutPct)}</strong> − paid <strong>${fmtMoney(totalPaidAllQuarters)}</strong>`;
+        trueupExplainer.textContent = `You finished above your quarterly run-rate — this catches you up to the full annual commission earned at your final TTM of ${fmtMoney(finalTTM)}.`;
+      } else {
+        trueupDetail.innerHTML = `Annual entitlement <strong>${fmtMoney(annualEntitlementAtPayoutPct)}</strong> already covered by quarterly payouts.`;
+        trueupExplainer.textContent = `No top-up needed — your quarterly payouts already meet or exceed the annual entitlement at your final TTM.`;
+      }
+    } else {
+      trueupCard.style.display = 'block';
+      document.getElementById('trueup-amount').textContent = '—';
+      document.getElementById('trueup-detail').textContent = 'Available once all 4 quarters are entered';
+      document.getElementById('trueup-explainer').textContent = `Catches you up if you finish the year ahead of your quarterly run-rate. Pays the gap between full annual commission (at Q4 TTM) and the sum of Q1–Q4 payouts.`;
+    }
+  }
+
   const heldElP = document.getElementById('q-total-heldback-p');
   if (heldElP) heldElP.textContent = fmtMoney(totalHeld);
 

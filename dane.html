@@ -2015,9 +2015,11 @@ function drawCommissionCurve() {
     <circle cx="${markerX}" cy="${yScale(cur.newComm)}" r="4" fill="#0a2540"/>
     <circle cx="${markerX}" cy="${yScale(cur.oldComm)}" r="4" fill="#8e8e93"/>
     <text x="${markerX > W - 110 ? markerX - 6 : markerX + 6}" y="${padT + 14}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" fill="#d4351c" font-size="11" font-family="DM Mono, monospace" font-weight="600">Your GP: $${(scenario.gp/1000).toFixed(0)}k</text>
-    <text x="${markerX > W - 110 ? markerX - 8 : markerX + 8}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" y="${yScale(cur.newComm) - 8}" fill="#0a2540" font-size="10" font-family="DM Mono, monospace" font-weight="600">New: $${(cur.newComm/1000).toFixed(1)}k</text>
-    <text x="${markerX > W - 110 ? markerX - 8 : markerX + 8}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" y="${yScale(cur.oldComm) + 14}" fill="#666" font-size="10" font-family="DM Mono, monospace">Old: $${(cur.oldComm/1000).toFixed(1)}k</text>
-    <text x="${markerX > W - 110 ? markerX - 8 : markerX + 8}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" y="${(yScale(cur.newComm) + yScale(cur.oldComm))/2 + 4}" fill="#1f5e3c" font-size="10" font-family="DM Mono, monospace" font-weight="600">Δ +$${((cur.newComm - cur.oldComm)/1000).toFixed(1)}k</text>
+    <!-- Fixed info-box (top-right corner of plot area) showing New / Old / Δ — never overlaps marker labels -->
+    <rect x="${W - padR - 130}" y="${padT + 26}" width="124" height="62" fill="#fff" stroke="#cdd9e8" stroke-width="1" rx="4"/>
+    <text x="${W - padR - 124}" y="${padT + 42}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace" font-weight="600">New: $${(cur.newComm/1000).toFixed(1)}k</text>
+    <text x="${W - padR - 124}" y="${padT + 58}" fill="#666" font-size="11" font-family="DM Mono, monospace">Old: $${(cur.oldComm/1000).toFixed(1)}k</text>
+    <text x="${W - padR - 124}" y="${padT + 76}" fill="${cur.newComm >= cur.oldComm ? '#1f5e3c' : '#a8281b'}" font-size="11" font-family="DM Mono, monospace" font-weight="700">Δ ${cur.newComm >= cur.oldComm ? '+' : ''}$${((cur.newComm - cur.oldComm)/1000).toFixed(1)}k</text>
     <text x="${padL}" y="${padT - 8}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace">Commission ($, super-inclusive)</text>
     <text x="${W/2}" y="${H - 8}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace">Annual GP Sold</text>
   `;
