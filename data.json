@@ -1823,7 +1823,7 @@
       "dashboardFile": "sales4.html",
       "placeholder": true,
       "last365GPSold": 0,
-      "annualGPTarget": 400000,
+      "annualGPTarget": 0,
       "minProductionGP": null
     }
   ],

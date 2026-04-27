@@ -196,8 +196,23 @@
   .scenario-row:last-of-type { border-bottom: none; }
   .scenario-row label { font-size: 13px; color: var(--muted); }
 
+  /* Scenario row variant: when the row contains a realistic-slider, give it a vertical layout
+     so the slider gets full-width breathing room (instead of being squeezed into a 1fr column). */
+  .scenario-row.has-realistic-slider {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px 0 18px;
+  }
+  .scenario-row.has-realistic-slider .label-row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  }
+  .scenario-row.has-realistic-slider .label-row > label { font-size: 14px; color: var(--ink); font-weight: 600; }
+  .scenario-row.has-realistic-slider .value-cell {
+    display: flex; justify-content: flex-end; align-items: center; gap: 10px;
+  }
+
   /* Non-linear realistic-range slider */
-  .realistic-slider-wrap { position: relative; width: 100%; padding: 22px 0 36px; }
+  .realistic-slider-wrap { position: relative; width: 100%; padding: 28px 0 38px; }
   .realistic-slider-wrap .zone-bar {
     position: absolute; top: 30px; left: 0; right: 0; height: 6px;
     display: flex; border-radius: 3px; overflow: hidden;
@@ -626,8 +641,16 @@
         <h2>Scenario Inputs</h2>
         <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Drag the sliders or type in exact figures to model different scenarios.</p>
 
-        <div class="scenario-row">
-          <label><span style="display:block;">Annual Performance</span><span>Revenue <span class="tooltip-trigger" data-tip="Enter your Performance Revenue excl. GST from your Zoho Dashboard Data. Realistic Range zone is highlighted on the slider.">?</span></span></label>
+        <div class="scenario-row has-realistic-slider">
+          <div class="label-row">
+            <label>Annual Performance Revenue <span class="tooltip-trigger" data-tip="Enter your Performance Revenue excl. GST from your Zoho Dashboard Data. Realistic Range zone is highlighted on the slider.">?</span></label>
+            <div class="value-cell">
+              <div style="position: relative;">
+                <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+                <input type="text" inputmode="numeric" id="rev-input" class="value-input" style="padding-left: 22px; width: 150px;" value="195,000">
+              </div>
+            </div>
+          </div>
           <div class="realistic-slider-wrap" id="rev-slider-wrap">
             <div class="zone-labels"><span class="label-band" id="rev-label-band">Realistic Range</span></div>
             <div class="zone-bar">
@@ -638,10 +661,6 @@
             <input type="range" id="rev-slider" min="0" max="100" step="0.1" value="50">
             <div class="ticks"></div>
             <div class="zone-legend"><span style="color:#c43c30;">↤ Under</span><span style="color:#1f5e3c;">Realistic</span><span style="color:#a17a00;">Stretch ↦</span></div>
-          </div>
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="rev-input" class="value-input" style="padding-left: 22px;" value="195,000">
           </div>
         </div>
 
@@ -720,7 +739,7 @@
       <h2>Quarterly Payout <span class="tooltip-trigger" data-tip="Get your last 365 Days Performance Revenue data from the data tab in your Zoho Team Record.">?</span></h2>
       <p style="font-size: 13px; color: var(--muted); margin: 8px 0 8px;">Based on last 365 days of revenue (ex. GST) that you generated from your performance. Each quarter-end, enter your trailing 12-month revenue — commission is calculated on that annualised figure, then divided by 4. Empty quarters show projected amounts in green based on your Annual Performance Revenue input above.</p>
       <div style="margin: 0 0 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <a class="btn small" href="https://crm.zoho.com/crm/org657079535/tab/CustomModule3/2877869000001224372/canvas/2877869000056971016" target="_blank" rel="noopener" style="text-decoration: none; background: #e2772f; color: #fff; border: 1px solid #e2772f; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Get My Current Zoho Data ↗</a>
+        <a class="btn small" href="https://crm.zoho.com/crm/org657079535/tab/CustomModule3/2877869000001224372/canvas/2877869000056971016" target="_blank" rel="noopener" style="text-decoration: none; background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Get My Current Zoho Data ↗</a>
         <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Pull your trailing 12-month revenue (ex. GST) from the Data tab, then enter it below.</span>
       </div>
       <div class="quarter-grid" id="quarter-grid"></div>

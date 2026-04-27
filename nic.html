@@ -88,8 +88,23 @@
   .scenario-row:last-of-type { border-bottom: none; }
   .scenario-row label { font-size: 13px; color: var(--muted); line-height: 1.3; }
 
+  /* Scenario row variant: when the row contains a realistic-slider, give it a vertical layout
+     so the slider gets full-width breathing room (instead of being squeezed into a 1fr column). */
+  .scenario-row.has-realistic-slider {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px 0 18px;
+  }
+  .scenario-row.has-realistic-slider .label-row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  }
+  .scenario-row.has-realistic-slider .label-row > label { font-size: 14px; color: var(--ink); font-weight: 600; }
+  .scenario-row.has-realistic-slider .value-cell {
+    display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+  }
+
   /* Non-linear realistic-range slider */
-  .realistic-slider-wrap { position: relative; width: 100%; padding: 22px 0 36px; }
+  .realistic-slider-wrap { position: relative; width: 100%; padding: 28px 0 38px; }
   .realistic-slider-wrap .zone-bar {
     position: absolute; top: 30px; left: 0; right: 0; height: 6px;
     display: flex; border-radius: 3px; overflow: hidden;
@@ -332,8 +347,17 @@
         <h2>Scenario Inputs</h2>
         <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Drag the sliders or type in exact figures to model different scenarios.</p>
 
-        <div class="scenario-row">
-          <label>Annual GP Sold <span class="tooltip-trigger" data-tip="Enter your Annual GP Sold (ex. GST) for the last 365 days from your personal Zoho dashboard. The Realistic Range zone is highlighted on the slider.">?</span></label>
+        <div class="scenario-row has-realistic-slider">
+          <div class="label-row">
+            <label>Annual GP Sold <span class="tooltip-trigger" data-tip="Enter your Annual GP Sold (ex. GST) for the last 365 days from your personal Zoho dashboard. The Realistic Range zone is highlighted on the slider.">?</span></label>
+            <div class="value-cell">
+              <div style="position: relative;">
+                <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+                <input type="text" inputmode="numeric" id="gp-input" class="value-input" style="padding-left: 22px; width: 150px;" value="300,000">
+              </div>
+              <div style="font-size: 11px; color: var(--muted); font-family: var(--mono);">÷ 12 = <span id="gp-monthly-chip" style="color:var(--navy);font-weight:600;">$25,000</span>/mo</div>
+            </div>
+          </div>
           <div class="realistic-slider-wrap" id="gp-slider-wrap">
             <div class="zone-labels"><span class="label-band">Realistic Range</span></div>
             <div class="zone-bar">
@@ -344,13 +368,6 @@
             <input type="range" id="gp-slider" min="0" max="100" step="0.1" value="50">
             <div class="ticks"></div>
             <div class="zone-legend"><span style="color:#c43c30;">↤ Under</span><span style="color:#1f5e3c;">Realistic</span><span style="color:#a17a00;">Stretch ↦</span></div>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 4px; align-items: stretch;">
-            <div style="position: relative;">
-              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-              <input type="text" inputmode="numeric" id="gp-input" class="value-input" style="padding-left: 22px;" value="300,000">
-            </div>
-            <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); text-align: right;">÷ 12 = <span id="gp-monthly-chip" style="color:var(--navy);font-weight:600;">$25,000</span>/mo</div>
           </div>
         </div>
 
@@ -461,12 +478,12 @@
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
         <h2 style="margin: 0;">Margin Calculator</h2>
-        <span style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;">Display only · informational</span>
+        <span style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Margin Multipliers coming soon to the commission structure</span>
       </div>
-      <p style="font-size: 13px; color: var(--muted); margin: 4px 0 16px;">Sanity-check your realised margin on bookings. GST is stripped from Revenue so the result lines up with the company P&amp;L (which is ex-GST). A future "margin accelerator" may reward higher-margin work — for now, this is just here to make the trade-off visible.</p>
+      <p style="font-size: 13px; color: var(--muted); margin: 4px 0 16px;">Sanity-check your realised margin on bookings. GST is stripped from Revenue so the result lines up with the company P&amp;L (which is ex-GST). Higher-margin work will be rewarded once Margin Multipliers go live.</p>
       <div class="scenario-row">
         <label>Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(inc. GST)</span></label>
-        <input type="range" id="margin-rev-slider" min="0" max="600000" step="5000" value="0">
+        <input type="range" id="margin-rev-slider" min="0" max="1500000" step="10000" value="0">
         <div style="position: relative;">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
           <input type="text" inputmode="numeric" id="margin-revenue-input" class="value-input" style="padding-left: 22px;" value="0">
@@ -474,21 +491,25 @@
       </div>
       <div class="scenario-row">
         <label>GP Sold <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(auto-pulls from Annual GP Sold above)</span></label>
-        <input type="range" id="margin-gp-slider" min="0" max="600000" step="5000" value="0">
+        <input type="range" id="margin-gp-slider" min="0" max="1500000" step="10000" value="0">
         <div style="position: relative;">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
           <input type="text" inputmode="numeric" id="margin-gp-input" class="value-input" style="padding-left: 22px;" value="0">
         </div>
       </div>
-      <div class="rate-calc" style="margin-top: 14px;">
-        <div>
-          <span class="chip" id="margin-rev-chip">Revenue ex-GST: $—</span>
-          <span style="color: var(--muted);">·</span>
-          <span class="chip" id="margin-gp-chip">GP: $—</span>
-          <span style="color: var(--muted);">=</span>
-          <span class="chip result" id="margin-result">—</span>
+      <div style="margin-top: 16px; padding: 18px 22px; background: #f6f8fc; border: 1px solid var(--border); border-radius: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap;">
+          <div style="font-size: 12px; color: var(--muted); font-family: var(--mono);">
+            <div>Revenue ex-GST: <strong id="margin-rev-chip" style="color: var(--ink); font-weight: 600;">$—</strong></div>
+            <div>GP: <strong id="margin-gp-chip" style="color: var(--ink); font-weight: 600;">$—</strong></div>
+            <div style="font-size: 10px; color: var(--faint); margin-top: 4px;">Formula: <span id="margin-formula">GP ÷ (Revenue − Revenue ÷ 11)</span></div>
+          </div>
+          <div style="text-align: center; min-width: 200px; padding: 16px 24px; border-radius: 10px; background: #f0f0eb;" id="margin-result-wrap">
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Realised Margin</div>
+            <div style="font-family: var(--mono); font-size: 36px; font-weight: 700; line-height: 1.1; margin-top: 4px;" id="margin-result">—</div>
+            <div style="font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;" id="margin-band-label">&nbsp;</div>
+          </div>
         </div>
-        <span class="label" id="margin-formula">GP ÷ (Revenue − Revenue ÷ 11)</span>
       </div>
     </div>
 
@@ -772,7 +793,9 @@ async function load() {
     // Apply plan-defined slider maxes (fall back to existing HTML defaults if missing)
     const maxMetric = +plan.maxMetricValue || 600000;
     const maxProd = +plan.maxProductionValue || 400000;
-    document.getElementById('gp-slider').max = maxMetric;
+    // GP slider is non-linear (0-100 position), DO NOT overwrite its max — its absolute money max
+    // comes from emp.realisticRange.absoluteMax instead. Only the legacy linear sliders need this.
+    if (!emp.realisticRange) document.getElementById('gp-slider').max = maxMetric;
     document.getElementById('event-gp-slider').max = maxProd;
     // Monthly Scenario sandbox — allow for bigger one-month scenarios than the annual/12 cap
     // (a really strong month can easily exceed the linear monthly average).
@@ -971,18 +994,36 @@ function wireInputs() {
       const revEx = revInc - revInc / 11; // strip 10% GST (Australian)
       const margin = revEx > 0 ? gp / revEx : 0;
       const result = document.getElementById('margin-result');
+      const wrap = document.getElementById('margin-result-wrap');
+      const bandLabel = document.getElementById('margin-band-label');
       const revChip = document.getElementById('margin-rev-chip');
       const gpChip = document.getElementById('margin-gp-chip');
-      if (revChip) revChip.textContent = `Revenue ex-GST: ${fmtMoney(revEx)}`;
-      if (gpChip) gpChip.textContent = `GP: ${fmtMoney(gp)}`;
+      if (revChip) revChip.textContent = fmtMoney(revEx);
+      if (gpChip) gpChip.textContent = fmtMoney(gp);
       if (revEx > 0 && gp > 0) {
         result.textContent = (margin * 100).toFixed(1) + '%';
-        result.style.background = margin >= 0.30 ? 'var(--accent)' : (margin >= 0.20 ? 'var(--navy)' : 'var(--danger)');
-        result.style.color = '#fff';
+        if (margin >= 0.30) {
+          wrap.style.background = '#e6f7ee'; wrap.style.border = '2px solid #6fc792';
+          result.style.color = '#1f5e3c';
+          bandLabel.textContent = '✓ HIGH MARGIN';
+          bandLabel.style.color = '#1f5e3c';
+        } else if (margin >= 0.20) {
+          wrap.style.background = '#fff8e1'; wrap.style.border = '2px solid #f5d890';
+          result.style.color = '#8a6a00';
+          bandLabel.textContent = '— ACCEPTABLE';
+          bandLabel.style.color = '#8a6a00';
+        } else {
+          wrap.style.background = '#fdecea'; wrap.style.border = '2px solid #e89999';
+          result.style.color = '#a8281b';
+          bandLabel.textContent = '⚠ LOW MARGIN';
+          bandLabel.style.color = '#a8281b';
+        }
       } else {
         result.textContent = '—';
-        result.style.background = '';
         result.style.color = '';
+        wrap.style.background = '#f0f0eb';
+        wrap.style.border = '1px solid var(--border)';
+        bandLabel.textContent = '\u00A0';
       }
     };
     const formatLive = (input) => {
@@ -1948,7 +1989,7 @@ function drawCommissionCurve() {
     <line x1="${markerX}" y1="${padT}" x2="${markerX}" y2="${padT + innerH}" stroke="#d4351c" stroke-width="1.2" stroke-dasharray="3 3"/>
     <circle cx="${markerX}" cy="${yScale(cur.newComm)}" r="4" fill="#0a2540"/>
     <circle cx="${markerX}" cy="${yScale(cur.oldComm)}" r="4" fill="#8e8e93"/>
-    <text x="${markerX + 6}" y="${padT + 14}" fill="#d4351c" font-size="11" font-family="DM Mono, monospace" font-weight="600">Your GP: $${(scenario.gp/1000).toFixed(0)}k</text>
+    <text x="${markerX > W - 110 ? markerX - 6 : markerX + 6}" y="${padT + 14}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" fill="#d4351c" font-size="11" font-family="DM Mono, monospace" font-weight="600">Your GP: $${(scenario.gp/1000).toFixed(0)}k</text>
     <text x="${padL}" y="${padT - 8}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace">Commission ($, super-inclusive)</text>
     <text x="${W/2}" y="${H - 8}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace">Annual GP Sold</text>
   `;
