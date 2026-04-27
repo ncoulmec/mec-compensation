@@ -397,6 +397,7 @@
       <h2>What you've earned</h2>
       <p class="blurb">Enter your actual monthly GP Received and Event GP Produced below. Commissions are calculated month-by-month off these real numbers, with quarterly true-ups keeping your payouts fair over time. Edits persist on this device.</p>
     </div>
+    <div id="prod-gate-banner"></div>
 
     <div class="yt-row">
       <div class="kpi-card inverted">
@@ -671,8 +672,10 @@ async function load() {
     if (data.globals.guardrailEnabled === false) {
       document.querySelectorAll('[data-guardrail-card]').forEach(el => el.style.display = 'none');
     }
-    // Hide Projects tab (Sales Rep has no projects)
-    if (!plan.includeProjects) {
+    // Hide Projects tab if plan doesn't include projects, OR if no projects are assigned to this employee.
+    const myProjects = (data.projects || []).filter(p => Array.isArray(p.assignedTo) && p.assignedTo.includes(EMPLOYEE_ID));
+    const hideProjects = !plan.includeProjects || myProjects.length === 0;
+    if (hideProjects) {
       const projTab = document.querySelector('[data-tab="projects"]');
       if (projTab) projTab.style.display = 'none';
     }
@@ -1012,6 +1015,25 @@ function computeMonthlyRows() {
   // Raw monthly commissions (before offset/cap)
   // If admin has entered actualPayouts for a month, admin's GP/eventGP take precedence — that's the "locked" row.
   const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
+
+  // PRODUCTION GATE — for hybrid roles (Evie/Evie2): if YTD annualised Event GP < emp.minProductionGP,
+  // sales (GP) commission is paused for the year. Production commission (1% × Event GP) is unaffected.
+  let prodGatePassed = true;
+  let prodGateInfo = null;
+  if (emp.minProductionGP && emp.minProductionGP > 0) {
+    let ytdEvent = 0, monthsWithData = 0;
+    actualsMonths.forEach((m, i) => {
+      const ap = actualPayouts[i];
+      const ev = (ap && ap.eventGP != null && ap.eventGP !== '') ? +ap.eventGP : (+m.eventGP || 0);
+      const gp = (ap && ap.gpReceived != null && ap.gpReceived !== '') ? +ap.gpReceived : (+m.gpReceived || 0);
+      if (ev > 0 || gp > 0) monthsWithData += 1;
+      ytdEvent += ev;
+    });
+    const annualizedEvent = monthsWithData > 0 ? (ytdEvent / monthsWithData) * 12 : 0;
+    prodGatePassed = monthsWithData === 0 || annualizedEvent >= emp.minProductionGP;
+    prodGateInfo = { ytdEvent, monthsWithData, annualizedEvent, target: emp.minProductionGP, passed: prodGatePassed };
+  }
+
   const raw = actualsMonths.map((m, i) => {
     const ap = actualPayouts[i];
     const gpAdmin = ap && ap.gpReceived != null && ap.gpReceived !== '';
@@ -1021,7 +1043,9 @@ function computeMonthlyRows() {
     const gp = gpAdmin ? (+ap.gpReceived || 0) : (+m.gpReceived || 0);
     const ev = evAdmin ? (+ap.eventGP || 0) : (+m.eventGP || 0);
     const { total: mGross } = calcBandCommission(gp, mBands);
-    return { gp, ev, gpRawInc: mGross * effectiveKpi, prodInc: ev * prodPct * effectiveKpi, locked };
+    // If the production gate is not met, GP commission paused (production commission still flows)
+    const gpRaw = prodGatePassed ? mGross * effectiveKpi : 0;
+    return { gp, ev, gpRawInc: gpRaw, prodInc: ev * prodPct * effectiveKpi, locked };
   });
 
   let balance = 0;                  // >0 = rep owes future commissions (overpaid); carries between quarters/years
@@ -1173,7 +1197,7 @@ function computeMonthlyRows() {
     annualCapFired,
   };
 
-  return { rows, totals, quarters, annualSummary };
+  return { rows, totals, quarters, annualSummary, prodGateInfo };
 }
 
 // Monthly Scenario sandbox — same monthly band calc as a single month, no cap
@@ -1337,7 +1361,25 @@ function update() {
   if (evChip) evChip.textContent = fmtMoney(scenario.eventGP / 12);
 
   // ===== ACTUAL =====
-  const { rows: mRows, totals: mTot, quarters: qSummary, annualSummary } = computeMonthlyRows();
+  const { rows: mRows, totals: mTot, quarters: qSummary, annualSummary, prodGateInfo } = computeMonthlyRows();
+
+  // Production gate banner (only shown for employees with minProductionGP set)
+  const gateBanner = document.getElementById('prod-gate-banner');
+  if (gateBanner) {
+    if (prodGateInfo) {
+      const { ytdEvent, monthsWithData, annualizedEvent, target, passed } = prodGateInfo;
+      if (monthsWithData === 0) {
+        gateBanner.innerHTML = `<div class="banner info" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate:</strong> ${fmtMoney(target)} of Event GP per year required to unlock GP sales commission. Enter monthly Event GP below to track.</span></div>`;
+      } else if (passed) {
+        gateBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Pace ${fmtMoney(annualizedEvent)} ≥ target ${fmtMoney(target)}. GP sales commission flowing normally.</span></div>`;
+      } else {
+        const gap = target - annualizedEvent;
+        gateBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate not met:</strong> Annualised pace ${fmtMoney(annualizedEvent)} (YTD ${fmtMoney(ytdEvent)} over ${monthsWithData} months) is below the ${fmtMoney(target)} target — need <strong>${fmtMoney(gap)}/yr</strong> more event production. <strong>GP sales commission paused</strong> until pace meets target. Production commission (1% × Event GP) is unaffected.</span></div>`;
+      }
+    } else {
+      gateBanner.innerHTML = '';
+    }
+  }
   const tbody = document.getElementById('monthly-body');
   // Update the calc cells per row (leave inputs untouched so caret/focus survives)
   mRows.forEach(r2 => {
