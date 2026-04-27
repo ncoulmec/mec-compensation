@@ -697,7 +697,12 @@
       "last365GPSold": 389300,
       "annualGPTarget": 400000,
       "minProductionGP": null,
-      "previousBaseSalary": 85000
+      "previousBaseSalary": 85000,
+      "realisticRange": {
+        "min": 250000,
+        "max": 450000,
+        "absoluteMax": 600000
+      }
     },
     {
       "id": "daniel",
@@ -877,7 +882,12 @@
       "last365GPSold": 333700,
       "annualGPTarget": 400000,
       "minProductionGP": null,
-      "previousBaseSalary": 71250
+      "previousBaseSalary": 71250,
+      "realisticRange": {
+        "min": 250000,
+        "max": 450000,
+        "absoluteMax": 600000
+      }
     },
     {
       "id": "nic",
@@ -1057,7 +1067,12 @@
       "last365GPSold": 335200,
       "annualGPTarget": 400000,
       "minProductionGP": null,
-      "previousBaseSalary": 70000
+      "previousBaseSalary": 70000,
+      "realisticRange": {
+        "min": 250000,
+        "max": 450000,
+        "absoluteMax": 600000
+      }
     },
     {
       "id": "evie",
@@ -1237,7 +1252,12 @@
       "last365GPSold": 182500,
       "annualGPTarget": 200000,
       "minProductionGP": 400000,
-      "previousBaseSalary": 77500
+      "previousBaseSalary": 77500,
+      "realisticRange": {
+        "min": 150000,
+        "max": 250000,
+        "absoluteMax": 400000
+      }
     },
     {
       "id": "evie2",
@@ -1417,7 +1437,12 @@
       "last365GPSold": 0,
       "annualGPTarget": 200000,
       "minProductionGP": 400000,
-      "previousBaseSalary": 77500
+      "previousBaseSalary": 77500,
+      "realisticRange": {
+        "min": 150000,
+        "max": 250000,
+        "absoluteMax": 400000
+      }
     },
     {
       "id": "tom",
@@ -1597,7 +1622,12 @@
       "last365GPSold": 48700,
       "annualGPTarget": 50000,
       "minProductionGP": null,
-      "previousBaseSalary": 88000
+      "previousBaseSalary": 88000,
+      "realisticRange": {
+        "min": 170000,
+        "max": 250000,
+        "absoluteMax": 400000
+      }
     },
     {
       "id": "michael",

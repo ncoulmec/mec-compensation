@@ -195,6 +195,58 @@
   }
   .scenario-row:last-of-type { border-bottom: none; }
   .scenario-row label { font-size: 13px; color: var(--muted); }
+
+  /* Non-linear realistic-range slider */
+  .realistic-slider-wrap { position: relative; width: 100%; padding: 22px 0 36px; }
+  .realistic-slider-wrap .zone-bar {
+    position: absolute; top: 30px; left: 0; right: 0; height: 6px;
+    display: flex; border-radius: 3px; overflow: hidden;
+    pointer-events: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+  }
+  .realistic-slider-wrap .zone { height: 100%; }
+  .realistic-slider-wrap .zone.under { background: #fde2e1; }
+  .realistic-slider-wrap .zone.realistic { background: #c8efd9; }
+  .realistic-slider-wrap .zone.stretch { background: #ffeeb8; }
+  .realistic-slider-wrap input[type="range"] {
+    position: relative; width: 100%; z-index: 2; background: transparent;
+    margin: 22px 0 4px;
+  }
+  .realistic-slider-wrap .zone-labels {
+    position: absolute; left: 0; right: 0; top: 0; height: 18px;
+    pointer-events: none;
+  }
+  .realistic-slider-wrap .label-band {
+    position: absolute; top: 0; text-align: center;
+    font-size: 9px; color: #1f5e3c; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 1px 0;
+  }
+  .realistic-slider-wrap .label-band::before,
+  .realistic-slider-wrap .label-band::after {
+    content: ''; display: inline-block; width: 8px; height: 1px;
+    background: #1f5e3c; vertical-align: middle; margin: 0 4px;
+  }
+  .realistic-slider-wrap .ticks {
+    position: absolute; left: 0; right: 0; bottom: 12px;
+    pointer-events: none; height: 14px;
+  }
+  .realistic-slider-wrap .tick {
+    position: absolute; transform: translateX(-50%);
+    font-size: 10px; font-family: var(--mono); color: var(--muted);
+    white-space: nowrap;
+  }
+  .realistic-slider-wrap .tick::before {
+    content: ''; display: block; width: 1px; height: 6px;
+    background: var(--muted); margin: 0 auto -2px;
+  }
+  .realistic-slider-wrap .tick.endpoint { color: var(--faint); font-size: 9px; }
+  .realistic-slider-wrap .zone-legend {
+    position: absolute; left: 0; right: 0; bottom: -18px;
+    display: flex; justify-content: space-between;
+    font-size: 9px; font-family: var(--mono); color: var(--faint);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    pointer-events: none;
+  }
   .tooltip-trigger {
     display: inline-block;
     width: 14px; height: 14px;
@@ -575,8 +627,18 @@
         <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Drag the sliders or type in exact figures to model different scenarios.</p>
 
         <div class="scenario-row">
-          <label><span style="display:block;">Annual Performance</span><span>Revenue <span class="tooltip-trigger" data-tip="Enter your Performance Revenue excl. GST from your Zoho Dashboard Data.">?</span></span></label>
-          <input type="range" id="rev-slider" min="0" max="400000" step="5000" value="195000">
+          <label><span style="display:block;">Annual Performance</span><span>Revenue <span class="tooltip-trigger" data-tip="Enter your Performance Revenue excl. GST from your Zoho Dashboard Data. Realistic Range zone is highlighted on the slider.">?</span></span></label>
+          <div class="realistic-slider-wrap" id="rev-slider-wrap">
+            <div class="zone-labels"><span class="label-band" id="rev-label-band">Realistic Range</span></div>
+            <div class="zone-bar">
+              <div class="zone under"></div>
+              <div class="zone realistic"></div>
+              <div class="zone stretch"></div>
+            </div>
+            <input type="range" id="rev-slider" min="0" max="100" step="0.1" value="50">
+            <div class="ticks"></div>
+            <div class="zone-legend"><span style="color:#c43c30;">↤ Under</span><span style="color:#1f5e3c;">Realistic</span><span style="color:#a17a00;">Stretch ↦</span></div>
+          </div>
           <div style="position: relative;">
             <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
             <input type="text" inputmode="numeric" id="rev-input" class="value-input" style="padding-left: 22px;" value="195,000">
@@ -851,6 +913,80 @@ async function load() {
   }
 }
 
+// === Non-linear realistic-range slider ===
+// Maps a 0-100 slider position to actual money via piecewise mapping that gives the
+// realistic zone 60% of slider width, with under (20%) and stretch (20%) on either side.
+// This means dragging through the realistic range moves slowly — Tom can dial in $200k vs $215k easily.
+const NLS_UNDER = 20, NLS_REAL = 60, NLS_STRETCH = 20;
+function nlsPosToMoney(pos, range) {
+  const { min, max, absoluteMax, absoluteMin = 0 } = range;
+  if (pos <= NLS_UNDER) return absoluteMin + (pos / NLS_UNDER) * (min - absoluteMin);
+  if (pos <= NLS_UNDER + NLS_REAL) {
+    const t = (pos - NLS_UNDER) / NLS_REAL;
+    return min + t * (max - min);
+  }
+  const t = (pos - NLS_UNDER - NLS_REAL) / NLS_STRETCH;
+  return max + t * (absoluteMax - max);
+}
+function nlsMoneyToPos(money, range) {
+  const { min, max, absoluteMax, absoluteMin = 0 } = range;
+  if (money <= absoluteMin) return 0;
+  if (money <= min) return min === absoluteMin ? 0 : ((money - absoluteMin) / (min - absoluteMin)) * NLS_UNDER;
+  if (money <= max) return NLS_UNDER + ((money - min) / (max - min)) * NLS_REAL;
+  if (money >= absoluteMax) return 100;
+  return NLS_UNDER + NLS_REAL + ((money - max) / (absoluteMax - max)) * NLS_STRETCH;
+}
+// Render the tick markers + label-band positioning inside a .realistic-slider-wrap
+function nlsRenderChrome(wrapEl, range) {
+  const { min, max, absoluteMax, absoluteMin = 0 } = range;
+  const zones = wrapEl.querySelectorAll('.zone');
+  if (zones.length === 3) { zones[0].style.width = NLS_UNDER + '%'; zones[1].style.width = NLS_REAL + '%'; zones[2].style.width = NLS_STRETCH + '%'; }
+  const band = wrapEl.querySelector('.label-band');
+  if (band) {
+    band.style.left = NLS_UNDER + '%';
+    band.style.width = NLS_REAL + '%';
+    band.textContent = `Realistic Range $${(min/1000).toFixed(0)}k–$${(max/1000).toFixed(0)}k`;
+  }
+  const ticks = wrapEl.querySelector('.ticks');
+  if (ticks) {
+    ticks.innerHTML = `
+      <span class="tick endpoint" style="left:0%;">$${(absoluteMin/1000).toFixed(0)}k</span>
+      <span class="tick" style="left:${NLS_UNDER}%;">$${(min/1000).toFixed(0)}k</span>
+      <span class="tick" style="left:${NLS_UNDER + NLS_REAL}%;">$${(max/1000).toFixed(0)}k</span>
+      <span class="tick endpoint" style="left:100%;">$${(absoluteMax/1000).toFixed(0)}k</span>`;
+  }
+}
+function wireNonLinearSlider(slider, input, range, onChange) {
+  const wrap = slider.closest('.realistic-slider-wrap');
+  if (wrap) nlsRenderChrome(wrap, range);
+  const updateFromSlider = () => {
+    const money = Math.round(nlsPosToMoney(+slider.value, range) / 100) * 100;
+    input.value = fmtNum(money);
+    onChange(money);
+  };
+  const updateFromInput = () => {
+    const money = parseNum(input.value);
+    const caret = input.selectionStart;
+    const digitsBefore = (input.value.slice(0, caret).match(/\d/g) || []).length;
+    input.value = fmtNum(money);
+    let cursor = 0, seen = 0;
+    while (cursor < input.value.length && seen < digitsBefore) {
+      if (/\d/.test(input.value[cursor])) seen++;
+      cursor++;
+    }
+    input.setSelectionRange(cursor, cursor);
+    slider.value = nlsMoneyToPos(money, range);
+    onChange(money);
+  };
+  slider.addEventListener('input', updateFromSlider);
+  input.addEventListener('input', updateFromInput);
+  // Initial sync from current value
+  return (initialMoney) => {
+    slider.value = nlsMoneyToPos(initialMoney, range);
+    input.value = fmtNum(initialMoney);
+  };
+}
+
 function wireInputs() {
   const revSlider = document.getElementById('rev-slider');
   const revInput = document.getElementById('rev-input');
@@ -858,31 +994,17 @@ function wireInputs() {
   const kpiInput = document.getElementById('kpi-input');
   const kpiSlider2 = document.getElementById('kpi-slider-2');
 
-  revSlider.value = scenario.revenue;
-  revInput.value = fmtNum(scenario.revenue);
+  // Pull realistic range from emp record (with a sensible default).
+  const range = emp.realisticRange || { min: 170000, max: 250000, absoluteMax: 400000, absoluteMin: 0 };
+  range.absoluteMin = range.absoluteMin || 0;
+  const setRev = wireNonLinearSlider(revSlider, revInput, range, (money) => {
+    scenario.revenue = money;
+    update();
+  });
+  setRev(scenario.revenue);
   kpiSlider.value = scenario.kpiScore;
   kpiSlider2.value = scenario.kpiScore;
   kpiInput.value = scenario.kpiScore.toFixed(2);
-
-  revSlider.addEventListener('input', () => {
-    scenario.revenue = +revSlider.value;
-    revInput.value = fmtNum(scenario.revenue);
-    update();
-  });
-  revInput.addEventListener('input', () => {
-    scenario.revenue = parseNum(revInput.value);
-    const caret = revInput.selectionStart;
-    const digitsBefore = (revInput.value.slice(0, caret).match(/\d/g) || []).length;
-    revInput.value = fmtNum(scenario.revenue);
-    let cursor = 0, seen = 0;
-    while (cursor < revInput.value.length && seen < digitsBefore) {
-      if (/\d/.test(revInput.value[cursor])) seen++;
-      cursor++;
-    }
-    revInput.setSelectionRange(cursor, cursor);
-    revSlider.value = Math.min(scenario.revenue, +revSlider.max);
-    update();
-  });
   const syncKpi = (val) => {
     scenario.kpiScore = Math.max(0, Math.min(+val || 0, data.globals.kpiScoreCap || 1));
     kpiSlider.value = scenario.kpiScore;
