@@ -340,33 +340,6 @@
       </div>
     </div>
 
-    <!-- Margin calculator -->
-    <div class="card" style="border-left: 4px solid var(--navy);">
-      <h2 style="margin-top: 0;">Margin Calculator <span style="font-size: 12px; font-weight: 400; color: var(--muted);">(display only — not yet wired into commission)</span></h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Enter the Revenue (inc GST) you booked alongside the GP sold to see your realised margin. GST is stripped (Revenue ÷ 11) so margin compares like-for-like with the ex-GST P&amp;L. <strong>This is currently informational only.</strong> A future "margin accelerator" multiplier may be wired in to reward higher-margin work.</p>
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: end;">
-        <div>
-          <label style="font-size: 12px; color: var(--muted); display:block; margin-bottom: 4px;">Revenue inc. GST</label>
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="margin-revenue-input" class="value-input" style="padding-left: 22px; width: 100%;" value="0">
-          </div>
-        </div>
-        <div>
-          <label style="font-size: 12px; color: var(--muted); display:block; margin-bottom: 4px;">GP Sold (auto-pulled)</label>
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="margin-gp-input" class="value-input" style="padding-left: 22px; width: 100%; background: #fafaf7;" value="0">
-          </div>
-        </div>
-        <div style="text-align: center; padding: 12px; background: #f0f7f3; border: 1px solid #b8e0c8; border-radius: 8px;">
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Realised Margin</div>
-          <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--navy);" id="margin-result">—</div>
-          <div style="font-size: 10px; color: var(--muted); font-family: var(--mono); margin-top: 2px;" id="margin-formula">GP ÷ (Revenue − Revenue/11)</div>
-        </div>
-      </div>
-    </div>
-
     <!-- Commission Curve Chart: New vs Old across full GP range -->
     <div class="card">
       <h2 style="margin-top: 0;">Commission Curve — New vs Old</h2>
@@ -420,6 +393,41 @@
         <tbody id="bands-body"></tbody>
       </table>
       <div style="margin-top: 12px; font-size: 12px; color: var(--muted); font-family: var(--mono);" id="production-note"></div>
+    </div>
+
+    <!-- Margin Calculator — sits below Commission Bands, styled to match Scenario Inputs -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
+        <h2 style="margin: 0;">Margin Calculator</h2>
+        <span style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;">Display only · informational</span>
+      </div>
+      <p style="font-size: 13px; color: var(--muted); margin: 4px 0 16px;">Sanity-check your realised margin on bookings. GST is stripped from Revenue so the result lines up with the company P&amp;L (which is ex-GST). A future "margin accelerator" may reward higher-margin work — for now, this is just here to make the trade-off visible.</p>
+      <div class="scenario-row">
+        <label>Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(inc. GST)</span></label>
+        <input type="range" id="margin-rev-slider" min="0" max="600000" step="5000" value="0">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="margin-revenue-input" class="value-input" style="padding-left: 22px;" value="0">
+        </div>
+      </div>
+      <div class="scenario-row">
+        <label>GP Sold <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(auto-pulls from Annual GP Sold above)</span></label>
+        <input type="range" id="margin-gp-slider" min="0" max="600000" step="5000" value="0">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="margin-gp-input" class="value-input" style="padding-left: 22px;" value="0">
+        </div>
+      </div>
+      <div class="rate-calc" style="margin-top: 14px;">
+        <div>
+          <span class="chip" id="margin-rev-chip">Revenue ex-GST: $—</span>
+          <span style="color: var(--muted);">·</span>
+          <span class="chip" id="margin-gp-chip">GP: $—</span>
+          <span style="color: var(--muted);">=</span>
+          <span class="chip result" id="margin-result">—</span>
+        </div>
+        <span class="label" id="margin-formula">GP ÷ (Revenue − Revenue ÷ 11)</span>
+      </div>
     </div>
 
     <div class="card" data-guardrail-card style="padding: 18px 24px;">
@@ -813,22 +821,30 @@ function wireInputs() {
   kpiSlider2.addEventListener('input', () => syncKpi(kpiSlider2.value));
   kpiInput.addEventListener('input', () => syncKpi(kpiInput.value));
 
-  // Margin calculator
-  const mRev = document.getElementById('margin-revenue-input');
-  const mGP = document.getElementById('margin-gp-input');
-  if (mRev && mGP) {
+  // Margin calculator — slider + input pairs styled like the rest of the page
+  const mRevSlider = document.getElementById('margin-rev-slider');
+  const mRevInput = document.getElementById('margin-revenue-input');
+  const mGpSlider = document.getElementById('margin-gp-slider');
+  const mGpInput = document.getElementById('margin-gp-input');
+  if (mRevSlider && mRevInput && mGpSlider && mGpInput) {
     const recalcMargin = () => {
-      const revInc = parseNum(mRev.value);
-      const gp = parseNum(mGP.value);
+      const revInc = parseNum(mRevInput.value);
+      const gp = parseNum(mGpInput.value);
       const revEx = revInc - revInc / 11; // strip 10% GST (Australian)
-      const out = document.getElementById('margin-result');
+      const margin = revEx > 0 ? gp / revEx : 0;
+      const result = document.getElementById('margin-result');
+      const revChip = document.getElementById('margin-rev-chip');
+      const gpChip = document.getElementById('margin-gp-chip');
+      if (revChip) revChip.textContent = `Revenue ex-GST: ${fmtMoney(revEx)}`;
+      if (gpChip) gpChip.textContent = `GP: ${fmtMoney(gp)}`;
       if (revEx > 0 && gp > 0) {
-        const margin = gp / revEx;
-        out.textContent = (margin * 100).toFixed(1) + '%';
-        out.style.color = margin >= 0.30 ? 'var(--accent)' : (margin >= 0.20 ? 'var(--navy)' : 'var(--danger)');
+        result.textContent = (margin * 100).toFixed(1) + '%';
+        result.style.background = margin >= 0.30 ? 'var(--accent)' : (margin >= 0.20 ? 'var(--navy)' : 'var(--danger)');
+        result.style.color = '#fff';
       } else {
-        out.textContent = '—';
-        out.style.color = 'var(--muted)';
+        result.textContent = '—';
+        result.style.background = '';
+        result.style.color = '';
       }
     };
     const formatLive = (input) => {
@@ -842,10 +858,23 @@ function wireInputs() {
       }
       input.setSelectionRange(cursor, cursor);
     };
-    mRev.addEventListener('input', () => { formatLive(mRev); recalcMargin(); });
-    mGP.addEventListener('input', () => { formatLive(mGP); recalcMargin(); });
+    const syncMarginPair = (slider, input) => {
+      slider.addEventListener('input', () => { input.value = fmtNum(+slider.value); recalcMargin(); });
+      input.addEventListener('input', () => {
+        formatLive(input);
+        const n = parseNum(input.value);
+        slider.value = Math.min(n, +slider.max);
+        recalcMargin();
+      });
+    };
+    syncMarginPair(mRevSlider, mRevInput);
+    syncMarginPair(mGpSlider, mGpInput);
     // Auto-pull GP from main scenario whenever it changes
-    const autoPull = () => { mGP.value = fmtNum(scenario.gp); recalcMargin(); };
+    const autoPull = () => {
+      mGpInput.value = fmtNum(scenario.gp);
+      mGpSlider.value = Math.min(scenario.gp, +mGpSlider.max);
+      recalcMargin();
+    };
     document.getElementById('gp-slider').addEventListener('input', autoPull);
     document.getElementById('gp-input').addEventListener('input', autoPull);
     autoPull();
@@ -875,6 +904,14 @@ function calcBandCommission(metric, bands) {
   return { total, breakdown };
 }
 
+// Production Gate resolver — checks plan-level minProductionGP first (new home, edited from MEC Group → Plan Types),
+// falls back to legacy per-employee field. Returns 0 if no gate is configured.
+function getProductionGate() {
+  const planMin = +data.planTypes?.[emp.planType]?.minProductionGP || 0;
+  const empMin = +emp.minProductionGP || 0;
+  return planMin || empMin;
+}
+
 // Planning-side calculation.
 // IMPORTANT: band output and production commission are ALREADY super-inclusive (gross).
 // ex-super portion = gross / (1 + superRate). super portion = gross − ex.
@@ -883,9 +920,9 @@ function calcAll() {
   const sr = g.superRate;
   const { total: bandCommGrossRaw, breakdown } = calcBandCommission(scenario.gp, plan.bands);
 
-  // PLANNING-SIDE PRODUCTION GATE — if emp.minProductionGP is set, scenario.eventGP must >= it
+  // PLANNING-SIDE PRODUCTION GATE — if getProductionGate() is set, scenario.eventGP must >= it
   // for the GP commission to flow on the planning side. (Independent of the actual gate.)
-  const planningGatePassed = !emp.minProductionGP || scenario.eventGP >= emp.minProductionGP;
+  const planningGatePassed = !getProductionGate() || scenario.eventGP >= getProductionGate();
   const bandCommGross = planningGatePassed ? bandCommGrossRaw : 0;
 
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, 0), g.kpiScoreCap || 1);
@@ -1103,11 +1140,11 @@ function computeMonthlyRows() {
   // If admin has entered actualPayouts for a month, admin's GP/eventGP take precedence — that's the "locked" row.
   const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
 
-  // PRODUCTION GATE — for hybrid roles (Evie/Evie2): if YTD annualised Event GP < emp.minProductionGP,
+  // PRODUCTION GATE — for hybrid roles (Evie/Evie2): if YTD annualised Event GP < getProductionGate(),
   // sales (GP) commission is paused for the year. Production commission (1% × Event GP) is unaffected.
   let prodGatePassed = true;
   let prodGateInfo = null;
-  if (emp.minProductionGP && emp.minProductionGP > 0) {
+  if (getProductionGate() && getProductionGate() > 0) {
     let ytdEvent = 0, monthsWithData = 0;
     actualsMonths.forEach((m, i) => {
       const ap = actualPayouts[i];
@@ -1117,8 +1154,8 @@ function computeMonthlyRows() {
       ytdEvent += ev;
     });
     const annualizedEvent = monthsWithData > 0 ? (ytdEvent / monthsWithData) * 12 : 0;
-    prodGatePassed = monthsWithData === 0 || annualizedEvent >= emp.minProductionGP;
-    prodGateInfo = { ytdEvent, monthsWithData, annualizedEvent, target: emp.minProductionGP, passed: prodGatePassed };
+    prodGatePassed = monthsWithData === 0 || annualizedEvent >= getProductionGate();
+    prodGateInfo = { ytdEvent, monthsWithData, annualizedEvent, target: getProductionGate(), passed: prodGatePassed };
   }
 
   const raw = actualsMonths.map((m, i) => {
@@ -1488,8 +1525,8 @@ function update() {
   // Planning gate banner — shown for hybrid roles with a minProductionGP target
   const planningBanner = document.getElementById('planning-gate-banner');
   if (planningBanner) {
-    if (emp.minProductionGP && emp.minProductionGP > 0) {
-      const target = emp.minProductionGP;
+    if (getProductionGate() && getProductionGate() > 0) {
+      const target = getProductionGate();
       if (r.planningGatePassed) {
         planningBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} ≥ target ${fmtMoney(target)} — your GP sales commission flows. Drag Annual Event GP Produced below ${fmtMoney(target)} to see what happens to your commission if production drops.</span></div>`;
       } else {

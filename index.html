@@ -618,19 +618,19 @@
       <table id="emp-table">
         <thead>
           <tr>
-            <th style="width:16%">Name</th>
-            <th style="width:16%">Role</th>
-            <th style="width:11%">Base Salary</th>
-            <th style="width:11%">+ 12% Super</th>
-            <th style="width:18%">Plan Type</th>
-            <th style="width:14%" title="Minimum annual GP-Sold required (only applies to hybrid Production roles like Evie). Below this, GP commission stops paying. Leave $0 for no gate.">Production Gate <small style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(annual GP)</small></th>
-            <th style="width:7%">Status</th>
-            <th style="width:7%">Dashboard</th>
+            <th style="width:18%">Name</th>
+            <th style="width:18%">Role</th>
+            <th style="width:12%">Base Salary</th>
+            <th style="width:12%">+ 12% Super</th>
+            <th style="width:22%">Plan Type</th>
+            <th style="width:8%">Status</th>
+            <th style="width:10%">Dashboard</th>
           </tr>
         </thead>
         <tbody id="emp-body"></tbody>
         <tfoot id="emp-foot"></tfoot>
       </table>
+      <p style="margin-top: 8px; font-size: 12px; color: var(--muted);">Production Gates (e.g. Evie's $400k) now live on the <strong>Plan Types</strong> tab against the relevant hybrid plan.</p>
     </div>
   </section>
 
@@ -815,19 +815,19 @@
         </div>
         <div style="display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);">
           <span style="font-size: 13px; color: var(--muted); font-weight: 500;">Multipliers:</span>
-          <label style="font-size: 13px;">Worst Case
+          <label style="font-size: 13px; color: var(--danger); font-weight: 600;">Worst Case
             <span class="input-with-suffix" style="display: inline-flex; width: 80px; margin-left: 6px;">
-              <input type="number" id="fp-worst-pct" value="70" min="20" max="100" step="5" style="text-align: right;">
-              <span class="suffix">%</span>
+              <input type="number" id="fp-worst-pct" value="70" min="20" max="100" step="5" style="text-align: right; color: var(--danger); font-weight: 600;">
+              <span class="suffix" style="color: var(--danger);">%</span>
             </span>
           </label>
-          <label style="font-size: 13px;">Best Case
+          <label style="font-size: 13px; color: var(--accent); font-weight: 600;">Best Case
             <span class="input-with-suffix" style="display: inline-flex; width: 80px; margin-left: 6px;">
-              <input type="number" id="fp-best-pct" value="115" min="100" max="200" step="5" style="text-align: right;">
-              <span class="suffix">%</span>
+              <input type="number" id="fp-best-pct" value="115" min="100" max="200" step="5" style="text-align: right; color: var(--accent); font-weight: 600;">
+              <span class="suffix" style="color: var(--accent);">%</span>
             </span>
           </label>
-          <span style="font-size: 11px; color: var(--faint); font-style: italic;">e.g. Worst = Target × 0.70 means worst-case is 30% below target.</span>
+          <span style="font-size: 11px; color: var(--faint); font-style: italic;">Sentiment slider's range auto-links to these (Worst−100 to Best−100). e.g. 70%/115% → −30% to +15%.</span>
         </div>
       </div>
 
@@ -885,6 +885,7 @@
             <input type="text" inputmode="numeric" id="fp-gm-gp-input" value="1,827,000" style="font-family: var(--mono); font-size: 14px; padding: 8px 10px 8px 22px; border: 1px solid var(--border); border-radius: 6px; width: 130px;">
           </div>
           <button class="btn small" id="fp-gm-reset" style="font-size: 11px;">Reset to Target</button>
+          <button class="btn small" id="fp-gm-reset-ltm" style="font-size: 11px; background: #fff7e6; border-color: #f5d890; color: #8a6a00;" title="Pull current LTM Zoho actual GP-Sold (last 365 days) into the slider — the team's actual run-rate.">⟲ Reset to LTM Zoho Actuals</button>
         </div>
         <div style="background: #fef5e6; border: 1px solid #f5d890; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: var(--warn);">
           <strong>Disclaimer:</strong> This is a projection based on current LTM margin ratios staying constant. Actual GM commission depends on what the company's Contribution Margin and Net Profit end up being — those vary with costs that aren't captured here.
@@ -1217,12 +1218,6 @@ function renderEmployees() {
 
   data.employees.forEach((e, i) => {
     const superIncl = Math.round(e.baseSalary * (1 + superRate));
-    // Only employees on hybrid plans (where the gate logic applies) see an editable gate.
-    const planMeta = data.planTypes[e.planType];
-    const gateApplies = planMeta && (e.planType === 'hybrid_gp' || e.planType === 'hybrid_rev' || e.planType === 'hybrid_rev_senior');
-    const gateCell = gateApplies
-      ? `<div title="Below this annual GP-Sold, the Sales-side commission stops paying. Set $0 to disable.">${moneyInputHtml(`employees.${i}.minProductionGP`, '0')}</div>`
-      : `<span style="color: var(--faint); font-size: 11px;">N/A</span>`;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input type="text" class="name-input" value="${e.name}" data-i="${i}" data-f="name"></td>
@@ -1230,7 +1225,6 @@ function renderEmployees() {
       <td>${moneyInputHtml(`employees.${i}.baseSalary`)}</td>
       <td><div class="read-only-cell" data-super="${i}">${fmtMoney(superIncl)}</div></td>
       <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
-      <td>${gateCell}</td>
       <td>${e.placeholder ? '<span class="pill warn">placeholder</span>' : '<span class="pill">active</span>'}</td>
       <td><a href="${e.dashboardFile}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 12px; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open ${e.name}'s dashboard in a new tab">Open dashboard ↗</a></td>
     `;
@@ -1328,6 +1322,12 @@ function renderPlans() {
               <div style="flex: 0 0 180px;">
                 <label style="font-size: 14px; display: block; margin-bottom: 6px;">Maximum Production Value <span class="hint">Event GP slider max</span></label>
                 ${moneyInputHtml(`planTypes.${key}.maxProductionValue`, '0')}
+              </div>
+            ` : ''}
+            ${(key.includes('hybrid')) ? `
+              <div style="flex: 0 0 220px;">
+                <label style="font-size: 14px; display: block; margin-bottom: 6px;">Production Gate <span class="hint">Minimum annual GP-Sold required for sales commission to flow. $0 disables the gate. Applies to every employee on this plan.</span></label>
+                ${moneyInputHtml(`planTypes.${key}.minProductionGP`, '0')}
               </div>
             ` : ''}
           </div>
@@ -2514,19 +2514,7 @@ function renderFinancialPlanning() {
   const zoho = $('#zoho-link');
   if (zoho) zoho.href = data.globals?.zohoDashboardUrl || '#';
 
-  // Sentiment slider — wire once
-  const sentEl = $('#fp-sentiment');
-  if (sentEl && !sentEl.dataset.listenerAttached) {
-    sentEl.addEventListener('input', () => {
-      $('#fp-sentiment-pct').textContent = sentEl.value;
-      renderFinancialPlanning();
-    });
-    sentEl.dataset.listenerAttached = '1';
-  }
-  $('#fp-sentiment-pct').textContent = sentEl ? sentEl.value : '0';
-  const sentMult = 1 + (getFpSentiment() / 100);
-
-  // Worst/Best multiplier inputs
+  // Worst/Best multiplier inputs (must be read before sentiment slider so we can link the slider's range to them)
   const worstEl = $('#fp-worst-pct');
   const bestEl = $('#fp-best-pct');
   if (worstEl && !worstEl.dataset.listenerAttached) {
@@ -2541,6 +2529,28 @@ function renderFinancialPlanning() {
   const bestMult = (bestEl ? +bestEl.value || 115 : 115) / 100;
   if ($('#fp-worst-pct-label')) $('#fp-worst-pct-label').textContent = (worstMult * 100).toFixed(0);
   if ($('#fp-best-pct-label')) $('#fp-best-pct-label').textContent = (bestMult * 100).toFixed(0);
+
+  // Sentiment slider — range linked to multipliers (e.g. 70%/115% → -30 to +15)
+  const sentEl = $('#fp-sentiment');
+  if (sentEl) {
+    const newMin = Math.round((worstMult - 1) * 100);
+    const newMax = Math.round((bestMult - 1) * 100);
+    sentEl.min = newMin;
+    sentEl.max = newMax;
+    // Clamp current value into the new bounds
+    const currentVal = parseInt(sentEl.value, 10) || 0;
+    if (currentVal < newMin) sentEl.value = newMin;
+    if (currentVal > newMax) sentEl.value = newMax;
+  }
+  if (sentEl && !sentEl.dataset.listenerAttached) {
+    sentEl.addEventListener('input', () => {
+      $('#fp-sentiment-pct').textContent = sentEl.value;
+      renderFinancialPlanning();
+    });
+    sentEl.dataset.listenerAttached = '1';
+  }
+  $('#fp-sentiment-pct').textContent = sentEl ? sentEl.value : '0';
+  const sentMult = 1 + (getFpSentiment() / 100);
 
   // Build unified rows: employees + externals. Both have editable Last 365 and editable Target.
   const rows = data.employees.map((e, i) => ({
@@ -2580,9 +2590,9 @@ function renderFinancialPlanning() {
     const tag = r.kind === 'external' ? ` <span style="font-size: 10px; color: var(--faint); font-family: var(--mono); margin-left: 4px;">non-dashboard</span>` : ` <span style="font-size: 11px; color: var(--muted);">${r.role}</span>`;
     return `<tr>
       <td><strong>${r.name}</strong>${tag}</td>
-      <td style="text-align:right;">${moneyInputHtml(r.last365Path, '0')}</td>
+      <td style="text-align:right;"><div style="display: flex; justify-content: flex-end;">${moneyInputHtml(r.last365Path, '0')}</div></td>
       <td style="text-align:right; font-family: var(--mono); color: var(--danger); font-weight: 600;">${fmtMoney(worst)}</td>
-      <td style="text-align:right;">${moneyInputHtml(r.targetPath, '0')}</td>
+      <td style="text-align:right;"><div style="display: flex; justify-content: flex-end;">${moneyInputHtml(r.targetPath, '0')}</div></td>
       <td style="text-align:right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(best)}</td>
       <td style="text-align:right;">${removeBtn}</td>
     </tr>`;
@@ -2685,7 +2695,7 @@ function renderFinancialPlanning() {
         <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px;">From the highlighted Target column above. Change any Target input to update this projection live.</div>
       </div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected Revenue <span style="color: var(--faint); font-size: 11px;">= Team GP ÷ GM (${(gmXero*100).toFixed(1)}%)</span></span><span>${fmtMoney(projRevenue)}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected GP <span style="color: var(--faint); font-size: 11px;">= Team Target Total</span></span><span>${fmtMoney(projGP)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected GP <span style="color: var(--faint); font-size: 11px;">= Team Target Total (in Zoho)</span></span><span>${fmtMoney(projGP)}</span></div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected CM <span style="color: var(--faint); font-size: 11px;">= Revenue × ${(ltm.cm/ltm.revenue*100).toFixed(1)}% LTM CM ratio</span></span><span>${fmtMoney(projCM)}</span></div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected NP <span style="color: var(--faint); font-size: 11px;">= Revenue × ${(ltm.np/ltm.revenue*100).toFixed(1)}% LTM NM ratio</span></span><span>${fmtMoney(projNP)}</span></div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono); color: var(--danger);"><span>− New Variable Comp Pool</span><span>−${fmtMoney(totalVarComp)}</span></div>
@@ -2705,10 +2715,20 @@ function renderFinancialPlanning() {
   const gmGpSlider = $('#fp-gm-gp');
   const gmGpInput = $('#fp-gm-gp-input');
   const gmReset = $('#fp-gm-reset');
+  const gmResetLtm = $('#fp-gm-reset-ltm');
   if (gmGpSlider && !gmGpSlider.dataset.listenerAttached) {
     gmGpSlider.addEventListener('input', () => { gmGpInput.value = fmtNum(+gmGpSlider.value); renderGmTweaker(); });
     gmGpInput.addEventListener('input', () => { const n = parseMoney(gmGpInput.value); if (n != null) { gmGpSlider.value = Math.max(+gmGpSlider.min, Math.min(n, +gmGpSlider.max)); gmGpInput.value = fmtNum(n); renderGmTweaker(); } });
     gmReset.addEventListener('click', () => { gmGpSlider.value = totalOnTrack; gmGpInput.value = fmtNum(totalOnTrack); renderGmTweaker(); });
+    if (gmResetLtm) {
+      gmResetLtm.addEventListener('click', () => {
+        const ltmActual = fpTotalLast365();
+        const clamped = Math.max(+gmGpSlider.min, Math.min(ltmActual, +gmGpSlider.max));
+        gmGpSlider.value = clamped;
+        gmGpInput.value = fmtNum(ltmActual);
+        renderGmTweaker();
+      });
+    }
     gmGpSlider.dataset.listenerAttached = '1';
   }
   // Default the slider value to On Track on first render or if not yet user-touched
@@ -2805,12 +2825,17 @@ function renderCostStack(ltm) {
   // + super on that delta + new commission delta vs old plan (cost-to-MEC at last-365 GP).
   // Then breakeven additional GP-sold required to absorb the increase at LTM CM margin.
   const superRate = data.globals?.superRate ?? 0.12;
+  // Hardcoded fallbacks per Nathan — used if data.json hasn't been redeployed with previousBaseSalary fields
+  const PREV_BASE_FALLBACK = {
+    hayley: 100000, dane: 85000, nic: 70000, evie: 77500, evie2: 77500,
+    daniel: 71250, tom: 88000, michael: 70000
+  };
   let totalDeltaBase = 0, totalDeltaSuper = 0, totalDeltaComm = 0;
 
   const rows = data.employees
     .filter(e => !e.placeholder)
     .map(e => {
-      const oldBase = +e.previousBaseSalary || 0;
+      const oldBase = (+e.previousBaseSalary) || PREV_BASE_FALLBACK[e.id] || 0;
       const newBase = +e.baseSalary || 0;
       const dBase = newBase - oldBase;
       const dSuper = dBase * superRate;

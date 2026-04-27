@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Compensation Dashboard · Evie Johnston</title>
+<title>Compensation Dashboard · Daniel Steer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -249,6 +249,7 @@
       <h2>Forecast your year</h2>
       <p class="blurb">Model scenarios using the sliders below. These are your forward-looking projections — adjust the inputs to see how different GP targets affect your variable compensation. Numbers reset on reload.</p>
     </div>
+    <div id="pay-increase-banner"></div>
     <div id="planning-gate-banner"></div>
 
     <div class="kpi-row">
@@ -339,6 +340,20 @@
       </div>
     </div>
 
+    <!-- Commission Curve Chart: New vs Old across full GP range -->
+    <div class="card">
+      <h2 style="margin-top: 0;">Commission Curve — New vs Old</h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Your commission earnings (super-inclusive) at every GP level under the <strong style="color: var(--navy);">New</strong> incremental-band plan vs the <strong style="color: var(--muted);">Old</strong> 3.5%-flat plan. The vertical line marks your current scenario.</p>
+      <div id="commission-curve-wrap" style="width: 100%; overflow-x: auto;">
+        <svg id="commission-curve" viewBox="0 0 800 360" style="width: 100%; height: auto; min-width: 600px;" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div style="display: flex; gap: 18px; margin-top: 8px; font-size: 12px; font-family: var(--mono); color: var(--muted); flex-wrap: wrap;">
+        <span><span style="display:inline-block; width:14px; height:3px; background: var(--navy); vertical-align: middle; margin-right: 6px;"></span>New plan (inc super)</span>
+        <span><span style="display:inline-block; width:14px; height:3px; background: var(--muted); vertical-align: middle; margin-right: 6px;"></span>Old plan (3.5% × GP × 1.12)</span>
+        <span><span style="display:inline-block; width:14px; height:3px; background: var(--accent); vertical-align: middle; margin-right: 6px;"></span>Difference</span>
+      </div>
+    </div>
+
     <!-- Old vs New commission comparison -->
     <div class="compare-card">
       <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Old vs New Commission</h2>
@@ -378,6 +393,41 @@
         <tbody id="bands-body"></tbody>
       </table>
       <div style="margin-top: 12px; font-size: 12px; color: var(--muted); font-family: var(--mono);" id="production-note"></div>
+    </div>
+
+    <!-- Margin Calculator — sits below Commission Bands, styled to match Scenario Inputs -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
+        <h2 style="margin: 0;">Margin Calculator</h2>
+        <span style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;">Display only · informational</span>
+      </div>
+      <p style="font-size: 13px; color: var(--muted); margin: 4px 0 16px;">Sanity-check your realised margin on bookings. GST is stripped from Revenue so the result lines up with the company P&amp;L (which is ex-GST). A future "margin accelerator" may reward higher-margin work — for now, this is just here to make the trade-off visible.</p>
+      <div class="scenario-row">
+        <label>Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(inc. GST)</span></label>
+        <input type="range" id="margin-rev-slider" min="0" max="600000" step="5000" value="0">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="margin-revenue-input" class="value-input" style="padding-left: 22px;" value="0">
+        </div>
+      </div>
+      <div class="scenario-row">
+        <label>GP Sold <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(auto-pulls from Annual GP Sold above)</span></label>
+        <input type="range" id="margin-gp-slider" min="0" max="600000" step="5000" value="0">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="margin-gp-input" class="value-input" style="padding-left: 22px;" value="0">
+        </div>
+      </div>
+      <div class="rate-calc" style="margin-top: 14px;">
+        <div>
+          <span class="chip" id="margin-rev-chip">Revenue ex-GST: $—</span>
+          <span style="color: var(--muted);">·</span>
+          <span class="chip" id="margin-gp-chip">GP: $—</span>
+          <span style="color: var(--muted);">=</span>
+          <span class="chip result" id="margin-result">—</span>
+        </div>
+        <span class="label" id="margin-formula">GP ÷ (Revenue − Revenue ÷ 11)</span>
+      </div>
     </div>
 
     <div class="card" data-guardrail-card style="padding: 18px 24px;">
@@ -579,7 +629,7 @@
 
 <script>
 /* ============================================================
-   Employee Compensation Dashboard — Evie Johnston (Sales Rep, gp_bands)
+   Employee Compensation Dashboard — Daniel Steer (Sales Rep, gp_bands)
    Planning + Actual split, no margin multiplier, super-inclusive everywhere.
    ============================================================ */
 
@@ -770,6 +820,65 @@ function wireInputs() {
   kpiSlider.addEventListener('input', () => syncKpi(kpiSlider.value));
   kpiSlider2.addEventListener('input', () => syncKpi(kpiSlider2.value));
   kpiInput.addEventListener('input', () => syncKpi(kpiInput.value));
+
+  // Margin calculator — slider + input pairs styled like the rest of the page
+  const mRevSlider = document.getElementById('margin-rev-slider');
+  const mRevInput = document.getElementById('margin-revenue-input');
+  const mGpSlider = document.getElementById('margin-gp-slider');
+  const mGpInput = document.getElementById('margin-gp-input');
+  if (mRevSlider && mRevInput && mGpSlider && mGpInput) {
+    const recalcMargin = () => {
+      const revInc = parseNum(mRevInput.value);
+      const gp = parseNum(mGpInput.value);
+      const revEx = revInc - revInc / 11; // strip 10% GST (Australian)
+      const margin = revEx > 0 ? gp / revEx : 0;
+      const result = document.getElementById('margin-result');
+      const revChip = document.getElementById('margin-rev-chip');
+      const gpChip = document.getElementById('margin-gp-chip');
+      if (revChip) revChip.textContent = `Revenue ex-GST: ${fmtMoney(revEx)}`;
+      if (gpChip) gpChip.textContent = `GP: ${fmtMoney(gp)}`;
+      if (revEx > 0 && gp > 0) {
+        result.textContent = (margin * 100).toFixed(1) + '%';
+        result.style.background = margin >= 0.30 ? 'var(--accent)' : (margin >= 0.20 ? 'var(--navy)' : 'var(--danger)');
+        result.style.color = '#fff';
+      } else {
+        result.textContent = '—';
+        result.style.background = '';
+        result.style.color = '';
+      }
+    };
+    const formatLive = (input) => {
+      const caret = input.selectionStart;
+      const digitsBefore = (input.value.slice(0, caret).match(/\d/g) || []).length;
+      input.value = fmtNum(parseNum(input.value));
+      let cursor = 0, seen = 0;
+      while (cursor < input.value.length && seen < digitsBefore) {
+        if (/\d/.test(input.value[cursor])) seen++;
+        cursor++;
+      }
+      input.setSelectionRange(cursor, cursor);
+    };
+    const syncMarginPair = (slider, input) => {
+      slider.addEventListener('input', () => { input.value = fmtNum(+slider.value); recalcMargin(); });
+      input.addEventListener('input', () => {
+        formatLive(input);
+        const n = parseNum(input.value);
+        slider.value = Math.min(n, +slider.max);
+        recalcMargin();
+      });
+    };
+    syncMarginPair(mRevSlider, mRevInput);
+    syncMarginPair(mGpSlider, mGpInput);
+    // Auto-pull GP from main scenario whenever it changes
+    const autoPull = () => {
+      mGpInput.value = fmtNum(scenario.gp);
+      mGpSlider.value = Math.min(scenario.gp, +mGpSlider.max);
+      recalcMargin();
+    };
+    document.getElementById('gp-slider').addEventListener('input', autoPull);
+    document.getElementById('gp-input').addEventListener('input', autoPull);
+    autoPull();
+  }
 }
 
 function calcBandCommission(metric, bands) {
@@ -795,6 +904,14 @@ function calcBandCommission(metric, bands) {
   return { total, breakdown };
 }
 
+// Production Gate resolver — checks plan-level minProductionGP first (new home, edited from MEC Group → Plan Types),
+// falls back to legacy per-employee field. Returns 0 if no gate is configured.
+function getProductionGate() {
+  const planMin = +data.planTypes?.[emp.planType]?.minProductionGP || 0;
+  const empMin = +emp.minProductionGP || 0;
+  return planMin || empMin;
+}
+
 // Planning-side calculation.
 // IMPORTANT: band output and production commission are ALREADY super-inclusive (gross).
 // ex-super portion = gross / (1 + superRate). super portion = gross − ex.
@@ -803,9 +920,9 @@ function calcAll() {
   const sr = g.superRate;
   const { total: bandCommGrossRaw, breakdown } = calcBandCommission(scenario.gp, plan.bands);
 
-  // PLANNING-SIDE PRODUCTION GATE — if emp.minProductionGP is set, scenario.eventGP must >= it
+  // PLANNING-SIDE PRODUCTION GATE — if getProductionGate() is set, scenario.eventGP must >= it
   // for the GP commission to flow on the planning side. (Independent of the actual gate.)
-  const planningGatePassed = !emp.minProductionGP || scenario.eventGP >= emp.minProductionGP;
+  const planningGatePassed = !getProductionGate() || scenario.eventGP >= getProductionGate();
   const bandCommGross = planningGatePassed ? bandCommGrossRaw : 0;
 
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, 0), g.kpiScoreCap || 1);
@@ -1023,11 +1140,11 @@ function computeMonthlyRows() {
   // If admin has entered actualPayouts for a month, admin's GP/eventGP take precedence — that's the "locked" row.
   const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
 
-  // PRODUCTION GATE — for hybrid roles (Evie/Evie2): if YTD annualised Event GP < emp.minProductionGP,
+  // PRODUCTION GATE — for hybrid roles (Evie/Evie2): if YTD annualised Event GP < getProductionGate(),
   // sales (GP) commission is paused for the year. Production commission (1% × Event GP) is unaffected.
   let prodGatePassed = true;
   let prodGateInfo = null;
-  if (emp.minProductionGP && emp.minProductionGP > 0) {
+  if (getProductionGate() && getProductionGate() > 0) {
     let ytdEvent = 0, monthsWithData = 0;
     actualsMonths.forEach((m, i) => {
       const ap = actualPayouts[i];
@@ -1037,8 +1154,8 @@ function computeMonthlyRows() {
       ytdEvent += ev;
     });
     const annualizedEvent = monthsWithData > 0 ? (ytdEvent / monthsWithData) * 12 : 0;
-    prodGatePassed = monthsWithData === 0 || annualizedEvent >= emp.minProductionGP;
-    prodGateInfo = { ytdEvent, monthsWithData, annualizedEvent, target: emp.minProductionGP, passed: prodGatePassed };
+    prodGatePassed = monthsWithData === 0 || annualizedEvent >= getProductionGate();
+    prodGateInfo = { ytdEvent, monthsWithData, annualizedEvent, target: getProductionGate(), passed: prodGatePassed };
   }
 
   const raw = actualsMonths.map((m, i) => {
@@ -1367,11 +1484,49 @@ function update() {
   const evChip = document.getElementById('event-gp-monthly-chip');
   if (evChip) evChip.textContent = fmtMoney(scenario.eventGP / 12);
 
+  // Pay-increase celebration — shows previous → current base salary if higher
+  const payBanner = document.getElementById('pay-increase-banner');
+  if (payBanner) {
+    const prev = +emp.previousBaseSalary || 0;
+    const curr = +emp.baseSalary || 0;
+    if (prev > 0 && curr > prev) {
+      const superRate = (data.globals && data.globals.superRate) || 0.12;
+      const dBase = curr - prev;
+      const dSuper = dBase * superRate;
+      const totalLift = dBase + dSuper;
+      const pctLift = (dBase / prev) * 100;
+      payBanner.innerHTML = `
+        <div style="margin-bottom: 22px; padding: 16px 20px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div>
+              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🎉 Your pay increase</div>
+              <div style="font-family: var(--mono); font-size: 14px; color: var(--ink); margin-top: 6px;">
+                <span style="color: var(--muted); text-decoration: line-through;">${fmtMoney(prev)}</span>
+                &nbsp;→&nbsp;
+                <strong style="font-size: 18px; color: #1f5e3c;">${fmtMoney(curr)}</strong>
+                <span style="font-size: 12px; color: var(--muted);">base salary (ex super)</span>
+              </div>
+              <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px;">
+                +${fmtMoney(dBase)} base &nbsp;·&nbsp; +${fmtMoney(dSuper)} extra super (12%) &nbsp;·&nbsp; +${pctLift.toFixed(1)}%
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Total annual lift</div>
+              <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #1f5e3c;">+${fmtMoney(totalLift)}</div>
+              <div style="font-size: 11px; color: var(--muted);">before any commission earned on top</div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      payBanner.innerHTML = '';
+    }
+  }
+
   // Planning gate banner — shown for hybrid roles with a minProductionGP target
   const planningBanner = document.getElementById('planning-gate-banner');
   if (planningBanner) {
-    if (emp.minProductionGP && emp.minProductionGP > 0) {
-      const target = emp.minProductionGP;
+    if (getProductionGate() && getProductionGate() > 0) {
+      const target = getProductionGate();
       if (r.planningGatePassed) {
         planningBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} ≥ target ${fmtMoney(target)} — your GP sales commission flows. Drag Annual Event GP Produced below ${fmtMoney(target)} to see what happens to your commission if production drops.</span></div>`;
       } else {
@@ -1578,6 +1733,87 @@ function update() {
       `;
     }).join('');
   }
+
+  // Refresh the commission curve chart (the marker tracks scenario.gp).
+  drawCommissionCurve();
+}
+
+// Draws the New-vs-Old commission curve as inline SVG.
+// Plots commission earnings (super-inclusive) across the full GP range,
+// with a marker line at the current scenario.gp position.
+function drawCommissionCurve() {
+  const svg = document.getElementById('commission-curve');
+  if (!svg || !emp) return;
+  const plan = data.planTypes[emp.planType];
+  if (!plan || !plan.bands) {
+    svg.innerHTML = '<text x="400" y="180" text-anchor="middle" fill="#888" font-size="14">No band plan available.</text>';
+    return;
+  }
+  const sr = data.globals.superRate || 0.12;
+  const oldRate = plan.oldCommissionRate || 0.035;
+  const maxGP = plan.maxMetricValue || 600000;
+  const W = 800, H = 360;
+  const padL = 70, padR = 18, padT = 22, padB = 50;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  // Sample 60 points
+  const samples = 60;
+  const points = [];
+  let maxY = 0;
+  for (let i = 0; i <= samples; i++) {
+    const gp = (maxGP / samples) * i;
+    const newComm = calcBandCommission(gp, plan.bands).total; // already super-inclusive
+    const oldComm = gp * oldRate * (1 + sr); // make super-inclusive for fair comparison
+    points.push({ gp, newComm, oldComm });
+    if (newComm > maxY) maxY = newComm;
+    if (oldComm > maxY) maxY = oldComm;
+  }
+  if (maxY === 0) maxY = 1; // avoid /0
+  const xScale = gp => padL + (gp / maxGP) * innerW;
+  const yScale = v => padT + innerH - (v / maxY) * innerH;
+  const pathFor = key => 'M ' + points.map(p => `${xScale(p.gp).toFixed(1)} ${yScale(p[key]).toFixed(1)}`).join(' L ');
+
+  // Y axis ticks
+  const yTicks = 5;
+  const yAxis = [];
+  for (let i = 0; i <= yTicks; i++) {
+    const v = (maxY / yTicks) * i;
+    const y = yScale(v);
+    yAxis.push(`<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#eee" stroke-width="1"/>`);
+    yAxis.push(`<text x="${padL - 6}" y="${y + 3}" text-anchor="end" fill="#888" font-size="10" font-family="DM Mono, monospace">$${(v/1000).toFixed(0)}k</text>`);
+  }
+
+  // X axis ticks (every 100k)
+  const xTicks = [];
+  for (let v = 0; v <= maxGP; v += 100000) {
+    const x = xScale(v);
+    xTicks.push(`<line x1="${x}" y1="${padT + innerH}" x2="${x}" y2="${padT + innerH + 4}" stroke="#888" stroke-width="1"/>`);
+    xTicks.push(`<text x="${x}" y="${padT + innerH + 16}" text-anchor="middle" fill="#888" font-size="10" font-family="DM Mono, monospace">$${(v/1000).toFixed(0)}k</text>`);
+  }
+
+  // Difference area shading (new - old)
+  const diffPath = 'M ' + points.map(p => `${xScale(p.gp).toFixed(1)} ${yScale(p.newComm).toFixed(1)}`).join(' L ') +
+                   ' L ' + [...points].reverse().map(p => `${xScale(p.gp).toFixed(1)} ${yScale(p.oldComm).toFixed(1)}`).join(' L ') + ' Z';
+
+  // Marker line at current scenario.gp
+  const markerX = xScale(Math.min(scenario.gp, maxGP));
+  const cur = points[Math.round((Math.min(scenario.gp, maxGP) / maxGP) * samples)] || points[points.length - 1];
+
+  svg.innerHTML = `
+    ${yAxis.join('')}
+    <path d="${diffPath}" fill="rgba(46, 168, 109, 0.08)" stroke="none"/>
+    <path d="${pathFor('oldComm')}" fill="none" stroke="#8e8e93" stroke-width="2" stroke-dasharray="4 3"/>
+    <path d="${pathFor('newComm')}" fill="none" stroke="#0a2540" stroke-width="2.5"/>
+    ${xTicks.join('')}
+    <line x1="${padL}" y1="${padT + innerH}" x2="${W - padR}" y2="${padT + innerH}" stroke="#888" stroke-width="1"/>
+    <line x1="${markerX}" y1="${padT}" x2="${markerX}" y2="${padT + innerH}" stroke="#d4351c" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <circle cx="${markerX}" cy="${yScale(cur.newComm)}" r="4" fill="#0a2540"/>
+    <circle cx="${markerX}" cy="${yScale(cur.oldComm)}" r="4" fill="#8e8e93"/>
+    <text x="${markerX + 6}" y="${padT + 14}" fill="#d4351c" font-size="11" font-family="DM Mono, monospace" font-weight="600">Your GP: $${(scenario.gp/1000).toFixed(0)}k</text>
+    <text x="${padL}" y="${padT - 8}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace">Commission ($, super-inclusive)</text>
+    <text x="${W/2}" y="${H - 8}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace">Annual GP Sold</text>
+  `;
 }
 
 function renderBreakdown(r) {

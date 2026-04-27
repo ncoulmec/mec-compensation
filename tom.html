@@ -545,6 +545,7 @@
 
   <!-- Overview -->
   <section class="panel" id="panel-overview">
+    <div id="pay-increase-banner"></div>
     <div class="kpi-row">
       <div class="kpi-card">
         <div class="label">Base Salary</div>
@@ -655,7 +656,11 @@
 
     <div class="card">
       <h2>Quarterly Payout <span class="tooltip-trigger" data-tip="Get your last 365 Days Performance Revenue data from the data tab in your Zoho Team Record.">?</span></h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 8px 0 12px;">Based on last 365 days of revenue (ex. GST) that you generated from your performance. Each quarter-end, enter your trailing 12-month revenue — commission is calculated on that annualised figure, then divided by 4. Empty quarters show projected amounts in green based on your Annual Performance Revenue input above.</p>
+      <p style="font-size: 13px; color: var(--muted); margin: 8px 0 8px;">Based on last 365 days of revenue (ex. GST) that you generated from your performance. Each quarter-end, enter your trailing 12-month revenue — commission is calculated on that annualised figure, then divided by 4. Empty quarters show projected amounts in green based on your Annual Performance Revenue input above.</p>
+      <div style="margin: 0 0 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <a class="btn small" href="https://crm.zoho.com/crm/org657079535/tab/CustomModule3/2877869000001224372/canvas/2877869000056971016" target="_blank" rel="noopener" style="text-decoration: none; background: #e2772f; color: #fff; border: 1px solid #e2772f; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Get My Current Zoho Data ↗</a>
+        <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Pull your trailing 12-month revenue (ex. GST) from the Data tab, then enter it below.</span>
+      </div>
       <div class="quarter-grid" id="quarter-grid"></div>
       <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px;">
         <span style="color: var(--muted);">Total commission paid across all 4 quarters</span>
@@ -1101,6 +1106,44 @@ function update() {
       gb.innerHTML = `<div class="banner warn"><span class="dot"></span>Breach — company ${label} ${fmtPct(guard.margin)} is below the ${fmtPct(guard.floor)} floor. Variable comp is paused.</div>`;
     } else {
       gb.innerHTML = `<div class="banner info"><span class="dot"></span>Awaiting P&amp;L data from the MEC overview — projections below are indicative only.</div>`;
+    }
+  }
+
+  // Pay-increase celebration
+  const payBanner = document.getElementById('pay-increase-banner');
+  if (payBanner) {
+    const prev = +emp.previousBaseSalary || 0;
+    const curr = +emp.baseSalary || 0;
+    if (prev > 0 && curr > prev) {
+      const superRate = (data.globals && data.globals.superRate) || 0.12;
+      const dBase = curr - prev;
+      const dSuper = dBase * superRate;
+      const totalLift = dBase + dSuper;
+      const pctLift = (dBase / prev) * 100;
+      payBanner.innerHTML = `
+        <div style="margin: 0 0 22px; padding: 16px 20px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div>
+              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🎉 Your pay increase</div>
+              <div style="font-family: var(--mono); font-size: 14px; color: var(--ink); margin-top: 6px;">
+                <span style="color: var(--muted); text-decoration: line-through;">${fmtMoney(prev)}</span>
+                &nbsp;→&nbsp;
+                <strong style="font-size: 18px; color: #1f5e3c;">${fmtMoney(curr)}</strong>
+                <span style="font-size: 12px; color: var(--muted);">base salary (ex super)</span>
+              </div>
+              <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px;">
+                +${fmtMoney(dBase)} base &nbsp;·&nbsp; +${fmtMoney(dSuper)} extra super (12%) &nbsp;·&nbsp; +${pctLift.toFixed(1)}%
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Total annual lift</div>
+              <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #1f5e3c;">+${fmtMoney(totalLift)}</div>
+              <div style="font-size: 11px; color: var(--muted);">before any commission earned on top</div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      payBanner.innerHTML = '';
     }
   }
 

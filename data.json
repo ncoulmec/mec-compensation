@@ -123,7 +123,7 @@
       "bands": [
         {
           "threshold": 0,
-          "rate": 0
+          "rate": 0.0
         },
         {
           "threshold": 100000,
@@ -135,10 +135,22 @@
         },
         {
           "threshold": 300000,
-          "rate": 0.14
+          "rate": 0.11
+        },
+        {
+          "threshold": 350000,
+          "rate": 0.13
         },
         {
           "threshold": 400000,
+          "rate": 0.14
+        },
+        {
+          "threshold": 450000,
+          "rate": 0.145
+        },
+        {
+          "threshold": 500000,
           "rate": 0.15
         }
       ],
@@ -165,7 +177,7 @@
       "bands": [
         {
           "threshold": 0,
-          "rate": 0
+          "rate": 0.0
         },
         {
           "threshold": 100000,
@@ -177,10 +189,22 @@
         },
         {
           "threshold": 300000,
-          "rate": 0.14
+          "rate": 0.11
+        },
+        {
+          "threshold": 350000,
+          "rate": 0.13
         },
         {
           "threshold": 400000,
+          "rate": 0.14
+        },
+        {
+          "threshold": 450000,
+          "rate": 0.145
+        },
+        {
+          "threshold": 500000,
           "rate": 0.15
         }
       ],
@@ -233,7 +257,8 @@
       "showOldCommissionComparison": true,
       "oldCommissionRate": 0.035,
       "trueUpMode": "quarterly_carry_forward",
-      "includeProjects": false
+      "includeProjects": false,
+      "minProductionGP": 400000
     },
     "hybrid_rev": {
       "name": "Talent (Performer-Revenue Hybrid)",
@@ -491,7 +516,8 @@
       ],
       "last365GPSold": 187000,
       "annualGPTarget": 200000,
-      "minProductionGP": null
+      "minProductionGP": null,
+      "previousBaseSalary": 100000
     },
     {
       "id": "dane",
@@ -670,7 +696,8 @@
       ],
       "last365GPSold": 389300,
       "annualGPTarget": 400000,
-      "minProductionGP": null
+      "minProductionGP": null,
+      "previousBaseSalary": 85000
     },
     {
       "id": "daniel",
@@ -849,7 +876,8 @@
       ],
       "last365GPSold": 333700,
       "annualGPTarget": 400000,
-      "minProductionGP": null
+      "minProductionGP": null,
+      "previousBaseSalary": 71250
     },
     {
       "id": "nic",
@@ -1028,7 +1056,8 @@
       ],
       "last365GPSold": 335200,
       "annualGPTarget": 400000,
-      "minProductionGP": null
+      "minProductionGP": null,
+      "previousBaseSalary": 70000
     },
     {
       "id": "evie",
@@ -1207,7 +1236,8 @@
       ],
       "last365GPSold": 182500,
       "annualGPTarget": 200000,
-      "minProductionGP": 400000
+      "minProductionGP": 400000,
+      "previousBaseSalary": 77500
     },
     {
       "id": "evie2",
@@ -1386,7 +1416,8 @@
       ],
       "last365GPSold": 0,
       "annualGPTarget": 200000,
-      "minProductionGP": 400000
+      "minProductionGP": 400000,
+      "previousBaseSalary": 77500
     },
     {
       "id": "tom",
@@ -1565,7 +1596,8 @@
       ],
       "last365GPSold": 48700,
       "annualGPTarget": 50000,
-      "minProductionGP": null
+      "minProductionGP": null,
+      "previousBaseSalary": 88000
     },
     {
       "id": "michael",
@@ -1744,6 +1776,24 @@
       ],
       "last365GPSold": 0,
       "annualGPTarget": 0,
+      "minProductionGP": null,
+      "previousBaseSalary": 70000
+    },
+    {
+      "id": "sales4",
+      "name": "Sales 4.0",
+      "role": "Sales Rep",
+      "roleShort": "Sales",
+      "baseSalary": 75000,
+      "previousBaseSalary": 75000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gp_bands",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "sales4.html",
+      "placeholder": true,
+      "last365GPSold": 0,
+      "annualGPTarget": 400000,
       "minProductionGP": null
     }
   ],
@@ -1849,17 +1899,20 @@
       {
         "id": "charize",
         "name": "Charize",
-        "last365GPSold": 138800
+        "last365GPSold": 138800,
+        "annualGPTarget": 138800
       },
       {
         "id": "lyra",
         "name": "Lyra",
-        "last365GPSold": 3000
+        "last365GPSold": 3000,
+        "annualGPTarget": 3000
       },
       {
         "id": "nathan_coul",
         "name": "Nathan",
-        "last365GPSold": 34800
+        "last365GPSold": 34800,
+        "annualGPTarget": 34800
       }
     ],
     "bestCaseMultiplier": 1.15,
