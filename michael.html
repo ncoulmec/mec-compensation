@@ -196,6 +196,27 @@
   .scenario-row:last-of-type { border-bottom: none; }
   .scenario-row label { font-size: 13px; color: var(--muted); }
 
+  /* Key Terms floating popup — top-left of dashboard */
+  .key-terms-fab { position: fixed; top: 14px; left: 14px; z-index: 100; }
+  .key-terms-fab button {
+    background: #fff; border: 1px solid var(--border); padding: 8px 14px;
+    border-radius: 999px; cursor: pointer; font-size: 12px; color: var(--navy);
+    font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: all 0.15s;
+  }
+  .key-terms-fab button:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .key-terms-modal {
+    display: none; position: fixed; top: 60px; left: 14px; width: 480px; max-width: 92vw;
+    max-height: 80vh; overflow-y: auto; z-index: 101;
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.12); padding: 22px 26px;
+  }
+  .key-terms-modal.open { display: block; }
+  .key-terms-modal h2 { margin: 0 0 4px; font-size: 18px; color: var(--navy); }
+  .key-terms-modal .subtitle { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .key-terms-modal dt { font-weight: 700; color: var(--navy); margin-top: 12px; font-size: 13px; }
+  .key-terms-modal dd { font-size: 13px; color: var(--ink); line-height: 1.5; margin: 4px 0 0; }
+  .key-terms-modal .close-x { position: absolute; top: 14px; right: 18px; cursor: pointer; font-size: 22px; color: var(--muted); border: none; background: none; }
+
   /* Help / What is True-Up? */
   details.tu-help { background: #fafaf7; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-top: 18px; }
   details.tu-help summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--navy); list-style: none; display: flex; justify-content: space-between; align-items: center; }
@@ -570,6 +591,49 @@
   </div>
 </nav>
 
+<div class="key-terms-fab">
+  <button onclick="document.getElementById('key-terms-modal').classList.toggle('open')">📖 Key Terms</button>
+</div>
+<div id="key-terms-modal" class="key-terms-modal">
+  <button class="close-x" onclick="document.getElementById('key-terms-modal').classList.remove('open')" aria-label="Close">×</button>
+  <h2>Key Terms</h2>
+  <div class="subtitle">Quick reference for the language used on your dashboard.</div>
+  <dl>
+    <dt>Revenue (ex GST)</dt>
+    <dd>Money the company earns from your performances <em>after</em> stripping the 10% GST. This is what shows in Xero's P&amp;L and what your commission is calculated on.</dd>
+
+    <dt>TTM (Trailing Twelve Months)</dt>
+    <dd>Your revenue total over the last 365 days. Updated each quarter — drives your quarterly commission. Smooths out seasonal variation so you don't have to wait until year-end to be paid.</dd>
+
+    <dt>Super-Inclusive</dt>
+    <dd>The dollar figures on your dashboard already include the 12% superannuation. So if it says $5,000 commission, that means $4,464 to you + $536 super = $5,000 total cost to MEC. You don't get extra super on top.</dd>
+
+    <dt>Milestone Bonus</dt>
+    <dd>A flat dollar bonus that fires when you cross a specific revenue threshold (e.g. $5,000 when you reach $100k revenue). It's on top of the band-based commission.</dd>
+
+    <dt>Annual True-Up</dt>
+    <dd>Year-end catch-up payment. If your final TTM revenue would have earned you more than the sum of your quarterly payouts, the difference is paid as a top-up. See "What is the True-Up?" in the Overview tab for full details.</dd>
+
+    <dt>Quarterly Payout</dt>
+    <dd>Your commission split into 4 cash flows. Each quarter, we look at your TTM revenue and pay you 1/4 of the annual commission that level would earn — so cash flow stays steady through the year.</dd>
+
+    <dt>KPI Multiplier</dt>
+    <dd>A score from 0.7× to 1.3× applied to your variable comp. Driven by your KPI scorecard (six categories from your employment agreement). 50% achievement = 1.0×; 100% = 1.3×; 0% = 0.7×.</dd>
+
+    <dt>Base Salary</dt>
+    <dd>Your guaranteed annual salary, paid fortnightly, regardless of performance. Shown ex-super on your dashboard with super added separately.</dd>
+
+    <dt>Total Package</dt>
+    <dd>Base salary + super on base + commission earned + project bonuses. The full cost-to-MEC of employing you for the year.</dd>
+
+    <dt>Production Commission</dt>
+    <dd>(Sales/Producer hybrid roles only) An additional 1% paid on Event GP <em>after</em> the event has happened. Doesn't apply to your Performer role.</dd>
+
+    <dt>Effective Rate</dt>
+    <dd>The commission % you'd earn on the next dollar of revenue at your current position — base band rate × KPI multiplier.</dd>
+  </dl>
+</div>
+
 <main>
   <div id="error-slot"></div>
   <div id="loading" class="loading">Loading compensation data…</div>
@@ -629,8 +693,8 @@
         </div>
 
         <div class="scenario-row">
-          <label>KPI Score <span class="tooltip-trigger" data-tip="Coming soon — KPIs are still being finalised. For now the slider is capped at 1.0×.">?</span></label>
-          <input type="range" id="kpi-slider" min="0" max="1" step="0.05" value="1">
+          <label>KPI Score <span class="tooltip-trigger" data-tip="Multiplier on commission earned. Driven by your KPI scorecard on the KPI tab — 0% achievement maps to 0.70×, 50% to 1.00×, 100% to 1.30×.">?</span></label>
+          <input type="range" id="kpi-slider" min="0.7" max="1.3" step="0.01" value="1">
           <input type="text" id="kpi-input" class="value-input" value="1.00">
         </div>
 
@@ -839,18 +903,22 @@
   <!-- KPI -->
   <section class="panel" id="panel-kpi">
     <div class="kpi-draft-note">
-      <strong>Draft:</strong> KPI assignments and scoring are not yet finalised. The slider below shows how a KPI multiplier <em>would</em> affect variable compensation — currently capped at 1.0×.
+      <strong>How this works:</strong> Six KPI categories from your employment agreement. Drag each slider to your achievement % (0–100%). Categories are weighted (sum to 100%). The weighted average maps linearly to your final multiplier: <strong>0% → 0.7×</strong>, <strong>50% → 1.0×</strong>, <strong>100% → 1.3×</strong>.
     </div>
 
     <div class="two-col">
       <div class="kpi-slider-card">
-        <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Your KPI Score</h2>
-        <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Drag the slider to simulate different performance scores.</p>
+        <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Your KPI Multiplier</h2>
+        <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Calculated from your scorecard below. Drag this slider to manually override.</p>
         <div class="kpi-big-value"><span id="kpi-big">1.00</span><span class="x">×</span></div>
-        <input type="range" id="kpi-slider-2" min="0" max="1" step="0.05" value="1" style="width: 100%; accent-color: var(--navy);">
+        <input type="range" id="kpi-slider-2" min="0.7" max="1.3" step="0.01" value="1" style="width: 100%; accent-color: var(--navy);">
         <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px;">
-          <span>0.0×</span>
+          <span>0.7×</span>
           <span>1.0×</span>
+          <span>1.3×</span>
+        </div>
+        <div style="margin-top: 12px; padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--mono); color: var(--muted);">
+          Scorecard weighted average: <strong id="kpi-overall-pct" style="color: var(--navy);">—</strong>
         </div>
       </div>
 
@@ -863,10 +931,7 @@
       </div>
     </div>
 
-    <div class="card" style="margin-top: 22px;">
-      <h2>Your KPI Assignments</h2>
-      <div id="kpi-list" style="margin-top: 10px;"></div>
-    </div>
+    <div id="kpi-scorecard" style="margin-top: 22px;"></div>
   </section>
 
   <!-- Payouts -->
@@ -926,6 +991,13 @@ const scenario = {
   quarters: [null, null, null, null]
 };
 
+// Per-employee scenario overrides — runs after data + emp loaded.
+function applyScenarioDefaults() {
+  if (!emp || !emp.scenarioDefaults) return;
+  const sd = emp.scenarioDefaults;
+  if (typeof sd.revenue === 'number') scenario.revenue = sd.revenue;
+}
+
 const fmtMoney = (n) => {
   if (n === null || n === undefined || isNaN(n)) return '—';
   const v = Number(n);
@@ -967,6 +1039,8 @@ async function load() {
     emp = data.employees.find(e => e.id === EMPLOYEE_ID);
     if (!emp) throw new Error(`Employee "${EMPLOYEE_ID}" not found`);
     plan = data.planTypes[emp.planType];
+    // Per-employee scenario defaults (e.g. Michael 2025 actuals: 75 gigs / $98.25k revenue)
+    applyScenarioDefaults();
     if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
     // Only show projects if the plan has includeProjects = true
     myProjects = plan.includeProjects
@@ -1087,7 +1161,9 @@ function wireInputs() {
   kpiInput.value = scenario.kpiScore.toFixed(2);
 
   const syncKpi = (val) => {
-    scenario.kpiScore = Math.max(0, Math.min(+val || 0, data.globals.kpiScoreCap || 1));
+    const floor = data.globals.kpiScoreFloor || 0;
+    const cap = data.globals.kpiScoreCap || 1;
+    scenario.kpiScore = Math.max(floor, Math.min(+val || 0, cap));
     kpiSlider.value = scenario.kpiScore;
     kpiSlider2.value = scenario.kpiScore;
     kpiInput.value = scenario.kpiScore.toFixed(2);
@@ -1100,7 +1176,10 @@ function wireInputs() {
   // === GIG PLANNING TAB ===
   // Bidirectional sync: edit any of {gigs, avgPerGig, totalRevenue} → other two recalculate
   // and the commission projection at the bottom updates live.
-  wireGigPlanning('plan-', { gigs: 40, avg: 3750, rev: 150000 }, (totalRev) => {
+  // Michael's 2025 actuals as defaults: 75 gigs × $1,310 avg = $98,250
+  const sd = emp.scenarioDefaults || {};
+  const planDefaults = { gigs: sd.gigs || 75, avg: sd.avgPerGig || 1310, rev: sd.revenue || 98250 };
+  wireGigPlanning('plan-', planDefaults, (totalRev) => {
     const { total: bandComm } = calcBandCommission(totalRev, plan.bands);
     const sr = data.globals.superRate || 0.12;
     const baseInc = (emp.baseSalary || 0) * (1 + sr);
@@ -1295,7 +1374,7 @@ function calcAll() {
   const { total: bandComm, breakdown } = calcBandCommission(scenario.revenue, plan.bands);
   const production = (plan.includeProduction ? (plan.productionPct || 0) : 0) * scenario.revenue;
   const preKpi = bandComm + production;
-  const effectiveKpi = Math.min(Math.max(scenario.kpiScore, 0), g.kpiScoreCap || 1);
+  const effectiveKpi = Math.min(Math.max(scenario.kpiScore, g.kpiScoreFloor || 0), g.kpiScoreCap || 1);
   const kpiFloor = g.kpiMinForComm || 0;
   const variable = scenario.kpiScore >= kpiFloor ? preKpi * effectiveKpi : 0;
 
@@ -1702,27 +1781,78 @@ function renderKpiTab(r) {
   document.getElementById('kpi-mult').textContent = `× ${scenario.kpiScore.toFixed(2)}`;
   document.getElementById('kpi-after').textContent = fmtMoney(r.variable);
 
-  const kpiList = document.getElementById('kpi-list');
-  if (!emp.kpiAssignments || emp.kpiAssignments.length === 0) {
-    kpiList.innerHTML = `
-      <div style="padding: 30px; text-align: center; color: var(--muted); font-size: 14px; background: #fafaf7; border-radius: 8px;">
-        No KPIs assigned yet.
-      </div>`;
+  // Scorecard: render each category with criteria checklist + achievement slider + weight
+  const wrap = document.getElementById('kpi-scorecard');
+  if (!wrap) return;
+  const sc = emp.kpiScorecard;
+  if (!sc || !Array.isArray(sc.categories) || sc.categories.length === 0) {
+    wrap.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--muted); font-size: 14px; background: #fafaf7; border-radius: 8px;">No KPI scorecard configured yet.</div>`;
+    document.getElementById('kpi-overall-pct').textContent = '—';
     return;
   }
-  kpiList.innerHTML = emp.kpiAssignments.map(a => {
-    const def = data.kpis.definitions.find(k => k.id === a.kpiId) || { name: a.kpiId };
+  wrap.innerHTML = sc.categories.map((c, i) => {
+    const score = +c.score || 0;
+    const weight = +c.weight || 0;
+    const colour = score >= 80 ? '#1f5e3c' : score >= 50 ? '#8a6a00' : '#a8281b';
     return `
-      <div style="display: grid; grid-template-columns: 1fr 100px 120px; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border);">
-        <div>
-          <div style="font-weight: 500;">${def.name}</div>
-          <div style="font-size: 12px; color: var(--muted); font-family: var(--mono);">${def.unit} · ${def.direction} is better</div>
+    <div class="card" style="margin-bottom: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+        <h3 style="margin: 0;">${c.title}</h3>
+        <div style="display: flex; gap: 14px; align-items: center; font-family: var(--mono); font-size: 12px;">
+          <span style="color: var(--muted);">Weight</span>
+          <input type="number" data-kpi-cat="${i}" data-kpi-field="weight" value="${weight}" min="0" max="100" step="5" style="width: 60px; text-align: right; padding: 4px 6px;">
+          <span style="color: var(--muted);">%</span>
         </div>
-        <div style="font-family: var(--mono); text-align: right;">Target: ${a.target}</div>
-        <div style="font-family: var(--mono); text-align: right; color: var(--muted);">Weight: ${fmtPct(a.weight, 0)}</div>
       </div>
-    `;
+      <ul style="font-size: 12px; color: var(--muted); margin: 8px 0 14px; padding-left: 18px; line-height: 1.6;">
+        ${(c.criteria || []).map(k => `<li>${k}</li>`).join('')}
+      </ul>
+      <div style="display: grid; grid-template-columns: 110px 1fr 110px; gap: 14px; align-items: center; padding: 8px 12px; background: #fafaf7; border-radius: 6px;">
+        <span style="font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Achievement</span>
+        <input type="range" data-kpi-cat="${i}" data-kpi-field="score" min="0" max="100" step="5" value="${score}">
+        <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; text-align: right; color: ${colour};">${score}%</div>
+      </div>
+    </div>`;
   }).join('');
+
+  // Wire scorecard inputs once
+  if (!wrap.dataset.listenerAttached) {
+    wrap.addEventListener('input', (ev) => {
+      const t = ev.target;
+      if (!t || t.dataset == null) return;
+      const i = +t.dataset.kpiCat;
+      const f = t.dataset.kpiField;
+      if (isNaN(i) || !f) return;
+      let v = parseFloat(t.value);
+      if (isNaN(v)) v = 0;
+      v = Math.max(0, Math.min(100, v));
+      emp.kpiScorecard.categories[i][f] = v;
+      // Recalculate weighted average → multiplier
+      const cats = emp.kpiScorecard.categories;
+      const totalWeight = cats.reduce((s, c) => s + (+c.weight || 0), 0);
+      const weightedAvg = totalWeight > 0
+        ? cats.reduce((s, c) => s + (+c.score || 0) * (+c.weight || 0), 0) / totalWeight
+        : 0;
+      // Map 0–100% achievement linearly to 0.7–1.3 multiplier (50% = 1.0)
+      const mult = 0.7 + (weightedAvg / 100) * 0.6;
+      scenario.kpiScore = Math.max(0.7, Math.min(1.3, mult));
+      // Sync the manual override slider too
+      const k1 = document.getElementById('kpi-slider'); if (k1) k1.value = scenario.kpiScore;
+      const k2 = document.getElementById('kpi-slider-2'); if (k2) k2.value = scenario.kpiScore;
+      const ki = document.getElementById('kpi-input'); if (ki) ki.value = scenario.kpiScore.toFixed(2);
+      update();
+    });
+    wrap.dataset.listenerAttached = '1';
+  }
+
+  // Overall % display
+  const cats = sc.categories;
+  const totalWeight = cats.reduce((s, c) => s + (+c.weight || 0), 0);
+  const weightedAvg = totalWeight > 0
+    ? cats.reduce((s, c) => s + (+c.score || 0) * (+c.weight || 0), 0) / totalWeight
+    : 0;
+  const overallEl = document.getElementById('kpi-overall-pct');
+  if (overallEl) overallEl.textContent = `${weightedAvg.toFixed(0)}% (weights sum ${totalWeight}%)`;
 }
 
 function renderSuperCard(r) {

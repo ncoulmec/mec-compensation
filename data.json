@@ -31,7 +31,7 @@
         "multiplier": 1.3
       }
     ],
-    "kpiScoreCap": 1,
+    "kpiScoreCap": 1.3,
     "kpiMinForComm": 0,
     "guardrailBasis": "gm",
     "guardrailBasisOptions": {
@@ -40,7 +40,8 @@
       "np": "Net Margin (CM \u2212 OpEx) / Rev"
     },
     "guardrailEnabled": false,
-    "zohoDashboardUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261"
+    "zohoDashboardUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+    "kpiScoreFloor": 0.7
   },
   "planTypes": {
     "gm": {
@@ -1628,6 +1629,25 @@
         "min": 170000,
         "max": 250000,
         "absoluteMax": 400000
+      },
+      "kpiScorecard": {
+        "overallNote": "Slider value 0\u2013100% per category \u00d7 weight. Weighted sum maps linearly: 0%\u21920.7\u00d7, 50%\u21921.0\u00d7, 100%\u21921.3\u00d7 multiplier on commission.",
+        "categories": [
+          {
+            "id": "placeholder",
+            "title": "KPIs to be defined",
+            "weight": 100,
+            "score": 100,
+            "criteria": [
+              "KPI structure for Tom not yet finalised \u2014 using a single placeholder slider for now."
+            ]
+          }
+        ]
+      },
+      "scenarioDefaults": {
+        "gigs": 97,
+        "avgPerGig": 2013,
+        "revenue": 195237
       }
     },
     {
@@ -1813,6 +1833,90 @@
         "min": 70000,
         "max": 200000,
         "absoluteMax": 300000
+      },
+      "kpiScorecard": {
+        "overallNote": "Slider value 0\u2013100% per category \u00d7 weight. Weighted sum maps linearly: 0%\u21920.7\u00d7, 50%\u21921.0\u00d7, 100%\u21921.3\u00d7 multiplier on commission.",
+        "categories": [
+          {
+            "id": "reliability",
+            "title": "Performance Reliability & Quality",
+            "weight": 25,
+            "score": 100,
+            "criteria": [
+              "100% fulfilment rate for all personally booked performances (no late arrivals, no poor cancellations)",
+              "Minimum 35 performances during contract period (pro-rated from annual 70 target)",
+              "20% 5-star review rate or higher (35 \u00d7 20% = 7 reviews)",
+              "Increase gross profit per performance by 25% vs previous year personal average"
+            ]
+          },
+          {
+            "id": "initiative",
+            "title": "Initiative & Proactivity",
+            "weight": 15,
+            "score": 100,
+            "criteria": [
+              "Demonstrate proactive mindset \u2014 identify improvements without prompting",
+              "Propose at least 2 improvements to systems/workflows/tools by Month 3",
+              "Independently research and trial 1 new tool, present findings to management",
+              "Show evidence of troubleshooting/solving issues without escalation, at least once per fortnight"
+            ]
+          },
+          {
+            "id": "systems",
+            "title": "Systems Development & Delivery",
+            "weight": 25,
+            "score": 100,
+            "criteria": [
+              "Successfully scope, build, and implement at least 1 major internal system/tool (e.g. Talent Availability Checker, Client Online Portal, Custom Quote Generator)",
+              "Deliver 3\u20135 smaller automation/system improvements within Zoho/PandaDoc/MEC platforms (\u22655 hours/month admin saved)",
+              "Detailed documentation (technical notes, SOPs, UAT reports) for every system built/updated"
+            ]
+          },
+          {
+            "id": "training",
+            "title": "Training & Documentation",
+            "weight": 10,
+            "score": 100,
+            "criteria": [
+              "Refactor and update internal DJ training modules \u2014 record new videos where necessary",
+              "Create minimum 5 new SOP videos covering backend systems or performance tech, stored in internal library",
+              "Maintain training content version-controlled and up-to-date by end of contract"
+            ]
+          },
+          {
+            "id": "team",
+            "title": "Interpersonal Impact & Team Support",
+            "weight": 10,
+            "score": 100,
+            "criteria": [
+              "Resolve 90% of assigned IT support requests within agreed timeframes (24\u201348h non-urgent, same-day urgent)",
+              "Deliver at least 4 DJ mentoring/shadowing sessions for new performers, with positive feedback",
+              "Active participation in weekly leadership/project meetings \u2014 clear progress updates",
+              "Strong, transparent communication \u2014 weekly progress emails on current projects",
+              "Attend 100% of scheduled team meetings unless on leave/performing",
+              "Contribute positively to team culture (peak-period support, helpful knowledge sharing)",
+              "Gather feedback on new projects from at least 3 team members by Month 5"
+            ]
+          },
+          {
+            "id": "company",
+            "title": "Company-wide & Behavioural Expectations",
+            "weight": 15,
+            "score": 100,
+            "criteria": [
+              "Achieve B or higher weighted average in company-wide and role-specific behavioural reviews",
+              "Meet 90% of project deadlines as agreed in project timelines",
+              "Maintain collaborative, solutions-focused approach with all staff, clients, suppliers",
+              "Work diligently and amicably towards staff and clients of MEC in all undertakings"
+            ]
+          }
+        ]
+      },
+      "scenarioDefaults": {
+        "gigs": 75,
+        "avgPerGig": 1310,
+        "revenue": 98250,
+        "annualRevenue": 98250
       }
     },
     {
