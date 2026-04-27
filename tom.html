@@ -599,9 +599,11 @@
           <span class="label" id="calc-note">Effective rate at your current position</span>
         </div>
 
-        <h3 style="margin-top: 22px;">Project Bonuses</h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 8px;">Tick to include each project in your projected total package.</p>
-        <div id="project-toggles"></div>
+        <div id="planning-projects-section" style="display: none;">
+          <h3 style="margin-top: 22px;">Project Bonuses</h3>
+          <p style="font-size: 12px; color: var(--muted); margin: 0 0 8px;">Tick to include each project in your projected total package.</p>
+          <div id="project-toggles"></div>
+        </div>
       </div>
 
       <div>
@@ -814,9 +816,14 @@ async function load() {
       : [];
     myProjects.forEach(p => { scenario.projectsEnabled[p.id] = false; });
 
-    if (!plan.includeProjects) {
+    if (!plan.includeProjects || myProjects.length === 0) {
       const projTab = document.querySelector('[data-tab="projects"]');
       if (projTab) projTab.style.display = 'none';
+      const planningProjSection = document.getElementById('planning-projects-section');
+      if (planningProjSection) planningProjSection.style.display = 'none';
+    } else {
+      const planningProjSection = document.getElementById('planning-projects-section');
+      if (planningProjSection) planningProjSection.style.display = '';
     }
     if (data.globals.guardrailEnabled === false) {
       document.querySelectorAll('[data-guardrail-card]').forEach(el => el.style.display = 'none');

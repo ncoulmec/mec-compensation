@@ -249,6 +249,7 @@
       <h2>Forecast your year</h2>
       <p class="blurb">Model scenarios using the sliders below. These are your forward-looking projections — adjust the inputs to see how different GP targets affect your variable compensation. Numbers reset on reload.</p>
     </div>
+    <div id="planning-gate-banner"></div>
 
     <div class="kpi-row">
       <div class="kpi-card">
@@ -800,7 +801,12 @@ function calcBandCommission(metric, bands) {
 function calcAll() {
   const g = data.globals;
   const sr = g.superRate;
-  const { total: bandCommGross, breakdown } = calcBandCommission(scenario.gp, plan.bands);
+  const { total: bandCommGrossRaw, breakdown } = calcBandCommission(scenario.gp, plan.bands);
+
+  // PLANNING-SIDE PRODUCTION GATE — if emp.minProductionGP is set, scenario.eventGP must >= it
+  // for the GP commission to flow on the planning side. (Independent of the actual gate.)
+  const planningGatePassed = !emp.minProductionGP || scenario.eventGP >= emp.minProductionGP;
+  const bandCommGross = planningGatePassed ? bandCommGrossRaw : 0;
 
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, 0), g.kpiScoreCap || 1);
   const commGross = bandCommGross * effectiveKpi;               // inc-super
@@ -863,6 +869,7 @@ function calcAll() {
     subtotalExSuper, totalSuper, totalPackage,
     nextTier, progressPct, toGo, contextMsg,
     oldComm,
+    planningGatePassed,
     // legacy aliases
     bandCommKpi, commInc, production, productionKpi, prodInc, variable
   };
@@ -1359,6 +1366,22 @@ function update() {
   if (gpChip) gpChip.textContent = fmtMoney(scenario.gp / 12);
   const evChip = document.getElementById('event-gp-monthly-chip');
   if (evChip) evChip.textContent = fmtMoney(scenario.eventGP / 12);
+
+  // Planning gate banner — shown for hybrid roles with a minProductionGP target
+  const planningBanner = document.getElementById('planning-gate-banner');
+  if (planningBanner) {
+    if (emp.minProductionGP && emp.minProductionGP > 0) {
+      const target = emp.minProductionGP;
+      if (r.planningGatePassed) {
+        planningBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} ≥ target ${fmtMoney(target)} — your GP sales commission flows. Drag Annual Event GP Produced below ${fmtMoney(target)} to see what happens to your commission if production drops.</span></div>`;
+      } else {
+        const gap = target - scenario.eventGP;
+        planningBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate not met:</strong> Modelled Event GP ${fmtMoney(scenario.eventGP)} is ${fmtMoney(gap)} short of the ${fmtMoney(target)} target. Under this scenario, <strong>your GP sales commission would be paused</strong>. Production commission (1% × Event GP) is unaffected.</span></div>`;
+      }
+    } else {
+      planningBanner.innerHTML = '';
+    }
+  }
 
   // ===== ACTUAL =====
   const { rows: mRows, totals: mTot, quarters: qSummary, annualSummary, prodGateInfo } = computeMonthlyRows();

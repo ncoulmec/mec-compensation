@@ -303,8 +303,10 @@
           <thead>
             <tr>
               <th>Quarter</th>
-              <th class="num">Cumulative CM<small>YTD at quarter-end</small></th>
-              <th class="num">Cumulative NP<small>YTD at quarter-end</small></th>
+              <th class="num">CM<small>This quarter</small></th>
+              <th class="num">NP<small>This quarter</small></th>
+              <th class="num" style="background:#fafaf7;">Last Year CM<small>Same Q last year</small></th>
+              <th class="num" style="background:#fafaf7;">Last Year NP<small>Same Q last year</small></th>
               <th class="num">Annualised Commission<small>Inc. super</small></th>
               <th class="num">Quarterly Payout<small>75% · inc. super</small></th>
             </tr>
@@ -605,17 +607,34 @@ function calcAll() {
   };
 }
 
+// Find the same-quarter from last year by parsing the quarter label.
+// "Apr-Jun 2026" → look up "Apr-Jun 2025" in companyPL.
+function lookupLastYearQuarter(label) {
+  if (!label) return null;
+  const yearMatch = label.match(/(\d{4})/);
+  if (!yearMatch) return null;
+  const priorLabel = label.replace(yearMatch[1], (parseInt(yearMatch[1], 10) - 1).toString());
+  return lookupPLQuarter(priorLabel);
+}
+
 function renderQuarterlyGrid() {
   const tbody = document.getElementById('quarterly-body');
   const rows = actualsQuarters.map((q, i) => {
     const auto = q.autoFromPL;
     const lockChip = auto ? `<span style="font-size:10px; color:var(--accent); font-weight:600; margin-left:4px;" title="Auto-pulled from MEC Group P&amp;L — read-only here, edit on the Overview's P&amp;L tab">🔗 P&amp;L</span>` : '';
     const inputAttrs = auto ? 'disabled style="background:#f5faf7; color:var(--muted); cursor:not-allowed;"' : '';
+    const lastYear = lookupLastYearQuarter(q.quarter);
+    const lyCM = lastYear ? lastYear.cm : null;
+    const lyNP = lastYear ? lastYear.np : null;
+    const lyCMText = lyCM != null ? fmtMoney(lyCM) : '—';
+    const lyNPText = lyNP != null ? fmtMoney(lyNP) : '—';
     return `
     <tr data-qtr-idx="${i}"${auto ? ' class="auto-pl"' : ''}>
       <td class="qtr">${q.quarter}${lockChip}</td>
       <td class="input-cell"><input type="text" inputmode="numeric" data-field="cm" data-idx="${i}" value="${q.cm ? fmtNum(q.cm) : ''}" placeholder="0" ${inputAttrs}></td>
       <td class="input-cell"><input type="text" inputmode="numeric" data-field="np" data-idx="${i}" value="${q.np ? fmtNum(q.np) : ''}" placeholder="0" ${inputAttrs}></td>
+      <td class="num" style="background:#fafaf7; color:var(--muted);">${lyCMText}</td>
+      <td class="num" style="background:#fafaf7; color:var(--muted);">${lyNPText}</td>
       <td class="num" data-cell="annual">—</td>
       <td class="num plus" data-cell="qpayout">—</td>
     </tr>
@@ -627,6 +646,8 @@ function renderQuarterlyGrid() {
       <td class="qtr">Year totals</td>
       <td class="num" id="tot-cm">—</td>
       <td class="num" id="tot-np">—</td>
+      <td class="num" id="tot-ly-cm" style="background:rgba(255,255,255,0.1);">—</td>
+      <td class="num" id="tot-ly-np" style="background:rgba(255,255,255,0.1);">—</td>
       <td class="num" id="tot-annual">—</td>
       <td class="num" id="tot-qpayout">—</td>
     </tr>
@@ -782,6 +803,16 @@ function update() {
   });
   document.getElementById('tot-cm').textContent = fmtMoney(qTot.cm);
   document.getElementById('tot-np').textContent = fmtMoney(qTot.np);
+  // Sum last-year CM/NP across the same 4 quarters
+  let lyCMTotal = 0, lyNPTotal = 0;
+  actualsQuarters.forEach(q => {
+    const ly = lookupLastYearQuarter(q.quarter);
+    if (ly) { lyCMTotal += ly.cm; lyNPTotal += ly.np; }
+  });
+  const lyCMEl = document.getElementById('tot-ly-cm');
+  const lyNPEl = document.getElementById('tot-ly-np');
+  if (lyCMEl) lyCMEl.textContent = lyCMTotal > 0 ? fmtMoney(lyCMTotal) : '—';
+  if (lyNPEl) lyNPEl.textContent = lyNPTotal > 0 ? fmtMoney(lyNPTotal) : '—';
   document.getElementById('tot-annual').textContent = fmtMoney(latestAnnual);
   document.getElementById('tot-qpayout').textContent = fmtMoney(qTot.quarterlyPayout);
 
