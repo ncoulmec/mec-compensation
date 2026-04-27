@@ -231,23 +231,23 @@
       "bands": [
         {
           "threshold": 0,
-          "rate": 0
+          "rate": 0.0
         },
         {
-          "threshold": 50000,
-          "rate": 0.04
+          "threshold": 75000,
+          "rate": 0.03
         },
         {
-          "threshold": 100000,
+          "threshold": 125000,
+          "rate": 0.05
+        },
+        {
+          "threshold": 175000,
           "rate": 0.08
         },
         {
-          "threshold": 150000,
-          "rate": 0.12
-        },
-        {
-          "threshold": 200000,
-          "rate": 0.13
+          "threshold": 225000,
+          "rate": 0.11
         }
       ],
       "productionPct": 0.01,
@@ -274,7 +274,7 @@
       "bands": [
         {
           "threshold": 0,
-          "rate": 0
+          "rate": 0.0
         },
         {
           "threshold": 70000,
@@ -282,15 +282,15 @@
         },
         {
           "threshold": 100000,
-          "rate": 0.056
+          "rate": 0.18
         },
         {
           "threshold": 130000,
-          "rate": 0.14
+          "rate": 0.21
         },
         {
           "threshold": 160000,
-          "rate": 0.196
+          "rate": 0.25
         },
         {
           "threshold": 190000,
@@ -700,7 +700,7 @@
       "previousBaseSalary": 85000,
       "realisticRange": {
         "min": 250000,
-        "max": 450000,
+        "max": 425000,
         "absoluteMax": 600000
       }
     },
@@ -885,7 +885,7 @@
       "previousBaseSalary": 71250,
       "realisticRange": {
         "min": 250000,
-        "max": 450000,
+        "max": 425000,
         "absoluteMax": 600000
       }
     },
@@ -1070,7 +1070,7 @@
       "previousBaseSalary": 70000,
       "realisticRange": {
         "min": 250000,
-        "max": 450000,
+        "max": 425000,
         "absoluteMax": 600000
       }
     },
@@ -1257,6 +1257,9 @@
         "min": 150000,
         "max": 250000,
         "absoluteMax": 400000
+      },
+      "scenarioDefaults": {
+        "gp": 175000
       }
     },
     {
@@ -1442,6 +1445,9 @@
         "min": 150000,
         "max": 250000,
         "absoluteMax": 400000
+      },
+      "scenarioDefaults": {
+        "gp": 175000
       }
     },
     {
@@ -1807,14 +1813,19 @@
       "last365GPSold": 0,
       "annualGPTarget": 0,
       "minProductionGP": null,
-      "previousBaseSalary": 70000
+      "previousBaseSalary": 70000,
+      "realisticRange": {
+        "min": 70000,
+        "max": 200000,
+        "absoluteMax": 300000
+      }
     },
     {
       "id": "sales4",
       "name": "Sales 4.0",
       "role": "Sales Rep",
       "roleShort": "Sales",
-      "baseSalary": 75000,
+      "baseSalary": 0,
       "previousBaseSalary": 75000,
       "baseSalaryIncludesSuper": false,
       "planType": "gp_bands",

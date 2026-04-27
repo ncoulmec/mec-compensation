@@ -491,7 +491,7 @@
       </div>
       <div class="scenario-row">
         <label>GP Sold <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(auto-pulls from Annual GP Sold above)</span></label>
-        <input type="range" id="margin-gp-slider" min="0" max="1500000" step="10000" value="0">
+        <input type="range" id="margin-gp-slider" min="0" max="600000" step="5000" value="0">
         <div style="position: relative;">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
           <input type="text" inputmode="numeric" id="margin-gp-input" class="value-input" style="padding-left: 22px;" value="0">
@@ -499,10 +499,10 @@
       </div>
       <div style="margin-top: 16px; padding: 18px 22px; background: #f6f8fc; border: 1px solid var(--border); border-radius: 10px;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap;">
-          <div style="font-size: 12px; color: var(--muted); font-family: var(--mono);">
-            <div>Revenue ex-GST: <strong id="margin-rev-chip" style="color: var(--ink); font-weight: 600;">$—</strong></div>
-            <div>GP: <strong id="margin-gp-chip" style="color: var(--ink); font-weight: 600;">$—</strong></div>
-            <div style="font-size: 10px; color: var(--faint); margin-top: 4px;">Formula: <span id="margin-formula">GP ÷ (Revenue − Revenue ÷ 11)</span></div>
+          <div style="font-size: 14px; color: var(--ink); font-family: var(--mono); line-height: 1.7;">
+            <div>Revenue ex-GST: <strong id="margin-rev-chip" style="color: var(--ink); font-weight: 700; font-size: 16px;">$—</strong></div>
+            <div>GP: <strong id="margin-gp-chip" style="color: var(--ink); font-weight: 700; font-size: 16px;">$—</strong></div>
+            <div style="font-size: 11px; color: var(--faint); margin-top: 6px; font-weight: 400;">Formula: <span id="margin-formula">GP ÷ (Revenue − Revenue ÷ 11)</span></div>
           </div>
           <div style="text-align: center; min-width: 200px; padding: 16px 24px; border-radius: 10px; background: #f0f0eb;" id="margin-result-wrap">
             <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Realised Margin</div>
@@ -510,6 +510,12 @@
             <div style="font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;" id="margin-band-label">&nbsp;</div>
           </div>
         </div>
+        <details style="margin-top: 14px; font-size: 11px; color: var(--muted);">
+          <summary style="cursor: pointer; color: var(--navy); font-weight: 600;">How are High / Acceptable / Low margin set?</summary>
+          <div style="padding: 10px 12px; margin-top: 6px; background: #fff; border: 1px solid var(--border); border-radius: 6px; line-height: 1.6;">
+            Thresholds are placeholders for now: <strong style="color:#1f5e3c;">≥30% = High Margin</strong> (green), <strong style="color:#8a6a00;">≥20% = Acceptable</strong> (amber), <strong style="color:#a8281b;">&lt;20% = Low Margin</strong> (red). The 30% target is roughly your historical average — once Margin Multipliers go live, hitting High Margin will unlock a multiplier on commission. Nathan can re-tune these in code or via Plan Types editor in a future pass.
+          </div>
+        </details>
       </div>
     </div>
 
@@ -733,6 +739,13 @@ const scenario = {
   mscnEvent: 0,
 };
 
+// Per-employee scenario overrides (from data.json scenarioDefaults) — applied after data loads.
+function applyScenarioDefaults() {
+  if (!emp || !emp.scenarioDefaults) return;
+  if (typeof emp.scenarioDefaults.gp === 'number') scenario.gp = emp.scenarioDefaults.gp;
+  if (typeof emp.scenarioDefaults.eventGP === 'number') scenario.eventGP = emp.scenarioDefaults.eventGP;
+}
+
 const fmtMoney = (n) => {
   if (n === null || n === undefined || isNaN(n)) return '—';
   const v = Number(n);
@@ -763,6 +776,9 @@ async function load() {
     if (!emp) throw new Error(`Employee "${EMPLOYEE_ID}" not found`);
     plan = data.planTypes[emp.planType];
     if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
+
+    // Per-employee scenario defaults from data.json (e.g., Evie starts at $175k not $300k)
+    applyScenarioDefaults();
 
     // Initialise actuals months (from data.json baseline; override with localStorage if present)
     const baseline = (emp.actuals && Array.isArray(emp.actuals.monthlyGP)) ? emp.actuals.monthlyGP : defaultMonths();
@@ -987,6 +1003,15 @@ function wireInputs() {
   const mRevInput = document.getElementById('margin-revenue-input');
   const mGpSlider = document.getElementById('margin-gp-slider');
   const mGpInput = document.getElementById('margin-gp-input');
+  // Hybrid (Evie) gets half the range; full Sales (Daniel/Nic/Dane) gets full range
+  // Linked to the GP slider's absolute max from realisticRange schema.
+  if (emp.realisticRange) {
+    const gpAbsMax = emp.realisticRange.absoluteMax || 600000;
+    mGpSlider.max = gpAbsMax;
+    // Hybrid Sales/Producer roles (Evie) get $750k revenue ceiling, full Sales reps get $1.5M
+    const isHybrid = emp.planType === 'hybrid_gp' || emp.planType === 'hybrid_rev' || emp.planType === 'hybrid_rev_senior';
+    mRevSlider.max = isHybrid ? 750000 : 1500000;
+  }
   if (mRevSlider && mRevInput && mGpSlider && mGpInput) {
     const recalcMargin = () => {
       const revInc = parseNum(mRevInput.value);
@@ -1990,6 +2015,9 @@ function drawCommissionCurve() {
     <circle cx="${markerX}" cy="${yScale(cur.newComm)}" r="4" fill="#0a2540"/>
     <circle cx="${markerX}" cy="${yScale(cur.oldComm)}" r="4" fill="#8e8e93"/>
     <text x="${markerX > W - 110 ? markerX - 6 : markerX + 6}" y="${padT + 14}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" fill="#d4351c" font-size="11" font-family="DM Mono, monospace" font-weight="600">Your GP: $${(scenario.gp/1000).toFixed(0)}k</text>
+    <text x="${markerX > W - 110 ? markerX - 8 : markerX + 8}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" y="${yScale(cur.newComm) - 8}" fill="#0a2540" font-size="10" font-family="DM Mono, monospace" font-weight="600">New: $${(cur.newComm/1000).toFixed(1)}k</text>
+    <text x="${markerX > W - 110 ? markerX - 8 : markerX + 8}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" y="${yScale(cur.oldComm) + 14}" fill="#666" font-size="10" font-family="DM Mono, monospace">Old: $${(cur.oldComm/1000).toFixed(1)}k</text>
+    <text x="${markerX > W - 110 ? markerX - 8 : markerX + 8}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" y="${(yScale(cur.newComm) + yScale(cur.oldComm))/2 + 4}" fill="#1f5e3c" font-size="10" font-family="DM Mono, monospace" font-weight="600">Δ +$${((cur.newComm - cur.oldComm)/1000).toFixed(1)}k</text>
     <text x="${padL}" y="${padT - 8}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace">Commission ($, super-inclusive)</text>
     <text x="${W/2}" y="${H - 8}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace">Annual GP Sold</text>
   `;

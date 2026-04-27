@@ -717,7 +717,7 @@
       <h2 id="pl-label">Company P&amp;L (Cash Basis)</h2>
       <p class="intro" id="pl-sublabel">Quarterly company financials. Feeds the company-wide view and can gate variable comp payouts (e.g., "comm only pays if company NP &gt; X"). Fiscal year starts July.</p>
       <div id="xero-note" style="margin: 0 0 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <a class="btn small" href="https://go.xero.com/Reports/Default.aspx?reportType=ProfitAndLoss" target="_blank" rel="noopener" style="background: #13b5ea; color: #fff; border-color: #13b5ea; text-decoration: none;">📊 Open in Xero (P&amp;L)</a>
+        <a class="btn small" href="https://go.xero.com/Reports/Default.aspx?reportType=ProfitAndLoss" target="_blank" rel="noopener" style="background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; text-decoration: none;">📊 Open in Xero (P&amp;L) ↗</a>
         <span style="font-size: 12px; color: var(--muted);">Manual entry for now — Xero direct-import integration is on the roadmap.</span>
       </div>
       <details style="margin: 0 0 18px; font-size: 12px;">
@@ -799,7 +799,10 @@
           <tfoot id="fp-targets-foot"></tfoot>
         </table>
       </div>
-      <button class="btn small" onclick="addExternalContributor()" style="margin-top: 10px;">+ Add Non-Dashboard Contributor</button>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
+        <button class="btn small" onclick="addExternalContributor()">+ Add Non-Dashboard Contributor</button>
+        <button class="btn small" onclick="resetTargetsToLast365()" style="background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef;" title="Copies each contributor's Last 365 Days actual into their Target column.">⟲ Set Targets back to Last 365 Days Actuals</button>
+      </div>
 
       <!-- Two sentiment sliders: one drives Worst Case, one drives Best Case directly -->
       <div class="card" style="background: #fafaf7; padding: 16px 18px; margin-top: 18px; margin-bottom: 0;">
@@ -1196,6 +1199,11 @@ $$('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     $$('.panel').forEach(p => p.classList.remove('active'));
     $('#panel-' + btn.dataset.tab).classList.add('active');
+    // Re-render Financial Planning when switching to it so it picks up
+    // any base-salary/target/etc edits made on other tabs while it was hidden.
+    if (btn.dataset.tab === 'planning') {
+      try { renderFinancialPlanning(); } catch (e) { /* defensive */ }
+    }
   });
 });
 // Show first panel by default
@@ -2665,27 +2673,55 @@ function renderFinancialPlanning() {
     $('#fp-margins-body').innerHTML = `<div style="color: var(--muted); font-size: 13px;">No P&amp;L data yet.</div>`;
   }
 
-  // Projected P&L (deducting commissions from NP) — drives off team Target total via GM (Xero)
+  // Projected P&L: drives off team Target total + non-Zoho revenue baseline (so projection lines up with Xero reality).
+  // Reordered top-to-bottom: GP → Revenue → CM → NP → Δ Comm Cost → Net.
   if (ltm && ltm.revenue > 0 && totalOnTrack > 0) {
     const gmXero = ltm.gp / ltm.revenue;
-    // Project Revenue from team Target GP using GM ratio (target GP ÷ GM = projected revenue)
-    const projRevenue = gmXero > 0 ? totalOnTrack / gmXero : 0;
-    const projGP = totalOnTrack;  // explicitly: the team's modelled Target IS projected GP (Zoho aligned)
+    // The Xero LTM has revenue NOT tracked in Zoho (production fees, retainers, ad-hoc). Hold that as a baseline.
+    const ltmZohoGP = fpTotalLast365();
+    const zohoImpliedLtmRev = gmXero > 0 ? ltmZohoGP / gmXero : 0;
+    const nonZohoBaselineRev = Math.max(0, ltm.revenue - zohoImpliedLtmRev);
+    const nonZohoBaselineGP = nonZohoBaselineRev * gmXero;
+
+    // Project: incremental Zoho-tracked GP at Team Target + the fixed non-Zoho baseline
+    const projGP = totalOnTrack + nonZohoBaselineGP;
+    const projRevenue = gmXero > 0 ? projGP / gmXero : 0;
     const projCM = projRevenue * (ltm.cm / ltm.revenue);
     const projNP = projRevenue * (ltm.np / ltm.revenue);
-    const projNpAfterComm = projNP - totalVarComp;
+
+    // DELTA cost: don't deduct total new commission — deduct only the INCREASE vs old plan
+    // (LTM contribExp already includes old-plan cost, so to project at new plan we only add the lift).
+    const superRate = data.globals?.superRate ?? 0.12;
+    let projOldVarComp = 0;
+    data.employees.forEach((e, i) => {
+      if (e.placeholder) return;
+      const plan = data.planTypes[e.planType];
+      if (!plan) return;
+      const onTrackForEmp = +e.annualGPTarget || 0;
+      if (plan.metricBasis === 'gp' && onTrackForEmp > 0) {
+        const oldRate = plan.oldCommissionRate || 0.035;
+        projOldVarComp += onTrackForEmp * oldRate * (1 + superRate);
+      }
+      // GM (Hayley) and revenue-based plans: assume $0 old-plan commission baseline (no historical rate set)
+    });
+    const deltaVarComp = totalVarComp - projOldVarComp;
+    const projNpAfterComm = projNP - deltaVarComp;
+
     $('#fp-pl-body').innerHTML = `
       <div style="background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
         <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Projection driven from</div>
-        <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy); margin-top: 4px;">Team Target Total: ${fmtMoney(totalOnTrack)}</div>
-        <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px;">From the highlighted Target column above. Change any Target input to update this projection live.</div>
+        <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy); margin-top: 4px;">Team Target Total: ${fmtMoney(totalOnTrack)} <span style="font-size:11px; color: var(--muted); font-weight: 500;">(Zoho)</span></div>
+        <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px;">+ Non-Zoho baseline GP ${fmtMoney(nonZohoBaselineGP)} <span style="color: var(--faint);">(production fees, retainers, ad-hoc — held constant from Xero LTM)</span></div>
       </div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected Revenue <span style="color: var(--faint); font-size: 11px;">= Team GP ÷ GM (${(gmXero*100).toFixed(1)}%)</span></span><span>${fmtMoney(projRevenue)}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected GP <span style="color: var(--faint); font-size: 11px;">= Team Target Total (in Zoho)</span></span><span>${fmtMoney(projGP)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected GP <span style="color: var(--faint); font-size: 11px;">= Team Target ${fmtMoney(totalOnTrack)} + Non-Zoho ${fmtMoney(nonZohoBaselineGP)}</span></span><span>${fmtMoney(projGP)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected Revenue <span style="color: var(--faint); font-size: 11px;">= Projected GP ÷ GM (${(gmXero*100).toFixed(1)}%)</span></span><span>${fmtMoney(projRevenue)}</span></div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected CM <span style="color: var(--faint); font-size: 11px;">= Revenue × ${(ltm.cm/ltm.revenue*100).toFixed(1)}% LTM CM ratio</span></span><span>${fmtMoney(projCM)}</span></div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected NP <span style="color: var(--faint); font-size: 11px;">= Revenue × ${(ltm.np/ltm.revenue*100).toFixed(1)}% LTM NM ratio</span></span><span>${fmtMoney(projNP)}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono); color: var(--danger);"><span>− New Variable Comp Pool</span><span>−${fmtMoney(totalVarComp)}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-family: var(--mono); font-weight: 700; font-size: 16px; border-top: 1px solid var(--border); margin-top: 6px; color: ${projNpAfterComm > 0 ? 'var(--accent)' : 'var(--danger)'};"><span>Projected NP After New Commissions</span><span>${fmtMoney(projNpAfterComm)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono); color: var(--muted); font-size: 12px;"><span style="padding-left: 14px;">New plan commission pool (at Team Target)</span><span>${fmtMoney(totalVarComp)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono); color: var(--muted); font-size: 12px;"><span style="padding-left: 14px;">Old plan commission baseline (3.5% × GP × 1.12)</span><span>− ${fmtMoney(projOldVarComp)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono); color: ${deltaVarComp >= 0 ? 'var(--danger)' : 'var(--accent)'};"><span>= ${deltaVarComp >= 0 ? '−' : '+'} Increase in Variable Comp <span style="color: var(--faint); font-size: 11px;">(NEW − OLD)</span></span><span>${deltaVarComp >= 0 ? '−' : '+'}${fmtMoney(Math.abs(deltaVarComp))}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-family: var(--mono); font-weight: 700; font-size: 16px; border-top: 1px solid var(--border); margin-top: 6px; color: ${projNpAfterComm > 0 ? 'var(--accent)' : 'var(--danger)'};"><span>Projected NP After New Plan Increase</span><span>${fmtMoney(projNpAfterComm)}</span></div>
+      <p style="font-size: 10px; color: var(--faint); margin-top: 10px; font-family: var(--mono); line-height: 1.5;">LTM contribExp already includes the OLD plan's commission cost, so we only deduct the INCREASE (new − old) to avoid double-counting. The $${fmtNum(Math.round(nonZohoBaselineRev))} non-Zoho baseline is the gap between Xero LTM Revenue and Zoho-implied revenue — held flat in this projection.</p>
     `;
   } else {
     $('#fp-pl-body').innerHTML = `<div style="color: var(--muted); font-size: 13px;">No P&amp;L data — fill in the Company P&amp;L tab to see projections.</div>`;
@@ -2694,8 +2730,8 @@ function renderFinancialPlanning() {
   // New vs Old commission comparison — at last 365-day GP per employee
   $('#fp-newvsold-body').innerHTML = renderNewVsOld();
 
-  // Compounding Cost Stack
-  $('#fp-coststack-body').innerHTML = renderCostStack(ltm);
+  // Compounding Cost Stack — pass totalOnTrack so Hayley's commission matches the GM Tweaker default
+  $('#fp-coststack-body').innerHTML = renderCostStack(ltm, totalOnTrack);
 
   // GM Commission Tweaker — wire sliders if not already
   const gmGpSlider = $('#fp-gm-gp');
@@ -2824,10 +2860,10 @@ function renderNewVsOld() {
   <p style="font-size: 11px; color: var(--muted); margin: 10px 0 0; font-family: var(--mono);">Old plan = 3.5% of GP ex-super + 12% super on top (the actual cost to MEC). New plan figures are super-inclusive directly. Negative delta = new plan saves money; positive = new plan costs more.</p>`;
 }
 
-function renderCostStack(ltm) {
-  // Compounding Cost Stack: full year-over-year cost increase per employee = base salary delta
-  // + super on that delta + new commission delta vs old plan (cost-to-MEC at last-365 GP).
-  // Then breakeven additional GP-sold required to absorb the increase at LTM CM margin.
+function renderCostStack(ltm, totalOnTrack) {
+  // Compounding Cost Stack: cost increase per employee at Team Target (annualGPTarget basis)
+  // = base salary delta + super on delta + new commission delta vs old plan.
+  // Switched from "at last-365 GP" → "at Team Target" so figures match the GM Tweaker default.
   const superRate = data.globals?.superRate ?? 0.12;
   // Hardcoded fallbacks per Nathan — used if data.json hasn't been redeployed with previousBaseSalary fields
   const PREV_BASE_FALLBACK = {
@@ -2845,23 +2881,21 @@ function renderCostStack(ltm) {
       const dSuper = dBase * superRate;
 
       const plan = data.planTypes[e.planType];
-      const last365 = +e.last365GPSold || 0;
+      const target = +e.annualGPTarget || 0;
       let oldCommIncSuper = 0, newCommIncSuper = 0, dComm = 0, commLabel = '';
-      if (plan && plan.metricBasis === 'gp' && last365 > 0) {
+      if (plan && plan.metricBasis === 'gp' && target > 0) {
         const oldRate = plan.oldCommissionRate || 0.035;
-        oldCommIncSuper = last365 * oldRate * (1 + superRate);
-        newCommIncSuper = fpProjectCommission(e, last365);
+        oldCommIncSuper = target * oldRate * (1 + superRate);
+        newCommIncSuper = fpProjectCommission(e, target);
         dComm = newCommIncSuper - oldCommIncSuper;
-        commLabel = `at last-365 GP ${fmtMoney(last365)}`;
+        commLabel = `at Team Target ${fmtMoney(target)}`;
       } else if (e.id === 'hayley') {
-        // Hayley's commission projected at company GP scaled to CM/NP via LTM ratios.
-        const last365TotalZoho = fpTotalLast365();
-        const h = fpProjectHayley(last365TotalZoho);
+        // Hayley uses the same teamGP source as the GM Commission Tweaker: Team Target Total.
+        const h = fpProjectHayley(totalOnTrack || fpTotalLast365());
         newCommIncSuper = h.total;
-        // Old plan for Hayley: assume previous fixed/discretionary commission ≈ 0 baseline (no prior commission rate set).
-        oldCommIncSuper = 0;
+        oldCommIncSuper = 0; // no historical commission rate set for GM
         dComm = newCommIncSuper - oldCommIncSuper;
-        commLabel = `at company LTM CM/NP`;
+        commLabel = `at Team Target ${fmtMoney(totalOnTrack || 0)} (matches GM Tweaker)`;
       } else {
         commLabel = '—';
       }
@@ -2948,6 +2982,15 @@ function renderCostStack(ltm) {
     <p style="font-size: 11px; color: var(--muted); margin: 10px 0 0; font-family: var(--mono);">
       Old base = previousBaseSalary on each employee record. Old comm = last-365 GP × old plan rate (3.5%) × 1.12 super on top — the actual cost MEC was paying. New comm = the new band-based plan, which is super-inclusive directly. Hayley's commission shown at the company's LTM CM/NP via the GM plan.
     </p>`;
+}
+
+function resetTargetsToLast365() {
+  if (!confirm('Reset every Target back to that contributor\'s Last 365 Days actual?')) return;
+  data.employees.forEach(e => { e.annualGPTarget = +e.last365GPSold || 0; });
+  if (!data.financialPlanning) data.financialPlanning = {};
+  (data.financialPlanning.externalContributors || []).forEach(c => { c.annualGPTarget = +c.last365GPSold || 0; });
+  setDirty();
+  renderFinancialPlanning();
 }
 
 function addExternalContributor() {
