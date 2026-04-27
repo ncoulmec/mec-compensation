@@ -196,6 +196,15 @@
   .scenario-row:last-of-type { border-bottom: none; }
   .scenario-row label { font-size: 13px; color: var(--muted); }
 
+  /* Help / What is True-Up? */
+  details.tu-help { background: #fafaf7; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-top: 18px; }
+  details.tu-help summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--navy); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  details.tu-help summary::-webkit-details-marker { display: none; }
+  details.tu-help summary::after { content: "+"; font-size: 20px; font-weight: 400; color: var(--muted); }
+  details.tu-help[open] summary::after { content: "−"; }
+  details.tu-help .body { margin-top: 14px; font-size: 13px; color: var(--ink); line-height: 1.6; }
+  details.tu-help .body strong { color: var(--navy); }
+
   /* Scenario row variant: when the row contains a realistic-slider, give it a vertical layout
      so the slider gets full-width breathing room (instead of being squeezed into a 1fr column). */
   .scenario-row.has-realistic-slider {
@@ -764,6 +773,22 @@
           </div>
         </div>
       </div>
+
+      <details class="tu-help">
+        <summary>What is the True-Up?</summary>
+        <div class="body">
+          <p>Your commission is calculated each quarter on your <strong>trailing 12-month revenue</strong> (TTM) and divided by 4. This means quarterly payouts are smoother and more predictable — you don't have to wait until year-end to get paid.</p>
+          <p>But there's a problem: if you have a slow start to the year and a big finish, the early quarterly payouts are calculated on lower TTM, so they pay less. By the time your TTM catches up at year-end, only the <em>final</em> quarter's payout reflects your strong year — and that's just 25% of the annual commission. You'd be underpaid.</p>
+          <p>The <strong>Annual True-Up</strong> fixes this. At year-end:</p>
+          <ul>
+            <li>We compute what your <strong>full annual commission</strong> should be at your final Q4 TTM revenue.</li>
+            <li>We subtract everything we've already paid you across Q1–Q4.</li>
+            <li>The difference is paid as a year-end <strong>catch-up bonus</strong>.</li>
+          </ul>
+          <p>This way, if you finish the year strong (e.g. you push past the $220k milestone in Q4), you get the <strong>full annual commission you earned</strong> — including the 38.75% kicker zone — not just 1/4 of it from the last quarter. Your base salary is never affected, and the true-up is never negative.</p>
+          <p style="color: var(--muted); font-size: 12px;">Example: You start the year with TTM at $150k (no commission below $195k). By Q4 you push TTM to $220k → annual entitlement ≈ $9.7k. If only Q4 paid out ($2.4k), the <strong>$7.3k true-up</strong> at year-end gets you to the full $9.7k.</p>
+        </div>
+      </details>
     </div>
   </section>
 

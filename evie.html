@@ -446,6 +446,7 @@
         <div class="compare-arrow">
           <div id="delta-arrow">→</div>
           <div class="delta" id="delta-val">—</div>
+          <div id="delta-gate-note" style="display: none; font-size: 11px; color: var(--warn); font-weight: 600; text-align: center; margin-top: 6px; line-height: 1.3;"></div>
         </div>
         <div class="compare-col new">
           <div class="label">New plan (incremental bands)</div>
@@ -1633,6 +1634,17 @@ function update() {
   deltaEl.textContent = (delta >= 0 ? '+' : '') + fmtMoney(delta);
   deltaEl.classList.toggle('negative', delta < 0);
   arrow.textContent = delta > 0 ? '▲' : delta < 0 ? '▼' : '→';
+  // Gate explainer — when a production gate exists AND it's not met, the new commission is $0,
+  // so the negative delta is misleading without context. Show a small note explaining why.
+  const gateNote = document.getElementById('delta-gate-note');
+  if (gateNote) {
+    if (delta < 0 && getProductionGate() > 0 && !r.planningGatePassed) {
+      gateNote.style.display = 'block';
+      gateNote.innerHTML = `⚠ Production gate not met<br><span style="font-weight: 400; color: var(--muted);">New commission paused — drag Annual Event GP to ${fmtMoney(getProductionGate())}+ to flow</span>`;
+    } else {
+      gateNote.style.display = 'none';
+    }
+  }
 
   // Bands table — show both annual and monthly (÷12) ranges
   const body = document.getElementById('bands-body');

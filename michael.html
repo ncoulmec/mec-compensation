@@ -196,6 +196,15 @@
   .scenario-row:last-of-type { border-bottom: none; }
   .scenario-row label { font-size: 13px; color: var(--muted); }
 
+  /* Help / What is True-Up? */
+  details.tu-help { background: #fafaf7; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-top: 18px; }
+  details.tu-help summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--navy); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  details.tu-help summary::-webkit-details-marker { display: none; }
+  details.tu-help summary::after { content: "+"; font-size: 20px; font-weight: 400; color: var(--muted); }
+  details.tu-help[open] summary::after { content: "−"; }
+  details.tu-help .body { margin-top: 14px; font-size: 13px; color: var(--ink); line-height: 1.6; }
+  details.tu-help .body strong { color: var(--navy); }
+
   /* Realistic-range slider styles */
   .scenario-row.has-realistic-slider { grid-template-columns: 1fr; gap: 8px; padding: 14px 0 18px; }
   .scenario-row.has-realistic-slider .label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
@@ -678,6 +687,7 @@
         </thead>
         <tbody id="bands-body"></tbody>
       </table>
+      <div id="milestone-bonus-callout" style="margin-top: 14px;"></div>
     </div>
 
     <div class="card" data-guardrail-card style="padding: 18px 24px;">
@@ -719,6 +729,22 @@
           </div>
         </div>
       </div>
+
+      <details class="tu-help">
+        <summary>What is the True-Up?</summary>
+        <div class="body">
+          <p>Your commission is calculated each quarter on your <strong>trailing 12-month revenue</strong> (TTM) and divided by 4. This means quarterly payouts are smoother and more predictable — you don't have to wait until year-end to get paid.</p>
+          <p>But there's a problem: if you have a slow start to the year and a big finish, the early quarterly payouts are calculated on lower TTM, so they pay less. By the time your TTM catches up at year-end, only the <em>final</em> quarter's payout reflects your strong year — and that's just 25% of the annual commission. You'd be underpaid.</p>
+          <p>The <strong>Annual True-Up</strong> fixes this. At year-end:</p>
+          <ul>
+            <li>We compute what your <strong>full annual commission</strong> should be at your final Q4 TTM revenue.</li>
+            <li>We subtract everything we've already paid you across Q1–Q4.</li>
+            <li>The difference is paid as a year-end <strong>catch-up bonus</strong>.</li>
+          </ul>
+          <p>This way, if you finish the year strong, you get the <strong>full annual commission you earned</strong> — not just 1/4 of it from the last quarter. Your base salary is never affected, and the true-up is never negative (no claw-back if you're already overpaid; the next year's commissions absorb that naturally).</p>
+          <p style="color: var(--muted); font-size: 12px;">Example: Q1 TTM is $130k → quarterly payout $1k. Q4 TTM is $200k → final-quarter payout $3.75k. Total quarterly paid ≈ $9k. But annual entitlement at $200k = $15k. The <strong>$6k true-up</strong> at year-end gets you to the full $15k.</p>
+        </div>
+      </details>
     </div>
   </section>
 
@@ -740,12 +766,12 @@
         <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Forward-looking — what you're aiming for this year.</p>
         <div class="scenario-row">
           <label>Number of Gigs</label>
-          <input type="range" id="plan-gigs-slider" min="0" max="200" step="1" value="40">
+          <input type="range" id="plan-gigs-slider" min="25" max="150" step="1" value="40">
           <input type="text" inputmode="numeric" id="plan-gigs-input" class="value-input" value="40">
         </div>
         <div class="scenario-row">
           <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
-          <input type="range" id="plan-avg-slider" min="0" max="20000" step="100" value="3750">
+          <input type="range" id="plan-avg-slider" min="500" max="5000" step="50" value="3750">
           <div style="position: relative;">
             <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
             <input type="text" inputmode="numeric" id="plan-avg-input" class="value-input" style="padding-left: 22px;" value="3,750">
@@ -773,12 +799,12 @@
         <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">What you've actually delivered. Edits persist on this device.</p>
         <div class="scenario-row">
           <label>Gigs delivered</label>
-          <input type="range" id="actual-gigs-slider" min="0" max="200" step="1" value="0">
+          <input type="range" id="actual-gigs-slider" min="0" max="150" step="1" value="0">
           <input type="text" inputmode="numeric" id="actual-gigs-input" class="value-input" value="0">
         </div>
         <div class="scenario-row">
           <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
-          <input type="range" id="actual-avg-slider" min="0" max="20000" step="100" value="0">
+          <input type="range" id="actual-avg-slider" min="0" max="5000" step="50" value="0">
           <div style="position: relative;">
             <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
             <input type="text" inputmode="numeric" id="actual-avg-input" class="value-input" style="padding-left: 22px;" value="0">
@@ -1253,18 +1279,12 @@ function calcBandCommission(revenue, bands) {
       partial: revenue > b.threshold && revenue < nextThreshold
     });
   }
-  // Flat milestone bonuses ("kickers"): fire when metric crosses a threshold (e.g. $5k at $100k for Michael)
+  // Flat milestone bonuses ("kickers"): fire when metric crosses a threshold (e.g. $5k at $100k for Michael).
+  // Adds to totalComm but does NOT push as a breakdown row — kept off the bands table per Nathan
+  // ("just 2 bands for Michael now"). Kickers are surfaced separately as a Milestone Bonus callout.
   if (plan && Array.isArray(plan.flatBonuses)) {
     plan.flatBonuses.forEach(k => {
-      if (revenue >= k.threshold) {
-        totalComm += k.amount;
-        breakdown.push({
-          min: k.threshold, max: k.threshold, rate: null,
-          earn: k.amount, cumulative: totalComm,
-          active: true, partial: false,
-          isKicker: true, kickerLabel: k.label
-        });
-      }
+      if (revenue >= k.threshold) totalComm += k.amount;
     });
   }
   return { total: totalComm, breakdown };
@@ -1483,6 +1503,30 @@ function update() {
       <td class="num">${b.active ? fmtMoney(b.cumulative) : '—'}</td>
     </tr>`;
   }).join('');
+
+  // Milestone Bonus callout — surfaces plan.flatBonuses (e.g. Michael's $5k at $100k)
+  // outside of the bands table since these are flat amounts, not band rates.
+  const milestone = document.getElementById('milestone-bonus-callout');
+  if (milestone && Array.isArray(plan.flatBonuses) && plan.flatBonuses.length > 0) {
+    milestone.innerHTML = plan.flatBonuses.map(k => {
+      const reached = scenario.revenue >= k.threshold;
+      const bg = reached ? 'linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%)' : '#fafaf7';
+      const border = reached ? '1px solid #6fc792' : '1px solid var(--border)';
+      const colour = reached ? '#1f5e3c' : 'var(--muted)';
+      const icon = reached ? '✓' : '🎯';
+      const status = reached ? 'Unlocked at your current scenario' : `Unlocked when revenue reaches ${fmtMoney(k.threshold)}`;
+      return `<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: ${bg}; border: ${border}; border-radius: 8px;">
+        <div>
+          <div style="font-size: 11px; color: ${colour}; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">${icon} Milestone Bonus</div>
+          <div style="font-size: 13px; color: var(--ink); margin-top: 2px;">${k.label || ''}</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">${status}</div>
+        </div>
+        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: ${colour};">${fmtMoney(k.amount)}</div>
+      </div>`;
+    }).join('');
+  } else if (milestone) {
+    milestone.innerHTML = '';
+  }
 
   // Quarterly payouts
   updateQuarterlyDisplay(r);
