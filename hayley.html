@@ -166,6 +166,7 @@
       <h2>Forecast your year</h2>
       <p class="blurb">Model the company's full-year Contribution Margin (CM) and Net Profit (NP) — your incentive is driven by both. CM bonus = matched band rate × (CM − baseline). NP bonus = matched band rate × (NP − matched threshold). Both numbers are super-inclusive.</p>
     </div>
+    <div id="pay-increase-banner"></div>
 
     <div class="kpi-row">
       <div class="kpi-card">
@@ -297,7 +298,11 @@
 
     <div class="card">
       <h2>Quarterly Payouts</h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Enter the company's actual CM and NP at each quarter's end (cumulative fiscal year to date). Each quarter pays 75% of the commission earned to that point, minus what's been paid already.</p>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 8px;">Enter the company's actual CM and NP at each quarter's end (cumulative fiscal year to date). Each quarter pays 75% of the commission earned to that point, minus what's been paid already.</p>
+      <div style="margin: 0 0 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <a class="btn small" href="https://go.xero.com/Reports/Default.aspx?reportType=ProfitAndLoss" target="_blank" rel="noopener" style="text-decoration: none; background: #13b5ea; color: #fff; border: 1px solid #13b5ea; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Open Xero P&amp;L ↗</a>
+        <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Pull this quarter's Revenue / COGS / Contribution Exp / OpEx from Xero, then update the Company P&amp;L tab on MEC Group.</span>
+      </div>
       <div style="overflow-x: auto;">
         <table class="quarterly" id="quarterly-table">
           <thead>
@@ -396,6 +401,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
   });
 });
+document.getElementById('panel-overview').classList.add('active');
 
 async function load() {
   try {
@@ -712,6 +718,44 @@ function update() {
   const r = calcAll();
   const g = data.globals;
 
+  // Pay-increase celebration
+  const payBanner = document.getElementById('pay-increase-banner');
+  if (payBanner) {
+    const prev = +emp.previousBaseSalary || 0;
+    const curr = +emp.baseSalary || 0;
+    if (prev > 0 && curr > prev) {
+      const superRate = (data.globals && data.globals.superRate) || 0.12;
+      const dBase = curr - prev;
+      const dSuper = dBase * superRate;
+      const totalLift = dBase + dSuper;
+      const pctLift = (dBase / prev) * 100;
+      payBanner.innerHTML = `
+        <div style="margin: 0 0 22px; padding: 16px 20px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div>
+              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🎉 Your pay increase</div>
+              <div style="font-family: var(--mono); font-size: 14px; color: var(--ink); margin-top: 6px;">
+                <span style="color: var(--muted); text-decoration: line-through;">${fmtMoney(prev)}</span>
+                &nbsp;→&nbsp;
+                <strong style="font-size: 18px; color: #1f5e3c;">${fmtMoney(curr)}</strong>
+                <span style="font-size: 12px; color: var(--muted);">base salary (ex super)</span>
+              </div>
+              <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px;">
+                +${fmtMoney(dBase)} base &nbsp;·&nbsp; +${fmtMoney(dSuper)} extra super (12%) &nbsp;·&nbsp; +${pctLift.toFixed(1)}%
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Total annual lift</div>
+              <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #1f5e3c;">+${fmtMoney(totalLift)}</div>
+              <div style="font-size: 11px; color: var(--muted);">before any commission earned on top</div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      payBanner.innerHTML = '';
+    }
+  }
+
   // Metric cards
   document.getElementById('card-base').textContent = fmtMoney(r.baseInc);
   document.getElementById('card-base-sub').textContent = `${fmtMoney(r.base)} + ${fmtMoney(r.baseSuper)} super`;
@@ -838,7 +882,7 @@ function update() {
     const projAnnualCM = latest.cm * (4 / quartersWithData);
     const projAnnualNP = latest.np * (4 / quartersWithData);
     const projCM = calcCMIncentive(projAnnualCM).earning;
-    const projNP = calcNPIncentive(projAnnualNP).earning;
+    const projNP = calcNPKicker(projAnnualNP).bonus;
     const projTotal = (projCM + projNP) * r.effectiveKpi;
     const projPackage = r.baseInc + projTotal;
     projEl.textContent = fmtMoney(projTotal);

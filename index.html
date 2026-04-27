@@ -618,13 +618,14 @@
       <table id="emp-table">
         <thead>
           <tr>
-            <th style="width:18%">Name</th>
-            <th style="width:18%">Role</th>
-            <th style="width:12%">Base Salary</th>
-            <th style="width:12%">+ 12% Super</th>
-            <th style="width:22%">Plan Type</th>
-            <th style="width:8%">Status</th>
-            <th style="width:10%">Dashboard</th>
+            <th style="width:16%">Name</th>
+            <th style="width:16%">Role</th>
+            <th style="width:11%">Base Salary</th>
+            <th style="width:11%">+ 12% Super</th>
+            <th style="width:18%">Plan Type</th>
+            <th style="width:14%" title="Minimum annual GP-Sold required (only applies to hybrid Production roles like Evie). Below this, GP commission stops paying. Leave $0 for no gate.">Production Gate <small style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(annual GP)</small></th>
+            <th style="width:7%">Status</th>
+            <th style="width:7%">Dashboard</th>
           </tr>
         </thead>
         <tbody id="emp-body"></tbody>
@@ -715,9 +716,24 @@
     <div class="card">
       <h2 id="pl-label">Company P&amp;L (Cash Basis)</h2>
       <p class="intro" id="pl-sublabel">Quarterly company financials. Feeds the company-wide view and can gate variable comp payouts (e.g., "comm only pays if company NP &gt; X"). Fiscal year starts July.</p>
-      <div id="xero-note" style="margin: 0 0 18px; padding: 10px 14px; background: #fff7e6; border: 1px solid #f5d890; border-radius: 6px; font-size: 13px; color: #8a6a00;">
-        <strong>TODO:</strong> create an integration that pulls in directly from Xero. In the meantime, enter quarterly figures manually.
+      <div id="xero-note" style="margin: 0 0 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <a class="btn small" href="https://go.xero.com/Reports/Default.aspx?reportType=ProfitAndLoss" target="_blank" rel="noopener" style="background: #13b5ea; color: #fff; border-color: #13b5ea; text-decoration: none;">📊 Open in Xero (P&amp;L)</a>
+        <span style="font-size: 12px; color: var(--muted);">Manual entry for now — Xero direct-import integration is on the roadmap.</span>
       </div>
+      <details style="margin: 0 0 18px; font-size: 12px;">
+        <summary style="cursor: pointer; color: var(--navy); font-weight: 600;">📖 Key terms legend</summary>
+        <div style="margin-top: 8px; padding: 12px 14px; background: #f6f8fc; border: 1px solid var(--border); border-radius: 6px; line-height: 1.7; color: var(--ink);">
+          <div><strong>Revenue</strong> — total invoiced sales ex-GST (Xero "Total Income").</div>
+          <div><strong>COGS</strong> — direct cost of goods sold (talent fees, freelancers paid per-project, etc.).</div>
+          <div><strong>GP (Gross Profit)</strong> = Revenue − COGS.</div>
+          <div><strong>Contribution Expenses</strong> — direct staff cost attributable to delivering revenue (Sales/Account team salaries + super + commissions).</div>
+          <div><strong>CM (Contribution Margin)</strong> = GP − Contribution Expenses. The cash left after the team that produced the revenue is paid.</div>
+          <div><strong>OpEx</strong> — overheads not tied to a particular project (rent, software, finance, leadership salaries excl. team commission).</div>
+          <div><strong>NP (Net Profit)</strong> = CM − OpEx. The bottom line.</div>
+          <div><strong>LTM</strong> — Last Twelve Months. Rolling sum of the last 4 complete quarters.</div>
+          <div><strong>YoY</strong> — Year-over-Year. Same metric this quarter vs the same quarter last year (from Previous Quarters Historical).</div>
+        </div>
+      </details>
 
       <h3 style="font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 4px;">Last 4 Complete Quarters</h3>
       <p style="margin: 4px 0 12px; font-size: 13px; color: var(--muted);">These sum to the LTM (Last Twelve Months) total used for guardrail and reporting. <strong>Green ▲ / red ▼</strong> badges on Contribution Margin and Net Profit show the delta vs the same quarter last year (from the "Previous Quarters" section below).</p>
@@ -734,7 +750,7 @@
         <span style="color: var(--muted); font-size: 12px;">Labels are editable.</span>
       </div>
 
-      <h3 style="margin-top: 32px; font-size: 14px; font-weight: 600; color: var(--ink);">Current Quarter (In Progress)</h3>
+      <h3 style="margin-top: 32px; font-size: 14px; font-weight: 600; color: var(--ink);">Current Quarter</h3>
       <p style="margin: 4px 0 12px; font-size: 13px; color: var(--muted);">Enter partial data as the quarter progresses. <em>Not</em> included in the LTM Total above until you "Roll quarter forward".</p>
       <div class="pl-grid">
         <table id="pl-current-table">
@@ -765,8 +781,29 @@
         <a id="zoho-link" class="btn primary" style="text-decoration: none; padding: 10px 16px; white-space: nowrap;" target="_blank" href="#">📊 Last 365 Days in Zoho ↗</a>
       </div>
 
-      <div class="card" style="background: #fafaf7; padding: 16px 18px; margin-bottom: 18px;">
-        <label style="font-size: 14px; font-weight: 600; display: block; margin-bottom: 6px;">Sentiment slider <span class="hint" style="display:block; font-weight:400;">Slide left for bearish/worst case, right for bullish/best case. Scales the On Track column; Worst Case = On Track × 0.70 (red); Best Case = On Track × 1.15 (green) — both move with the slider.</span></label>
+      <h3>Per-Employee GP Targets</h3>
+      <p class="intro" style="margin-bottom: 10px;">Edit each contributor's Target. Last 365 days are Zoho actuals (editable). Worst Case and Best Case scale off Target by the percentages set below the table. Slider shifts the Target column up or down.</p>
+      <div style="overflow-x: auto;">
+        <table id="fp-targets-table" style="font-size: 13px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Contributor</th>
+              <th style="text-align:right;">Last 365 Days<br><small style="font-weight:400;color:var(--faint);font-size:9px;">Zoho Actual · Editable</small></th>
+              <th style="text-align:right; color: var(--danger);">Worst Case<br><small style="font-weight:400;color:var(--faint);font-size:9px;">Target × <span id="fp-worst-pct-label">70</span>%</small></th>
+              <th style="text-align:right;">Target<br><small style="font-weight:400;color:var(--faint);font-size:9px;">Editable</small></th>
+              <th style="text-align:right; color: var(--accent);">Best Case<br><small style="font-weight:400;color:var(--faint);font-size:9px;">Target × <span id="fp-best-pct-label">115</span>%</small></th>
+              <th style="width: 60px;"></th>
+            </tr>
+          </thead>
+          <tbody id="fp-targets-body"></tbody>
+          <tfoot id="fp-targets-foot"></tfoot>
+        </table>
+      </div>
+      <button class="btn small" onclick="addExternalContributor()" style="margin-top: 10px;">+ Add Non-Dashboard Contributor</button>
+
+      <!-- Sentiment slider — now under the table per Nathan -->
+      <div class="card" style="background: #fafaf7; padding: 16px 18px; margin-top: 18px; margin-bottom: 0;">
+        <label style="font-size: 14px; font-weight: 600; display: block; margin-bottom: 6px;">Sentiment Slider <span class="hint" style="display:block; font-weight:400;">Slide left for worst case, right for best case. Shifts the Target column. Worst/Best columns multiply off the (slider-adjusted) Target.</span></label>
         <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
           <input type="range" id="fp-sentiment" min="-30" max="30" step="5" value="0" style="flex: 1 1 320px; max-width: 480px; accent-color: var(--navy);">
           <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy); min-width: 70px;"><span id="fp-sentiment-pct">0</span>%</div>
@@ -776,38 +813,34 @@
             <span style="display:inline-block; width:90px; text-align:right; color: var(--accent); font-weight: 600;">Best Case</span>
           </div>
         </div>
+        <div style="display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);">
+          <span style="font-size: 13px; color: var(--muted); font-weight: 500;">Multipliers:</span>
+          <label style="font-size: 13px;">Worst Case
+            <span class="input-with-suffix" style="display: inline-flex; width: 80px; margin-left: 6px;">
+              <input type="number" id="fp-worst-pct" value="70" min="20" max="100" step="5" style="text-align: right;">
+              <span class="suffix">%</span>
+            </span>
+          </label>
+          <label style="font-size: 13px;">Best Case
+            <span class="input-with-suffix" style="display: inline-flex; width: 80px; margin-left: 6px;">
+              <input type="number" id="fp-best-pct" value="115" min="100" max="200" step="5" style="text-align: right;">
+              <span class="suffix">%</span>
+            </span>
+          </label>
+          <span style="font-size: 11px; color: var(--faint); font-style: italic;">e.g. Worst = Target × 0.70 means worst-case is 30% below target.</span>
+        </div>
       </div>
-
-      <h3>Per-employee + non-dashboard targets</h3>
-      <p class="intro" style="margin-bottom: 10px;">Edit the "On Track" target for each contributor. The sentiment slider scales it; Worst Case = On Track × 0.70, Best Case = On Track × 1.15.</p>
-      <div style="overflow-x: auto;">
-        <table id="fp-targets-table" style="font-size: 13px;">
-          <thead>
-            <tr>
-              <th style="text-align:left;">Contributor</th>
-              <th style="text-align:right;">Last 365 days<br><small style="font-weight:400;color:var(--faint);font-size:9px;">Zoho actual</small></th>
-              <th style="text-align:right; color: var(--danger);">Worst Case<br><small style="font-weight:400;color:var(--faint);font-size:9px;">On Track × 0.70</small></th>
-              <th style="text-align:right;">On Track<br><small style="font-weight:400;color:var(--faint);font-size:9px;">Editable target</small></th>
-              <th style="text-align:right; color: var(--accent);">Best Case<br><small style="font-weight:400;color:var(--faint);font-size:9px;">On Track × 1.15</small></th>
-              <th style="width: 60px;"></th>
-            </tr>
-          </thead>
-          <tbody id="fp-targets-body"></tbody>
-          <tfoot id="fp-targets-foot"></tfoot>
-        </table>
-      </div>
-      <button class="btn small" onclick="addExternalContributor()" style="margin-top: 10px;">+ Add non-dashboard contributor</button>
 
       <!-- Analysis cards -->
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 22px;">
         <div class="card">
-          <h3 style="margin-top: 0;">Variable comp pool</h3>
-          <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Sum of all commissions across all 8 dashboard employees at On Track targets.</p>
+          <h3 style="margin-top: 0;">Variable Comp Pool</h3>
+          <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Sum of all commissions across all dashboard employees at Target.</p>
           <div id="fp-varcomp-body"></div>
         </div>
         <div class="card">
-          <h3 style="margin-top: 0;">Total team cost</h3>
-          <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Base salaries + super on base + commissions at On Track.</p>
+          <h3 style="margin-top: 0;">Total Team Cost</h3>
+          <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Base salaries + super on base + commissions at Target.</p>
           <div id="fp-cost-body"></div>
         </div>
       </div>
@@ -815,36 +848,46 @@
       <!-- Current Margin from P&L -->
       <div class="card" style="margin-top: 18px;">
         <h3 style="margin-top: 0;">Current Margin (LTM from P&amp;L)</h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Last-12-months figures from the Company P&amp;L tab. Used to project Revenue/CM/NP from team GP-sold below.</p>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Last-12-months figures from the Company P&amp;L tab. Each metric shows its formula in the sub-label. Gross Margin (Zoho) divides last-365-days team Zoho GP by Xero LTM Revenue — a sanity check on Zoho-vs-Xero alignment.</p>
         <div id="fp-margins-body"></div>
       </div>
 
-      <!-- Projected P&L from On Track GP, after commissions -->
+      <!-- Projected P&L from Target GP, after commissions -->
       <div class="card" style="margin-top: 18px;">
-        <h3 style="margin-top: 0;">Projected Company P&amp;L (after commissions)</h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">At the modelled On Track team GP-sold, project Revenue / GP / CM / NP using current LTM ratios. Then deduct the new variable-comp pool from NP (because higher GP sold means higher commission spend). <span class="hint" style="display:block; margin-top: 4px;">Note: Zoho GP sold ≠ Xero cash-basis GP — buffers in Zoho mean Xero is usually higher. This projection scales by historical ratios.</span></p>
+        <h3 style="margin-top: 0;">Projected Company P&amp;L (After Commissions)</h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Drives off the team Target total (highlighted blue below). Projects Revenue / GP / CM / NP using current LTM Gross Margin %. Then deducts the new Variable Comp Pool to surface the bottom-line impact. <span class="hint" style="display:block; margin-top: 4px;">Note: Zoho GP sold ≠ Xero cash-basis GP — buffers in Zoho mean Xero is usually higher.</span></p>
         <div id="fp-pl-body"></div>
       </div>
 
       <!-- New vs Old Commission Comparison -->
       <div class="card" style="margin-top: 18px;">
-        <h3 style="margin-top: 0;">New vs Old Commission — at last 365 day GP levels</h3>
+        <h3 style="margin-top: 0;">New vs Old Commission — At Last 365 Day GP Levels</h3>
         <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">If the team hits exactly the same numbers as the last 365 days, how much more (or less) does the company pay in commissions under the new plan vs the old 3.5% flat plan?</p>
         <div id="fp-newvsold-body"></div>
       </div>
 
+      <!-- Compounding Cost Stack -->
+      <div class="card" style="margin-top: 18px; border-left: 3px solid var(--warn);">
+        <h3 style="margin-top: 0;">Compounding Cost Stack &amp; Breakeven</h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Total cost increase to MEC: base salary increases + super on those + new commission delta. The breakeven row shows how much extra GP the team needs to deliver (at LTM CM margin) to absorb the cost increase.</p>
+        <div id="fp-coststack-body"></div>
+      </div>
+
       <!-- GM Commission Tweaker -->
       <div class="card" style="margin-top: 18px; border-left: 3px solid var(--navy);">
-        <h3 style="margin-top: 0;">GM Commission Tweaker (Hayley)</h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Hayley plays with team GP-sold here to see her own variable comp dynamically. Defaults to the team's On Track total but you can override.</p>
+        <h3 style="margin-top: 0;">Commission Tweaker (General Manager)</h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">GM plays with team GP-sold here to see their own variable comp dynamically. Defaults to the team's Target total but you can override.</p>
         <div style="display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
-          <label style="font-size: 13px; font-weight: 500; min-width: 220px;">Hypothetical team GP-sold (Zoho)</label>
+          <label style="font-size: 13px; font-weight: 500; min-width: 220px;">Hypothetical Team GP-Sold (Zoho)</label>
           <input type="range" id="fp-gm-gp" min="500000" max="3000000" step="50000" value="1827000" style="flex: 1 1 320px; max-width: 480px; accent-color: var(--navy);">
           <div style="position: relative;">
             <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
             <input type="text" inputmode="numeric" id="fp-gm-gp-input" value="1,827,000" style="font-family: var(--mono); font-size: 14px; padding: 8px 10px 8px 22px; border: 1px solid var(--border); border-radius: 6px; width: 130px;">
           </div>
-          <button class="btn small" id="fp-gm-reset" style="font-size: 11px;">Reset to On Track</button>
+          <button class="btn small" id="fp-gm-reset" style="font-size: 11px;">Reset to Target</button>
+        </div>
+        <div style="background: #fef5e6; border: 1px solid #f5d890; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: var(--warn);">
+          <strong>Disclaimer:</strong> This is a projection based on current LTM margin ratios staying constant. Actual GM commission depends on what the company's Contribution Margin and Net Profit end up being — those vary with costs that aren't captured here.
         </div>
         <div id="fp-hayley-body"></div>
       </div>
@@ -1006,6 +1049,11 @@ document.addEventListener('input', (ev) => {
   if (path.startsWith('companyPL.historicalQuarters')) {
     updatePLTotals();
     updateHistoricalTotals();
+    updateCurrentQuarterTotals();
+  }
+  if (path.startsWith('companyPL.quarters')) {
+    // Already calls updatePLTotals above; also refresh current-quarter YoY since it can match against last-4 too.
+    updateCurrentQuarterTotals();
   }
   if (path.startsWith('companyPL.currentQuarter')) {
     updateCurrentQuarterTotals();
@@ -1119,6 +1167,12 @@ function renderAll() {
   const tbody = $('#emp-body');
   if (tbody && !tbody.dataset.listenerAttached) {
     tbody.addEventListener('input', onEmpEdit);
+    // Plan-type changes need to redraw the row so the Production-Gate cell appears/disappears.
+    tbody.addEventListener('change', (ev) => {
+      if (ev.target && ev.target.dataset && ev.target.dataset.f === 'planType') {
+        renderEmployees();
+      }
+    });
     tbody.dataset.listenerAttached = '1';
   }
 }
@@ -1163,6 +1217,12 @@ function renderEmployees() {
 
   data.employees.forEach((e, i) => {
     const superIncl = Math.round(e.baseSalary * (1 + superRate));
+    // Only employees on hybrid plans (where the gate logic applies) see an editable gate.
+    const planMeta = data.planTypes[e.planType];
+    const gateApplies = planMeta && (e.planType === 'hybrid_gp' || e.planType === 'hybrid_rev' || e.planType === 'hybrid_rev_senior');
+    const gateCell = gateApplies
+      ? `<div title="Below this annual GP-Sold, the Sales-side commission stops paying. Set $0 to disable.">${moneyInputHtml(`employees.${i}.minProductionGP`, '0')}</div>`
+      : `<span style="color: var(--faint); font-size: 11px;">N/A</span>`;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input type="text" class="name-input" value="${e.name}" data-i="${i}" data-f="name"></td>
@@ -1170,6 +1230,7 @@ function renderEmployees() {
       <td>${moneyInputHtml(`employees.${i}.baseSalary`)}</td>
       <td><div class="read-only-cell" data-super="${i}">${fmtMoney(superIncl)}</div></td>
       <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
+      <td>${gateCell}</td>
       <td>${e.placeholder ? '<span class="pill warn">placeholder</span>' : '<span class="pill">active</span>'}</td>
       <td><a href="${e.dashboardFile}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 12px; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open ${e.name}'s dashboard in a new tab">Open dashboard ↗</a></td>
     `;
@@ -1836,15 +1897,17 @@ function renderCurrentQuarter() {
     const cur = +cq[l.key] || 0;
     const prior = priorQ ? +priorQ[l.key] || 0 : null;
     const yoyCell = renderYoYCell(cur, prior, l.key === 'cogs' || l.key === 'contribExp' || l.key === 'opex');
+    // Wrap YoY cell with data-cq-yoy="<key>" for live re-render
+    const yoyTagged = yoyCell.replace('<td ', `<td data-cq-yoy="${l.key}" `);
     return `<tr>
       <td>${l.label}</td>
       <td style="min-width:200px;text-align:center;"><div style="margin:0 auto;max-width:160px;">${moneyInputHtml(`companyPL.currentQuarter.${l.key}`)}</div></td>
-      ${yoyCell}
+      ${yoyTagged}
     </tr>`;
   }).join('') +
-  `<tr class="totals"><td>Gross Profit</td><td style="text-align:center;" data-cq-gp></td>${renderYoYTotalCell('gp', priorQ)}</tr>
-   <tr class="totals"><td>Contribution Margin</td><td style="text-align:center;" data-cq-cm></td>${renderYoYTotalCell('cm', priorQ)}</tr>
-   <tr class="totals"><td>Net Profit</td><td style="text-align:center;" data-cq-np></td>${renderYoYTotalCell('np', priorQ)}</tr>`;
+  `<tr class="totals"><td>Gross Profit</td><td style="text-align:center;" data-cq-gp></td>${renderYoYTotalCell('gp', priorQ).replace('<td ', '<td data-cq-yoy-total="gp" ')}</tr>
+   <tr class="totals"><td>Contribution Margin</td><td style="text-align:center;" data-cq-cm></td>${renderYoYTotalCell('cm', priorQ).replace('<td ', '<td data-cq-yoy-total="cm" ')}</tr>
+   <tr class="totals"><td>Net Profit</td><td style="text-align:center;" data-cq-np></td>${renderYoYTotalCell('np', priorQ).replace('<td ', '<td data-cq-yoy-total="np" ')}</tr>`;
   updateCurrentQuarterTotals();
 }
 
@@ -1891,6 +1954,33 @@ function updateCurrentQuarterTotals() {
   setCell('[data-cq-gp]', gp);
   setCell('[data-cq-cm]', cm);
   setCell('[data-cq-np]', np);
+
+  // Refresh YoY cells live (so editing Current Quarter or Historical Quarters updates badges in place)
+  const yearMatch = String(cq.label || '').match(/(\d{4})/);
+  let priorQ = null;
+  if (yearMatch) {
+    const priorLabel = cq.label.replace(yearMatch[1], (parseInt(yearMatch[1], 10) - 1).toString());
+    const pools = [...(data.companyPL.quarters || []), ...(data.companyPL.historicalQuarters || [])];
+    priorQ = pools.find(q => q && q.label === priorLabel) || null;
+  }
+  const lines = [
+    { key: 'revenue', inverted: false },
+    { key: 'cogs', inverted: true },
+    { key: 'contribExp', inverted: true },
+    { key: 'opex', inverted: true }
+  ];
+  lines.forEach(l => {
+    const cell = document.querySelector(`[data-cq-yoy="${l.key}"]`);
+    if (!cell) return;
+    const cur = +cq[l.key] || 0;
+    const prior = priorQ ? +priorQ[l.key] || 0 : null;
+    cell.outerHTML = renderYoYCell(cur, prior, l.inverted).replace('<td ', `<td data-cq-yoy="${l.key}" `);
+  });
+  ['gp', 'cm', 'np'].forEach(kind => {
+    const cell = document.querySelector(`[data-cq-yoy-total="${kind}"]`);
+    if (!cell) return;
+    cell.outerHTML = renderYoYTotalCell(kind, priorQ).replace('<td ', `<td data-cq-yoy-total="${kind}" `);
+  });
 }
 
 function rollForwardQuarter() {
@@ -2415,6 +2505,11 @@ function getFpSentiment() {
 }
 
 function renderFinancialPlanning() {
+  // Preserve focus across re-renders so typing in money inputs doesn't get blocked.
+  const active = document.activeElement;
+  const focusPath = active && active.dataset ? active.dataset.moneyPath : null;
+  const focusCursor = (active && active.selectionStart != null) ? active.selectionStart : null;
+
   // Zoho link
   const zoho = $('#zoho-link');
   if (zoho) zoho.href = data.globals?.zohoDashboardUrl || '#';
@@ -2431,10 +2526,27 @@ function renderFinancialPlanning() {
   $('#fp-sentiment-pct').textContent = sentEl ? sentEl.value : '0';
   const sentMult = 1 + (getFpSentiment() / 100);
 
-  // Build a unified rows array: dashboard employees + non-dashboard contributors
+  // Worst/Best multiplier inputs
+  const worstEl = $('#fp-worst-pct');
+  const bestEl = $('#fp-best-pct');
+  if (worstEl && !worstEl.dataset.listenerAttached) {
+    worstEl.addEventListener('input', () => { $('#fp-worst-pct-label').textContent = worstEl.value; renderFinancialPlanning(); });
+    worstEl.dataset.listenerAttached = '1';
+  }
+  if (bestEl && !bestEl.dataset.listenerAttached) {
+    bestEl.addEventListener('input', () => { $('#fp-best-pct-label').textContent = bestEl.value; renderFinancialPlanning(); });
+    bestEl.dataset.listenerAttached = '1';
+  }
+  const worstMult = (worstEl ? +worstEl.value || 70 : 70) / 100;
+  const bestMult = (bestEl ? +bestEl.value || 115 : 115) / 100;
+  if ($('#fp-worst-pct-label')) $('#fp-worst-pct-label').textContent = (worstMult * 100).toFixed(0);
+  if ($('#fp-best-pct-label')) $('#fp-best-pct-label').textContent = (bestMult * 100).toFixed(0);
+
+  // Build unified rows: employees + externals. Both have editable Last 365 and editable Target.
   const rows = data.employees.map((e, i) => ({
     kind: 'employee', i, name: e.name, role: e.role,
     last365: +e.last365GPSold || 0,
+    last365Path: `employees.${i}.last365GPSold`,
     targetBase: +e.annualGPTarget || 0,
     targetPath: `employees.${i}.annualGPTarget`,
     emp: e,
@@ -2442,10 +2554,11 @@ function renderFinancialPlanning() {
   const ext = data.financialPlanning?.externalContributors || [];
   ext.forEach((c, ei) => {
     rows.push({
-      kind: 'external', ei, name: c.name || `(unnamed)`, role: 'non-dashboard contributor',
+      kind: 'external', ei, name: c.name || `(unnamed)`, role: 'Non-Dashboard Contributor',
       last365: +c.last365GPSold || 0,
-      targetBase: +c.last365GPSold || 0,
-      targetPath: `financialPlanning.externalContributors.${ei}.last365GPSold`,
+      last365Path: `financialPlanning.externalContributors.${ei}.last365GPSold`,
+      targetBase: +(c.annualGPTarget != null ? c.annualGPTarget : c.last365GPSold) || 0,
+      targetPath: `financialPlanning.externalContributors.${ei}.annualGPTarget`,
     });
   });
 
@@ -2454,8 +2567,8 @@ function renderFinancialPlanning() {
   const body = $('#fp-targets-body');
   body.innerHTML = rows.map((r) => {
     const onTrack = Math.max(0, Math.round(r.targetBase * sentMult));
-    const worst = Math.round(onTrack * 0.70);
-    const best = Math.round(onTrack * 1.15);
+    const worst = Math.round(onTrack * worstMult);
+    const best = Math.round(onTrack * bestMult);
     totalLast365 += r.last365;
     totalWorst += worst;
     totalOnTrack += onTrack;
@@ -2464,24 +2577,22 @@ function renderFinancialPlanning() {
     const removeBtn = r.kind === 'external'
       ? `<button class="btn small danger" onclick="removeExternalContributor(${r.ei})" style="padding: 3px 8px; font-size: 11px;">×</button>`
       : '';
-    const nameCell = r.kind === 'external'
-      ? `<input type="text" value="${r.name}" oninput="data.financialPlanning.externalContributors[${r.ei}].name=this.value; setDirty()" style="width: 180px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit;"> <span style="font-size: 11px; color: var(--faint); margin-left: 4px;">non-dashboard</span>`
-      : `<strong>${r.name}</strong> <span style="font-size: 11px; color: var(--muted);">${r.role}</span>`;
+    const tag = r.kind === 'external' ? ` <span style="font-size: 10px; color: var(--faint); font-family: var(--mono); margin-left: 4px;">non-dashboard</span>` : ` <span style="font-size: 11px; color: var(--muted);">${r.role}</span>`;
     return `<tr>
-      <td>${nameCell}</td>
-      <td style="text-align:right; font-family: var(--mono);">${fmtMoney(r.last365)}</td>
+      <td><strong>${r.name}</strong>${tag}</td>
+      <td style="text-align:right;">${moneyInputHtml(r.last365Path, '0')}</td>
       <td style="text-align:right; font-family: var(--mono); color: var(--danger); font-weight: 600;">${fmtMoney(worst)}</td>
-      <td style="text-align:right;">${moneyInputHtml(r.targetPath)}</td>
+      <td style="text-align:right;">${moneyInputHtml(r.targetPath, '0')}</td>
       <td style="text-align:right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(best)}</td>
       <td style="text-align:right;">${removeBtn}</td>
     </tr>`;
   }).join('');
 
   $('#fp-targets-foot').innerHTML = `<tr style="background: var(--navy); color: #fff;">
-    <td style="padding: 12px 10px; font-weight: 700;">Team total</td>
+    <td style="padding: 12px 10px; font-weight: 700;">Team Total</td>
     <td style="text-align:right; font-family: var(--mono); font-weight: 700; padding: 12px 10px;">${fmtMoney(totalLast365)}</td>
     <td style="text-align:right; font-family: var(--mono); font-weight: 700; padding: 12px 10px; color: #ffb6b6;">${fmtMoney(totalWorst)}</td>
-    <td style="text-align:right; font-family: var(--mono); font-weight: 700; padding: 12px 10px;">${fmtMoney(totalOnTrack)}</td>
+    <td style="text-align:right; font-family: var(--mono); font-weight: 700; padding: 12px 10px; background: rgba(255,255,255,0.1);">${fmtMoney(totalOnTrack)}</td>
     <td style="text-align:right; font-family: var(--mono); font-weight: 700; padding: 12px 10px; color: #b6f5c8;">${fmtMoney(totalBest)}</td>
     <td></td>
   </tr>`;
@@ -2509,39 +2620,76 @@ function renderFinancialPlanning() {
     <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-family: var(--mono); font-weight: 700; font-size: 16px; border-top: 1px solid var(--border); margin-top: 6px; color: var(--navy);"><span>Total team cost</span><span>${fmtMoney(teamCost)}</span></div>
   `;
 
-  // Current Margin from P&L
+  // Current Margin from P&L — Xero LTM + Zoho synthetic
   const ltm = fpComputeLTM();
   if (ltm && ltm.revenue > 0) {
+    const gmXero = ltm.gp / ltm.revenue;
+    const cmRatio = ltm.cm / ltm.revenue;
+    const nmRatio = ltm.np / ltm.revenue;
+    // Zoho GM: total Zoho GP sold (last 365) divided by Xero LTM Revenue (a sanity-check ratio)
+    const zohoGP = fpTotalLast365();
+    const gmZero = zohoGP > 0 ? zohoGP / ltm.revenue : null;
     $('#fp-margins-body').innerHTML = `
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+        <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;">
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Revenue (LTM Xero)</div>
+          <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(ltm.revenue)}</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Sum of last 4 complete quarters</div>
+        </div>
+        <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;">
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Last 365 GP Sold (Zoho)</div>
+          <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(zohoGP)}</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Sum of team Last 365 GP from grid above</div>
+        </div>
+      </div>
       <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-        <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;"><div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Revenue (LTM)</div><div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(ltm.revenue)}</div></div>
-        <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;"><div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Gross Margin</div><div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${((ltm.gp/ltm.revenue)*100).toFixed(1)}%</div><div style="font-size:11px; color: var(--faint); font-family: var(--mono);">${fmtMoney(ltm.gp)}</div></div>
-        <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;"><div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Contribution Margin</div><div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${((ltm.cm/ltm.revenue)*100).toFixed(1)}%</div><div style="font-size:11px; color: var(--faint); font-family: var(--mono);">${fmtMoney(ltm.cm)}</div></div>
-        <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;"><div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Net Margin</div><div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${((ltm.np/ltm.revenue)*100).toFixed(1)}%</div><div style="font-size:11px; color: var(--faint); font-family: var(--mono);">${fmtMoney(ltm.np)}</div></div>
+        <div style="background: #f5faf7; padding: 12px 14px; border-radius: 8px; border: 1px solid #c3e4d0;">
+          <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Gross Margin (Xero)</div>
+          <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${(gmXero * 100).toFixed(1)}%</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">(Revenue − CoGS) ÷ Revenue<br>${fmtMoney(ltm.gp)} ÷ ${fmtMoney(ltm.revenue)}</div>
+        </div>
+        <div style="background: #fef5e6; padding: 12px 14px; border-radius: 8px; border: 1px solid #f5d890;">
+          <div style="font-size: 11px; color: var(--warn); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Gross Margin (Zoho)</div>
+          <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${gmZero != null ? (gmZero * 100).toFixed(1) + '%' : '—'}</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Zoho GP ÷ Xero Revenue<br>${gmZero != null ? fmtMoney(zohoGP) + ' ÷ ' + fmtMoney(ltm.revenue) : ''}</div>
+        </div>
+        <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;">
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Contribution Margin</div>
+          <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${(cmRatio * 100).toFixed(1)}%</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">(GP − Contrib Exp) ÷ Revenue<br>${fmtMoney(ltm.cm)}</div>
+        </div>
+        <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;">
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Net Margin</div>
+          <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${(nmRatio * 100).toFixed(1)}%</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">(CM − OpEx) ÷ Revenue<br>${fmtMoney(ltm.np)}</div>
+        </div>
       </div>
     `;
   } else {
     $('#fp-margins-body').innerHTML = `<div style="color: var(--muted); font-size: 13px;">No P&amp;L data yet.</div>`;
   }
 
-  // Projected P&L (deducting commissions from NP)
-  if (ltm && ltm.revenue > 0 && totalLast365 > 0) {
-    const revRatio = ltm.revenue / totalLast365;
-    const projRevenue = totalOnTrack * revRatio;
-    const projGP = projRevenue * (ltm.gp / ltm.revenue);
+  // Projected P&L (deducting commissions from NP) — drives off team Target total via GM (Xero)
+  if (ltm && ltm.revenue > 0 && totalOnTrack > 0) {
+    const gmXero = ltm.gp / ltm.revenue;
+    // Project Revenue from team Target GP using GM ratio (target GP ÷ GM = projected revenue)
+    const projRevenue = gmXero > 0 ? totalOnTrack / gmXero : 0;
+    const projGP = totalOnTrack;  // explicitly: the team's modelled Target IS projected GP (Zoho aligned)
     const projCM = projRevenue * (ltm.cm / ltm.revenue);
     const projNP = projRevenue * (ltm.np / ltm.revenue);
-    // Higher GP-sold means higher commission spend — deduct extra commission cost from projected NP
-    // The LTM NP already includes existing commission costs implicitly; here we surface the new commission load
     const projNpAfterComm = projNP - totalVarComp;
     $('#fp-pl-body').innerHTML = `
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono); font-size: 11px; color: var(--muted);"><span>LTM revenue / GP-sold ratio</span><span>${revRatio.toFixed(2)}×</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected Revenue</span><span>${fmtMoney(projRevenue)}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected GP</span><span>${fmtMoney(projGP)} <span style="color: var(--faint); font-size: 11px;">(${((ltm.gp/ltm.revenue)*100).toFixed(1)}%)</span></span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected CM</span><span>${fmtMoney(projCM)} <span style="color: var(--faint); font-size: 11px;">(${((ltm.cm/ltm.revenue)*100).toFixed(1)}%)</span></span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected NP <span style="color: var(--faint);">(at LTM ratios)</span></span><span>${fmtMoney(projNP)}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono); color: var(--danger);"><span>− Variable comp pool (new commission load)</span><span>−${fmtMoney(totalVarComp)}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-family: var(--mono); font-weight: 700; font-size: 16px; border-top: 1px solid var(--border); margin-top: 6px; color: ${projNpAfterComm > 0 ? 'var(--accent)' : 'var(--danger)'};"><span>Projected NP after new commissions</span><span>${fmtMoney(projNpAfterComm)}</span></div>
+      <div style="background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+        <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Projection driven from</div>
+        <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy); margin-top: 4px;">Team Target Total: ${fmtMoney(totalOnTrack)}</div>
+        <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px;">From the highlighted Target column above. Change any Target input to update this projection live.</div>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected Revenue <span style="color: var(--faint); font-size: 11px;">= Team GP ÷ GM (${(gmXero*100).toFixed(1)}%)</span></span><span>${fmtMoney(projRevenue)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected GP <span style="color: var(--faint); font-size: 11px;">= Team Target Total</span></span><span>${fmtMoney(projGP)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected CM <span style="color: var(--faint); font-size: 11px;">= Revenue × ${(ltm.cm/ltm.revenue*100).toFixed(1)}% LTM CM ratio</span></span><span>${fmtMoney(projCM)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>Projected NP <span style="color: var(--faint); font-size: 11px;">= Revenue × ${(ltm.np/ltm.revenue*100).toFixed(1)}% LTM NM ratio</span></span><span>${fmtMoney(projNP)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono); color: var(--danger);"><span>− New Variable Comp Pool</span><span>−${fmtMoney(totalVarComp)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-family: var(--mono); font-weight: 700; font-size: 16px; border-top: 1px solid var(--border); margin-top: 6px; color: ${projNpAfterComm > 0 ? 'var(--accent)' : 'var(--danger)'};"><span>Projected NP After New Commissions</span><span>${fmtMoney(projNpAfterComm)}</span></div>
     `;
   } else {
     $('#fp-pl-body').innerHTML = `<div style="color: var(--muted); font-size: 13px;">No P&amp;L data — fill in the Company P&amp;L tab to see projections.</div>`;
@@ -2549,6 +2697,9 @@ function renderFinancialPlanning() {
 
   // New vs Old commission comparison — at last 365-day GP per employee
   $('#fp-newvsold-body').innerHTML = renderNewVsOld();
+
+  // Compounding Cost Stack
+  $('#fp-coststack-body').innerHTML = renderCostStack(ltm);
 
   // GM Commission Tweaker — wire sliders if not already
   const gmGpSlider = $('#fp-gm-gp');
@@ -2568,23 +2719,34 @@ function renderFinancialPlanning() {
     gmGpInput.addEventListener('input', () => { gmGpSlider.dataset.userTouched = '1'; }, { once: true });
   }
   renderGmTweaker();
+
+  // Restore focus to the money input that was being edited (preserves caret position)
+  if (focusPath) {
+    const refocus = document.querySelector(`[data-money-path="${focusPath}"]`);
+    if (refocus) {
+      refocus.focus();
+      if (focusCursor != null) {
+        try { refocus.setSelectionRange(focusCursor, focusCursor); } catch (e) {}
+      }
+    }
+  }
 }
 
 function renderGmTweaker() {
   const gmGpSlider = $('#fp-gm-gp');
   const teamGP = gmGpSlider ? +gmGpSlider.value || 0 : 0;
-  const hayleyComm = fpProjectHayley(teamGP);
+  const gmComm = fpProjectHayley(teamGP);
   const ltm = fpComputeLTM();
   const last365TotalZoho = fpTotalLast365();
   const note = (ltm && last365TotalZoho > 0)
-    ? `<div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-bottom: 8px;">Team GP $${fmtNum(teamGP)} → projected company Revenue ${fmtMoney(hayleyComm.projRevenue)} · CM ${fmtMoney(hayleyComm.projCM)} · NP ${fmtMoney(hayleyComm.projNP)}</div>`
+    ? `<div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-bottom: 8px;">Team GP $${fmtNum(teamGP)} → projected company Revenue ${fmtMoney(gmComm.projRevenue)} · CM ${fmtMoney(gmComm.projCM)} · NP ${fmtMoney(gmComm.projNP)}</div>`
     : `<div style="font-size: 11px; color: var(--faint); font-family: var(--mono); margin-bottom: 8px;">Need P&amp;L data to project company CM/NP.</div>`;
   const body = $('#fp-hayley-body');
   if (body) {
     body.innerHTML = `${note}
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>CM commission (inc. super)</span><span>${fmtMoney(hayleyComm.cmComm)}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>NP kicker (inc. super)</span><span>${fmtMoney(hayleyComm.npComm)}</span></div>
-      <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-family: var(--mono); font-weight: 700; font-size: 16px; border-top: 1px solid var(--border); margin-top: 6px; color: var(--navy);"><span>Hayley total commission</span><span>${fmtMoney(hayleyComm.total)}</span></div>`;
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>CM commission (inc. super)</span><span>${fmtMoney(gmComm.cmComm)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; font-family: var(--mono);"><span>NP kicker (inc. super)</span><span>${fmtMoney(gmComm.npComm)}</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-family: var(--mono); font-weight: 700; font-size: 16px; border-top: 1px solid var(--border); margin-top: 6px; color: var(--navy);"><span>Total General Manager commission</span><span>${fmtMoney(gmComm.total)}</span></div>`;
   }
 }
 
@@ -2636,6 +2798,127 @@ function renderNewVsOld() {
     </tfoot>
   </table>
   <p style="font-size: 11px; color: var(--muted); margin: 10px 0 0; font-family: var(--mono);">Old plan = 3.5% of GP ex-super + 12% super on top (the actual cost to MEC). New plan figures are super-inclusive directly. Negative delta = new plan saves money; positive = new plan costs more.</p>`;
+}
+
+function renderCostStack(ltm) {
+  // Compounding Cost Stack: full year-over-year cost increase per employee = base salary delta
+  // + super on that delta + new commission delta vs old plan (cost-to-MEC at last-365 GP).
+  // Then breakeven additional GP-sold required to absorb the increase at LTM CM margin.
+  const superRate = data.globals?.superRate ?? 0.12;
+  let totalDeltaBase = 0, totalDeltaSuper = 0, totalDeltaComm = 0;
+
+  const rows = data.employees
+    .filter(e => !e.placeholder)
+    .map(e => {
+      const oldBase = +e.previousBaseSalary || 0;
+      const newBase = +e.baseSalary || 0;
+      const dBase = newBase - oldBase;
+      const dSuper = dBase * superRate;
+
+      const plan = data.planTypes[e.planType];
+      const last365 = +e.last365GPSold || 0;
+      let oldCommIncSuper = 0, newCommIncSuper = 0, dComm = 0, commLabel = '';
+      if (plan && plan.metricBasis === 'gp' && last365 > 0) {
+        const oldRate = plan.oldCommissionRate || 0.035;
+        oldCommIncSuper = last365 * oldRate * (1 + superRate);
+        newCommIncSuper = fpProjectCommission(e, last365);
+        dComm = newCommIncSuper - oldCommIncSuper;
+        commLabel = `at last-365 GP ${fmtMoney(last365)}`;
+      } else if (e.id === 'hayley') {
+        // Hayley's commission projected at company GP scaled to CM/NP via LTM ratios.
+        const last365TotalZoho = fpTotalLast365();
+        const h = fpProjectHayley(last365TotalZoho);
+        newCommIncSuper = h.total;
+        // Old plan for Hayley: assume previous fixed/discretionary commission ≈ 0 baseline (no prior commission rate set).
+        oldCommIncSuper = 0;
+        dComm = newCommIncSuper - oldCommIncSuper;
+        commLabel = `at company LTM CM/NP`;
+      } else {
+        commLabel = '—';
+      }
+
+      const totalDelta = dBase + dSuper + dComm;
+      totalDeltaBase += dBase;
+      totalDeltaSuper += dSuper;
+      totalDeltaComm += dComm;
+
+      const totalColour = totalDelta > 0 ? 'var(--danger)' : (totalDelta < 0 ? 'var(--accent)' : 'var(--muted)');
+      return `<tr>
+        <td><strong>${e.name}</strong> <span style="font-size: 11px; color: var(--muted);">${e.role || ''}</span></td>
+        <td style="text-align:right; font-family: var(--mono); color: var(--muted);">${fmtMoney(oldBase)}</td>
+        <td style="text-align:right; font-family: var(--mono);">${fmtMoney(newBase)}</td>
+        <td style="text-align:right; font-family: var(--mono); color: ${dBase > 0 ? 'var(--danger)' : 'var(--muted)'};">${dBase > 0 ? '+' : ''}${fmtMoney(dBase)}</td>
+        <td style="text-align:right; font-family: var(--mono); color: ${dSuper > 0 ? 'var(--danger)' : 'var(--muted)'};">${dSuper > 0 ? '+' : ''}${fmtMoney(dSuper)}</td>
+        <td style="text-align:right; font-family: var(--mono); color: var(--muted);">${oldCommIncSuper > 0 ? fmtMoney(oldCommIncSuper) : '—'}</td>
+        <td style="text-align:right; font-family: var(--mono);">${newCommIncSuper > 0 ? fmtMoney(newCommIncSuper) : '—'}</td>
+        <td style="text-align:right; font-family: var(--mono); color: ${dComm > 0 ? 'var(--danger)' : (dComm < 0 ? 'var(--accent)' : 'var(--muted)')};">${dComm !== 0 ? (dComm > 0 ? '+' : '') + fmtMoney(dComm) : '—'}</td>
+        <td style="text-align:right; font-family: var(--mono); font-weight: 700; color: ${totalColour};">${totalDelta >= 0 ? '+' : ''}${fmtMoney(totalDelta)}</td>
+      </tr>
+      <tr><td colspan="9" style="font-size: 10px; color: var(--faint); padding: 0 0 6px 12px; font-family: var(--mono);">Commission ${commLabel}</td></tr>`;
+    }).join('');
+
+  const totalCostIncrease = totalDeltaBase + totalDeltaSuper + totalDeltaComm;
+
+  // Breakeven: how much additional GP-sold do we need at the LTM CM margin to absorb totalCostIncrease?
+  // Use CM/GP from LTM as the "drop-through" — every $1 of extra GP delivers (CM/GP) of CM.
+  let breakevenHTML = '';
+  if (ltm && ltm.gp > 0) {
+    const cmPerGp = ltm.cm / ltm.gp;
+    const breakevenGP = cmPerGp > 0 ? totalCostIncrease / cmPerGp : 0;
+    const last365TotalZoho = fpTotalLast365();
+    const upliftPct = last365TotalZoho > 0 ? (breakevenGP / last365TotalZoho) * 100 : 0;
+    breakevenHTML = `
+      <div style="margin-top: 18px; padding: 14px 16px; border: 2px solid var(--warn); background: #fff8e1; border-radius: 6px;">
+        <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Breakeven extra GP-sold needed</div>
+        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--navy); margin-top: 4px;">${fmtMoney(breakevenGP)}</div>
+        <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px;">
+          = Total cost increase ${fmtMoney(totalCostIncrease)} ÷ LTM CM/GP drop-through ${(cmPerGp * 100).toFixed(1)}%
+          ${last365TotalZoho > 0 ? ` · ${upliftPct.toFixed(1)}% lift on last-365 GP-sold of ${fmtMoney(last365TotalZoho)}` : ''}
+        </div>
+      </div>`;
+  } else {
+    breakevenHTML = `<div style="margin-top: 14px; font-size: 12px; color: var(--faint); font-family: var(--mono);">Need P&amp;L data to compute breakeven extra GP needed.</div>`;
+  }
+
+  const totalColour = totalCostIncrease > 0 ? '#ffb6b6' : '#b6f5c8';
+
+  return `
+    <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px;">
+      The total cost-to-MEC of every team member's pay increase compounds: base salary lifts + super on those lifts + the new commission plan vs the old 3.5%-flat plan. Every dollar here flows through the P&amp;L every year going forward — so this is the true investment behind the new structure.
+    </p>
+    <table style="font-size: 13px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;">Employee</th>
+          <th style="text-align:right;">Old base</th>
+          <th style="text-align:right;">New base</th>
+          <th style="text-align:right;">Δ Base</th>
+          <th style="text-align:right;">Δ Super (12%)</th>
+          <th style="text-align:right;">Old comm</th>
+          <th style="text-align:right;">New comm</th>
+          <th style="text-align:right;">Δ Comm</th>
+          <th style="text-align:right;">Total Δ</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr style="background: var(--navy); color: #fff;">
+          <td style="padding: 10px; font-weight: 700;">Compounded total</td>
+          <td></td>
+          <td></td>
+          <td style="text-align:right; font-family: var(--mono); font-weight: 700; padding: 10px;">${totalDeltaBase >= 0 ? '+' : ''}${fmtMoney(totalDeltaBase)}</td>
+          <td style="text-align:right; font-family: var(--mono); font-weight: 700; padding: 10px;">${totalDeltaSuper >= 0 ? '+' : ''}${fmtMoney(totalDeltaSuper)}</td>
+          <td></td>
+          <td></td>
+          <td style="text-align:right; font-family: var(--mono); font-weight: 700; padding: 10px;">${totalDeltaComm >= 0 ? '+' : ''}${fmtMoney(totalDeltaComm)}</td>
+          <td style="text-align:right; font-family: var(--mono); font-weight: 700; padding: 10px; color: ${totalColour};">${totalCostIncrease >= 0 ? '+' : ''}${fmtMoney(totalCostIncrease)}</td>
+        </tr>
+      </tfoot>
+    </table>
+    ${breakevenHTML}
+    <p style="font-size: 11px; color: var(--muted); margin: 10px 0 0; font-family: var(--mono);">
+      Old base = previousBaseSalary on each employee record. Old comm = last-365 GP × old plan rate (3.5%) × 1.12 super on top — the actual cost MEC was paying. New comm = the new band-based plan, which is super-inclusive directly. Hayley's commission shown at the company's LTM CM/NP via the GM plan.
+    </p>`;
 }
 
 function addExternalContributor() {
