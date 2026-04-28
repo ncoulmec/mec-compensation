@@ -35,9 +35,9 @@
     "kpiMinForComm": 0,
     "guardrailBasis": "gm",
     "guardrailBasisOptions": {
-      "gm": "Gross Margin (Rev \u2212 CoS) / Rev",
-      "cm": "Contribution Margin (GP \u2212 Contrib. Exp) / Rev",
-      "np": "Net Margin (CM \u2212 OpEx) / Rev"
+      "gm": "Gross Margin (Rev − CoS) / Rev",
+      "cm": "Contribution Margin (GP − Contrib. Exp) / Rev",
+      "np": "Net Margin (CM − OpEx) / Rev"
     },
     "guardrailEnabled": false,
     "zohoDashboardUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
@@ -51,7 +51,7 @@
   "planTypes": {
     "gm": {
       "name": "General Manager (CM-driven + NP kicker)",
-      "description": "For Hayley. $1M no-commission floor; $10k maintenance hit at $1,100,000 (round-down from LTM CM ~$1,111k); then escalating growth bands. Dashboard shows LTM CM live from companyPL. NP incremental bonuses are more lucrative with bands extending to $1.3M. Band output is super-INCLUSIVE. Quarterly 75/25 payout (being reviewed \u2014 may switch to quarterly TU like Sales team).",
+      "description": "For Hayley. $1M no-commission floor; $10k maintenance hit at $1,100,000 (round-down from LTM CM ~$1,111k); then escalating growth bands. Dashboard shows LTM CM live from companyPL. NP incremental bonuses are more lucrative with bands extending to $1.3M. Band output is super-INCLUSIVE. Quarterly 75/25 payout (being reviewed — may switch to quarterly TU like Sales team).",
       "metricLabel": "Contribution Margin (primary) + Net Profit kicker",
       "maxMetricValue": 1500000,
       "metricBasis": "cm_np",
@@ -117,7 +117,7 @@
     },
     "gp_bands_senior": {
       "name": "Senior Sales Manager (GP Incremental Bands)",
-      "description": "For Senior Sales (Dane). Same band structure as the Sales Rep plan \u2014 seniority reflected in the $92.5k base salary rather than in the commission bands. Band output is super-INCLUSIVE. 1% production commission on Event GP (also super-inclusive). Quarterly true-up with running balance carry-forward.",
+      "description": "For Senior Sales (Dane). Same band structure as the Sales Rep plan — seniority reflected in the $92.5k base salary rather than in the commission bands. Band output is super-INCLUSIVE. 1% production commission on Event GP (also super-inclusive). Quarterly true-up with running balance carry-forward.",
       "metricLabel": "Annual GP Sold",
       "maxMetricValue": 600000,
       "metricBasis": "gp",
@@ -225,7 +225,7 @@
     },
     "hybrid_gp": {
       "name": "Sales-Producer Hybrid (GP Sales + Production)",
-      "description": "For Evie & Evie 2.0. Five-band monotonic structure with $50k no-commission floor (half the Sales Rep floor). Match at $150k (old 3.5%+super ~$5,880), clear win at $200k (~$12,000 vs old+super $7,840 = +$4,160), and rates continue climbing above $200k at 13% \u2014 2 points under Daniel's 15% top so Evie's stretch stays meaningful without out-paying Sales Rep stretch per dollar. 1% production commission on Event GP drives the bulk of Evie's earnings. Band output is super-INCLUSIVE.",
+      "description": "For Evie & Evie 2.0. Five-band monotonic structure with $50k no-commission floor (half the Sales Rep floor). Match at $150k (old 3.5%+super ~$5,880), clear win at $200k (~$12,000 vs old+super $7,840 = +$4,160), and rates continue climbing above $200k at 13% — 2 points under Daniel's 15% top so Evie's stretch stays meaningful without out-paying Sales Rep stretch per dollar. 1% production commission on Event GP drives the bulk of Evie's earnings. Band output is super-INCLUSIVE.",
       "metricLabel": "Annual GP Sold",
       "maxMetricValue": 400000,
       "metricBasis": "gp",
@@ -273,7 +273,7 @@
     },
     "hybrid_rev": {
       "name": "Talent (Performer-Revenue Hybrid)",
-      "description": "For Michael (Performer/Systems Manager). Variable comp on revenue bands. $70k floor (pay-for-yourself), then $30k increments up to $190k+. Band rates scaled \u00d7 1.12 in v16 so band output is super-INCLUSIVE (same commission amounts as before, just stated inclusive of super).",
+      "description": "For Michael (Performer/Systems Manager). Variable comp on revenue bands. $70k floor (pay-for-yourself), then $30k increments up to $190k+. Band rates scaled × 1.12 in v16 so band output is super-INCLUSIVE (same commission amounts as before, just stated inclusive of super).",
       "metricLabel": "Annual Performance Revenue",
       "maxMetricValue": 300000,
       "metricBasis": "revenue",
@@ -305,7 +305,7 @@
     },
     "hybrid_rev_senior": {
       "name": "Talent Senior (Performer-Revenue Hybrid)",
-      "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue \u2192 ~$100k base ex-super equivalent. Rates scaled \u00d7 1.12 in v16 to make band output super-INCLUSIVE while preserving commission amounts.",
+      "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue → ~$100k base ex-super equivalent. Rates scaled × 1.12 in v16 to make band output super-INCLUSIVE while preserving commission amounts.",
       "metricLabel": "Annual Performance Revenue",
       "maxMetricValue": 400000,
       "metricBasis": "revenue",
@@ -330,7 +330,7 @@
     },
     "base_only": {
       "name": "Base Salary Only",
-      "description": "Placeholder plan \u2014 no variable comp.",
+      "description": "Placeholder plan — no variable comp.",
       "metricLabel": "(none)",
       "metricBasis": "none",
       "payoutFrequency": "n/a",
@@ -344,7 +344,7 @@
     "definitions": [
       {
         "id": "conversion_rate_quoted",
-        "name": "Conversion Rate (Quoted \u2192 Confirmed)",
+        "name": "Conversion Rate (Quoted → Confirmed)",
         "unit": "%",
         "direction": "higher",
         "defaultWeight": 0.25,
@@ -531,53 +531,75 @@
         "baseInclSuper": 123200
       },
       "kpiScorecard": {
-        "overallNote": "DRAFT \u2014 GM KPIs need rebuild per Nathan. Regional visit removed; this is a starter for Nathan to confirm/edit.",
+        "overallNote": "DRAFT v2 — rebuilt from the GM Position Description (pp. 14–21 of the Australian Staff Employment Agreement). Anchored on the eight 'What Success Looks Like in Year One' markers plus Operational Leadership, Team Leadership & HR, Financial Management, Interim HOE Coverage, and behavioural standards.",
+        "sourceDoc": "Australian Staff Employment Agreement.pdf — General Manager PD",
         "categories": [
           {
-            "id": "company_performance",
-            "title": "Company Performance",
-            "weight": 40,
-            "score": 100,
-            "included": true,
-            "criteria": [
-              "Exceed previous fiscal year Gross Profit Sold (company-wide)",
-              "Hit or exceed annual CM and NP targets (set in MEC Group P&L)",
-              "Maintain or grow GM% (CM/Revenue) year-over-year",
-              "Sales target of $35k+ for interstate bookings"
-            ]
-          },
-          {
-            "id": "team_leadership",
-            "title": "Team Leadership",
+            "id": "operational_leadership",
+            "title": "Operational Leadership & Team Cadence",
             "weight": 25,
-            "score": 100,
+            "score": 0,
             "included": true,
             "criteria": [
-              "Conduct quarterly KPI reviews with each direct report",
-              "Manage Sales/Talent team performance to plan",
-              "Identify and address underperformance early; coach for growth"
+              "Team operating to a clear, consistent meeting rhythm (regular 1:1s, performance check-ins, all-team cadence run effectively with your support).",
+              "Senior leadership team meeting cadence held — regular 1:1s with direct reports plus a monthly performance review with the Director.",
+              "Primary escalation point for operational issues — coaches direct reports through resolution rather than solving everything directly.",
+              "Proactively identifies operational friction and gaps — escalates improvement briefs to the Director with clear context.",
+              "Adopts and drives adherence to new systems and processes as they are implemented."
             ]
           },
           {
-            "id": "growth_strategy",
-            "title": "Growth Strategy",
-            "weight": 15,
-            "score": 100,
+            "id": "team_performance",
+            "title": "Team Performance & Direct Reports",
+            "weight": 25,
+            "score": 0,
             "included": true,
             "criteria": [
-              "Increase number of venues that refer business to MEC: 8 new referring venues per annum",
-              "Increase % of repeat business across the company year-over-year"
+              "Every direct report has documented KPIs and has received at least one formal mid-year review with clear, honest feedback.",
+              "Onboarding is no longer improvised — at least one new team member has been brought on through a structured process you've built or refined.",
+              "Direct reports experience you as a GM, not a former peer — the leadership shift has been made and held with consistency.",
+              "Manages separations and performance improvement processes in collaboration with the Director.",
+              "Mentors direct reports through conflict resolution; holds the team accountable to Company-Wide Behaviours (above B average)."
+            ]
+          },
+          {
+            "id": "financial_execution",
+            "title": "Financial Execution",
+            "weight": 20,
+            "score": 0,
+            "included": true,
+            "criteria": [
+              "Financial performance tracked weekly — leading and lagging metrics reviewed, variances understood; brings the Director well-reasoned analysis rather than raw numbers.",
+              "Executes against annual revenue, GP, and cost targets set in partnership with the Director.",
+              "Monitors weekly/monthly leading and lagging metrics (quotes, confirmations, revenue, conversion rates, average value, call volumes) and acts on variances.",
+              "Oversees wage budgets and assesses cost efficiency regularly via Xero cash-basis P&L.",
+              "Ensures the business operates within break-even parameters and flags financial risk early."
+            ]
+          },
+          {
+            "id": "interim_hoe_coverage",
+            "title": "Interim HOE Coverage & Talent/Account Oversight",
+            "weight": 15,
+            "score": 0,
+            "included": true,
+            "criteria": [
+              "HOE vacancy hasn't created dropped balls — venue relationships, talent oversight, and account management are being covered with clear interim ownership.",
+              "Web project backlog is prioritised and moving — clear weekly mandate to the dev team; web decisions no longer bottleneck on the Director.",
+              "Brand & quality oversight: client interactions and event deliverables remain consistent with brand identity in tone, quality, and presentation.",
+              "Working rhythm with the Director gives genuine autonomy while keeping strategic alignment tight."
             ]
           },
           {
             "id": "behavioural",
-            "title": "Behavioural & Conduct",
-            "weight": 20,
-            "score": 100,
+            "title": "Behavioural & Conduct Floor",
+            "weight": 15,
+            "score": 0,
             "included": true,
             "criteria": [
-              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
-              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+              "Adheres to Company-Wide Behaviours and Individual Responsibilities; maintains an above-B weighted average across both.",
+              "Owns company culture, values, and the behavioural framework (Company-Wide Behaviours).",
+              "Continuously improves employee retention, satisfaction, and productivity.",
+              "Works diligently and amicably with all staff, clients, and suppliers."
             ]
           }
         ]
@@ -780,7 +802,7 @@
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
-        "overallNote": "DRAFT \u2014 Senior Sales KPIs from employment agreement. NOTE: under review for FY26.",
+        "overallNote": "DRAFT — Senior Sales KPIs from employment agreement. NOTE: under review for FY26.",
         "categories": [
           {
             "id": "sales_targets",
@@ -791,7 +813,7 @@
             "criteria": [
               "Gross Profit Sold > $375,000 in the calendar year",
               "Bookings Quoted > 1,000 across the calendar year",
-              "Monthly conversion rate \u2265 35% across a 365-day period",
+              "Monthly conversion rate ≥ 35% across a 365-day period",
               "Average GP of Sales > $800 per transaction every month when converting new business"
             ]
           },
@@ -1006,7 +1028,7 @@
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
-        "overallNote": "DRAFT \u2014 Sales Rep KPIs from employment agreement. NOTE: targets reduced when team grew; under review for FY26.",
+        "overallNote": "DRAFT — Sales Rep KPIs from employment agreement. NOTE: targets reduced when team grew; under review for FY26.",
         "categories": [
           {
             "id": "sales_targets",
@@ -1017,7 +1039,7 @@
             "criteria": [
               "Gross Profit Sold > $350,000 in the calendar year",
               "Bookings Quoted > 1,000 across the calendar year",
-              "Monthly conversion rate \u2265 30% across a 365-day period",
+              "Monthly conversion rate ≥ 30% across a 365-day period",
               "Average GP of Sales > $800 per transaction every month when converting new business"
             ]
           },
@@ -1232,7 +1254,7 @@
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
-        "overallNote": "DRAFT \u2014 Sales Rep KPIs from employment agreement. NOTE: targets reduced when team grew; under review for FY26.",
+        "overallNote": "DRAFT — Sales Rep KPIs from employment agreement. NOTE: targets reduced when team grew; under review for FY26.",
         "categories": [
           {
             "id": "sales_targets",
@@ -1243,7 +1265,7 @@
             "criteria": [
               "Gross Profit Sold > $350,000 in the calendar year",
               "Bookings Quoted > 1,000 across the calendar year",
-              "Monthly conversion rate \u2265 30% across a 365-day period",
+              "Monthly conversion rate ≥ 30% across a 365-day period",
               "Average GP of Sales > $800 per transaction every month when converting new business"
             ]
           },
@@ -1462,7 +1484,7 @@
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
-        "overallNote": "DRAFT \u2014 Production Coordinator KPIs (admin items pruned per Nathan).",
+        "overallNote": "DRAFT — Production Coordinator KPIs (admin items pruned per Nathan).",
         "categories": [
           {
             "id": "content",
@@ -1690,7 +1712,7 @@
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
-        "overallNote": "DRAFT \u2014 Production Coordinator KPIs (admin items pruned per Nathan).",
+        "overallNote": "DRAFT — Production Coordinator KPIs (admin items pruned per Nathan).",
         "categories": [
           {
             "id": "content",
@@ -1902,7 +1924,7 @@
         "absoluteMax": 400000
       },
       "kpiScorecard": {
-        "overallNote": "DRAFT \u2014 Sales & Talent Manager KPIs. Min performances/revenue de-emphasised; sourcing + content prioritised.",
+        "overallNote": "DRAFT — Sales & Talent Manager KPIs. Min performances/revenue de-emphasised; sourcing + content prioritised.",
         "categories": [
           {
             "id": "sourcing",
@@ -2152,7 +2174,7 @@
         "absoluteMax": 300000
       },
       "kpiScorecard": {
-        "overallNote": "Slider value 0\u2013100% per category \u00d7 weight. Weighted sum maps linearly: 0%\u21920.7\u00d7, 50%\u21921.0\u00d7, 100%\u21921.3\u00d7 multiplier on commission.",
+        "overallNote": "Slider value 0–100% per category × weight. Weighted sum maps linearly: 0%→0.7×, 50%→1.0×, 100%→1.3× multiplier on commission.",
         "categories": [
           {
             "id": "reliability",
@@ -2162,7 +2184,7 @@
             "criteria": [
               "100% fulfilment rate for all personally booked performances (no late arrivals, no poor cancellations)",
               "Minimum 35 performances during contract period (pro-rated from annual 70 target)",
-              "20% 5-star review rate or higher (35 \u00d7 20% = 7 reviews)",
+              "20% 5-star review rate or higher (35 × 20% = 7 reviews)",
               "Increase gross profit per performance by 25% vs previous year personal average"
             ]
           },
@@ -2172,7 +2194,7 @@
             "weight": 15,
             "score": 100,
             "criteria": [
-              "Demonstrate proactive mindset \u2014 identify improvements without prompting",
+              "Demonstrate proactive mindset — identify improvements without prompting",
               "Propose at least 2 improvements to systems/workflows/tools by Month 3",
               "Independently research and trial 1 new tool, present findings to management",
               "Show evidence of troubleshooting/solving issues without escalation, at least once per fortnight"
@@ -2185,7 +2207,7 @@
             "score": 100,
             "criteria": [
               "Successfully scope, build, and implement at least 1 major internal system/tool (e.g. Talent Availability Checker, Client Online Portal, Custom Quote Generator)",
-              "Deliver 3\u20135 smaller automation/system improvements within Zoho/PandaDoc/MEC platforms (\u22655 hours/month admin saved)",
+              "Deliver 3–5 smaller automation/system improvements within Zoho/PandaDoc/MEC platforms (≥5 hours/month admin saved)",
               "Detailed documentation (technical notes, SOPs, UAT reports) for every system built/updated"
             ]
           },
@@ -2195,7 +2217,7 @@
             "weight": 10,
             "score": 100,
             "criteria": [
-              "Refactor and update internal DJ training modules \u2014 record new videos where necessary",
+              "Refactor and update internal DJ training modules — record new videos where necessary",
               "Create minimum 5 new SOP videos covering backend systems or performance tech, stored in internal library",
               "Maintain training content version-controlled and up-to-date by end of contract"
             ]
@@ -2206,10 +2228,10 @@
             "weight": 10,
             "score": 100,
             "criteria": [
-              "Resolve 90% of assigned IT support requests within agreed timeframes (24\u201348h non-urgent, same-day urgent)",
+              "Resolve 90% of assigned IT support requests within agreed timeframes (24–48h non-urgent, same-day urgent)",
               "Deliver at least 4 DJ mentoring/shadowing sessions for new performers, with positive feedback",
-              "Active participation in weekly leadership/project meetings \u2014 clear progress updates",
-              "Strong, transparent communication \u2014 weekly progress emails on current projects",
+              "Active participation in weekly leadership/project meetings — clear progress updates",
+              "Strong, transparent communication — weekly progress emails on current projects",
               "Attend 100% of scheduled team meetings unless on leave/performing",
               "Contribute positively to team culture (peak-period support, helpful knowledge sharing)",
               "Gather feedback on new projects from at least 3 team members by Month 5"

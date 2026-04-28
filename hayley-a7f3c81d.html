@@ -386,25 +386,42 @@
   </section>
 
   <section class="panel" id="panel-kpi">
-    <div class="kpi-draft-note">
-      <strong>Draft:</strong> KPI framework for the GM role is still being finalised. The slider below is a placeholder.
+    <div style="margin-bottom: 18px; padding: 14px 18px; background: linear-gradient(135deg, #fff8e1 0%, #fff2c5 100%); border: 2px solid #f5d890; border-radius: 10px;">
+      <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">⚠ DRAFT — KPIs coming soon</div>
+      <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.5;">
+        This scorecard <strong>previews</strong> how your KPI multiplier will work once we go live. Right now your KPI is <strong>locked at 1.0×</strong> (no impact on commission). When KPIs activate, dragging the achievement sliders below will calculate your real multiplier between <strong>0.7×</strong> and <strong>1.3×</strong>.
+      </div>
     </div>
+    <div class="kpi-draft-note">
+      <strong>How this will work:</strong> KPI categories from your employment agreement. Drag each achievement slider (0–200%). Categories are weighted (sum to 100%). The weighted average maps linearly to your multiplier: <strong>0% → 0.7×</strong>, <strong>50% → 1.0×</strong>, <strong>100% → 1.3×</strong>. Achievement above 100% (over-delivery) compensates for under-delivery elsewhere — but the multiplier is capped at 1.3×. Untick a category to exclude it from the calculation.
+    </div>
+
     <div class="two-col">
       <div class="kpi-slider-card">
-        <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Your KPI Score</h2>
+        <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Your KPI Multiplier</h2>
+        <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Calculated from your scorecard below. Drag this slider to manually override.</p>
         <div class="kpi-big-value"><span id="kpi-big">1.00</span><span class="x">×</span></div>
         <input type="range" id="kpi-slider-2" min="0" max="1.5" step="0.01" value="1" style="width: 100%; accent-color: var(--navy);">
         <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px;">
-          <span>0.0×</span><span>1.0×</span>
+          <span>0.7×</span>
+          <span>1.0×</span>
+          <span>1.3×</span>
+        </div>
+        <div style="margin-top: 12px; padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--mono); color: var(--muted);">
+          Scorecard weighted average: <strong id="kpi-overall-pct" style="color: var(--navy);">—</strong>
         </div>
       </div>
+
       <div class="card" style="margin-bottom: 0;">
         <h2>Effect on your comp</h2>
         <div class="super-line muted" style="margin-top: 12px;"><span>Variable comp before KPI</span><span id="kpi-before">—</span></div>
         <div class="super-line"><span>KPI multiplier</span><span id="kpi-mult">—</span></div>
         <div class="super-line total" style="color: var(--navy);"><span>Variable comp after KPI</span><span id="kpi-after">—</span></div>
+        <div style="margin-top: 14px; font-size: 12px; color: var(--muted); font-family: var(--mono);">Projects and base salary are not affected by KPI score.</div>
       </div>
     </div>
+
+    <div id="kpi-scorecard" style="margin-top: 22px;"></div>
   </section>
 
   <section class="panel" id="panel-payouts">
@@ -447,6 +464,31 @@
         <li style="margin-bottom: 12px;"><strong>What lands while you&rsquo;re employed is yours.</strong> If you ever leave MEC, any commission already paid out is yours. Any commission on cash that has already arrived at MEC, even if it hasn&rsquo;t been paid out yet, is yours &mdash; in your final paycheck. Cash that arrives after your last day stays with the company.</li>
         <li><strong>KPIs matter where your contract says they do.</strong> Some roles have KPIs spelled out in their employment agreement &mdash; if yours does, those KPIs are real. They will be tracked, reviewed quarterly, and they affect your eligibility for full variable pay. We will not put a KPI on you that we don&rsquo;t intend to enforce. If a KPI feels wrong or out of date, raise it.</li>
       </ol>
+    </div>
+
+        <div class="card" style="border-left: 3px solid var(--navy);">
+      <h3 style="margin: 0 0 8px;">How "GP Attributed" works (the proportional rule)</h3>
+      <p style="font-size: 13px; color: var(--muted); margin: 0 0 12px; line-height: 1.6;">
+        When a client pays in instalments &mdash; say a deposit now and the balance closer to the event &mdash; Zoho splits the booking's <strong>total expected Gross Profit</strong> across each payment in proportion to the payment's share of the sale. Your commission is calculated only on the <strong>GP that has actually landed</strong> &mdash; never on GP still sitting in unpaid balances.
+      </p>
+      <div style="background: #fafaf7; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-size: 13px; line-height: 1.7; color: var(--ink);">
+        <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 8px;">Worked example</div>
+        <div style="font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 10px;">Booking #2877869000291019007 &middot; Total sale $3,000 inc GST &middot; Total expected GP $1,676</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 14px; font-family: var(--mono); font-size: 12px;">
+          <div style="font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 4px;">Payment</div>
+          <div style="font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 4px;">Share of sale</div>
+          <div style="font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 4px; text-align: right;">GP attributed</div>
+          <div>Deposit &mdash; $1,000</div><div>33.3%</div><div style="text-align: right; color: #1f5e3c; font-weight: 600;">$559.09</div>
+          <div>2nd payment &mdash; $650</div><div>21.7%</div><div style="text-align: right; color: #1f5e3c; font-weight: 600;">$363.41</div>
+          <div>3rd payment &mdash; $350</div><div>11.7%</div><div style="text-align: right; color: #1f5e3c; font-weight: 600;">$195.68</div>
+          <div style="color: var(--muted);">Outstanding balance &mdash; $1,000</div><div style="color: var(--muted);">33.3%</div><div style="text-align: right; color: var(--muted);">$557.82 (pending)</div>
+          <div style="grid-column: 1 / 3; border-top: 1px solid var(--border); padding-top: 6px; font-weight: 600;">GP received to date</div>
+          <div style="text-align: right; border-top: 1px solid var(--border); padding-top: 6px; font-weight: 700; color: var(--navy);">$1,118.18</div>
+        </div>
+      </div>
+      <p style="font-size: 12px; color: var(--muted); margin: 12px 0 0; line-height: 1.6;">
+        <strong>Why this matters:</strong> if the client cancels before paying the balance, the commission you've already earned (on the $1,118.18 received) is yours to keep. Refunds reduce future commission. The remaining $557.82 GP only attaches to your commission if &mdash; and when &mdash; that final payment lands. This is the "cash in is cash out" principle in mechanical detail.
+      </p>
     </div>
 
     <div class="card">
@@ -1070,6 +1112,155 @@ function update() {
 }
 
 load();
+
+function renderKpiTab(r) {
+  // KPI is locked at 1.0× (DRAFT) for now — overwrite scenario.kpiScore so commission isn't actually affected.
+  scenario.kpiScore = 1.0;
+  const k1 = document.getElementById('kpi-slider'); if (k1) k1.value = 1;
+  const k2 = document.getElementById('kpi-slider-2'); if (k2) k2.value = 1;
+  const ki = document.getElementById('kpi-input'); if (ki) ki.value = '1.00';
+  const kbig = document.getElementById('kpi-big'); if (kbig) kbig.textContent = '1.00';
+  const kbef = document.getElementById('kpi-before'); if (kbef) kbef.textContent = fmtMoney(r.preKpi);
+  const kmul = document.getElementById('kpi-mult'); if (kmul) kmul.textContent = '× 1.00';
+  const kaft = document.getElementById('kpi-after'); if (kaft) kaft.textContent = fmtMoney(r.variable);
+
+  const wrap = document.getElementById('kpi-scorecard');
+  if (!wrap) return;
+  const sc = emp.kpiScorecard;
+  if (!sc || !Array.isArray(sc.categories) || sc.categories.length === 0) {
+    wrap.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--muted); font-size: 14px; background: #fafaf7; border-radius: 8px;">No KPI scorecard configured yet.</div>`;
+    const ov = document.getElementById('kpi-overall-pct'); if (ov) ov.textContent = '—';
+    return;
+  }
+  if (!wrap.dataset.rendered) {
+    wrap.innerHTML = sc.categories.map((c, i) => {
+      if (typeof c.included !== 'boolean') c.included = true;
+      const score = +c.score || 0;
+      const weight = +c.weight || 0;
+      const isSystems = c.id === 'systems';
+      const myProjs = (data.projects || []).filter(p => Array.isArray(p.assignedTo) && p.assignedTo.includes(EMPLOYEE_ID));
+      const fillerSlot = 4 - myProjs.length;
+      const systemsBody = isSystems ? `
+        <div style="font-size: 12px; color: var(--muted); margin: 4px 0 12px; line-height: 1.5;">
+          Tick each project as you complete it. Your achievement % auto-updates from these checkboxes.
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+          ${myProjs.map((p) => `
+            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fafaf7; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">
+              <input type="checkbox" data-kpi-cat="${i}" data-kpi-project="${p.id}" style="margin: 0; width: 16px; height: 16px;">
+              <span style="font-size: 13px; color: var(--ink);">${p.name}</span>
+            </label>
+          `).join('')}
+          ${[...Array(Math.max(0, fillerSlot))].map((_, n) => `
+            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fafaf7; border: 1px dashed var(--border); border-radius: 8px; cursor: pointer; color: var(--faint);">
+              <input type="checkbox" data-kpi-cat="${i}" data-kpi-project-filler="${n}" style="margin: 0; width: 16px; height: 16px;">
+              <span style="font-size: 13px;">Future project slot ${n + 1}</span>
+            </label>
+          `).join('')}
+        </div>
+      ` : `
+        <div style="display: grid; grid-template-columns: 110px 1fr 110px; gap: 14px; align-items: center; padding: 10px 14px; background: #fafaf7; border-radius: 8px;">
+          <span style="font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Achievement</span>
+          <input type="range" data-kpi-cat="${i}" data-kpi-field="score" min="0" max="200" step="5" value="${score}">
+          <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; text-align: right;" data-kpi-score-display="${i}">${score}%</div>
+        </div>`;
+      return `
+      <div class="card" data-kpi-card="${i}" style="margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <label style="display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--navy); cursor: pointer; flex: 1; min-width: 0;">
+            <input type="checkbox" data-kpi-cat="${i}" data-kpi-field="included" ${c.included ? 'checked' : ''} style="margin: 0; width: 16px; height: 16px; flex-shrink: 0;">
+            <span style="font-size: 16px;">${c.title}</span>
+          </label>
+          <div style="display: flex; gap: 8px; align-items: center; padding: 4px 14px; background: #fafaf7; border: 1px solid var(--border); border-radius: 999px;">
+            <span style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Weight</span>
+            <input type="number" data-kpi-cat="${i}" data-kpi-field="weight" value="${weight}" min="0" max="100" step="5" style="width: 50px; text-align: right; padding: 4px 6px; border: none; background: transparent; font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--navy);">
+            <span style="font-size: 12px; color: var(--muted);">%</span>
+          </div>
+        </div>
+        <ul style="font-size: 12px; color: var(--muted); margin: 10px 0 14px; padding-left: 18px; line-height: 1.6;">
+          ${(c.criteria || []).map(k => `<li>${k}</li>`).join('')}
+        </ul>
+        ${systemsBody}
+      </div>`;
+    }).join('');
+
+    wrap.addEventListener('input', (ev) => {
+      const t = ev.target;
+      if (!t || !t.dataset) return;
+      const i = +t.dataset.kpiCat;
+      if (isNaN(i)) return;
+      const f = t.dataset.kpiField;
+      const cat = emp.kpiScorecard.categories[i];
+      if (f === 'score') {
+        let v = parseFloat(t.value);
+        if (isNaN(v)) v = 0;
+        v = Math.max(0, Math.min(200, v));
+        cat.score = v;
+        const display = wrap.querySelector(`[data-kpi-score-display="${i}"]`);
+        if (display) {
+          display.textContent = v + '%';
+          display.style.color = v >= 80 ? '#1f5e3c' : v >= 50 ? '#8a6a00' : '#a8281b';
+        }
+        recalcKpiOverall();
+      } else if (f === 'weight') {
+        let v = parseFloat(t.value);
+        if (isNaN(v)) v = 0;
+        cat.weight = Math.max(0, Math.min(100, v));
+        recalcKpiOverall();
+      }
+    });
+    wrap.addEventListener('change', (ev) => {
+      const t = ev.target;
+      if (!t || !t.dataset) return;
+      const i = +t.dataset.kpiCat;
+      if (isNaN(i)) return;
+      const cat = emp.kpiScorecard.categories[i];
+      if (t.dataset.kpiField === 'included') {
+        cat.included = t.checked;
+        const card = wrap.querySelector(`[data-kpi-card="${i}"]`);
+        if (card) card.style.opacity = t.checked ? '1' : '0.45';
+        recalcKpiOverall();
+      } else if (t.dataset.kpiProject) {
+        const projId = t.dataset.kpiProject;
+        if (typeof scenario !== 'undefined' && scenario.projectsEnabled) {
+          scenario.projectsEnabled[projId] = t.checked;
+        }
+        const overviewToggle = document.querySelector(`input[type="checkbox"][data-project-id="${projId}"]`);
+        if (overviewToggle && overviewToggle !== t) overviewToggle.checked = t.checked;
+        const cards = wrap.querySelectorAll(`[data-kpi-cat="${i}"][type="checkbox"]:not([data-kpi-field])`);
+        const ticked = Array.from(cards).filter(x => x.checked).length;
+        const total = cards.length || 1;
+        cat.score = Math.round((ticked / total) * 100);
+        recalcKpiOverall();
+        if (typeof update === 'function') update();
+      }
+    });
+    sc.categories.forEach((c, i) => {
+      if (!c.included) {
+        const card = wrap.querySelector(`[data-kpi-card="${i}"]`);
+        if (card) card.style.opacity = '0.45';
+      }
+    });
+    wrap.dataset.rendered = '1';
+  }
+  recalcKpiOverall();
+}
+
+function recalcKpiOverall() {
+  const sc = emp.kpiScorecard;
+  if (!sc || !Array.isArray(sc.categories)) return;
+  const cats = sc.categories.filter(c => c.included !== false);
+  const totalWeight = cats.reduce((s, c) => s + (+c.weight || 0), 0);
+  const weightedAvg = totalWeight > 0
+    ? cats.reduce((s, c) => s + (+c.score || 0) * (+c.weight || 0), 0) / totalWeight
+    : 0;
+  const previewMult = Math.max(0.7, Math.min(1.3, 0.7 + (weightedAvg / 100) * 0.6));
+  const overallEl = document.getElementById('kpi-overall-pct');
+  if (overallEl) {
+    overallEl.innerHTML = `${weightedAvg.toFixed(0)}% (would map to ${previewMult.toFixed(2)}× — locked at 1.00× while DRAFT)`;
+  }
+}
+
 </script>
 </body>
 </html>
