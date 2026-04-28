@@ -120,7 +120,7 @@
   .gp-floater-iconbtn:active { transform: scale(0.96); }
   .gp-floater-iconbtn.active { background: #eaf3fb; color: var(--accent); border-color: var(--accent); }
   .gp-floater-snap-popover {
-    position: absolute; top: 32px; left: 0; z-index: 5;
+    position: absolute; top: 32px; right: 0; z-index: 5;
     background: #fff; border: 1px solid var(--border); border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.10);
     padding: 6px; min-width: 180px;
@@ -138,7 +138,7 @@
   }
   .gp-floater-row.gp { grid-template-columns: 100px 1fr 70px; }
   .gp-floater .label-mini { font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: normal; font-weight: 500; line-height: 1.3; white-space: nowrap; }
-  .gp-floater .num-input { font-family: var(--mono); font-size: 12px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; width: 100%; text-align: right; background: #fff; height: 26px; box-sizing: border-box; }
+  .gp-floater .num-input { font-family: var(--mono); font-size: 12px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; width: 100%; text-align: center; background: #fff; height: 26px; box-sizing: border-box; }
   .gp-floater .num-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(45,90,180,0.2); border-color: var(--accent); }
   .gp-floater input[type="range"] { width: 100%; accent-color: var(--navy); }
   .gp-floater .value { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; text-align: right; }
@@ -151,7 +151,7 @@
   .gp-floater-footer { margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: #fafaf7; display: flex; justify-content: space-between; align-items: baseline; }
   .gp-floater-footer .ftr-label { font-size: 11px; color: var(--muted); }
   .gp-floater-footer .ftr-value { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--navy); }
-  .gp-floater-footer.dark { background: var(--navy); }
+  .gp-floater-footer.dark { background: var(--ink); }
   .gp-floater-footer.dark .ftr-label { color: rgba(255,255,255,0.75); }
   .gp-floater-footer.dark .ftr-value { color: #fff; }
   .gp-floater-footer .delta { font-size: 10px; font-family: var(--mono); margin-left: 4px; }
@@ -850,6 +850,14 @@
         <input type="range" id="sp-margin-slider" min="20" max="60" step="0.5" value="35">
         <div class="input-with-suffix" style="position: relative;"><input type="text" inputmode="decimal" id="sp-margin-input" class="value-input" style="padding-right: 22px;" value="35.0"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">%</span></div>
       </div>
+      <div class="scenario-row">
+        <label>Revenue ex GST <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= GP / Margin)</span></label>
+        <input type="range" id="sp-revenue-slider" min="100000" max="2000000" step="5000" value="957143">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="sp-revenue-input" class="value-input" style="padding-left: 22px;" value="957,143">
+        </div>
+      </div>
       <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
         <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this Total GP, you earn</div>
         <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
@@ -1001,11 +1009,9 @@
 <!-- Floating Quick-Adjust card (sticky bottom-right) — collapsed: GP+Event GP, expanded: full funnel -->
 <div class="gp-floater" id="gp-floater" style="display: none;">
   <div class="gp-floater-head">
-    <div class="title-wrap">
-      <button class="gp-floater-iconbtn" id="gpf-snap-btn" title="Snap to preset" aria-label="Snap presets">⋯</button>
-      <span class="title">Quick adjust</span>
-    </div>
+    <span class="title">Quick adjust</span>
     <div class="actions">
+      <button class="gp-floater-iconbtn" id="gpf-snap-btn" title="Snap to preset" aria-label="Snap presets">⋯</button>
       <button class="gp-floater-iconbtn" id="gpf-reset-btn" title="Reset to defaults" aria-label="Reset">↻</button>
       <button class="gp-floater-iconbtn" id="gpf-toggle-btn" title="Expand" aria-label="Expand">+</button>
     </div>
@@ -1015,11 +1021,11 @@
   <div id="gpf-funnel" style="display: none;">
     <div class="gp-floater-funnel">
       <div class="gp-floater-flow">
-        <span class="step">quoted</span><span class="arrow">→</span>
-        <span class="step">conv %</span><span class="arrow">→</span>
-        <span class="step">confirmed</span><span class="arrow">×</span>
-        <span class="step">avg gp</span><span class="arrow">=</span>
-        <span class="step headline">gp received</span>
+        <span class="step">Quoted</span><span class="arrow">→</span>
+        <span class="step">Conv %</span><span class="arrow">→</span>
+        <span class="step">Confirmed</span><span class="arrow">×</span>
+        <span class="step">Avg GP</span><span class="arrow">=</span>
+        <span class="step headline">GP Received</span>
       </div>
       <div class="gp-floater-row">
         <span class="label-mini">Quoted <span class="help-icon" data-tip="Bookings quoted in the last 12 months">?</span></span>
@@ -2462,13 +2468,27 @@ function paintFloater() {
     if (Math.abs(d) < 50) { cd.textContent = ''; cd.className = 'delta'; }
     else { cd.textContent = (d > 0 ? '+' : '−') + fmtMoney(Math.abs(d)); cd.className = 'delta ' + (d > 0 ? 'up' : 'down'); }
   }
-  // Sync the main GP slider + Sales Planning tab if they're rendered
-  const range = emp.realisticRange;
-  const mainSlider = $('gp-slider'); const mainInput = $('gp-input');
-  if (mainSlider && range) mainSlider.value = nlsMoneyToPos(funnelState.totalGP, { ...range, absoluteMin: range.absoluteMin || 0 });
-  if (mainInput) mainInput.value = fmtNum(funnelState.totalGP);
   // Sync Sales Planning tab inputs (they read state from funnelState via syncSPFromFunnel)
   if (typeof syncSPFromFunnel === 'function') syncSPFromFunnel();
+  // Note: main slider is sync'd via syncMainSlider(), called only from non-mainSlider paths to avoid drag write-back loop
+}
+
+function pushFunnelToAll() {
+  paintFloater();
+  syncMainSlider();
+  if (typeof update === 'function') update();
+}
+
+function syncMainSlider() {
+  const range = emp.realisticRange;
+  const mainSlider = document.getElementById('gp-slider');
+  const mainInput = document.getElementById('gp-input');
+  const mainEvSlider = document.getElementById('event-gp-slider');
+  const mainEvInput = document.getElementById('event-gp-input');
+  if (mainSlider && range) mainSlider.value = nlsMoneyToPos(funnelState.totalGP, { ...range, absoluteMin: range.absoluteMin || 0 });
+  if (mainInput) mainInput.value = fmtNum(funnelState.totalGP);
+  if (mainEvSlider) mainEvSlider.value = scenario.eventGP;
+  if (mainEvInput) mainEvInput.value = fmtNum(scenario.eventGP);
 }
 
 function wireFloater() {
@@ -2505,8 +2525,7 @@ function wireFloater() {
       const v = parseFloat(ev.target.value) || 0;
       funnelState[key] = v;
       funnelRecalc(key);
-      paintFloater();
-      if (typeof update === 'function') update();
+      pushFunnelToAll();
     };
     if (s) s.addEventListener('input', handler);
     if (i) i.addEventListener('input', handler);
@@ -2521,14 +2540,12 @@ function wireFloater() {
   if (gpS) gpS.addEventListener('input', () => {
     funnelState.totalGP = +gpS.value;
     funnelRecalc('gp');
-    paintFloater();
-    if (typeof update === 'function') update();
+    pushFunnelToAll();
   });
   // Event GP slider
   if (evS) evS.addEventListener('input', () => {
     scenario.eventGP = +evS.value;
-    paintFloater();
-    if (typeof update === 'function') update();
+    pushFunnelToAll();
   });
 
   // Snap chips — rendered into the popover, opened by the ⋯ menu button
@@ -2541,10 +2558,9 @@ function wireFloater() {
       btn.addEventListener('click', () => {
         funnelState.totalGP = parseInt(btn.dataset.snap, 10);
         funnelRecalc('gp');
-        paintFloater();
+        pushFunnelToAll();
         popover.classList.remove('open');
         snapBtn.classList.remove('active');
-        if (typeof update === 'function') update();
       });
     });
   }
@@ -2583,8 +2599,7 @@ function wireFloater() {
   if (resetBtn) resetBtn.addEventListener('click', () => {
     Object.assign(funnelState, funnelDefaults);
     funnelBaselineComm = null;
-    paintFloater();
-    if (typeof update === 'function') update();
+    pushFunnelToAll();
   });
 
   // Keep floater in sync when main GP/Event sliders change
@@ -2592,10 +2607,12 @@ function wireFloater() {
   const mainInput = document.getElementById('gp-input');
   const mainEvSlider = document.getElementById('event-gp-slider');
   const mainEvInput = document.getElementById('event-gp-input');
+  // Listen for main slider drags — update funnel state + floater UI ONLY (don't write back to main slider, that breaks the drag)
   if (mainSlider) mainSlider.addEventListener('input', () => { funnelState.totalGP = scenario.gp; funnelRecalc('gp'); paintFloater(); });
   if (mainInput) mainInput.addEventListener('input', () => { funnelState.totalGP = scenario.gp; funnelRecalc('gp'); paintFloater(); });
-  if (mainEvSlider) mainEvSlider.addEventListener('input', () => paintFloater());
-  if (mainEvInput) mainEvInput.addEventListener('input', () => paintFloater());
+  // Event GP main slider — keep floater event slider in sync
+  if (mainEvSlider) mainEvSlider.addEventListener('input', () => { scenario.eventGP = +mainEvSlider.value; paintFloater(); });
+  if (mainEvInput) mainEvInput.addEventListener('input', () => { scenario.eventGP = parseNum(mainEvInput.value); paintFloater(); });
 
   paintFloater();
 }
@@ -2626,6 +2643,9 @@ function syncSPFromFunnel() {
     }
     const mS = document.getElementById('sp-margin-slider'); if (mS) mS.value = funnelState.margin;
     const mI = document.getElementById('sp-margin-input'); if (mI) mI.value = (+funnelState.margin).toFixed(1);
+    const rev = funnelState.margin > 0 ? funnelState.totalGP / (funnelState.margin / 100) : 0;
+    const rS = document.getElementById('sp-revenue-slider'); if (rS) rS.value = Math.min(rev, +rS.max);
+    const rI = document.getElementById('sp-revenue-input'); if (rI) rI.value = fmtNum(Math.round(rev));
   }
 }
 
@@ -2664,6 +2684,18 @@ function wireSalesPlanning() {
   const mS = document.getElementById('sp-margin-slider'); const mI = document.getElementById('sp-margin-input');
   if (mS) mS.addEventListener('input', () => { funnelState.margin = +mS.value || 0; paintFloater(); });
   if (mI) mI.addEventListener('input', () => { funnelState.margin = parseFloat(mI.value) || 0; paintFloater(); });
+  // Revenue ex GST — derived from GP / margin, but editable: changing it updates margin
+  const rS = document.getElementById('sp-revenue-slider'); const rI = document.getElementById('sp-revenue-input');
+  if (rS) rS.addEventListener('input', () => {
+    const rev = +rS.value || 0;
+    if (rev > 0 && funnelState.totalGP > 0) funnelState.margin = (funnelState.totalGP / rev) * 100;
+    paintFloater();
+  });
+  if (rI) rI.addEventListener('input', () => {
+    const rev = parseNum(rI.value) || 0;
+    if (rev > 0 && funnelState.totalGP > 0) funnelState.margin = (funnelState.totalGP / rev) * 100;
+    paintFloater();
+  });
 
   // Initial paint
   if (typeof syncSPFromFunnel === 'function') syncSPFromFunnel();
@@ -2700,7 +2732,7 @@ function renderOTECard() {
         <div id="ote-variable-live" style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent); margin-top: 4px;">—</div>
         <div id="ote-variable-sub" style="font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">at —</div>
       </div>
-      <div style="padding: 12px 14px; background: var(--navy); color: #fff; border-radius: 8px;">
+      <div style="padding: 12px 14px; background: var(--ink); color: #fff; border-radius: 8px;">
         <div style="font-size: 10px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total <span style="color: rgba(255,255,255,0.5); font-weight: 500;">(inc super)</span></div>
         <div id="ote-total-live" style="font-family: var(--mono); font-size: 22px; font-weight: 700; margin-top: 4px;">—</div>
         <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px;">Total cost-to-MEC at current scenario</div>

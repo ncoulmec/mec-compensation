@@ -604,7 +604,7 @@
   .gp-floater-footer .delta { font-size: 10px; font-family: var(--mono); margin-left: 4px; }
   .gp-floater-footer .delta.up { color: #1f5e3c; }
   .gp-floater-footer .delta.down { color: #a8281b; }
-  .gp-floater-footer.dark { background: var(--navy); }
+  .gp-floater-footer.dark { background: var(--ink); }
   .gp-floater-footer.dark .ftr-label { color: rgba(255,255,255,0.75); }
   .gp-floater-footer.dark .ftr-value { color: #fff; }
   .gp-floater .help-icon {
@@ -1245,6 +1245,7 @@ async function load() {
     renderProjectToggles();
     renderQuarterInputs();
     update();
+    wireSimpleFloater();
   } catch (err) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error-slot').innerHTML =
