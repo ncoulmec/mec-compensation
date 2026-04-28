@@ -698,7 +698,8 @@
         "min": 250000,
         "max": 425000,
         "absoluteMax": 600000
-      }
+      },
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000023895089"
     },
     {
       "id": "daniel",
@@ -883,7 +884,8 @@
         "min": 250000,
         "max": 425000,
         "absoluteMax": 600000
-      }
+      },
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000103655232"
     },
     {
       "id": "nic",
@@ -1068,7 +1070,8 @@
         "min": 250000,
         "max": 425000,
         "absoluteMax": 600000
-      }
+      },
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000215439047"
     },
     {
       "id": "evie",
@@ -1257,7 +1260,8 @@
       "scenarioDefaults": {
         "gp": 175000
       },
-      "hideOldPlan": true
+      "hideOldPlan": false,
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146"
     },
     {
       "id": "evie2",
@@ -1446,7 +1450,8 @@
       "scenarioDefaults": {
         "gp": 175000
       },
-      "hideOldPlan": true
+      "hideOldPlan": true,
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146"
     },
     {
       "id": "tom",

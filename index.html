@@ -1227,7 +1227,12 @@ function renderEmployees() {
       <td><div class="read-only-cell" data-super="${i}">${fmtMoney(superIncl)}</div></td>
       <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
       <td>${e.placeholder ? '<span class="pill warn">placeholder</span>' : '<span class="pill">active</span>'}</td>
-      <td><a href="${e.dashboardFile}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 12px; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open ${e.name}'s dashboard in a new tab">Open dashboard ↗</a></td>
+      <td>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <a href="${e.dashboardFile}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 10px; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open ${e.name}'s dashboard in a new tab">Dashboard ↗</a>
+          <a href="admin.html#${e.id}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 10px; background: #fff; color: var(--navy); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open admin page (jumps to ${e.name}'s payroll entry)">Admin ↗</a>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
     tr.querySelector(`select[data-f="planType"]`).value = e.planType;

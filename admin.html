@@ -231,7 +231,7 @@ function ensureActualPayouts(emp) {
   return emp.actualPayouts;
 }
 
-// Shared band commission calculator — mirrors daniel.html's logic.
+// Shared band commission calculator — mirrors the Sales dashboard logic (daniel-*.html).
 function calcBandCommission(metric, bands) {
   let total = 0;
   const sorted = [...bands].sort((a, b) => a.threshold - b.threshold);
@@ -244,7 +244,7 @@ function calcBandCommission(metric, bands) {
 }
 
 // Compute per-month cash payout with quarterly TU + running balance carry-forward.
-// Matches the daniel.html algorithm so admin sees exactly what the employee will see.
+// Matches the Sales dashboard algorithm so admin sees exactly what the employee will see.
 function computePayouts(emp) {
   const plan = data.planTypes[emp.planType];
   if (!plan || !Array.isArray(plan.bands)) return { rows: new Array(12).fill({ gpComm: 0, prodComm: 0, cash: 0 }), balanceEnd: 0 };

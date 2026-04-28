@@ -143,9 +143,70 @@
       <h1 id="emp-name">Loading…</h1>
       <p class="sub" id="emp-sub">&nbsp;</p>
     </div>
-    <span class="role-badge" id="role-badge">—</span>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button onclick="document.getElementById('key-terms-modal').classList.toggle('open')" style="background: #fff; border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; color: var(--navy); font-weight: 600;">📖 Key Terms</button>
+      <span class="role-badge" id="role-badge">—</span>
+    </div>
   </div>
 </header>
+
+<style>
+  .key-terms-modal {
+    display: none; position: fixed; top: 60px; right: 14px; width: 480px; max-width: 92vw;
+    max-height: 80vh; overflow-y: auto; z-index: 101;
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.12); padding: 22px 26px;
+  }
+  .key-terms-modal.open { display: block; }
+  .key-terms-modal h2 { margin: 0 0 4px; font-size: 18px; color: var(--navy); }
+  .key-terms-modal .subtitle { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .key-terms-modal dt { font-weight: 700; color: var(--navy); margin-top: 12px; font-size: 13px; }
+  .key-terms-modal dd { font-size: 13px; color: var(--ink); line-height: 1.5; margin: 4px 0 0; }
+  .key-terms-modal .close-x { position: absolute; top: 14px; right: 18px; cursor: pointer; font-size: 22px; color: var(--muted); border: none; background: none; }
+</style>
+
+<div id="key-terms-modal" class="key-terms-modal">
+  <button class="close-x" onclick="document.getElementById('key-terms-modal').classList.remove('open')" aria-label="Close">×</button>
+  <h2>Key Terms</h2>
+  <div class="subtitle">Quick reference for the language used on your dashboard.</div>
+  <dl>
+    <dt>CM (Contribution Margin)</dt>
+    <dd>Revenue − COGS − Contribution Expenses (Sales/Account team salaries + super + commissions). The cash left after the team that produced the revenue is paid. Your CM bonus is calculated incrementally above the $1M baseline.</dd>
+
+    <dt>NP (Net Profit)</dt>
+    <dd>CM − OpEx (overheads not tied to projects). The bottom line. Your NP kicker pays in tiers above thresholds — every $100k more earns more.</dd>
+
+    <dt>LTM (Last Twelve Months)</dt>
+    <dd>Rolling sum of the last 4 complete quarters from Xero. Drives your projected commission and the maintenance bonus calculation.</dd>
+
+    <dt>YoY (Year-over-Year)</dt>
+    <dd>Same metric this quarter vs the same quarter last year. Shows whether you're growing the business compared to the previous period.</dd>
+
+    <dt>Maintenance Bonus</dt>
+    <dd>If the company stays profitable at $1M+ CM with no growth, you still earn a $10k baseline. This protects you from being penalised for steady-state years.</dd>
+
+    <dt>CM Baseline ($1M)</dt>
+    <dd>The floor below which CM bonus = $0. Above $1M, every dollar of CM earns at the band rate.</dd>
+
+    <dt>NP Kicker</dt>
+    <dd>Extra bonus paid when company NP crosses certain milestones ($100k / $300k / $700k / $1M / $1.3M / $1.5M). Tiered — bigger NP unlocks bigger bonuses.</dd>
+
+    <dt>Super-Inclusive</dt>
+    <dd>The dollar figures already include the 12% superannuation. So $46k commission means $41k to you + $5k super.</dd>
+
+    <dt>75% Quarterly / 25% Holdback</dt>
+    <dd>Each quarter pays 75% of commission earned to that point. The remaining 25% is held back and reconciled at year-end based on actual full-year CM/NP.</dd>
+
+    <dt>Quarterly True-Up</dt>
+    <dd>Each quarter we look at cumulative CM/NP, calculate the commission earned to date, subtract what's been paid in earlier quarters, and pay the difference (capped at 75% per quarter).</dd>
+
+    <dt>KPI Multiplier</dt>
+    <dd>A score from 0.7× to 1.3× applied to your variable comp. Currently locked at 1.0× — KPIs go live in a future pass.</dd>
+
+    <dt>Total Package</dt>
+    <dd>Base salary + super on base + CM commission + NP kicker. The full cost-to-MEC of employing you for the year.</dd>
+  </dl>
+</div>
 
 <nav class="tabs">
   <div class="tabs-inner" id="tab-bar">
