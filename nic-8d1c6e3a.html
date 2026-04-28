@@ -467,7 +467,7 @@
           <input type="text" id="kpi-input" class="value-input" value="1.00">
         </div>
 
-        <div class="rate-calc" id="rate-calc">
+        <div class="rate-calc" id="rate-calc" style="display: none;">
           <div>
             <span class="chip" id="calc-band">—</span>
             <span style="color: var(--muted);">×</span>
@@ -881,37 +881,26 @@
   <!-- KPI -->
   <section class="panel" id="panel-kpi">
     <div style="margin-bottom: 18px; padding: 14px 18px; background: linear-gradient(135deg, #fff8e1 0%, #fff2c5 100%); border: 2px solid #f5d890; border-radius: 10px;">
-      <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">⚠ DRAFT — KPIs coming soon</div>
+      <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">⚠ DRAFT — Being rolled out in Year 2</div>
       <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.5;">
-        This scorecard <strong>previews</strong> how your KPI multiplier will work once we go live. Right now your KPI is <strong>locked at 1.0×</strong> (no impact on commission). When KPIs activate, dragging the achievement sliders below will calculate your real multiplier between <strong>0.7×</strong> and <strong>1.3×</strong>.
+        This scorecard is the <strong>draft</strong> of how KPIs will look when we go live. KPIs are not yet active — your variable compensation is <strong>not affected by anything below</strong>. We're sharing the draft now so you can read it, push back, and have input before we switch it on next year.
       </div>
     </div>
-    <div class="kpi-draft-note">
-      <strong>How this will work:</strong> KPI categories from your employment agreement. Drag each achievement slider (0–200%). Categories are weighted (sum to 100%). The weighted average maps linearly to your multiplier: <strong>0% → 0.7×</strong>, <strong>50% → 1.0×</strong>, <strong>100% → 1.3×</strong>. Achievement above 100% (over-delivery) compensates for under-delivery elsewhere — but the multiplier is capped at 1.3×. Untick a category to exclude it from the calculation.
+    <div class="kpi-draft-note" style="font-size: 13px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 18px;">
+      <strong>How this will work in Year 2:</strong> The categories below come from your employment agreement / position description. Each category is weighted (totalling 100%). The weighted average of your achievement scores will map to a KPI multiplier between <strong>0.7×</strong> and <strong>1.3×</strong>, applied to your variable compensation. <strong>Hidden inputs</strong> (the slider and effect-on-comp calculator) are off until we go live.
     </div>
 
-    <div class="two-col">
+    <!-- Hidden multiplier slider + effect card — kept in DOM for forward compat, display:none for now -->
+    <div class="two-col" style="display: none;">
       <div class="kpi-slider-card">
-        <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Your KPI Multiplier</h2>
-        <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Calculated from your scorecard below. Drag this slider to manually override.</p>
         <div class="kpi-big-value"><span id="kpi-big">1.00</span><span class="x">×</span></div>
-        <input type="range" id="kpi-slider-2" min="0" max="1.5" step="0.01" value="1" style="width: 100%; accent-color: var(--navy);">
-        <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px;">
-          <span>0.7×</span>
-          <span>1.0×</span>
-          <span>1.3×</span>
-        </div>
-        <div style="margin-top: 12px; padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--mono); color: var(--muted);">
-          Scorecard weighted average: <strong id="kpi-overall-pct" style="color: var(--navy);">—</strong>
-        </div>
+        <input type="range" id="kpi-slider-2" min="0" max="1.5" step="0.01" value="1">
+        <div style="margin-top: 12px;">Scorecard weighted average: <strong id="kpi-overall-pct">—</strong></div>
       </div>
-
-      <div class="card" style="margin-bottom: 0;">
-        <h2>Effect on your comp</h2>
-        <div class="super-line muted" style="margin-top: 12px;"><span>Variable comp before KPI</span><span id="kpi-before">—</span></div>
+      <div class="card">
+        <div class="super-line muted"><span>Variable comp before KPI</span><span id="kpi-before">—</span></div>
         <div class="super-line"><span>KPI multiplier</span><span id="kpi-mult">—</span></div>
-        <div class="super-line total" style="color: var(--navy);"><span>Variable comp after KPI</span><span id="kpi-after">—</span></div>
-        <div style="margin-top: 14px; font-size: 12px; color: var(--muted); font-family: var(--mono);">Projects and base salary are not affected by KPI score.</div>
+        <div class="super-line total"><span>Variable comp after KPI</span><span id="kpi-after">—</span></div>
       </div>
     </div>
 
@@ -940,12 +929,12 @@
 <!-- Floating Quick-Adjust card (sticky bottom-right) — two sliders: Annual GP Sold + Event GP Produced -->
 <div class="gp-floater" id="gp-floater" style="display: none;">
   <div class="gp-floater-row">
-    <div class="label-mini">Annual<br>GP Sold</div>
+    <div class="label-mini" title="GP Received — Annual GP from bookings where the customer has paid">GP<br>Received</div>
     <input type="range" id="gp-floater-slider" min="0" max="600000" step="5000">
     <div class="value" id="gp-floater-value">—</div>
   </div>
   <div class="gp-floater-row" id="gp-floater-event-row">
-    <div class="label-mini">Event GP<br>Produced</div>
+    <div class="label-mini" title="Event GP — GP on bookings whose event date has already passed (drives 1% production commission)">Event<br>GP</div>
     <input type="range" id="event-floater-slider" min="0" max="800000" step="5000">
     <div class="value" id="event-floater-value">—</div>
   </div>
@@ -2402,45 +2391,76 @@ function wireSalesPlanning() {
   renderState();
 }
 
-// OTE Card — render at top of How This Works tab. Reads emp.ote from data.json.
+// OTE Card — render at TOP of Payouts & Super tab. Reads emp.ote from data.json.
+// Wired bidirectionally with the floater Annual GP Sold slider via the global update() flow.
 function renderOTECard() {
-  const wrap = document.getElementById('panel-howitworks');
+  const wrap = document.getElementById('panel-payouts');
   if (!wrap) return;
   const ote = emp.ote;
   const philosophy = data.globals?.payMixPhilosophy;
   if (!ote) return;
-  // Insert at top of howitworks panel, before the philosophy card
+  const snapTo = ote.snapToGP || null;
+
   const card = document.createElement('div');
   card.className = 'card';
+  card.id = 'ote-card';
   card.style.cssText = 'background: linear-gradient(135deg, #eef4fa 0%, #ffffff 100%); border-left: 4px solid var(--accent); margin-bottom: 18px;';
   card.innerHTML = `
-    <h2 style="margin: 0 0 6px;">Your On-Target Earnings (OTE)</h2>
-    <p style="font-size: 13px; color: var(--muted); margin: 0 0 16px;">A normal year, when you hit target, looks like this. <strong>All figures are super-inclusive</strong> for a fair apples-to-apples view of total package — base salary includes the 12% super your employer pays, same as your variable comp.</p>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 6px;">
+      <h2 style="margin: 0;">Your On-Target Earnings (OTE)</h2>
+      ${snapTo ? `<button id="ote-snap-btn" style="background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k GP)</button>` : ''}
+    </div>
+    <p style="font-size: 13px; color: var(--muted); margin: 0 0 16px;">A normal year, when you hit target, looks like this. <strong>All figures are super-inclusive</strong>. The Variable Target below updates live as you drag the floating GP Received slider.</p>
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
       <div style="padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
         <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Base Salary <span style="color: var(--faint); font-weight: 500;">(inc super)</span></div>
         <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(ote.baseInclSuper)}</div>
         <div style="font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">${fmtMoney(ote.baseSalary)} + ${fmtMoney(ote.baseSuperOnBase)} super</div>
-        <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">${ote.baseMixPct}% of OTE</div>
       </div>
       <div style="padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
-        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Variable Target <span style="color: var(--faint); font-weight: 500;">(inc super)</span></div>
-        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent); margin-top: 4px;">${fmtMoney(ote.variableTarget)}</div>
-        <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">at ${ote.targetMetricLabel}</div>
-        <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">${ote.variableMixPct}% of OTE</div>
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Variable @ Current GP <span style="color: var(--faint); font-weight: 500;">(inc super)</span></div>
+        <div id="ote-variable-live" style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent); margin-top: 4px;">—</div>
+        <div id="ote-variable-sub" style="font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">at —</div>
       </div>
       <div style="padding: 12px 14px; background: var(--navy); color: #fff; border-radius: 8px;">
         <div style="font-size: 10px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total <span style="color: rgba(255,255,255,0.5); font-weight: 500;">(inc super)</span></div>
-        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; margin-top: 4px;">${fmtMoney(ote.otePackage)}</div>
-        <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px;">Total cost-to-MEC at target</div>
+        <div id="ote-total-live" style="font-family: var(--mono); font-size: 22px; font-weight: 700; margin-top: 4px;">—</div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px;">Total cost-to-MEC at current scenario</div>
       </div>
     </div>
     <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6;">
-      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Today most roles run roughly <strong>${philosophy?.currentDefault || '80:20'}</strong> base/variable. As the team's confidence in the new plan grows and the business can support it, the goal is to gradually shift toward <strong>${philosophy?.futureGoal || '70:30'}</strong> — more of your earnings tied to performance, less guaranteed in the base. This is a multi-year move, not a sudden change.
+      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Today most roles run roughly <strong>${philosophy?.currentDefault || '80:20'}</strong> base/variable. As the team's confidence in the new plan grows and the business can support it, the goal is to gradually shift toward <strong>${philosophy?.futureGoal || '70:30'}</strong> — more of your earnings tied to performance, less guaranteed in the base.
     </div>
   `;
-  // Insert as first child of the panel
   wrap.insertBefore(card, wrap.firstChild);
+
+  // Wire Set to Target button — snaps floater + main GP slider to target
+  if (snapTo) {
+    const btn = document.getElementById('ote-snap-btn');
+    if (btn) btn.addEventListener('click', () => {
+      scenario.gp = snapTo;
+      const main = document.getElementById('gp-slider'); if (main) main.value = snapTo;
+      const mainI = document.getElementById('gp-input'); if (mainI) mainI.value = snapTo.toLocaleString('en-AU');
+      const fl = document.getElementById('gp-floater-slider'); if (fl) fl.value = snapTo;
+      const flV = document.getElementById('gp-floater-value'); if (flV) flV.textContent = '$' + Math.round(snapTo/1000) + 'k';
+      if (typeof update === 'function') update();
+    });
+  }
+}
+
+// Live OTE numbers — called from update() every render
+function refreshOTECard(r) {
+  const ote = emp && emp.ote;
+  if (!ote) return;
+  const variableLive = document.getElementById('ote-variable-live');
+  const variableSub = document.getElementById('ote-variable-sub');
+  const totalLive = document.getElementById('ote-total-live');
+  if (!variableLive) return;
+  // r.variable is super-inclusive variable comp at current scenario
+  const liveVar = r.variable + (r.projectsExSuper ? r.projectsExSuper * (1 + (data.globals.superRate || 0.12)) : 0);
+  variableLive.textContent = fmtMoney(liveVar);
+  variableSub.textContent = `at ${fmtMoney(scenario.gp)} GP Received`;
+  totalLive.textContent = fmtMoney((ote.baseInclSuper || 0) + liveVar);
 }
 
 function drawCommissionCurve() {

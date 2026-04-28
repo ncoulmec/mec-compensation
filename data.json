@@ -2,7 +2,7 @@
   "meta": {
     "companyName": "MEC Group",
     "companyInitials": "MEC",
-    "effectiveDate": "2026-04-28",
+    "effectiveDate": "2026-04-22",
     "lastUpdatedBy": "nathan",
     "schemaVersion": "2.0",
     "currency": "AUD"
@@ -71,12 +71,12 @@
           "rate": 0.1
         },
         {
-          "threshold": 1300000,
+          "threshold": 1100000,
           "rate": 0.05
         },
         {
-          "threshold": 1500000,
-          "rate": 0.1
+          "threshold": 1400000,
+          "rate": 0.075
         }
       ],
       "npBonuses": [
@@ -129,7 +129,7 @@
       "bands": [
         {
           "threshold": 0,
-          "rate": 0
+          "rate": 0.0
         },
         {
           "threshold": 100000,
@@ -183,7 +183,7 @@
       "bands": [
         {
           "threshold": 0,
-          "rate": 0
+          "rate": 0.0
         },
         {
           "threshold": 100000,
@@ -237,7 +237,7 @@
       "bands": [
         {
           "threshold": 0,
-          "rate": 0
+          "rate": 0.0
         },
         {
           "threshold": 50000,
@@ -285,7 +285,7 @@
       "bands": [
         {
           "threshold": 0,
-          "rate": 0
+          "rate": 0.0
         },
         {
           "threshold": 100000,
@@ -531,53 +531,75 @@
         "baseInclSuper": 123200
       },
       "kpiScorecard": {
-        "overallNote": "DRAFT — GM KPIs need rebuild per Nathan. Regional visit removed; this is a starter for Nathan to confirm/edit.",
+        "overallNote": "DRAFT v2 — rebuilt from the GM Position Description (pp. 14–21 of the Australian Staff Employment Agreement). Anchored on the eight 'What Success Looks Like in Year One' markers plus Operational Leadership, Team Leadership & HR, Financial Management, Interim HOE Coverage, and behavioural standards.",
+        "sourceDoc": "Australian Staff Employment Agreement.pdf — General Manager PD",
         "categories": [
           {
-            "id": "company_performance",
-            "title": "Company Performance",
-            "weight": 40,
-            "score": 100,
-            "included": true,
-            "criteria": [
-              "Exceed previous fiscal year Gross Profit Sold (company-wide)",
-              "Hit or exceed annual CM and NP targets (set in MEC Group P&L)",
-              "Maintain or grow GM% (CM/Revenue) year-over-year",
-              "Sales target of $35k+ for interstate bookings"
-            ]
-          },
-          {
-            "id": "team_leadership",
-            "title": "Team Leadership",
+            "id": "operational_leadership",
+            "title": "Operational Leadership & Team Cadence",
             "weight": 25,
-            "score": 100,
+            "score": 0,
             "included": true,
             "criteria": [
-              "Conduct quarterly KPI reviews with each direct report",
-              "Manage Sales/Talent team performance to plan",
-              "Identify and address underperformance early; coach for growth"
+              "Team operating to a clear, consistent meeting rhythm (regular 1:1s, performance check-ins, all-team cadence run effectively with your support).",
+              "Senior leadership team meeting cadence held — regular 1:1s with direct reports plus a monthly performance review with the Director.",
+              "Primary escalation point for operational issues — coaches direct reports through resolution rather than solving everything directly.",
+              "Proactively identifies operational friction and gaps — escalates improvement briefs to the Director with clear context.",
+              "Adopts and drives adherence to new systems and processes as they are implemented."
             ]
           },
           {
-            "id": "growth_strategy",
-            "title": "Growth Strategy",
-            "weight": 15,
-            "score": 100,
+            "id": "team_performance",
+            "title": "Team Performance & Direct Reports",
+            "weight": 25,
+            "score": 0,
             "included": true,
             "criteria": [
-              "Increase number of venues that refer business to MEC: 8 new referring venues per annum",
-              "Increase % of repeat business across the company year-over-year"
+              "Every direct report has documented KPIs and has received at least one formal mid-year review with clear, honest feedback.",
+              "Onboarding is no longer improvised — at least one new team member has been brought on through a structured process you've built or refined.",
+              "Direct reports experience you as a GM, not a former peer — the leadership shift has been made and held with consistency.",
+              "Manages separations and performance improvement processes in collaboration with the Director.",
+              "Mentors direct reports through conflict resolution; holds the team accountable to Company-Wide Behaviours (above B average)."
+            ]
+          },
+          {
+            "id": "financial_execution",
+            "title": "Financial Execution",
+            "weight": 20,
+            "score": 0,
+            "included": true,
+            "criteria": [
+              "Financial performance tracked weekly — leading and lagging metrics reviewed, variances understood; brings the Director well-reasoned analysis rather than raw numbers.",
+              "Executes against annual revenue, GP, and cost targets set in partnership with the Director.",
+              "Monitors weekly/monthly leading and lagging metrics (quotes, confirmations, revenue, conversion rates, average value, call volumes) and acts on variances.",
+              "Oversees wage budgets and assesses cost efficiency regularly via Xero cash-basis P&L.",
+              "Ensures the business operates within break-even parameters and flags financial risk early."
+            ]
+          },
+          {
+            "id": "interim_hoe_coverage",
+            "title": "Interim HOE Coverage & Talent/Account Oversight",
+            "weight": 15,
+            "score": 0,
+            "included": true,
+            "criteria": [
+              "HOE vacancy hasn't created dropped balls — venue relationships, talent oversight, and account management are being covered with clear interim ownership.",
+              "Web project backlog is prioritised and moving — clear weekly mandate to the dev team; web decisions no longer bottleneck on the Director.",
+              "Brand & quality oversight: client interactions and event deliverables remain consistent with brand identity in tone, quality, and presentation.",
+              "Working rhythm with the Director gives genuine autonomy while keeping strategic alignment tight."
             ]
           },
           {
             "id": "behavioural",
-            "title": "Behavioural & Conduct",
-            "weight": 20,
-            "score": 100,
+            "title": "Behavioural & Conduct Floor",
+            "weight": 15,
+            "score": 0,
             "included": true,
             "criteria": [
-              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
-              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+              "Adheres to Company-Wide Behaviours and Individual Responsibilities; maintains an above-B weighted average across both.",
+              "Owns company culture, values, and the behavioural framework (Company-Wide Behaviours).",
+              "Continuously improves employee retention, satisfaction, and productivity.",
+              "Works diligently and amicably with all staff, clients, and suppliers."
             ]
           }
         ]
@@ -776,7 +798,8 @@
         "baseMixPct": 80.9,
         "variableMixPct": 19.1,
         "baseSuperOnBase": 11100,
-        "baseInclSuper": 103600
+        "baseInclSuper": 103600,
+        "snapToGP": 400000
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
@@ -1002,7 +1025,8 @@
         "baseMixPct": 77.5,
         "variableMixPct": 22.5,
         "baseSuperOnBase": 9000,
-        "baseInclSuper": 84000
+        "baseInclSuper": 84000,
+        "snapToGP": 400000
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
@@ -1228,7 +1252,8 @@
         "baseMixPct": 77.4,
         "variableMixPct": 22.6,
         "baseSuperOnBase": 9000,
-        "baseInclSuper": 84000
+        "baseInclSuper": 84000,
+        "snapToGP": 400000
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
@@ -1437,16 +1462,16 @@
         }
       ],
       "last365GPSold": 182500,
-      "annualGPTarget": 200000,
+      "annualGPTarget": 250000,
       "minProductionGP": 400000,
       "previousBaseSalary": 77500,
       "realisticRange": {
-        "min": 150000,
-        "max": 250000,
+        "min": 175000,
+        "max": 325000,
         "absoluteMax": 400000
       },
       "scenarioDefaults": {
-        "gp": 175000
+        "gp": 200000
       },
       "hideOldPlan": false,
       "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146",
@@ -1458,7 +1483,8 @@
         "baseMixPct": 77.8,
         "variableMixPct": 22.2,
         "baseSuperOnBase": 9600,
-        "baseInclSuper": 89600
+        "baseInclSuper": 89600,
+        "snapToGP": 250000
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
@@ -1665,16 +1691,16 @@
         }
       ],
       "last365GPSold": 0,
-      "annualGPTarget": 200000,
+      "annualGPTarget": 150000,
       "minProductionGP": 400000,
       "previousBaseSalary": 77500,
       "realisticRange": {
-        "min": 150000,
-        "max": 250000,
+        "min": 100000,
+        "max": 200000,
         "absoluteMax": 400000
       },
       "scenarioDefaults": {
-        "gp": 175000
+        "gp": 100000
       },
       "hideOldPlan": true,
       "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146",
@@ -1686,7 +1712,8 @@
         "baseMixPct": 77.8,
         "variableMixPct": 22.2,
         "baseSuperOnBase": 9600,
-        "baseInclSuper": 89600
+        "baseInclSuper": 89600,
+        "snapToGP": 150000
       },
       "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
       "kpiScorecard": {
@@ -2240,8 +2267,8 @@
         "variableTarget": 18400,
         "otePackage": 96800,
         "targetMetricLabel": "$150k Performance Revenue + 3 projects",
-        "baseMixPct": 81,
-        "variableMixPct": 19,
+        "baseMixPct": 81.0,
+        "variableMixPct": 19.0,
         "baseSuperOnBase": 8400,
         "baseInclSuper": 78400
       }

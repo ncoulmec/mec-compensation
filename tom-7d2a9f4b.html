@@ -949,37 +949,26 @@
   <!-- KPI -->
   <section class="panel" id="panel-kpi">
     <div style="margin-bottom: 18px; padding: 14px 18px; background: linear-gradient(135deg, #fff8e1 0%, #fff2c5 100%); border: 2px solid #f5d890; border-radius: 10px;">
-      <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">⚠ DRAFT — KPIs coming soon</div>
+      <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">⚠ DRAFT — Being rolled out in Year 2</div>
       <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.5;">
-        This scorecard <strong>previews</strong> how your KPI multiplier will work once we go live. Right now your KPI is <strong>locked at 1.0×</strong> (no impact on commission). When KPIs activate, dragging the achievement sliders below will calculate your real multiplier between <strong>0.7×</strong> and <strong>1.3×</strong>.
+        This scorecard is the <strong>draft</strong> of how KPIs will look when we go live. KPIs are not yet active — your variable compensation is <strong>not affected by anything below</strong>. We're sharing the draft now so you can read it, push back, and have input before we switch it on next year.
       </div>
     </div>
-    <div class="kpi-draft-note">
-      <strong>How this will work:</strong> KPI categories from your employment agreement. Drag each achievement slider (0–200%). Categories are weighted (sum to 100%). The weighted average maps linearly to your multiplier: <strong>0% → 0.7×</strong>, <strong>50% → 1.0×</strong>, <strong>100% → 1.3×</strong>. Achievement above 100% (over-delivery) compensates for under-delivery elsewhere — but the multiplier is capped at 1.3×. Untick a category to exclude it from the calculation.
+    <div class="kpi-draft-note" style="font-size: 13px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 18px;">
+      <strong>How this will work in Year 2:</strong> The categories below come from your employment agreement / position description. Each category is weighted (totalling 100%). The weighted average of your achievement scores will map to a KPI multiplier between <strong>0.7×</strong> and <strong>1.3×</strong>, applied to your variable compensation. <strong>Hidden inputs</strong> (the slider and effect-on-comp calculator) are off until we go live.
     </div>
 
-    <div class="two-col">
+    <!-- Hidden multiplier slider + effect card — kept in DOM for forward compat, display:none for now -->
+    <div class="two-col" style="display: none;">
       <div class="kpi-slider-card">
-        <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Your KPI Multiplier</h2>
-        <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Calculated from your scorecard below. Drag this slider to manually override.</p>
         <div class="kpi-big-value"><span id="kpi-big">1.00</span><span class="x">×</span></div>
-        <input type="range" id="kpi-slider-2" min="0" max="1.5" step="0.01" value="1" style="width: 100%; accent-color: var(--navy);">
-        <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px;">
-          <span>0.7×</span>
-          <span>1.0×</span>
-          <span>1.3×</span>
-        </div>
-        <div style="margin-top: 12px; padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--mono); color: var(--muted);">
-          Scorecard weighted average: <strong id="kpi-overall-pct" style="color: var(--navy);">—</strong>
-        </div>
+        <input type="range" id="kpi-slider-2" min="0" max="1.5" step="0.01" value="1">
+        <div style="margin-top: 12px;">Scorecard weighted average: <strong id="kpi-overall-pct">—</strong></div>
       </div>
-
-      <div class="card" style="margin-bottom: 0;">
-        <h2>Effect on your comp</h2>
-        <div class="super-line muted" style="margin-top: 12px;"><span>Variable comp before KPI</span><span id="kpi-before">—</span></div>
+      <div class="card">
+        <div class="super-line muted"><span>Variable comp before KPI</span><span id="kpi-before">—</span></div>
         <div class="super-line"><span>KPI multiplier</span><span id="kpi-mult">—</span></div>
-        <div class="super-line total" style="color: var(--navy);"><span>Variable comp after KPI</span><span id="kpi-after">—</span></div>
-        <div style="margin-top: 14px; font-size: 12px; color: var(--muted); font-family: var(--mono);">Projects and base salary are not affected by KPI score.</div>
+        <div class="super-line total"><span>Variable comp after KPI</span><span id="kpi-after">—</span></div>
       </div>
     </div>
 
