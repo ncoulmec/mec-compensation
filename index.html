@@ -1332,8 +1332,12 @@ function renderPlans() {
             ` : ''}
             ${(key === 'hybrid_gp') ? `
               <div style="flex: 0 0 220px;">
-                <label style="font-size: 14px; display: block; margin-bottom: 6px;">Production Gate Minimum <span style="display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 50%; background: var(--border); font-size: 10px; font-weight: 600; color: var(--muted); cursor: help;" title="Minimum annual GP-Sold required for sales commission to flow. $0 disables the gate. Applies to every employee on this plan.">?</span></label>
+                <label style="font-size: 14px; display: block; margin-bottom: 6px;">Production Gate Floor <span style="display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 50%; background: var(--border); font-size: 10px; font-weight: 600; color: var(--muted); cursor: help;" title="Below this annual Event GP-Produced, sales commission is paused. Above this, commission ramps linearly toward the Full Rate threshold below.">?</span></label>
                 ${moneyInputHtml(`planTypes.${key}.minProductionGP`, '0')}
+              </div>
+              <div style="flex: 0 0 220px;">
+                <label style="font-size: 14px; display: block; margin-bottom: 6px;">Production Gate Full Rate <span style="display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 50%; background: var(--border); font-size: 10px; font-weight: 600; color: var(--muted); cursor: help;" title="Above this annual Event GP-Produced, full sales commission flows. Between Floor and Full, commission scales linearly. If equal to Floor, the gate behaves as a cliff (no ramp).">?</span></label>
+                ${moneyInputHtml(`planTypes.${key}.fullProductionGP`, '0')}
               </div>
             ` : ''}
           </div>

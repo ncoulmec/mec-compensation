@@ -1245,12 +1245,28 @@ function calcBandCommission(metric, bands) {
   return { total, breakdown };
 }
 
-// Production Gate resolver — checks plan-level minProductionGP first (new home, edited from MEC Group → Plan Types),
-// falls back to legacy per-employee field. Returns 0 if no gate is configured.
+// Production Gate resolver — returns { floor, full, hasGate, isRamp }.
+// Backward compat: legacy minProductionGP-only config = cliff (floor === full).
+// New ramp config: minProductionGP = floor, fullProductionGP = full rate threshold.
 function getProductionGate() {
-  const planMin = +data.planTypes?.[emp.planType]?.minProductionGP || 0;
+  const planFloor = +data.planTypes?.[emp.planType]?.minProductionGP || 0;
+  const planFull = +data.planTypes?.[emp.planType]?.fullProductionGP || 0;
   const empMin = +emp.minProductionGP || 0;
-  return planMin || empMin;
+  const floor = planFloor || empMin;
+  const full = planFull || floor; // if not configured, ramp collapses to a cliff at the floor
+  const hasGate = floor > 0;
+  const isRamp = hasGate && full > floor;
+  return { floor, full, hasGate, isRamp };
+}
+
+// Returns the production-gate factor (0 to 1) applied to sales-side band commission.
+// 0 below floor; linear ramp floor→full; 1 above full.
+function getProductionFactor(eventGP) {
+  const g = getProductionGate();
+  if (!g.hasGate) return 1;
+  if (eventGP < g.floor) return 0;
+  if (eventGP >= g.full) return 1;
+  return (eventGP - g.floor) / (g.full - g.floor);
 }
 
 // Planning-side calculation.
@@ -1261,10 +1277,11 @@ function calcAll() {
   const sr = g.superRate;
   const { total: bandCommGrossRaw, breakdown } = calcBandCommission(scenario.gp, plan.bands);
 
-  // PLANNING-SIDE PRODUCTION GATE — if getProductionGate() is set, scenario.eventGP must >= it
-  // for the GP commission to flow on the planning side. (Independent of the actual gate.)
-  const planningGatePassed = !getProductionGate() || scenario.eventGP >= getProductionGate();
-  const bandCommGross = planningGatePassed ? bandCommGrossRaw : 0;
+  // PLANNING-SIDE PRODUCTION GATE — ramp factor (0 below floor, linear to 1 at full, 1 above)
+  const planningGate = getProductionGate();
+  const planningFactor = getProductionFactor(scenario.eventGP);
+  const planningGatePassed = planningFactor >= 1;
+  const bandCommGross = bandCommGrossRaw * planningFactor;
 
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, g.kpiScoreFloor || 0), g.kpiScoreCap || 1);
   const commGross = bandCommGross * effectiveKpi;               // inc-super
@@ -1327,7 +1344,7 @@ function calcAll() {
     subtotalExSuper, totalSuper, totalPackage,
     nextTier, progressPct, toGo, contextMsg,
     oldComm,
-    planningGatePassed,
+    planningGatePassed, planningFactor, planningGate,
     // legacy aliases
     bandCommKpi, commInc, production, productionKpi, prodInc, variable
   };
@@ -1481,11 +1498,12 @@ function computeMonthlyRows() {
   // If admin has entered actualPayouts for a month, admin's GP/eventGP take precedence — that's the "locked" row.
   const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
 
-  // PRODUCTION GATE — for hybrid roles (Evie/Evie2): if YTD annualised Event GP < getProductionGate(),
-  // sales (GP) commission is paused for the year. Production commission (1% × Event GP) is unaffected.
-  let prodGatePassed = true;
+  // PRODUCTION GATE — for hybrid roles (Evie/Evie 2.0): annualised YTD Event GP runs through the
+  // ramp (floor → full). Sales commission scales by the resulting factor (0..1). Production commission unaffected.
+  const gateConfig = getProductionGate();
+  let prodGateFactor = 1;
   let prodGateInfo = null;
-  if (getProductionGate() && getProductionGate() > 0) {
+  if (gateConfig.hasGate) {
     let ytdEvent = 0, monthsWithData = 0;
     actualsMonths.forEach((m, i) => {
       const ap = actualPayouts[i];
@@ -1495,9 +1513,13 @@ function computeMonthlyRows() {
       ytdEvent += ev;
     });
     const annualizedEvent = monthsWithData > 0 ? (ytdEvent / monthsWithData) * 12 : 0;
-    prodGatePassed = monthsWithData === 0 || annualizedEvent >= getProductionGate();
-    prodGateInfo = { ytdEvent, monthsWithData, annualizedEvent, target: getProductionGate(), passed: prodGatePassed };
+    // No data yet: assume gate clears (factor 1) so projected commission shows fully
+    prodGateFactor = monthsWithData === 0 ? 1 : getProductionFactor(annualizedEvent);
+    const passed = prodGateFactor >= 1;
+    prodGateInfo = { ytdEvent, monthsWithData, annualizedEvent, floor: gateConfig.floor, full: gateConfig.full, factor: prodGateFactor, passed };
   }
+  // Backward-compat alias for downstream code that reads prodGatePassed
+  const prodGatePassed = prodGateFactor >= 1;
 
   const raw = actualsMonths.map((m, i) => {
     const ap = actualPayouts[i];
@@ -1508,8 +1530,8 @@ function computeMonthlyRows() {
     const gp = gpAdmin ? (+ap.gpReceived || 0) : (+m.gpReceived || 0);
     const ev = evAdmin ? (+ap.eventGP || 0) : (+m.eventGP || 0);
     const { total: mGross } = calcBandCommission(gp, mBands);
-    // If the production gate is not met, GP commission paused (production commission still flows)
-    const gpRaw = prodGatePassed ? mGross * effectiveKpi : 0;
+    // Apply ramp factor: 0 below floor, scales linearly to 1 at full. Production commission unaffected.
+    const gpRaw = mGross * effectiveKpi * prodGateFactor;
     return { gp, ev, gpRawInc: gpRaw, prodInc: ev * prodPct * effectiveKpi, locked };
   });
 
@@ -1774,9 +1796,12 @@ function update() {
   // so the negative delta is misleading without context. Show a small note explaining why.
   const gateNote = document.getElementById('delta-gate-note');
   if (gateNote) {
-    if (delta < 0 && getProductionGate() > 0 && !r.planningGatePassed) {
+    if (delta < 0 && r.planningGate && r.planningGate.hasGate && r.planningFactor < 1) {
       gateNote.style.display = 'block';
-      gateNote.innerHTML = `⚠ Production gate not met<br><span style="font-weight: 400; color: var(--muted);">New commission paused — drag Annual Event GP to ${fmtMoney(getProductionGate())}+ to flow</span>`;
+      const factorPct = (r.planningFactor * 100).toFixed(0);
+      gateNote.innerHTML = r.planningFactor === 0
+        ? `⚠ Below production floor<br><span style="font-weight: 400; color: var(--muted);">New commission paused — Event GP needs to reach ${fmtMoney(r.planningGate.floor)} to start ramping, ${fmtMoney(r.planningGate.full)} for full</span>`
+        : `⚠ Production ramp — ${factorPct}% commission<br><span style="font-weight: 400; color: var(--muted);">Drag Event GP to ${fmtMoney(r.planningGate.full)} for full sales commission</span>`;
     } else {
       gateNote.style.display = 'none';
     }
@@ -1874,16 +1899,20 @@ function update() {
     }
   }
 
-  // Planning gate banner — shown for hybrid roles with a minProductionGP target
+  // Planning gate banner — three states: under floor (pause), in ramp (partial), full
   const planningBanner = document.getElementById('planning-gate-banner');
   if (planningBanner) {
-    if (getProductionGate() && getProductionGate() > 0) {
-      const target = getProductionGate();
-      if (r.planningGatePassed) {
-        planningBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} ≥ target ${fmtMoney(target)} — your GP sales commission flows. Drag Annual Event GP Produced below ${fmtMoney(target)} to see what happens to your commission if production drops.</span></div>`;
+    const g = r.planningGate;
+    if (g && g.hasGate) {
+      const factor = r.planningFactor;
+      const factorPct = (factor * 100).toFixed(0);
+      if (factor >= 1) {
+        planningBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} ≥ ${fmtMoney(g.full)} — full GP sales commission flows. Drag Annual Event GP Produced below ${fmtMoney(g.full)} to see the ramp in action.</span></div>`;
+      } else if (factor > 0) {
+        planningBanner.innerHTML = `<div class="banner info" style="margin-bottom: 22px; background: #fff8e1; color: #8a6a00; border-color: #f5d890;"><span class="dot"></span><span><strong>Production ramp — ${factorPct}% sales commission</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} sits between the floor (${fmtMoney(g.floor)}) and full rate (${fmtMoney(g.full)}). Commission scales linearly through this zone — hit ${fmtMoney(g.full)} to flow at 100%. Production commission (1% × Event GP) is unaffected.</span></div>`;
       } else {
-        const gap = target - scenario.eventGP;
-        planningBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate not met:</strong> Modelled Event GP ${fmtMoney(scenario.eventGP)} is ${fmtMoney(gap)} short of the ${fmtMoney(target)} target. Under this scenario, <strong>your GP sales commission would be paused</strong>. Production commission (1% × Event GP) is unaffected.</span></div>`;
+        const gap = g.floor - scenario.eventGP;
+        planningBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Below production floor:</strong> Modelled Event GP ${fmtMoney(scenario.eventGP)} is ${fmtMoney(gap)} below the $${fmtNum(g.floor)} floor. <strong>GP sales commission paused</strong> until you reach floor; ramps from there to full at ${fmtMoney(g.full)}. Production commission (1% × Event GP) still flows.</span></div>`;
       }
     } else {
       planningBanner.innerHTML = '';
@@ -1893,18 +1922,22 @@ function update() {
   // ===== ACTUAL =====
   const { rows: mRows, totals: mTot, quarters: qSummary, annualSummary, prodGateInfo } = computeMonthlyRows();
 
-  // Production gate banner (only shown for employees with minProductionGP set)
+  // Production gate banner — three states (under floor / ramping / full)
   const gateBanner = document.getElementById('prod-gate-banner');
   if (gateBanner) {
     if (prodGateInfo) {
-      const { ytdEvent, monthsWithData, annualizedEvent, target, passed } = prodGateInfo;
+      const { ytdEvent, monthsWithData, annualizedEvent, floor, full, factor, passed } = prodGateInfo;
+      const factorPct = (factor * 100).toFixed(0);
       if (monthsWithData === 0) {
-        gateBanner.innerHTML = `<div class="banner info" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate:</strong> ${fmtMoney(target)} of Event GP per year required to unlock GP sales commission. Enter monthly Event GP below to track.</span></div>`;
+        gateBanner.innerHTML = `<div class="banner info" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate ramp:</strong> Sales commission is $0 below ${fmtMoney(floor)} of annualised Event GP, ramps linearly to 100% at ${fmtMoney(full)}. Enter monthly Event GP below to track.</span></div>`;
       } else if (passed) {
-        gateBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Pace ${fmtMoney(annualizedEvent)} ≥ target ${fmtMoney(target)}. GP sales commission flowing normally.</span></div>`;
+        gateBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Annualised pace ${fmtMoney(annualizedEvent)} ≥ ${fmtMoney(full)}. Full GP sales commission flowing.</span></div>`;
+      } else if (factor > 0) {
+        const toFull = full - annualizedEvent;
+        gateBanner.innerHTML = `<div class="banner info" style="margin-bottom: 14px; background: #fff8e1; color: #8a6a00; border-color: #f5d890;"><span class="dot"></span><span><strong>Production ramp — ${factorPct}% sales commission</strong> · Annualised pace ${fmtMoney(annualizedEvent)} sits in the ramp zone (${fmtMoney(floor)} → ${fmtMoney(full)}). Commission scales linearly. Hit ${fmtMoney(full)} (need <strong>${fmtMoney(toFull)}/yr</strong> more) for 100%. Production commission (1% × Event GP) unaffected.</span></div>`;
       } else {
-        const gap = target - annualizedEvent;
-        gateBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate not met:</strong> Annualised pace ${fmtMoney(annualizedEvent)} (YTD ${fmtMoney(ytdEvent)} over ${monthsWithData} months) is below the ${fmtMoney(target)} target — need <strong>${fmtMoney(gap)}/yr</strong> more event production. <strong>GP sales commission paused</strong> until pace meets target. Production commission (1% × Event GP) is unaffected.</span></div>`;
+        const toFloor = floor - annualizedEvent;
+        gateBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Below production floor:</strong> Annualised pace ${fmtMoney(annualizedEvent)} (YTD ${fmtMoney(ytdEvent)} over ${monthsWithData} months) is ${fmtMoney(toFloor)}/yr below the ${fmtMoney(floor)} floor. <strong>GP sales commission paused</strong> — ramp starts at ${fmtMoney(floor)}, reaches 100% at ${fmtMoney(full)}. Production commission still flows.</span></div>`;
       }
     } else {
       gateBanner.innerHTML = '';
