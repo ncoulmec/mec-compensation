@@ -31,7 +31,7 @@
         "multiplier": 1.3
       }
     ],
-    "kpiScoreCap": 1.3,
+    "kpiScoreCap": 1.5,
     "kpiMinForComm": 0,
     "guardrailBasis": "gm",
     "guardrailBasisOptions": {
@@ -41,7 +41,7 @@
     },
     "guardrailEnabled": false,
     "zohoDashboardUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
-    "kpiScoreFloor": 0.7,
+    "kpiScoreFloor": 0,
     "payMixPhilosophy": {
       "currentDefault": "80:20",
       "futureGoal": "70:30",
@@ -529,6 +529,58 @@
         "variableMixPct": 28.1,
         "baseSuperOnBase": 13200,
         "baseInclSuper": 123200
+      },
+      "kpiScorecard": {
+        "overallNote": "DRAFT \u2014 GM KPIs need rebuild per Nathan. Regional visit removed; this is a starter for Nathan to confirm/edit.",
+        "categories": [
+          {
+            "id": "company_performance",
+            "title": "Company Performance",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Exceed previous fiscal year Gross Profit Sold (company-wide)",
+              "Hit or exceed annual CM and NP targets (set in MEC Group P&L)",
+              "Maintain or grow GM% (CM/Revenue) year-over-year",
+              "Sales target of $35k+ for interstate bookings"
+            ]
+          },
+          {
+            "id": "team_leadership",
+            "title": "Team Leadership",
+            "weight": 25,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Conduct quarterly KPI reviews with each direct report",
+              "Manage Sales/Talent team performance to plan",
+              "Identify and address underperformance early; coach for growth"
+            ]
+          },
+          {
+            "id": "growth_strategy",
+            "title": "Growth Strategy",
+            "weight": 15,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Increase number of venues that refer business to MEC: 8 new referring venues per annum",
+              "Increase % of repeat business across the company year-over-year"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 20,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
       }
     },
     {
@@ -725,6 +777,36 @@
         "variableMixPct": 19.1,
         "baseSuperOnBase": 11100,
         "baseInclSuper": 103600
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT \u2014 Senior Sales KPIs from employment agreement. NOTE: under review for FY26.",
+        "categories": [
+          {
+            "id": "sales_targets",
+            "title": "Sales Performance",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Gross Profit Sold > $375,000 in the calendar year",
+              "Bookings Quoted > 1,000 across the calendar year",
+              "Monthly conversion rate \u2265 35% across a 365-day period",
+              "Average GP of Sales > $800 per transaction every month when converting new business"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
       }
     },
     {
@@ -921,6 +1003,36 @@
         "variableMixPct": 22.5,
         "baseSuperOnBase": 9000,
         "baseInclSuper": 84000
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT \u2014 Sales Rep KPIs from employment agreement. NOTE: targets reduced when team grew; under review for FY26.",
+        "categories": [
+          {
+            "id": "sales_targets",
+            "title": "Sales Performance",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Gross Profit Sold > $350,000 in the calendar year",
+              "Bookings Quoted > 1,000 across the calendar year",
+              "Monthly conversion rate \u2265 30% across a 365-day period",
+              "Average GP of Sales > $800 per transaction every month when converting new business"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
       }
     },
     {
@@ -1117,6 +1229,36 @@
         "variableMixPct": 22.6,
         "baseSuperOnBase": 9000,
         "baseInclSuper": 84000
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT \u2014 Sales Rep KPIs from employment agreement. NOTE: targets reduced when team grew; under review for FY26.",
+        "categories": [
+          {
+            "id": "sales_targets",
+            "title": "Sales Performance",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Gross Profit Sold > $350,000 in the calendar year",
+              "Bookings Quoted > 1,000 across the calendar year",
+              "Monthly conversion rate \u2265 30% across a 365-day period",
+              "Average GP of Sales > $800 per transaction every month when converting new business"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
       }
     },
     {
@@ -1317,6 +1459,34 @@
         "variableMixPct": 22.2,
         "baseSuperOnBase": 9600,
         "baseInclSuper": 89600
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT \u2014 Production Coordinator KPIs (admin items pruned per Nathan).",
+        "categories": [
+          {
+            "id": "content",
+            "title": "Content & Photo Shoots",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Schedule and roll out 2 separate photo shoots across the calendar year (with assistance from Talent Manager)",
+              "Capture content for 40+ artists annually across these shoots"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
       }
     },
     {
@@ -1517,6 +1687,34 @@
         "variableMixPct": 22.2,
         "baseSuperOnBase": 9600,
         "baseInclSuper": 89600
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT \u2014 Production Coordinator KPIs (admin items pruned per Nathan).",
+        "categories": [
+          {
+            "id": "content",
+            "title": "Content & Photo Shoots",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Schedule and roll out 2 separate photo shoots across the calendar year (with assistance from Talent Manager)",
+              "Capture content for 40+ artists annually across these shoots"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
       }
     },
     {
@@ -1704,15 +1902,51 @@
         "absoluteMax": 400000
       },
       "kpiScorecard": {
-        "overallNote": "Slider value 0\u2013100% per category \u00d7 weight. Weighted sum maps linearly: 0%\u21920.7\u00d7, 50%\u21921.0\u00d7, 100%\u21921.3\u00d7 multiplier on commission.",
+        "overallNote": "DRAFT \u2014 Sales & Talent Manager KPIs. Min performances/revenue de-emphasised; sourcing + content prioritised.",
         "categories": [
           {
-            "id": "placeholder",
-            "title": "KPIs to be defined",
-            "weight": 100,
+            "id": "sourcing",
+            "title": "Talent Sourcing & Onboarding",
+            "weight": 35,
             "score": 100,
+            "included": true,
             "criteria": [
-              "KPI structure for Tom not yet finalised \u2014 using a single placeholder slider for now."
+              "Source and on-board minimum 30 new entertainers per calendar year across multiple states",
+              "Melbourne replacement-of-turnover floor: 5 DJs, 2 DJ-Sax, 2 Complete Soloists"
+            ]
+          },
+          {
+            "id": "content",
+            "title": "Content & Photo Shoots",
+            "weight": 30,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "25 in-event organised Content Ninja video shoots across the calendar year",
+              "Schedule and roll out 2 separate photo shoots across the calendar year (with Production Coordinator)",
+              "Capture content for 40+ artists annually across these shoots"
+            ]
+          },
+          {
+            "id": "sales",
+            "title": "Sales Contribution",
+            "weight": 15,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Personal Gross Profit Sold above the agreed annual target (subject to change with sales involvement)",
+              "Maintain Average GP per booking > $800 when converting new business"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 20,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
             ]
           }
         ]
@@ -1987,10 +2221,10 @@
             "weight": 15,
             "score": 100,
             "criteria": [
-              "Achieve B or higher weighted average in company-wide and role-specific behavioural reviews",
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
               "Meet 90% of project deadlines as agreed in project timelines",
-              "Maintain collaborative, solutions-focused approach with all staff, clients, suppliers",
-              "Work diligently and amicably towards staff and clients of MEC in all undertakings"
+              "Maintain a collaborative, solutions-focused approach with all staff, clients, and suppliers",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all undertakings"
             ]
           }
         ]

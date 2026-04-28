@@ -374,10 +374,10 @@
   <div class="tabs-inner" id="tab-bar">
     <button class="tab-btn active" data-tab="overview">Overview</button>
     <button class="tab-btn" data-tab="planning">Planning</button>
-    <button class="tab-btn" data-tab="howitworks">How This Works</button>
     <button class="tab-btn" data-tab="projects">Projects</button>
     <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #fef5e6; color: #8a6a00; border: 1px solid #f5d890; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">draft</span></button>
     <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
+    <button class="tab-btn" data-tab="howitworks">How This Works</button>
   </div>
 </nav>
 
@@ -463,7 +463,7 @@
 
         <div class="scenario-row" style="display: none;">
           <label>KPI Score <span class="tooltip-trigger" data-tip="Coming soon — KPIs are still being finalised. For now the slider is capped at 1.0×.">?</span></label>
-          <input type="range" id="kpi-slider" min="0.7" max="1.3" step="0.01" value="1">
+          <input type="range" id="kpi-slider" min="0" max="1.5" step="0.01" value="1">
           <input type="text" id="kpi-input" class="value-input" value="1.00">
         </div>
 
@@ -792,51 +792,50 @@
     </div>
   </section>
 
-  <!-- How This Works -->
+  <!-- How This Works (sourced from Variable Compensation Philosophy.docx — Director's framing) -->
   <section class="panel" id="panel-howitworks">
     <div class="card" style="background: linear-gradient(135deg, #f6f8fc 0%, #ffffff 100%); border-left: 4px solid var(--navy);">
-      <h2 style="margin: 0 0 8px;">Plan Philosophy</h2>
+      <h2 style="margin: 0 0 6px;">How Your Variable Compensation Works</h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 0 0 14px; font-style: italic;">The thinking behind the plan, in plain English.</p>
       <p style="font-size: 14px; color: var(--ink); line-height: 1.7; margin: 0 0 12px;">
-        We pay you for <strong>net new gross profit you bring into the business</strong> — not for hours, not for activity, not for being busy. Your variable compensation is structured around three principles:
+        We pay you variable compensation because we want to reward exceptional performance. <strong>And we pay you when the customer pays</strong> — actual cash in the account means actual cash in your pocket.
       </p>
-      <ol style="font-size: 14px; color: var(--ink); line-height: 1.7; margin: 0 0 12px; padding-left: 22px;">
-        <li><strong>Reward growth, not effort.</strong> Bands earn at higher rates as you grow. The first $100k of GP you sell pays nothing — it's roughly the cost of having you on the team. Above $200k, you start sharing in the upside. Above $300k, the rate steps up. Above $450k, you're earning at the senior tier.</li>
-        <li><strong>Pay you fairly when the numbers don't work out.</strong> If you have a slow quarter, the quarterly true-up reconciles against your real entitlement — overpayments become a balance against future commission, never deducted from your base salary.</li>
-        <li><strong>Protect the company.</strong> When the business margin drops below the guardrail, variable comp pauses. We share the upside; we also share the responsibility for the downside.</li>
-      </ol>
-      <p style="font-size: 13px; color: var(--muted); margin: 0;">In plain English: <em>more GP sold = more pay, at a higher rate the more you sell. Misses get sorted at quarter-end. The company has a floor that protects everyone.</em></p>
-    </div>
-
-    <div class="two-col">
-      <div class="card">
-        <h3 style="margin: 0 0 10px;">Where the figures come from</h3>
-        <ul style="font-size: 13px; line-height: 1.6; color: var(--ink); padding-left: 18px; margin: 0;">
-          <li><strong>Annual GP Sold</strong> — your last-365-days Gross Profit pulled from your personal Zoho dashboard. Updated each quarter for the true-up.</li>
-          <li><strong>Event GP Produced</strong> — GP on bookings whose event date has passed. Drives the 1% production commission. (Hybrid Sales/Producer roles only.)</li>
-          <li><strong>Commission Bands</strong> — set in your employment agreement. Edited only with formal approval; you'll see updates here when they happen.</li>
-          <li><strong>Base Salary</strong> — your guaranteed annual figure, paid fortnightly, regardless of performance.</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3 style="margin: 0 0 10px;">When you get paid</h3>
-        <ul style="font-size: 13px; line-height: 1.6; color: var(--ink); padding-left: 18px; margin: 0;">
-          <li><strong>Base salary</strong>: fortnightly, every fortnight.</li>
-          <li><strong>Monthly commission</strong>: paid month-end on monthly GP, calculated on the monthly band schedule (annual ÷ 12).</li>
-          <li><strong>Quarterly true-up</strong>: at the end of every quarter, we reconcile against your real quarterly entitlement. Overpayment → balance forward. Underpayment → top-up in your month-3 cheque.</li>
-          <li><strong>Year-end true-up</strong>: any remaining balance after the final quarter carries into the next year. Closes out fairly over time.</li>
-        </ul>
-      </div>
+      <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0;">
+        That single sentence is the spine of the whole plan. Everything below follows from it. These are the principles we use to design how the bands, gates, and bonuses actually work — and the deal we're making with you when you sign on.
+      </p>
     </div>
 
     <div class="card">
-      <h3 style="margin: 0 0 10px;">The principles we won't break</h3>
+      <h3 style="margin: 0 0 12px;">The six principles</h3>
+      <ol style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0; padding-left: 22px;">
+        <li style="margin-bottom: 12px;"><strong>Cash in is cash out.</strong> The day a customer's cash lands at MEC is the day it counts toward your commission. Not the day a quote is sent. Not the day a booking is confirmed. The day the cash actually arrives. This is different to the old plan, and it does mean some commission will land later than it used to — especially for events booked months in advance. But it also means the cash you're paid on is real, and the company isn't out of pocket if a deal gets pulled.</li>
+        <li style="margin-bottom: 12px;"><strong>Same role, same plan.</strong> Every Sales Rep is on the same plan as every other Sales Rep. Every Performer is on the same plan as every other Performer. Where current rates differ from the standard shape today, that's a transition position — we'll bring everyone onto the same shape at the next plan refresh. Bespoke compensation belongs in your base salary, not in your commission curve.</li>
+        <li style="margin-bottom: 12px;"><strong>The harder you push, the more you earn per dollar.</strong> Bands climb. The first dollar of GP above your previous tier earns at a higher rate than the last dollar of the tier you just cleared. We want to reward stretch, not punish it. <strong>There's no cap.</strong></li>
+        <li style="margin-bottom: 12px;"><strong>Refunds reduce future commission. They never touch your base.</strong> If a gig is refunded or cancelled after you've been paid commission on it, that refund nets against your next commission cycle. No exceptions. But it never touches your base salary, and your paycheck never goes negative because of a refund.</li>
+        <li style="margin-bottom: 12px;"><strong>What lands while you're employed is yours.</strong> If you ever leave MEC, any commission already paid out is yours. Any commission on cash that has already arrived at MEC, even if it hasn't been paid out yet, is yours — in your final paycheck. Cash that arrives after your last day stays with the company.</li>
+        <li><strong>KPIs matter where your contract says they do.</strong> Some roles have KPIs spelled out in their employment agreement — if yours does, those KPIs are real. They will be tracked, reviewed quarterly, and they affect your eligibility for full variable pay. We will not put a KPI on you that we don't intend to enforce. If a KPI feels wrong or out of date, raise it.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3 style="margin: 0 0 10px;">What we don't pay variable comp on</h3>
+      <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Variable compensation is a sharp tool, and we use it for a narrow set of things. Plenty of behaviour we deeply value sits outside it:</p>
       <ul style="font-size: 13px; line-height: 1.6; color: var(--ink); padding-left: 18px; margin: 0;">
-        <li>Your <strong>base salary is never reduced</strong> by overpayments. True-up only flows from future commission.</li>
-        <li>The plan is <strong>auditable</strong>: every figure on this dashboard maps back to data.json (in the GitHub repo). You can see the math.</li>
-        <li>The plan <strong>doesn't change retroactively</strong>. If we tune the bands, the change applies forward from the effective date.</li>
-        <li>If you leave the business, <strong>commission already earned (cash received while you were employed) is paid</strong>. Cash received after your last day is not — that's covered by your replacement.</li>
+        <li><strong>Helping a colleague close a deal</strong> — noticed and recognised, but not split into your commission. That's the team.</li>
+        <li><strong>Doing your job exceptionally well in non-numerical ways</strong> — client experience, hand-offs, mentoring, the way you turn up. Reflected in your annual review and discretionary bonuses, not in the plan multiplier.</li>
+        <li><strong>Effort in itself</strong> — we pay for what lands. Effort is necessary but not sufficient.</li>
       </ul>
+    </div>
+
+    <div class="card">
+      <h3 style="margin: 0 0 10px;">How the plan changes year to year</h3>
+      <p style="font-size: 13px; color: var(--ink); line-height: 1.6; margin: 0;">
+        Expect a band tweak once a year — a small calibration based on what we've learned and where the business is heading. Bigger structural changes (new plan shape, addition of team-pool commissions if we go that way) will be communicated in advance and never applied retrospectively. <strong>Cash you've already earned is locked in.</strong>
+      </p>
+    </div>
+
+    <div style="font-size: 12px; color: var(--faint); text-align: right; margin-top: 16px; padding-right: 10px;">
+      — Nathan Op de Coul, Director, MEC Group
     </div>
 
     <div style="font-size: 12px; color: var(--faint); font-family: var(--mono); text-align: center; margin-top: 20px;">
@@ -864,7 +863,7 @@
       <div class="kpi-slider-card">
         <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Your KPI Score</h2>
         <div class="kpi-big-value"><span id="kpi-big">1.00</span><span class="x">×</span></div>
-        <input type="range" id="kpi-slider-2" min="0.7" max="1.3" step="0.01" value="1" style="width: 100%; accent-color: var(--navy);">
+        <input type="range" id="kpi-slider-2" min="0" max="1.5" step="0.01" value="1" style="width: 100%; accent-color: var(--navy);">
         <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px;">
           <span>0.0×</span><span>1.0×</span>
         </div>
@@ -1057,10 +1056,11 @@ async function load() {
     }
 
     // === SALES PLANNING TAB ===
-    // Wire bookings funnel calculator + Zoho data link.
-    if (emp.zohoDataUrl) {
+    // Wire bookings funnel calculator + Zoho data link (sales-shared dashboard URL).
+    const spZohoUrl = emp.salesZohoUrl || emp.zohoDataUrl;
+    if (spZohoUrl) {
       const sl = document.getElementById('sp-zoho-link');
-      if (sl) { sl.href = emp.zohoDataUrl; sl.style.display = 'inline-block'; }
+      if (sl) { sl.href = spZohoUrl; sl.style.display = 'inline-block'; }
     }
     wireSalesPlanning();
     renderOTECard();
@@ -2297,16 +2297,23 @@ function wireSalesPlanning() {
   const tS = document.getElementById('sp-totalgp-slider'), tI = document.getElementById('sp-totalgp-input');
   if (!qS) return;
 
-  // Per-employee defaults — based on last-365 actuals
+  // Per-employee defaults — pulled from last-365-days Zoho dashboard
   const defaults = {
-    daniel: { quoted: 125, conv: 40, confirmed: 50, avg: 6700, totalGP: 335000 },
-    nic:    { quoted: 125, conv: 40, confirmed: 50, avg: 6700, totalGP: 335000 },
-    dane:   { quoted: 150, conv: 40, confirmed: 60, avg: 6500, totalGP: 390000 },
-    evie:   { quoted: 60,  conv: 50, confirmed: 30, avg: 6000, totalGP: 180000 },
-    evie2:  { quoted: 0,   conv: 50, confirmed: 0,  avg: 0,    totalGP: 0 }
+    daniel: { quoted: 919,  conv: 40, confirmed: 364, avg: 919,  totalGP: 334400 },
+    nic:    { quoted: 959,  conv: 38, confirmed: 369, avg: 922,  totalGP: 340100 },
+    dane:   { quoted: 1000, conv: 45, confirmed: 446, avg: 882,  totalGP: 393300 },
+    evie:   { quoted: 540,  conv: 43, confirmed: 234, avg: 803,  totalGP: 187900 },
+    evie2:  { quoted: 270,  conv: 43, confirmed: 117, avg: 803,  totalGP: 94000 }
   };
   const def = defaults[EMPLOYEE_ID] || defaults.daniel;
   let state = { ...def };
+
+  // Slider ranges — Sales reps get full ranges; Evie/Evie 2.0 get half (smaller sales role + bigger producer side)
+  const isEvie = EMPLOYEE_ID === 'evie' || EMPLOYEE_ID === 'evie2';
+  qS.max = isEvie ? 800 : 1500;
+  fS.max = isEvie ? 400 : 700;
+  aS.max = 2000; aS.step = 25; // realistic average GP per booking $0–$2,000
+  tS.max = isEvie ? 300000 : 600000;
 
   const recalc = (changed) => {
     if (changed === 'quoted' || changed === 'conv') {
