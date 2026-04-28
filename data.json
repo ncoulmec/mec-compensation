@@ -263,7 +263,8 @@
       "oldCommissionRate": 0.035,
       "trueUpMode": "quarterly_carry_forward",
       "includeProjects": false,
-      "minProductionGP": 400000
+      "minProductionGP": 150000,
+      "fullProductionGP": 300000
     },
     "hybrid_rev": {
       "name": "Talent (Performer-Revenue Hybrid)",
