@@ -41,7 +41,12 @@
     },
     "guardrailEnabled": false,
     "zohoDashboardUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
-    "kpiScoreFloor": 0.7
+    "kpiScoreFloor": 0.7,
+    "payMixPhilosophy": {
+      "currentDefault": "80:20",
+      "futureGoal": "70:30",
+      "note": "Today most roles run 75-80% base / 20-25% variable. Goal is to gradually shift more compensation into variable pay (70:30) as team confidence in the plan grows and the business can support it."
+    }
   },
   "planTypes": {
     "gm": {
@@ -514,7 +519,17 @@
       "last365GPSold": 187000,
       "annualGPTarget": 200000,
       "minProductionGP": null,
-      "previousBaseSalary": 100000
+      "previousBaseSalary": 100000,
+      "ote": {
+        "baseSalary": 110000,
+        "variableTarget": 48200,
+        "otePackage": 171400,
+        "targetMetricLabel": "$1.3M CM / $1.1M NP",
+        "baseMixPct": 71.9,
+        "variableMixPct": 28.1,
+        "baseSuperOnBase": 13200,
+        "baseInclSuper": 123200
+      }
     },
     {
       "id": "dane",
@@ -700,7 +715,17 @@
         "max": 425000,
         "absoluteMax": 600000
       },
-      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000023895089"
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000023895089",
+      "ote": {
+        "baseSalary": 92500,
+        "variableTarget": 24400,
+        "otePackage": 128000,
+        "targetMetricLabel": "$400k GP Sold",
+        "baseMixPct": 80.9,
+        "variableMixPct": 19.1,
+        "baseSuperOnBase": 11100,
+        "baseInclSuper": 103600
+      }
     },
     {
       "id": "daniel",
@@ -886,7 +911,17 @@
         "max": 425000,
         "absoluteMax": 600000
       },
-      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000103655232"
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000103655232",
+      "ote": {
+        "baseSalary": 75000,
+        "variableTarget": 24400,
+        "otePackage": 108400,
+        "targetMetricLabel": "$400k GP Sold",
+        "baseMixPct": 77.5,
+        "variableMixPct": 22.5,
+        "baseSuperOnBase": 9000,
+        "baseInclSuper": 84000
+      }
     },
     {
       "id": "nic",
@@ -1072,7 +1107,17 @@
         "max": 425000,
         "absoluteMax": 600000
       },
-      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000215439047"
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000215439047",
+      "ote": {
+        "baseSalary": 75000,
+        "variableTarget": 24500,
+        "otePackage": 108500,
+        "targetMetricLabel": "$400k GP Sold",
+        "baseMixPct": 77.4,
+        "variableMixPct": 22.6,
+        "baseSuperOnBase": 9000,
+        "baseInclSuper": 84000
+      }
     },
     {
       "id": "evie",
@@ -1262,7 +1307,17 @@
         "gp": 175000
       },
       "hideOldPlan": false,
-      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146"
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146",
+      "ote": {
+        "baseSalary": 80000,
+        "variableTarget": 25600,
+        "otePackage": 115200,
+        "targetMetricLabel": "$200k GP / $400k+ Event GP",
+        "baseMixPct": 77.8,
+        "variableMixPct": 22.2,
+        "baseSuperOnBase": 9600,
+        "baseInclSuper": 89600
+      }
     },
     {
       "id": "evie2",
@@ -1452,7 +1507,17 @@
         "gp": 175000
       },
       "hideOldPlan": true,
-      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146"
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146",
+      "ote": {
+        "baseSalary": 80000,
+        "variableTarget": 25600,
+        "otePackage": 115200,
+        "targetMetricLabel": "$200k GP / $400k+ Event GP",
+        "baseMixPct": 77.8,
+        "variableMixPct": 22.2,
+        "baseSuperOnBase": 9600,
+        "baseInclSuper": 89600
+      }
     },
     {
       "id": "tom",
@@ -1656,6 +1721,16 @@
         "gigs": 97,
         "avgPerGig": 2013,
         "revenue": 195237
+      },
+      "ote": {
+        "baseSalary": 91350,
+        "variableTarget": 20650,
+        "otePackage": 122962,
+        "targetMetricLabel": "$220k Performance Revenue",
+        "baseMixPct": 83.2,
+        "variableMixPct": 16.8,
+        "baseSuperOnBase": 10962,
+        "baseInclSuper": 102312
       }
     },
     {
@@ -1925,6 +2000,16 @@
         "avgPerGig": 1310,
         "revenue": 98250,
         "annualRevenue": 98250
+      },
+      "ote": {
+        "baseSalary": 70000,
+        "variableTarget": 18400,
+        "otePackage": 96800,
+        "targetMetricLabel": "$150k Performance Revenue + 3 projects",
+        "baseMixPct": 81.0,
+        "variableMixPct": 19.0,
+        "baseSuperOnBase": 8400,
+        "baseInclSuper": 78400
       }
     },
     {

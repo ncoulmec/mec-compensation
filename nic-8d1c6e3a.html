@@ -373,8 +373,10 @@
 <nav class="tabs">
   <div class="tabs-inner" id="tab-bar">
     <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="planning">Planning</button>
+    <button class="tab-btn" data-tab="howitworks">How This Works</button>
     <button class="tab-btn" data-tab="projects">Projects</button>
-    <button class="tab-btn" data-tab="kpi">KPI (Draft)</button>
+    <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #fef5e6; color: #8a6a00; border: 1px solid #f5d890; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">draft</span></button>
     <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
   </div>
 </nav>
@@ -459,7 +461,7 @@
           </div>
         </div>
 
-        <div class="scenario-row">
+        <div class="scenario-row" style="display: none;">
           <label>KPI Score <span class="tooltip-trigger" data-tip="Coming soon — KPIs are still being finalised. For now the slider is capped at 1.0×.">?</span></label>
           <input type="range" id="kpi-slider" min="0.7" max="1.3" step="0.01" value="1">
           <input type="text" id="kpi-input" class="value-input" value="1.00">
@@ -718,7 +720,7 @@
       <div id="quarterly-strip" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;"></div>
 
       <details class="tu-help">
-        <summary>What is True-Up?</summary>
+        <summary>What is the True-Up?</summary>
         <div class="body">
           <p>Your GP commissions are paid <strong>monthly</strong> so you get cash flow through the year instead of waiting until year-end. But monthly payouts are only an estimate — your real entitlement depends on your <strong>quarterly</strong> and <strong>annual</strong> GP.</p>
           <p>At the end of each quarter we check:</p>
@@ -730,6 +732,115 @@
           <p style="color: var(--muted); font-size: 12px;">Example: you sell $70k of GP in month 1 and $0 in months 2-3. The monthly bands pay you about $4,100 in month 1. But at the end of the quarter, your entitlement on $70k quarterly is only $1,900. The $2,200 difference becomes your true-up balance — it'll offset what you earn in Q2 until worked off.</p>
         </div>
       </details>
+    </div>
+  </section>
+
+  <!-- Planning — bookings funnel calculator -->
+  <section class="panel" id="panel-planning">
+    <div style="margin-bottom: 18px;">
+      <h2 style="margin: 0 0 4px;">Sales Planning</h2>
+      <p style="color: var(--muted); font-size: 14px; margin: 0;">Break down your annual GP target into the controllable inputs: <strong>quotes sent</strong>, <strong>conversion rate</strong>, and <strong>average GP per booking</strong>. Edit any field — the others recalculate automatically. The commission earned at the resulting Total GP shows live below.</p>
+    </div>
+    <div style="margin: 0 0 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;" id="sp-zoho-link-row" style="display: none;">
+      <a id="sp-zoho-link" href="#" target="_blank" rel="noopener" style="display: none; text-decoration: none; background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Get My Current Zoho Data ↗</a>
+      <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Pull your last-365-days bookings + GP from your Zoho dashboard.</span>
+    </div>
+
+    <div class="card">
+      <div class="scenario-row">
+        <label>Number of Bookings <strong>Quoted</strong></label>
+        <input type="range" id="sp-quoted-slider" min="0" max="500" step="1" value="125">
+        <input type="text" inputmode="numeric" id="sp-quoted-input" class="value-input" value="125">
+      </div>
+      <div class="scenario-row">
+        <label>Conversion Rate <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(quoted → confirmed)</span></label>
+        <input type="range" id="sp-conv-slider" min="0" max="100" step="1" value="40">
+        <div class="input-with-suffix" style="position: relative;"><input type="text" inputmode="decimal" id="sp-conv-input" class="value-input" style="padding-right: 22px;" value="40"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">%</span></div>
+      </div>
+      <div class="scenario-row">
+        <label>Number of Bookings <strong>Confirmed</strong> <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Quoted × Conversion)</span></label>
+        <input type="range" id="sp-confirmed-slider" min="0" max="500" step="1" value="50">
+        <input type="text" inputmode="numeric" id="sp-confirmed-input" class="value-input" value="50">
+      </div>
+      <div class="scenario-row">
+        <label>Average GP per Booking <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
+        <input type="range" id="sp-avg-slider" min="0" max="20000" step="100" value="6700">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="sp-avg-input" class="value-input" style="padding-left: 22px;" value="6,700">
+        </div>
+      </div>
+      <div class="scenario-row">
+        <label style="font-weight: 600;">Total GP Confirmed <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Confirmed × Avg)</span></label>
+        <input type="range" id="sp-totalgp-slider" min="0" max="800000" step="1000" value="335000">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="sp-totalgp-input" class="value-input" style="padding-left: 22px;" value="335,000">
+        </div>
+      </div>
+      <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
+        <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this Total GP, you earn</div>
+        <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
+          <div><div style="font-size: 10px; color: var(--muted);">GP COMMISSION (inc super)</div><div id="sp-comm" style="font-size: 18px; font-weight: 700; color: var(--accent);">—</div></div>
+          <div><div style="font-size: 10px; color: var(--muted);">EFFECTIVE RATE</div><div id="sp-rate" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
+          <div><div style="font-size: 10px; color: var(--muted);">TOTAL PACKAGE</div><div id="sp-total" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
+        </div>
+        <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 8px;">
+          Funnel: <strong id="sp-funnel">125 quoted → 40% conversion → 50 confirmed × $6,700 avg = $335,000 GP</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How This Works -->
+  <section class="panel" id="panel-howitworks">
+    <div class="card" style="background: linear-gradient(135deg, #f6f8fc 0%, #ffffff 100%); border-left: 4px solid var(--navy);">
+      <h2 style="margin: 0 0 8px;">Plan Philosophy</h2>
+      <p style="font-size: 14px; color: var(--ink); line-height: 1.7; margin: 0 0 12px;">
+        We pay you for <strong>net new gross profit you bring into the business</strong> — not for hours, not for activity, not for being busy. Your variable compensation is structured around three principles:
+      </p>
+      <ol style="font-size: 14px; color: var(--ink); line-height: 1.7; margin: 0 0 12px; padding-left: 22px;">
+        <li><strong>Reward growth, not effort.</strong> Bands earn at higher rates as you grow. The first $100k of GP you sell pays nothing — it's roughly the cost of having you on the team. Above $200k, you start sharing in the upside. Above $300k, the rate steps up. Above $450k, you're earning at the senior tier.</li>
+        <li><strong>Pay you fairly when the numbers don't work out.</strong> If you have a slow quarter, the quarterly true-up reconciles against your real entitlement — overpayments become a balance against future commission, never deducted from your base salary.</li>
+        <li><strong>Protect the company.</strong> When the business margin drops below the guardrail, variable comp pauses. We share the upside; we also share the responsibility for the downside.</li>
+      </ol>
+      <p style="font-size: 13px; color: var(--muted); margin: 0;">In plain English: <em>more GP sold = more pay, at a higher rate the more you sell. Misses get sorted at quarter-end. The company has a floor that protects everyone.</em></p>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3 style="margin: 0 0 10px;">Where the figures come from</h3>
+        <ul style="font-size: 13px; line-height: 1.6; color: var(--ink); padding-left: 18px; margin: 0;">
+          <li><strong>Annual GP Sold</strong> — your last-365-days Gross Profit pulled from your personal Zoho dashboard. Updated each quarter for the true-up.</li>
+          <li><strong>Event GP Produced</strong> — GP on bookings whose event date has passed. Drives the 1% production commission. (Hybrid Sales/Producer roles only.)</li>
+          <li><strong>Commission Bands</strong> — set in your employment agreement. Edited only with formal approval; you'll see updates here when they happen.</li>
+          <li><strong>Base Salary</strong> — your guaranteed annual figure, paid fortnightly, regardless of performance.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 10px;">When you get paid</h3>
+        <ul style="font-size: 13px; line-height: 1.6; color: var(--ink); padding-left: 18px; margin: 0;">
+          <li><strong>Base salary</strong>: fortnightly, every fortnight.</li>
+          <li><strong>Monthly commission</strong>: paid month-end on monthly GP, calculated on the monthly band schedule (annual ÷ 12).</li>
+          <li><strong>Quarterly true-up</strong>: at the end of every quarter, we reconcile against your real quarterly entitlement. Overpayment → balance forward. Underpayment → top-up in your month-3 cheque.</li>
+          <li><strong>Year-end true-up</strong>: any remaining balance after the final quarter carries into the next year. Closes out fairly over time.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin: 0 0 10px;">The principles we won't break</h3>
+      <ul style="font-size: 13px; line-height: 1.6; color: var(--ink); padding-left: 18px; margin: 0;">
+        <li>Your <strong>base salary is never reduced</strong> by overpayments. True-up only flows from future commission.</li>
+        <li>The plan is <strong>auditable</strong>: every figure on this dashboard maps back to data.json (in the GitHub repo). You can see the math.</li>
+        <li>The plan <strong>doesn't change retroactively</strong>. If we tune the bands, the change applies forward from the effective date.</li>
+        <li>If you leave the business, <strong>commission already earned (cash received while you were employed) is paid</strong>. Cash received after your last day is not — that's covered by your replacement.</li>
+      </ul>
+    </div>
+
+    <div style="font-size: 12px; color: var(--faint); font-family: var(--mono); text-align: center; margin-top: 20px;">
+      Questions? Open the 📖 Key Terms button (top-right) for definitions, or speak to Nathan/Hayley directly.
     </div>
   </section>
 
@@ -944,6 +1055,15 @@ async function load() {
       syncGpFloater();
       syncEventFloater();
     }
+
+    // === SALES PLANNING TAB ===
+    // Wire bookings funnel calculator + Zoho data link.
+    if (emp.zohoDataUrl) {
+      const sl = document.getElementById('sp-zoho-link');
+      if (sl) { sl.href = emp.zohoDataUrl; sl.style.display = 'inline-block'; }
+    }
+    wireSalesPlanning();
+    renderOTECard();
 
     // Hide Old plan elements for employees who never saw the old plan (e.g. Evie 2.0)
     if (emp.hideOldPlan) {
@@ -2167,6 +2287,124 @@ function update() {
 // Draws the New-vs-Old commission curve as inline SVG.
 // Plots commission earnings (super-inclusive) across the full GP range,
 // with a marker line at the current scenario.gp position.
+// Sales Planning tab — bookings funnel calculator with bidirectional binding.
+// Quoted × ConversionRate = Confirmed; Confirmed × Avg = TotalGP. Edit any → others recalc.
+function wireSalesPlanning() {
+  const qS = document.getElementById('sp-quoted-slider'), qI = document.getElementById('sp-quoted-input');
+  const cS = document.getElementById('sp-conv-slider'), cI = document.getElementById('sp-conv-input');
+  const fS = document.getElementById('sp-confirmed-slider'), fI = document.getElementById('sp-confirmed-input');
+  const aS = document.getElementById('sp-avg-slider'), aI = document.getElementById('sp-avg-input');
+  const tS = document.getElementById('sp-totalgp-slider'), tI = document.getElementById('sp-totalgp-input');
+  if (!qS) return;
+
+  // Per-employee defaults — based on last-365 actuals
+  const defaults = {
+    daniel: { quoted: 125, conv: 40, confirmed: 50, avg: 6700, totalGP: 335000 },
+    nic:    { quoted: 125, conv: 40, confirmed: 50, avg: 6700, totalGP: 335000 },
+    dane:   { quoted: 150, conv: 40, confirmed: 60, avg: 6500, totalGP: 390000 },
+    evie:   { quoted: 60,  conv: 50, confirmed: 30, avg: 6000, totalGP: 180000 },
+    evie2:  { quoted: 0,   conv: 50, confirmed: 0,  avg: 0,    totalGP: 0 }
+  };
+  const def = defaults[EMPLOYEE_ID] || defaults.daniel;
+  let state = { ...def };
+
+  const recalc = (changed) => {
+    if (changed === 'quoted' || changed === 'conv') {
+      state.confirmed = Math.round(state.quoted * (state.conv / 100));
+      state.totalGP = state.confirmed * state.avg;
+    } else if (changed === 'confirmed') {
+      state.conv = state.quoted > 0 ? Math.round((state.confirmed / state.quoted) * 100) : 0;
+      state.totalGP = state.confirmed * state.avg;
+    } else if (changed === 'avg') {
+      state.totalGP = state.confirmed * state.avg;
+    } else if (changed === 'totalGP') {
+      state.avg = state.confirmed > 0 ? Math.round(state.totalGP / state.confirmed) : 0;
+    }
+    renderState();
+  };
+  const renderState = () => {
+    qS.value = state.quoted; qI.value = fmtNum(state.quoted);
+    cS.value = state.conv; cI.value = state.conv;
+    fS.value = state.confirmed; fI.value = fmtNum(state.confirmed);
+    aS.value = Math.min(state.avg, +aS.max); aI.value = fmtNum(state.avg);
+    tS.value = Math.min(state.totalGP, +tS.max); tI.value = fmtNum(state.totalGP);
+
+    // Compute commission at this Total GP (using emp's annual bands, not band-based KPI)
+    const { total: bandComm } = (function() {
+      let total = 0;
+      const sorted = [...plan.bands].sort((a, b) => a.threshold - b.threshold);
+      for (let i = 0; i < sorted.length; i++) {
+        const b = sorted[i];
+        const next = i + 1 < sorted.length ? sorted[i + 1].threshold : Infinity;
+        total += Math.max(0, Math.min(state.totalGP, next) - b.threshold) * b.rate;
+      }
+      return { total };
+    })();
+    const sr = data.globals.superRate || 0.12;
+    const baseInc = (emp.baseSalary || 0) * (1 + sr);
+    const totalPkg = baseInc + bandComm;
+    const effRate = state.totalGP > 0 ? (bandComm / state.totalGP) * 100 : 0;
+    document.getElementById('sp-comm').textContent = fmtMoney(bandComm);
+    document.getElementById('sp-rate').textContent = effRate.toFixed(1) + '%';
+    document.getElementById('sp-total').textContent = fmtMoney(totalPkg);
+    document.getElementById('sp-funnel').textContent = `${state.quoted} quoted → ${state.conv}% conversion → ${state.confirmed} confirmed × ${fmtMoney(state.avg)} avg = ${fmtMoney(state.totalGP)} GP`;
+  };
+
+  qS.addEventListener('input', () => { state.quoted = +qS.value || 0; recalc('quoted'); });
+  qI.addEventListener('input', () => { state.quoted = parseNum(qI.value) || 0; recalc('quoted'); });
+  cS.addEventListener('input', () => { state.conv = +cS.value || 0; recalc('conv'); });
+  cI.addEventListener('input', () => { state.conv = parseFloat(cI.value) || 0; recalc('conv'); });
+  fS.addEventListener('input', () => { state.confirmed = +fS.value || 0; recalc('confirmed'); });
+  fI.addEventListener('input', () => { state.confirmed = parseNum(fI.value) || 0; recalc('confirmed'); });
+  aS.addEventListener('input', () => { state.avg = +aS.value || 0; recalc('avg'); });
+  aI.addEventListener('input', () => { state.avg = parseNum(aI.value) || 0; recalc('avg'); });
+  tS.addEventListener('input', () => { state.totalGP = +tS.value || 0; recalc('totalGP'); });
+  tI.addEventListener('input', () => { state.totalGP = parseNum(tI.value) || 0; recalc('totalGP'); });
+
+  renderState();
+}
+
+// OTE Card — render at top of How This Works tab. Reads emp.ote from data.json.
+function renderOTECard() {
+  const wrap = document.getElementById('panel-howitworks');
+  if (!wrap) return;
+  const ote = emp.ote;
+  const philosophy = data.globals?.payMixPhilosophy;
+  if (!ote) return;
+  // Insert at top of howitworks panel, before the philosophy card
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.cssText = 'background: linear-gradient(135deg, #eef4fa 0%, #ffffff 100%); border-left: 4px solid var(--accent); margin-bottom: 18px;';
+  card.innerHTML = `
+    <h2 style="margin: 0 0 6px;">Your On-Target Earnings (OTE)</h2>
+    <p style="font-size: 13px; color: var(--muted); margin: 0 0 16px;">A normal year, when you hit target, looks like this. <strong>All figures are super-inclusive</strong> for a fair apples-to-apples view of total package — base salary includes the 12% super your employer pays, same as your variable comp.</p>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
+      <div style="padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Base Salary <span style="color: var(--faint); font-weight: 500;">(inc super)</span></div>
+        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(ote.baseInclSuper)}</div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">${fmtMoney(ote.baseSalary)} + ${fmtMoney(ote.baseSuperOnBase)} super</div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">${ote.baseMixPct}% of OTE</div>
+      </div>
+      <div style="padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Variable Target <span style="color: var(--faint); font-weight: 500;">(inc super)</span></div>
+        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent); margin-top: 4px;">${fmtMoney(ote.variableTarget)}</div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">at ${ote.targetMetricLabel}</div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">${ote.variableMixPct}% of OTE</div>
+      </div>
+      <div style="padding: 12px 14px; background: var(--navy); color: #fff; border-radius: 8px;">
+        <div style="font-size: 10px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total <span style="color: rgba(255,255,255,0.5); font-weight: 500;">(inc super)</span></div>
+        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; margin-top: 4px;">${fmtMoney(ote.otePackage)}</div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px;">Total cost-to-MEC at target</div>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6;">
+      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Today most roles run roughly <strong>${philosophy?.currentDefault || '80:20'}</strong> base/variable. As the team's confidence in the new plan grows and the business can support it, the goal is to gradually shift toward <strong>${philosophy?.futureGoal || '70:30'}</strong> — more of your earnings tied to performance, less guaranteed in the base. This is a multi-year move, not a sudden change.
+    </div>
+  `;
+  // Insert as first child of the panel
+  wrap.insertBefore(card, wrap.firstChild);
+}
+
 function drawCommissionCurve() {
   const svg = document.getElementById('commission-curve');
   if (!svg || !emp) return;
