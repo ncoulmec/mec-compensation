@@ -1,0 +1,2629 @@
+{
+  "meta": {
+    "companyName": "MEC Group",
+    "companyInitials": "MEC",
+    "effectiveDate": "2026-04-22",
+    "lastUpdatedBy": "nathan",
+    "schemaVersion": "2.0",
+    "currency": "AUD"
+  },
+  "globals": {
+    "superRate": 0.12,
+    "gstRate": 0.1,
+    "guardrailMargin": 0.35,
+    "quarterlyPayoutPct": 0.75,
+    "yearEndHoldbackPct": 0.25,
+    "marginMultipliers": [
+      {
+        "minMargin": 0.35,
+        "multiplier": 1
+      },
+      {
+        "minMargin": 0.4,
+        "multiplier": 1.1
+      },
+      {
+        "minMargin": 0.45,
+        "multiplier": 1.2
+      },
+      {
+        "minMargin": 0.5,
+        "multiplier": 1.3
+      }
+    ],
+    "kpiScoreCap": 1.5,
+    "kpiMinForComm": 0,
+    "guardrailBasis": "gm",
+    "guardrailBasisOptions": {
+      "gm": "Gross Margin (Rev − CoS) / Rev",
+      "cm": "Contribution Margin (GP − Contrib. Exp) / Rev",
+      "np": "Net Margin (CM − OpEx) / Rev"
+    },
+    "guardrailEnabled": false,
+    "zohoDashboardUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+    "kpiScoreFloor": 0,
+    "payMixPhilosophy": {
+      "currentDefault": "80:20",
+      "futureGoal": "70:30",
+      "note": "Today most roles run 75-80% base / 20-25% variable. Goal is to gradually shift more compensation into variable pay (70:30) as team confidence in the plan grows and the business can support it."
+    }
+  },
+  "planTypes": {
+    "gm": {
+      "name": "General Manager (CM-driven + NP kicker)",
+      "description": "For Hayley. $1M no-commission floor; $10k maintenance hit at $1,100,000 (round-down from LTM CM ~$1,111k); then escalating growth bands. Dashboard shows LTM CM live from companyPL. NP incremental bonuses are more lucrative with bands extending to $1.3M. Band output is super-INCLUSIVE. Quarterly 75/25 payout (being reviewed — may switch to quarterly TU like Sales team).",
+      "metricLabel": "Contribution Margin (primary) + Net Profit kicker",
+      "maxMetricValue": 1500000,
+      "metricBasis": "cm_np",
+      "inputIncludesGST": false,
+      "bandsIncludeSuper": true,
+      "payoutFrequency": "quarterly",
+      "payoutPercentage": 0.75,
+      "includeProduction": false,
+      "cmBaseline": 1100000,
+      "cmBands": [
+        {
+          "threshold": 0,
+          "rate": 0
+        },
+        {
+          "threshold": 1000000,
+          "rate": 0.1
+        },
+        {
+          "threshold": 1100000,
+          "rate": 0.05
+        },
+        {
+          "threshold": 1400000,
+          "rate": 0.075
+        }
+      ],
+      "npBonuses": [
+        {
+          "threshold": 900000,
+          "bonus": 1000
+        },
+        {
+          "threshold": 950000,
+          "bonus": 2000
+        },
+        {
+          "threshold": 1000000,
+          "bonus": 3000
+        },
+        {
+          "threshold": 1100000,
+          "bonus": 5000
+        },
+        {
+          "threshold": 1200000,
+          "bonus": 10000
+        },
+        {
+          "threshold": 1300000,
+          "bonus": 17000
+        },
+        {
+          "threshold": 1400000,
+          "bonus": 24000
+        },
+        {
+          "threshold": 1500000,
+          "bonus": 30000
+        }
+      ],
+      "includeProjects": false
+    },
+    "gp_bands_senior": {
+      "name": "Senior Sales Manager (GP Incremental Bands)",
+      "description": "For Senior Sales (Dane). Same band structure as the Sales Rep plan — seniority reflected in the $92.5k base salary rather than in the commission bands. Band output is super-INCLUSIVE. 1% production commission on Event GP (also super-inclusive). Quarterly true-up with running balance carry-forward.",
+      "metricLabel": "Annual GP Sold",
+      "maxMetricValue": 600000,
+      "metricBasis": "gp",
+      "inputIncludesGST": true,
+      "bandsIncludeSuper": true,
+      "payoutFrequency": "monthly",
+      "payoutPercentage": 1,
+      "includeProduction": true,
+      "bands": [
+        {
+          "threshold": 0,
+          "rate": 0.0
+        },
+        {
+          "threshold": 100000,
+          "rate": 0.028
+        },
+        {
+          "threshold": 200000,
+          "rate": 0.09
+        },
+        {
+          "threshold": 300000,
+          "rate": 0.11
+        },
+        {
+          "threshold": 350000,
+          "rate": 0.13
+        },
+        {
+          "threshold": 400000,
+          "rate": 0.14
+        },
+        {
+          "threshold": 450000,
+          "rate": 0.145
+        },
+        {
+          "threshold": 500000,
+          "rate": 0.15
+        }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "eventGP",
+      "maxProductionValue": 400000,
+      "productionIncludesSuper": true,
+      "showOldCommissionComparison": true,
+      "oldCommissionRate": 0.035,
+      "trueUpMode": "quarterly_carry_forward",
+      "includeProjects": false
+    },
+    "gp_bands": {
+      "name": "Sales Rep (GP Incremental Bands)",
+      "description": "For Sales Reps (Daniel, Nic). Five-band structure: true no-commission floor at $100k, soft start from $100-200k, ramps through $200-300k so $300k matches old 3.5% flat, accelerates past $400k. Band output is super-INCLUSIVE. 1% production commission on Event GP (also super-inclusive). Quarterly true-ups net against a running balance that carries forward (no clawback from base).",
+      "metricLabel": "Annual GP Sold",
+      "maxMetricValue": 600000,
+      "metricBasis": "gp",
+      "inputIncludesGST": true,
+      "bandsIncludeSuper": true,
+      "payoutFrequency": "monthly",
+      "payoutPercentage": 1,
+      "includeProduction": true,
+      "bands": [
+        {
+          "threshold": 0,
+          "rate": 0.0
+        },
+        {
+          "threshold": 100000,
+          "rate": 0.028
+        },
+        {
+          "threshold": 200000,
+          "rate": 0.09
+        },
+        {
+          "threshold": 300000,
+          "rate": 0.11
+        },
+        {
+          "threshold": 350000,
+          "rate": 0.13
+        },
+        {
+          "threshold": 400000,
+          "rate": 0.14
+        },
+        {
+          "threshold": 450000,
+          "rate": 0.145
+        },
+        {
+          "threshold": 500000,
+          "rate": 0.15
+        }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "eventGP",
+      "maxProductionValue": 400000,
+      "productionIncludesSuper": true,
+      "showOldCommissionComparison": true,
+      "oldCommissionRate": 0.035,
+      "trueUpMode": "quarterly_carry_forward",
+      "includeProjects": false
+    },
+    "hybrid_gp": {
+      "name": "Sales-Producer Hybrid (GP Sales + Production)",
+      "description": "For Evie & Evie 2.0. Five-band monotonic structure with $50k no-commission floor (half the Sales Rep floor). Match at $150k (old 3.5%+super ~$5,880), clear win at $200k (~$12,000 vs old+super $7,840 = +$4,160), and rates continue climbing above $200k at 13% — 2 points under Daniel's 15% top so Evie's stretch stays meaningful without out-paying Sales Rep stretch per dollar. 1% production commission on Event GP drives the bulk of Evie's earnings. Band output is super-INCLUSIVE.",
+      "metricLabel": "Annual GP Sold",
+      "maxMetricValue": 400000,
+      "metricBasis": "gp",
+      "inputIncludesGST": false,
+      "bandsIncludeSuper": true,
+      "payoutFrequency": "monthly",
+      "payoutPercentage": 1,
+      "includeProduction": true,
+      "bands": [
+        {
+          "threshold": 0,
+          "rate": 0.0
+        },
+        {
+          "threshold": 50000,
+          "rate": 0.04
+        },
+        {
+          "threshold": 100000,
+          "rate": 0.08
+        },
+        {
+          "threshold": 150000,
+          "rate": 0.11
+        },
+        {
+          "threshold": 200000,
+          "rate": 0.12
+        },
+        {
+          "threshold": 250000,
+          "rate": 0.13
+        }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "eventGP",
+      "maxProductionValue": 1200000,
+      "productionIncludesSuper": true,
+      "showOldCommissionComparison": true,
+      "oldCommissionRate": 0.035,
+      "trueUpMode": "quarterly_carry_forward",
+      "includeProjects": false,
+      "minProductionGP": 150000,
+      "fullProductionGP": 300000
+    },
+    "hybrid_rev": {
+      "name": "Talent (Performer-Revenue Hybrid)",
+      "description": "For Michael (Performer/Systems Manager). Variable comp on revenue bands. $70k floor (pay-for-yourself), then $30k increments up to $190k+. Band rates scaled × 1.12 in v16 so band output is super-INCLUSIVE (same commission amounts as before, just stated inclusive of super).",
+      "metricLabel": "Annual Performance Revenue",
+      "maxMetricValue": 300000,
+      "metricBasis": "revenue",
+      "inputIncludesGST": false,
+      "bandsIncludeSuper": true,
+      "payoutFrequency": "quarterly",
+      "payoutPercentage": 1,
+      "includeProduction": false,
+      "bands": [
+        {
+          "threshold": 0,
+          "rate": 0.0
+        },
+        {
+          "threshold": 100000,
+          "rate": 0.1
+        }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "revenue",
+      "includeProjects": true,
+      "flatBonuses": [
+        {
+          "threshold": 100000,
+          "amount": 5000,
+          "label": "$5,000 milestone bonus at $100k revenue"
+        }
+      ]
+    },
+    "hybrid_rev_senior": {
+      "name": "Talent Senior (Performer-Revenue Hybrid)",
+      "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue → ~$100k base ex-super equivalent. Rates scaled × 1.12 in v16 to make band output super-INCLUSIVE while preserving commission amounts.",
+      "metricLabel": "Annual Performance Revenue",
+      "maxMetricValue": 400000,
+      "metricBasis": "revenue",
+      "inputIncludesGST": false,
+      "bandsIncludeSuper": true,
+      "payoutFrequency": "quarterly",
+      "payoutPercentage": 1,
+      "includeProduction": false,
+      "bands": [
+        {
+          "threshold": 195000,
+          "rate": 0.38752
+        },
+        {
+          "threshold": 220000,
+          "rate": 0.1
+        }
+      ],
+      "productionPct": 0.01,
+      "productionBasis": "revenue",
+      "includeProjects": false
+    },
+    "base_only": {
+      "name": "Base Salary Only",
+      "description": "Placeholder plan — no variable comp.",
+      "metricLabel": "(none)",
+      "metricBasis": "none",
+      "payoutFrequency": "n/a",
+      "payoutPercentage": 1,
+      "includeProduction": false,
+      "bands": [],
+      "includeProjects": false
+    }
+  },
+  "kpis": {
+    "definitions": [
+      {
+        "id": "conversion_rate_quoted",
+        "name": "Conversion Rate (Quoted → Confirmed)",
+        "unit": "%",
+        "direction": "higher",
+        "defaultWeight": 0.25,
+        "formula": "bookingsConfirmed / bookingsQuoted"
+      },
+      {
+        "id": "call_rate",
+        "name": "Call Rate (Quotes with Call/VM Attached)",
+        "unit": "%",
+        "direction": "higher",
+        "defaultWeight": 0.15,
+        "formula": "quotesWithCall / totalQuotes",
+        "draft": true
+      },
+      {
+        "id": "revenue_target",
+        "name": "Revenue vs Target",
+        "unit": "AUD",
+        "direction": "higher",
+        "defaultWeight": 0.2
+      },
+      {
+        "id": "margin_target",
+        "name": "Realised Margin vs Target",
+        "unit": "%",
+        "direction": "higher",
+        "defaultWeight": 0.15
+      },
+      {
+        "id": "client_satisfaction",
+        "name": "Client Satisfaction",
+        "unit": "/10",
+        "direction": "higher",
+        "defaultWeight": 0.1
+      },
+      {
+        "id": "bookings_on_time",
+        "name": "Bookings Delivered On-Time",
+        "unit": "%",
+        "direction": "higher",
+        "defaultWeight": 0.1
+      },
+      {
+        "id": "complaint_rate",
+        "name": "Complaint Rate",
+        "unit": "%",
+        "direction": "lower",
+        "defaultWeight": 0.05
+      },
+      {
+        "id": "team_engagement",
+        "name": "Team Engagement (GM only)",
+        "unit": "score",
+        "direction": "higher",
+        "defaultWeight": 0.1
+      }
+    ]
+  },
+  "projects": [
+    {
+      "id": "rostering_system",
+      "name": "Rostering System",
+      "bonusAmount": 2500,
+      "bonusIncludesSuper": true,
+      "assignedTo": [
+        "michael"
+      ],
+      "status": "In Progress",
+      "dueDate": "2026-06-30",
+      "dodLink": "",
+      "payoutTrigger": "on_dod_signoff"
+    },
+    {
+      "id": "quoting_tool",
+      "name": "Quoting Tool",
+      "bonusAmount": 2500,
+      "bonusIncludesSuper": true,
+      "assignedTo": [
+        "michael"
+      ],
+      "status": "In Progress",
+      "dueDate": "2026-09-30",
+      "dodLink": "",
+      "payoutTrigger": "on_dod_signoff"
+    },
+    {
+      "id": "client_portal",
+      "name": "Client Portal",
+      "bonusAmount": 2500,
+      "bonusIncludesSuper": true,
+      "assignedTo": [
+        "michael"
+      ],
+      "status": "Not Started",
+      "dueDate": "2026-12-31",
+      "dodLink": "",
+      "payoutTrigger": "on_dod_signoff"
+    }
+  ],
+  "employees": [
+    {
+      "id": "hayley",
+      "name": "Hayley Wilson",
+      "role": "General Manager",
+      "roleShort": "GM",
+      "baseSalary": 110000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gm",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "hayley-a7f3c81d.html",
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "quarterlyCMNP": [
+          {
+            "quarter": "Apr-Jun 2026",
+            "cm": 0,
+            "np": 0,
+            "plLabel": "Apr-Jun 2026"
+          },
+          {
+            "quarter": "Jul-Sep 2026",
+            "cm": 0,
+            "np": 0,
+            "plLabel": "Jul-Sep 2026"
+          },
+          {
+            "quarter": "Oct-Dec 2026",
+            "cm": 0,
+            "np": 0,
+            "plLabel": "Oct-Dec 2026"
+          },
+          {
+            "quarter": "Jan-Mar 2027",
+            "cm": 0,
+            "np": 0,
+            "plLabel": "Jan-Mar 2027"
+          }
+        ]
+      },
+      "actualPayouts": [
+        {
+          "quarter": "Apr-Jun 2026",
+          "commissionPaid": null,
+          "cm": null,
+          "np": null,
+          "notes": ""
+        },
+        {
+          "quarter": "Jul-Sep 2026",
+          "commissionPaid": null,
+          "cm": null,
+          "np": null,
+          "notes": ""
+        },
+        {
+          "quarter": "Oct-Dec 2026",
+          "commissionPaid": null,
+          "cm": null,
+          "np": null,
+          "notes": ""
+        },
+        {
+          "quarter": "Jan-Mar 2027",
+          "commissionPaid": null,
+          "cm": null,
+          "np": null,
+          "notes": ""
+        }
+      ],
+      "last365GPSold": 187000,
+      "annualGPTarget": 200000,
+      "minProductionGP": null,
+      "previousBaseSalary": 100000,
+      "ote": {
+        "baseSalary": 110000,
+        "variableTarget": 48200,
+        "otePackage": 171400,
+        "targetMetricLabel": "$1.3M CM / $1.1M NP",
+        "baseMixPct": 71.9,
+        "variableMixPct": 28.1,
+        "baseSuperOnBase": 13200,
+        "baseInclSuper": 123200
+      },
+      "kpiScorecard": {
+        "overallNote": "DRAFT v2 — rebuilt from the GM Position Description (pp. 14–21 of the Australian Staff Employment Agreement). Anchored on the eight 'What Success Looks Like in Year One' markers plus Operational Leadership, Team Leadership & HR, Financial Management, Interim HOE Coverage, and behavioural standards.",
+        "sourceDoc": "Australian Staff Employment Agreement.pdf — General Manager PD",
+        "categories": [
+          {
+            "id": "operational_leadership",
+            "title": "Operational Leadership & Team Cadence",
+            "weight": 25,
+            "score": 0,
+            "included": true,
+            "criteria": [
+              "Team operating to a clear, consistent meeting rhythm (regular 1:1s, performance check-ins, all-team cadence run effectively with your support).",
+              "Senior leadership team meeting cadence held — regular 1:1s with direct reports plus a monthly performance review with the Director.",
+              "Primary escalation point for operational issues — coaches direct reports through resolution rather than solving everything directly.",
+              "Proactively identifies operational friction and gaps — escalates improvement briefs to the Director with clear context.",
+              "Adopts and drives adherence to new systems and processes as they are implemented."
+            ]
+          },
+          {
+            "id": "team_performance",
+            "title": "Team Performance & Direct Reports",
+            "weight": 25,
+            "score": 0,
+            "included": true,
+            "criteria": [
+              "Every direct report has documented KPIs and has received at least one formal mid-year review with clear, honest feedback.",
+              "Onboarding is no longer improvised — at least one new team member has been brought on through a structured process you've built or refined.",
+              "Direct reports experience you as a GM, not a former peer — the leadership shift has been made and held with consistency.",
+              "Manages separations and performance improvement processes in collaboration with the Director.",
+              "Mentors direct reports through conflict resolution; holds the team accountable to Company-Wide Behaviours (above B average)."
+            ]
+          },
+          {
+            "id": "financial_execution",
+            "title": "Financial Execution",
+            "weight": 20,
+            "score": 0,
+            "included": true,
+            "criteria": [
+              "Financial performance tracked weekly — leading and lagging metrics reviewed, variances understood; brings the Director well-reasoned analysis rather than raw numbers.",
+              "Executes against annual revenue, GP, and cost targets set in partnership with the Director.",
+              "Monitors weekly/monthly leading and lagging metrics (quotes, confirmations, revenue, conversion rates, average value, call volumes) and acts on variances.",
+              "Oversees wage budgets and assesses cost efficiency regularly via Xero cash-basis P&L.",
+              "Ensures the business operates within break-even parameters and flags financial risk early."
+            ]
+          },
+          {
+            "id": "interim_hoe_coverage",
+            "title": "Interim HOE Coverage & Talent/Account Oversight",
+            "weight": 15,
+            "score": 0,
+            "included": true,
+            "criteria": [
+              "HOE vacancy hasn't created dropped balls — venue relationships, talent oversight, and account management are being covered with clear interim ownership.",
+              "Web project backlog is prioritised and moving — clear weekly mandate to the dev team; web decisions no longer bottleneck on the Director.",
+              "Brand & quality oversight: client interactions and event deliverables remain consistent with brand identity in tone, quality, and presentation.",
+              "Working rhythm with the Director gives genuine autonomy while keeping strategic alignment tight."
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct Floor",
+            "weight": 15,
+            "score": 0,
+            "included": true,
+            "criteria": [
+              "Adheres to Company-Wide Behaviours and Individual Responsibilities; maintains an above-B weighted average across both.",
+              "Owns company culture, values, and the behavioural framework (Company-Wide Behaviours).",
+              "Continuously improves employee retention, satisfaction, and productivity.",
+              "Works diligently and amicably with all staff, clients, and suppliers."
+            ]
+          }
+        ]
+      },
+      "faqGroup": "gm"
+    },
+    {
+      "id": "dane",
+      "name": "Dane McKenzie",
+      "role": "Senior Sales",
+      "roleShort": "Senior Sales",
+      "baseSalary": 92500,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gp_bands_senior",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "dane-2f7b4a9d.html",
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "monthlyGP": [
+          {
+            "month": "Apr 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "May 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jun 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jul 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Aug 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Sep 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Oct 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Nov 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Dec 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jan 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Feb 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Mar 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          }
+        ]
+      },
+      "actualPayouts": [
+        {
+          "month": "Apr 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "May 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jun 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jul 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Aug 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Sep 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Oct 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Nov 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Dec 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jan 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Feb 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Mar 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        }
+      ],
+      "last365GPSold": 389300,
+      "annualGPTarget": 400000,
+      "minProductionGP": null,
+      "previousBaseSalary": 85000,
+      "realisticRange": {
+        "min": 250000,
+        "max": 450000,
+        "absoluteMax": 600000
+      },
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000023895089",
+      "ote": {
+        "baseSalary": 92500,
+        "variableTarget": 24400,
+        "otePackage": 128000,
+        "targetMetricLabel": "$400k GP Sold",
+        "baseMixPct": 80.9,
+        "variableMixPct": 19.1,
+        "baseSuperOnBase": 11100,
+        "baseInclSuper": 103600,
+        "snapToGP": 400000
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT — Senior Sales KPIs from employment agreement. NOTE: under review for FY26.",
+        "categories": [
+          {
+            "id": "sales_targets",
+            "title": "Sales Performance",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Gross Profit Sold > $375,000 in the calendar year",
+              "Bookings Quoted > 1,000 across the calendar year",
+              "Monthly conversion rate ≥ 35% across a 365-day period",
+              "Average GP of Sales > $800 per transaction every month when converting new business"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
+      },
+      "faqGroup": "sales_rep"
+    },
+    {
+      "id": "daniel",
+      "name": "Daniel Steer",
+      "role": "Sales Rep",
+      "roleShort": "Sales",
+      "baseSalary": 75000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gp_bands",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "daniel-4b9e2f5c.html",
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "monthlyGP": [
+          {
+            "month": "Apr 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "May 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jun 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jul 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Aug 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Sep 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Oct 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Nov 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Dec 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jan 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Feb 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Mar 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          }
+        ]
+      },
+      "actualPayouts": [
+        {
+          "month": "Apr 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "May 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jun 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jul 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Aug 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Sep 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Oct 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Nov 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Dec 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jan 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Feb 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Mar 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        }
+      ],
+      "last365GPSold": 333700,
+      "annualGPTarget": 400000,
+      "minProductionGP": null,
+      "previousBaseSalary": 71250,
+      "realisticRange": {
+        "min": 250000,
+        "max": 450000,
+        "absoluteMax": 600000
+      },
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000103655232",
+      "ote": {
+        "baseSalary": 75000,
+        "variableTarget": 24400,
+        "otePackage": 108400,
+        "targetMetricLabel": "$400k GP Sold",
+        "baseMixPct": 77.5,
+        "variableMixPct": 22.5,
+        "baseSuperOnBase": 9000,
+        "baseInclSuper": 84000,
+        "snapToGP": 400000
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT — Sales Rep KPIs from employment agreement. NOTE: targets reduced when team grew; under review for FY26.",
+        "categories": [
+          {
+            "id": "sales_targets",
+            "title": "Sales Performance",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Gross Profit Sold > $350,000 in the calendar year",
+              "Bookings Quoted > 1,000 across the calendar year",
+              "Monthly conversion rate ≥ 30% across a 365-day period",
+              "Average GP of Sales > $800 per transaction every month when converting new business"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
+      },
+      "faqGroup": "sales_rep"
+    },
+    {
+      "id": "nic",
+      "name": "Nic Symons",
+      "role": "Sales Rep",
+      "roleShort": "Sales",
+      "baseSalary": 75000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gp_bands",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "nic-8d1c6e3a.html",
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "monthlyGP": [
+          {
+            "month": "Apr 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "May 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jun 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jul 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Aug 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Sep 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Oct 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Nov 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Dec 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jan 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Feb 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Mar 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          }
+        ]
+      },
+      "actualPayouts": [
+        {
+          "month": "Apr 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "May 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jun 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jul 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Aug 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Sep 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Oct 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Nov 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Dec 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jan 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Feb 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Mar 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        }
+      ],
+      "last365GPSold": 335200,
+      "annualGPTarget": 400000,
+      "minProductionGP": null,
+      "previousBaseSalary": 70000,
+      "realisticRange": {
+        "min": 250000,
+        "max": 450000,
+        "absoluteMax": 600000
+      },
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000215439047",
+      "ote": {
+        "baseSalary": 75000,
+        "variableTarget": 24500,
+        "otePackage": 108500,
+        "targetMetricLabel": "$400k GP Sold",
+        "baseMixPct": 77.4,
+        "variableMixPct": 22.6,
+        "baseSuperOnBase": 9000,
+        "baseInclSuper": 84000,
+        "snapToGP": 400000
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT — Sales Rep KPIs from employment agreement. NOTE: targets reduced when team grew; under review for FY26.",
+        "categories": [
+          {
+            "id": "sales_targets",
+            "title": "Sales Performance",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Gross Profit Sold > $350,000 in the calendar year",
+              "Bookings Quoted > 1,000 across the calendar year",
+              "Monthly conversion rate ≥ 30% across a 365-day period",
+              "Average GP of Sales > $800 per transaction every month when converting new business"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
+      },
+      "faqGroup": "sales_rep"
+    },
+    {
+      "id": "evie",
+      "name": "Evie Johnston",
+      "role": "Sales / Producer Hybrid",
+      "roleShort": "Hybrid",
+      "baseSalary": 80000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "hybrid_gp",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "evie-6c3e8b1f.html",
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "monthlyGP": [
+          {
+            "month": "Apr 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "May 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jun 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jul 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Aug 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Sep 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Oct 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Nov 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Dec 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jan 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Feb 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Mar 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          }
+        ]
+      },
+      "actualPayouts": [
+        {
+          "month": "Apr 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "May 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jun 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jul 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Aug 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Sep 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Oct 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Nov 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Dec 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jan 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Feb 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Mar 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        }
+      ],
+      "last365GPSold": 182500,
+      "annualGPTarget": 250000,
+      "minProductionGP": 400000,
+      "previousBaseSalary": 77500,
+      "realisticRange": {
+        "min": 175000,
+        "max": 325000,
+        "absoluteMax": 400000
+      },
+      "scenarioDefaults": {
+        "gp": 200000
+      },
+      "hideOldPlan": false,
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146",
+      "ote": {
+        "baseSalary": 80000,
+        "variableTarget": 25600,
+        "otePackage": 115200,
+        "targetMetricLabel": "$200k GP / $400k+ Event GP",
+        "baseMixPct": 77.8,
+        "variableMixPct": 22.2,
+        "baseSuperOnBase": 9600,
+        "baseInclSuper": 89600,
+        "snapToGP": 250000
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT — Production Coordinator KPIs (admin items pruned per Nathan).",
+        "categories": [
+          {
+            "id": "content",
+            "title": "Content & Photo Shoots",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Schedule and roll out 2 separate photo shoots across the calendar year (with assistance from Talent Manager)",
+              "Capture content for 40+ artists annually across these shoots"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
+      },
+      "faqGroup": "hybrid_sales"
+    },
+    {
+      "id": "evie2",
+      "name": "Evie 2.0",
+      "role": "Sales / Producer Hybrid",
+      "roleShort": "Hybrid",
+      "baseSalary": 80000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "hybrid_gp",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "evie2-9a5d7c4e.html",
+      "placeholder": true,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "monthlyGP": [
+          {
+            "month": "Apr 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "May 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jun 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jul 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Aug 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Sep 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Oct 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Nov 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Dec 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jan 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Feb 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Mar 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          }
+        ]
+      },
+      "actualPayouts": [
+        {
+          "month": "Apr 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "May 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jun 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jul 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Aug 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Sep 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Oct 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Nov 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Dec 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jan 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Feb 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Mar 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        }
+      ],
+      "last365GPSold": 0,
+      "annualGPTarget": 150000,
+      "minProductionGP": 400000,
+      "previousBaseSalary": 77500,
+      "realisticRange": {
+        "min": 100000,
+        "max": 200000,
+        "absoluteMax": 400000
+      },
+      "scenarioDefaults": {
+        "gp": 100000
+      },
+      "hideOldPlan": true,
+      "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000071689146",
+      "ote": {
+        "baseSalary": 80000,
+        "variableTarget": 25600,
+        "otePackage": 115200,
+        "targetMetricLabel": "$200k GP / $400k+ Event GP",
+        "baseMixPct": 77.8,
+        "variableMixPct": 22.2,
+        "baseSuperOnBase": 9600,
+        "baseInclSuper": 89600,
+        "snapToGP": 150000
+      },
+      "salesZohoUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
+      "kpiScorecard": {
+        "overallNote": "DRAFT — Production Coordinator KPIs (admin items pruned per Nathan).",
+        "categories": [
+          {
+            "id": "content",
+            "title": "Content & Photo Shoots",
+            "weight": 60,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Schedule and roll out 2 separate photo shoots across the calendar year (with assistance from Talent Manager)",
+              "Capture content for 40+ artists annually across these shoots"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 40,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
+      },
+      "faqGroup": "hybrid_sales"
+    },
+    {
+      "id": "tom",
+      "name": "Tom Bunnett",
+      "role": "Performer / Talent Manager",
+      "roleShort": "Talent",
+      "baseSalary": 91350,
+      "baseSalaryIncludesSuper": false,
+      "planType": "hybrid_rev_senior",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "tom-7d2a9f4b.html",
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "monthlyGP": [
+          {
+            "month": "Apr 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "May 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jun 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jul 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Aug 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Sep 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Oct 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Nov 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Dec 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jan 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Feb 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Mar 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          }
+        ]
+      },
+      "actualPayouts": [
+        {
+          "month": "Apr 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "May 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jun 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jul 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Aug 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Sep 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Oct 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Nov 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Dec 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jan 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Feb 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Mar 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        }
+      ],
+      "last365GPSold": 48700,
+      "annualGPTarget": 50000,
+      "minProductionGP": null,
+      "previousBaseSalary": 88000,
+      "realisticRange": {
+        "min": 170000,
+        "max": 250000,
+        "absoluteMax": 400000
+      },
+      "kpiScorecard": {
+        "overallNote": "DRAFT — Sales & Talent Manager KPIs. Min performances/revenue de-emphasised; sourcing + content prioritised.",
+        "categories": [
+          {
+            "id": "sourcing",
+            "title": "Talent Sourcing & Onboarding",
+            "weight": 35,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Source and on-board minimum 30 new entertainers per calendar year across multiple states",
+              "Melbourne replacement-of-turnover floor: 5 DJs, 2 DJ-Sax, 2 Complete Soloists"
+            ]
+          },
+          {
+            "id": "content",
+            "title": "Content & Photo Shoots",
+            "weight": 30,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "25 in-event organised Content Ninja video shoots across the calendar year",
+              "Schedule and roll out 2 separate photo shoots across the calendar year (with Production Coordinator)",
+              "Capture content for 40+ artists annually across these shoots"
+            ]
+          },
+          {
+            "id": "sales",
+            "title": "Sales Contribution",
+            "weight": 15,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Personal Gross Profit Sold above the agreed annual target (subject to change with sales involvement)",
+              "Maintain Average GP per booking > $800 when converting new business"
+            ]
+          },
+          {
+            "id": "behavioural",
+            "title": "Behavioural & Conduct",
+            "weight": 20,
+            "score": 100,
+            "included": true,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all work undertakings"
+            ]
+          }
+        ]
+      },
+      "scenarioDefaults": {
+        "gigs": 97,
+        "avgPerGig": 2013,
+        "revenue": 195237
+      },
+      "ote": {
+        "baseSalary": 91350,
+        "variableTarget": 20650,
+        "otePackage": 122962,
+        "targetMetricLabel": "$220k Performance Revenue",
+        "baseMixPct": 83.2,
+        "variableMixPct": 16.8,
+        "baseSuperOnBase": 10962,
+        "baseInclSuper": 102312,
+        "snapToGP": 220000
+      },
+      "faqGroup": "performer"
+    },
+    {
+      "id": "michael",
+      "name": "Michael Kourkov",
+      "role": "Performer / Systems Manager",
+      "roleShort": "Talent",
+      "baseSalary": 70000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "hybrid_rev",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "michael-3e8f1b6c.html",
+      "placeholder": false,
+      "actuals": {
+        "fiscalYearStart": "2026-04",
+        "monthlyGP": [
+          {
+            "month": "Apr 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "May 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jun 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jul 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Aug 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Sep 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Oct 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Nov 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Dec 2026",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Jan 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Feb 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          },
+          {
+            "month": "Mar 2027",
+            "gpReceived": 0,
+            "eventGP": 0,
+            "revenueReceivedIncGST": 0
+          }
+        ]
+      },
+      "actualPayouts": [
+        {
+          "month": "Apr 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "May 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jun 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jul 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Aug 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Sep 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Oct 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Nov 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Dec 2026",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Jan 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Feb 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        },
+        {
+          "month": "Mar 2027",
+          "commissionPaid": null,
+          "gpReceived": null,
+          "eventGP": null,
+          "notes": ""
+        }
+      ],
+      "last365GPSold": 0,
+      "annualGPTarget": 0,
+      "minProductionGP": null,
+      "previousBaseSalary": 70000,
+      "realisticRange": {
+        "min": 70000,
+        "max": 200000,
+        "absoluteMax": 300000
+      },
+      "kpiScorecard": {
+        "overallNote": "Slider value 0–100% per category × weight. Weighted sum maps linearly: 0%→0.7×, 50%→1.0×, 100%→1.3× multiplier on commission.",
+        "categories": [
+          {
+            "id": "reliability",
+            "title": "Performance Reliability & Quality",
+            "weight": 25,
+            "score": 100,
+            "criteria": [
+              "100% fulfilment rate for all personally booked performances (no late arrivals, no poor cancellations)",
+              "Minimum 35 performances during contract period (pro-rated from annual 70 target)",
+              "20% 5-star review rate or higher (35 × 20% = 7 reviews)",
+              "Increase gross profit per performance by 25% vs previous year personal average"
+            ]
+          },
+          {
+            "id": "initiative",
+            "title": "Initiative & Proactivity",
+            "weight": 15,
+            "score": 100,
+            "criteria": [
+              "Demonstrate proactive mindset — identify improvements without prompting",
+              "Propose at least 2 improvements to systems/workflows/tools by Month 3",
+              "Independently research and trial 1 new tool, present findings to management",
+              "Show evidence of troubleshooting/solving issues without escalation, at least once per fortnight"
+            ]
+          },
+          {
+            "id": "systems",
+            "title": "Systems Development & Delivery",
+            "weight": 25,
+            "score": 100,
+            "criteria": [
+              "Successfully scope, build, and implement at least 1 major internal system/tool (e.g. Talent Availability Checker, Client Online Portal, Custom Quote Generator)",
+              "Deliver 3–5 smaller automation/system improvements within Zoho/PandaDoc/MEC platforms (≥5 hours/month admin saved)",
+              "Detailed documentation (technical notes, SOPs, UAT reports) for every system built/updated"
+            ]
+          },
+          {
+            "id": "training",
+            "title": "Training & Documentation",
+            "weight": 10,
+            "score": 100,
+            "criteria": [
+              "Refactor and update internal DJ training modules — record new videos where necessary",
+              "Create minimum 5 new SOP videos covering backend systems or performance tech, stored in internal library",
+              "Maintain training content version-controlled and up-to-date by end of contract"
+            ]
+          },
+          {
+            "id": "team",
+            "title": "Interpersonal Impact & Team Support",
+            "weight": 10,
+            "score": 100,
+            "criteria": [
+              "Resolve 90% of assigned IT support requests within agreed timeframes (24–48h non-urgent, same-day urgent)",
+              "Deliver at least 4 DJ mentoring/shadowing sessions for new performers, with positive feedback",
+              "Active participation in weekly leadership/project meetings — clear progress updates",
+              "Strong, transparent communication — weekly progress emails on current projects",
+              "Attend 100% of scheduled team meetings unless on leave/performing",
+              "Contribute positively to team culture (peak-period support, helpful knowledge sharing)",
+              "Gather feedback on new projects from at least 3 team members by Month 5"
+            ]
+          },
+          {
+            "id": "company",
+            "title": "Company-wide & Behavioural Expectations",
+            "weight": 15,
+            "score": 100,
+            "criteria": [
+              "Achieve a B or higher weighted average across Company-wide and Role-specific behavioural reviews",
+              "Meet 90% of project deadlines as agreed in project timelines",
+              "Maintain a collaborative, solutions-focused approach with all staff, clients, and suppliers",
+              "Work sufficiently diligently and amicably towards staff and clients of MEC in all undertakings"
+            ]
+          }
+        ]
+      },
+      "scenarioDefaults": {
+        "gigs": 75,
+        "avgPerGig": 1310,
+        "revenue": 98250,
+        "annualRevenue": 98250
+      },
+      "ote": {
+        "baseSalary": 70000,
+        "variableTarget": 18400,
+        "otePackage": 96800,
+        "targetMetricLabel": "$150k Performance Revenue + 3 projects",
+        "baseMixPct": 81.0,
+        "variableMixPct": 19.0,
+        "baseSuperOnBase": 8400,
+        "baseInclSuper": 78400,
+        "snapToGP": 125000
+      },
+      "faqGroup": "performer"
+    },
+    {
+      "id": "sales4",
+      "name": "Sales 4.0",
+      "role": "Sales Rep",
+      "roleShort": "Sales",
+      "baseSalary": 0,
+      "previousBaseSalary": 75000,
+      "baseSalaryIncludesSuper": false,
+      "planType": "gp_bands",
+      "planOverrides": null,
+      "kpiAssignments": [],
+      "dashboardFile": "sales4-5c6e1d8a.html",
+      "placeholder": true,
+      "last365GPSold": 0,
+      "annualGPTarget": 0,
+      "minProductionGP": null,
+      "faqGroup": "sales_rep"
+    }
+  ],
+  "companyPL": {
+    "label": "Company P&L (Cash Basis)",
+    "subLabel": "Quarterly company financials. Feeds the company-wide view and can gate variable comp payouts (e.g., 'comm only pays if company NP > X'). Fiscal year starts July.",
+    "fiscalYearStart": "2026-07",
+    "xeroIntegration": {
+      "enabled": false,
+      "note": "TODO: create an integration that pulls in directly from Xero. In the meantime, use CSV upload or manual entry."
+    },
+    "quarters": [
+      {
+        "label": "Apr-Jun 2025",
+        "revenue": 736680,
+        "cogs": 276345,
+        "contribExp": 208953,
+        "opex": 17781
+      },
+      {
+        "label": "Jul-Sep 2025",
+        "revenue": 913414,
+        "cogs": 332610,
+        "contribExp": 229616,
+        "opex": 57214
+      },
+      {
+        "label": "Oct-Dec 2025",
+        "revenue": 1168425,
+        "cogs": 707559,
+        "contribExp": 241306,
+        "opex": 33456
+      },
+      {
+        "label": "Jan-Mar 2026",
+        "revenue": 987753,
+        "cogs": 459256,
+        "contribExp": 239627,
+        "opex": 52191
+      }
+    ],
+    "currentQuarter": {
+      "label": "Apr-Jun 2026",
+      "revenue": 0,
+      "cogs": 0,
+      "contribExp": 0,
+      "opex": 0
+    },
+    "historicalQuarters": [
+      {
+        "label": "Jul-Sep 2023",
+        "revenue": 605642,
+        "cogs": 169422,
+        "contribExp": 136868,
+        "opex": 29127
+      },
+      {
+        "label": "Oct-Dec 2023",
+        "revenue": 889100,
+        "cogs": 490656,
+        "contribExp": 134350,
+        "opex": 16927
+      },
+      {
+        "label": "Jan-Mar 2024",
+        "revenue": 695000,
+        "cogs": 375340,
+        "contribExp": 175298,
+        "opex": 29556
+      },
+      {
+        "label": "Apr-Jun 2024",
+        "revenue": 615855,
+        "cogs": 278120,
+        "contribExp": 181917,
+        "opex": 20523
+      },
+      {
+        "label": "Jul-Sep 2024",
+        "revenue": 753116,
+        "cogs": 227517,
+        "contribExp": 195132,
+        "opex": 43354
+      },
+      {
+        "label": "Oct-Dec 2024",
+        "revenue": 964984,
+        "cogs": 595819,
+        "contribExp": 199633,
+        "opex": 29634
+      },
+      {
+        "label": "Jan-Mar 2025",
+        "revenue": 779829,
+        "cogs": 386494,
+        "contribExp": 164919,
+        "opex": 54189
+      }
+    ]
+  },
+  "financialPlanning": {
+    "externalContributors": [
+      {
+        "id": "charize",
+        "name": "Charize",
+        "last365GPSold": 138800,
+        "annualGPTarget": 138800
+      },
+      {
+        "id": "lyra",
+        "name": "Lyra",
+        "last365GPSold": 3000,
+        "annualGPTarget": 3000
+      },
+      {
+        "id": "nathan_coul",
+        "name": "Nathan",
+        "last365GPSold": 34800,
+        "annualGPTarget": 34800
+      }
+    ],
+    "bestCaseMultiplier": 1.15,
+    "worstCaseFromCurrentDay": true,
+    "zohoNote": "Zoho GP sold is slightly lower than Xero cash-basis GP due to internal buffers. Use Zoho figures for commission calc; Xero ratios used here for company P&L projection."
+  },
+  "faqs": {
+    "sales_rep": {
+      "label": "Sales Representative",
+      "items": [
+        {
+          "q": "When do I get paid commission?",
+          "a": "Commission is paid monthly on the same payroll cycle as your base salary. The figure is calculated from cash that has actually arrived in MEC's account that month — not from quotes sent or bookings confirmed. We pay when the customer pays."
+        },
+        {
+          "q": "What is the True-Up?",
+          "a": "Monthly commission is an estimate. At the end of each quarter we reconcile against your actual quarterly entitlement using the proper quarterly bands. If you have been paid more than you have earned, the excess becomes a balance that nets against future commission. If you have been paid less, the next month tops you up. Your base salary never moves either way."
+        },
+        {
+          "q": "What if a booking I made gets cancelled or refunded?",
+          "a": "Refunds reduce your future commission, never your base. The refunded amount appears as negative cash in Zoho on the booking, and is netted against your next commission cycle. Your paycheck never goes negative because of a refund."
+        },
+        {
+          "q": "What if I leave MEC mid-quarter?",
+          "a": "Cash that has already been paid to you stays with you. Cash that has already arrived at MEC but not yet been paid out to you is yours — it gets paid in your final paycheck. Cash that arrives after your last day stays with the company."
+        },
+        {
+          "q": "How is my band rate calculated?",
+          "a": "Your annual GP received climbs through bands. The first chunk earns at rate A%, the next at rate B%, etc. As you climb into higher bands, the marginal rate goes up — you earn more per dollar of GP at higher levels. The dashboard shows your Effective Rate which is the blended average across all bands you have already earned."
+        },
+        {
+          "q": "Why monthly bands instead of quarterly or annual?",
+          "a": "Monthly bands give you cash flow throughout the year. Annual bands would mean waiting until December for any commission. The quarterly true-up keeps things fair: monthly figures are an estimate, and at quarter-end we reconcile against your actual quarterly entitlement."
+        },
+        {
+          "q": "What is the difference between GP Sold and GP Received?",
+          "a": "GP Sold is the total expected GP from bookings you have quoted and converted. GP Received is the portion of that GP that has actually arrived as cash from customers. Commission is paid on GP Received only — that is the cash in is cash out principle."
+        },
+        {
+          "q": "Why is my band rate super-inclusive?",
+          "a": "Australian super (12%) is paid on top of every dollar you earn. Showing your commission as super-inclusive means the rate IS the total cost to the business — base + commission + super together. It makes pay packages comparable across employers and removes the mental math of adding super on top."
+        },
+        {
+          "q": "Can I see how the new plan compares to my old one?",
+          "a": "Yes — the Old vs New comparison card on your Overview tab shows what the same GP figure would have earned under both plans. The new plan rewards stretch (high performers earn proportionally more at higher GP) — most reps earn more on the new plan at realistic ranges."
+        },
+        {
+          "q": "What about KPIs — when do they affect my pay?",
+          "a": "KPIs are draft for Year 1 and locked at 1.0× — they do not affect your variable compensation right now. From Year 2, KPIs may apply a multiplier between 0.7× and 1.3× based on your scorecard. The full draft scorecard is on the KPIs tab so you can read it now and push back before activation."
+        },
+        {
+          "q": "Will my plan change next year?",
+          "a": "Expect annual band tweaks based on what we have learned and where the business is heading. Bigger structural changes (new shape, new mechanisms like team-pool commissions) will be communicated in advance and never applied retrospectively. Cash you have already earned is locked in."
+        },
+        {
+          "q": "What if I think a number is wrong?",
+          "a": "Raise it with Hayley or Nathan immediately. We would rather catch errors early. Bring the specific number, the figure you expected, and a Zoho or Xero screenshot if relevant. The sooner we look, the easier it is to fix."
+        },
+        {
+          "q": "Where does the dashboard data come from?",
+          "a": "GP and bookings data comes from Zoho. Company-level P&L data comes from Xero. Numbers are pulled at the start of each pay cycle. The dashboard is read-only — to change a number, the source system has to be updated first."
+        }
+      ]
+    },
+    "hybrid_sales": {
+      "label": "Sales + Production (Admin & Production Coordinator)",
+      "items": [
+        {
+          "q": "What is the production gate? Why does it exist?",
+          "a": "Your role has both sales and production responsibilities. The production gate sets a minimum annual Event GP Produced target (the GP you have shepherded through to actual event date). The gate ensures we are paying you for both sides of your role — not just Sales-style commission when you have not done the production side."
+        },
+        {
+          "q": "What happens if I do not hit the production gate?",
+          "a": "Below the floor ($150k Event GP) no Sales commission is paid (Production Commission of 1% on Event GP still flows). Between floor and full ($300k), Sales commission ramps linearly from 0% up to 100%. At full rate ($300k+), full Sales commission flows. You can see the ramp on your Planning area."
+        },
+        {
+          "q": "When do I get paid commission?",
+          "a": "Commission is paid monthly. Your monthly commission is calculated from the GP that has actually arrived as cash that month — same cash-in-cash-out principle as Sales reps."
+        },
+        {
+          "q": "What is the True-Up?",
+          "a": "Monthly commission is an estimate. At the end of each quarter we reconcile against your actual quarterly entitlement. If you have been paid too much, the excess nets against future commission. If too little, the next month tops you up. Your base salary never moves."
+        },
+        {
+          "q": "What if a booking I worked on gets cancelled or refunded?",
+          "a": "Refunds reduce your future commission, never your base. The refund appears as negative cash on the booking and nets against your next commission cycle."
+        },
+        {
+          "q": "What if I leave MEC mid-quarter?",
+          "a": "Cash already paid to you stays with you. Cash that has arrived at MEC but not yet been paid out is yours, paid in your final paycheck. Cash arriving after your last day stays with the company."
+        },
+        {
+          "q": "Why is my plan structured this way (compared to a Sales rep)?",
+          "a": "You have less time on pure sales because you are also doing production. The bands are tuned to that reality — they pay slightly differently to a pure Sales rep. The production gate is the structural piece that ensures you get rewarded for both sides of your role."
+        },
+        {
+          "q": "What about KPIs — when do they affect my pay?",
+          "a": "KPIs are draft for Year 1 and locked at 1.0× — they do not affect pay yet. From Year 2 they may apply a 0.7× to 1.3× multiplier. The draft scorecard for your role is on the KPIs tab — read it and push back before it goes live."
+        },
+        {
+          "q": "What if I think a number is wrong?",
+          "a": "Raise it with Hayley or Nathan straight away. Bring the figure you expected and a Zoho screenshot if you have one."
+        },
+        {
+          "q": "Where does the dashboard data come from?",
+          "a": "GP and Event GP figures come from Zoho. Numbers refresh each pay cycle."
+        }
+      ]
+    },
+    "gm": {
+      "label": "General Manager",
+      "items": [
+        {
+          "q": "Why is my plan based on Contribution Margin (CM) and Net Profit (NP), not personal GP?",
+          "a": "As GM your job is to make the whole business work — not to personally generate sales. Tying your variable comp to business-level metrics aligns your incentives with what is good for the company overall, not just one rep's funnel."
+        },
+        {
+          "q": "What is Contribution Margin (CM)?",
+          "a": "Revenue minus all direct costs of doing the work — talent fees, cost of goods sold, anything that scales with the gig. CM is what is left after the work is done, before fixed costs like salaries, rent, software."
+        },
+        {
+          "q": "What is Net Profit (NP)?",
+          "a": "CM minus all fixed costs (salaries, rent, software, etc.). NP is what is left for the business after every cost is paid for."
+        },
+        {
+          "q": "When does my CM band start paying?",
+          "a": "Your CM bands kick in at $1.0M of annual CM. Below $1.0M no variable comp flows from CM. From $1.0M-$1.1M you earn 10%. From $1.1M-$1.4M the rate is 5%. Above $1.4M the rate climbs back to 7.5%."
+        },
+        {
+          "q": "Why is the rate lower in the $1.1M-$1.4M zone?",
+          "a": "The $1.0M to $1.1M band is where your higher base salary (effective April 2026) is being paid back. The trough at 5% reflects the cost of the uplift — once you have grown CM beyond $1.4M, the rate climbs again to 7.5% to reward the stretch."
+        },
+        {
+          "q": "How does my NP kicker work?",
+          "a": "On top of CM commission, an NP-tied kicker scales with annual Net Profit. NP bonuses ramp from $0 to $30k at $1.5M annual NP — see the NP bonus card on your Overview tab for the band structure."
+        },
+        {
+          "q": "When do I get paid commission?",
+          "a": "Quarterly. At each quarter-end your trailing-12-month CM is calculated from the Xero P&L; your quarterly entitlement is paid in the next pay cycle."
+        },
+        {
+          "q": "What if a quarter is bad?",
+          "a": "Your trailing-12-month CM smooths quarterly variation — one bad quarter does not zero you out, but a sustained drop will reduce variable comp. Your base salary does not move."
+        },
+        {
+          "q": "What if I leave MEC mid-quarter?",
+          "a": "Variable comp earned on cash already arrived at MEC is yours — paid in your final paycheck. Variable comp on quarters not yet completed is forfeited."
+        },
+        {
+          "q": "What about KPIs — when do they affect my pay?",
+          "a": "KPIs are draft for Year 1 and locked at 1.0× — they do not affect your variable compensation. From Year 2, KPIs may apply a 0.7× to 1.3× multiplier. Your draft GM scorecard is on the KPIs tab."
+        },
+        {
+          "q": "What if I think a number is wrong?",
+          "a": "Raise it with Nathan immediately. Bring the figure you expected and the Xero P&L source data."
+        },
+        {
+          "q": "Where does the dashboard data come from?",
+          "a": "CM and NP figures come from Xero (P&L extract). The dashboard reads the LTM (last 12 months) plus current quarter. Numbers refresh each pay cycle."
+        }
+      ]
+    },
+    "performer": {
+      "label": "Performer / Sales & Talent Manager",
+      "items": [
+        {
+          "q": "How is my commission different from a pure Sales rep?",
+          "a": "Your bands are calculated from Performance Revenue (revenue you bring in as a performer) rather than GP Sold. Performer economics are different — you typically earn more per dollar of revenue than a Sales rep earns per dollar of GP, because the cost structure of a performance is different to a sale."
+        },
+        {
+          "q": "What counts as Performance Revenue?",
+          "a": "Total revenue (ex-GST) from your personally-booked performances over the period. Every gig you perform contributes to your annual Performance Revenue figure."
+        },
+        {
+          "q": "When do I get paid commission?",
+          "a": "Commission is paid quarterly. Your trailing-12-month Performance Revenue is computed at each quarter-end and your entitlement is paid in the next pay cycle."
+        },
+        {
+          "q": "What if I leave MEC mid-quarter?",
+          "a": "Cash already paid to you stays with you. Variable comp on already-arrived cash is paid in your final paycheck. Future quarters are forfeited."
+        },
+        {
+          "q": "What if a gig gets cancelled or refunded?",
+          "a": "The cancelled cash reduces your TTM revenue figure; future commissions adjust automatically at the next quarter-end. Your base salary does not move."
+        },
+        {
+          "q": "What about Sales-side responsibilities?",
+          "a": "If your role includes sales contributions, those are tracked separately on the Planning tab. Sales-side GP feeds into a separate calculation that runs alongside your performance-based commission."
+        },
+        {
+          "q": "What about KPIs — when do they affect my pay?",
+          "a": "KPIs are draft for Year 1 and locked at 1.0×. From Year 2 they may apply a 0.7× to 1.3× multiplier. Your full draft scorecard is on the KPIs tab — read it now and push back before activation."
+        },
+        {
+          "q": "Why is the rate super-inclusive?",
+          "a": "Australian super (12%) is paid on top of every dollar earned. Showing the rate as super-inclusive means the rate IS the total cost to the business — easier to compare with other offers and removes the mental math of adding super on top."
+        },
+        {
+          "q": "Will my plan change next year?",
+          "a": "Expect annual band tweaks. Bigger structural changes are communicated in advance and never applied retrospectively. Cash you have already earned is locked in."
+        },
+        {
+          "q": "What if I think a number is wrong?",
+          "a": "Raise it with Hayley or Nathan immediately. Bring the figure you expected and a Zoho or PandaDoc screenshot if relevant."
+        }
+      ]
+    }
+  }
+}
