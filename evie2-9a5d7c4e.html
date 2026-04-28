@@ -814,6 +814,7 @@
     </div>
 
     <div class="card">
+      <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin: 4px 0 12px;">① Volume × Value</div>
       <div class="scenario-row">
         <label>Number of Bookings <strong>Quoted</strong></label>
         <input type="range" id="sp-quoted-slider" min="0" max="500" step="1" value="125">
@@ -821,8 +822,8 @@
       </div>
       <div class="scenario-row">
         <label>Conversion Rate <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(quoted → confirmed)</span></label>
-        <input type="range" id="sp-conv-slider" min="0" max="100" step="1" value="40">
-        <div class="input-with-suffix" style="position: relative;"><input type="text" inputmode="decimal" id="sp-conv-input" class="value-input" style="padding-right: 22px;" value="40"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">%</span></div>
+        <input type="range" id="sp-conv-slider" min="0" max="100" step="0.5" value="40">
+        <div class="input-with-suffix" style="position: relative;"><input type="text" inputmode="decimal" id="sp-conv-input" class="value-input" style="padding-right: 22px;" value="40.0" step="0.1"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">%</span></div>
       </div>
       <div class="scenario-row">
         <label>Number of Bookings <strong>Confirmed</strong> <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Quoted × Conversion)</span></label>
@@ -837,12 +838,16 @@
           <input type="text" inputmode="numeric" id="sp-avg-input" class="value-input" style="padding-left: 22px;" value="6,700">
         </div>
       </div>
+
+      <div style="border-top: 1px dashed var(--border); margin: 18px 0 14px;"></div>
+
+      <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin: 4px 0 12px;">② Revenue × Margin</div>
       <div class="scenario-row">
-        <label style="font-weight: 600;">Total GP Confirmed <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Confirmed × Avg)</span></label>
-        <input type="range" id="sp-totalgp-slider" min="0" max="800000" step="1000" value="335000">
+        <label>Revenue ex GST <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(total $ rung up, GST stripped out)</span></label>
+        <input type="range" id="sp-revenue-slider" min="100000" max="2500000" step="5000" value="957143">
         <div style="position: relative;">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-          <input type="text" inputmode="numeric" id="sp-totalgp-input" class="value-input" style="padding-left: 22px;" value="335,000">
+          <input type="text" inputmode="numeric" id="sp-revenue-input" class="value-input" style="padding-left: 22px;" value="957,143">
         </div>
       </div>
       <div class="scenario-row">
@@ -850,12 +855,16 @@
         <input type="range" id="sp-margin-slider" min="20" max="60" step="0.5" value="35">
         <div class="input-with-suffix" style="position: relative;"><input type="text" inputmode="decimal" id="sp-margin-input" class="value-input" style="padding-right: 22px;" value="35.0"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">%</span></div>
       </div>
-      <div class="scenario-row">
-        <label>Revenue ex GST <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= GP / Margin)</span></label>
-        <input type="range" id="sp-revenue-slider" min="100000" max="2000000" step="5000" value="957143">
+
+      <div style="border-top: 2px solid var(--accent); margin: 18px 0 14px;"></div>
+
+      <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin: 4px 0 12px;">③ Total GP Confirmed = Both Paths Meet Here</div>
+      <div class="scenario-row" style="background: #f6f8fc; padding: 10px 14px; border-radius: 8px; margin: -6px 0 6px;">
+        <label style="font-weight: 700; color: var(--navy);">Total GP <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Confirmed × Avg, AND = Revenue × Margin)</span></label>
+        <input type="range" id="sp-totalgp-slider" min="0" max="800000" step="1000" value="335000">
         <div style="position: relative;">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-          <input type="text" inputmode="numeric" id="sp-revenue-input" class="value-input" style="padding-left: 22px;" value="957,143">
+          <input type="text" inputmode="numeric" id="sp-totalgp-input" class="value-input" style="padding-left: 22px; font-weight: 700;" value="335,000">
         </div>
       </div>
       <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
@@ -866,8 +875,57 @@
           <div><div style="font-size: 10px; color: var(--muted);">TOTAL PACKAGE</div><div id="sp-total" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
         </div>
         <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 8px;">
-          Funnel: <strong id="sp-funnel">125 quoted → 40% conversion → 50 confirmed × $6,700 avg = $335,000 GP</strong>
+          <strong id="sp-funnel">125 quoted → 40% conv → 50 confirmed × $6,700 = $335k GP @ 35% margin (= $957k revenue)</strong>
         </div>
+      </div>
+    </div>
+
+    <!-- Explainer graphic — how the two paths interlink -->
+    <div class="card" style="margin-top: 14px;">
+      <h3 style="margin: 0 0 6px;">How the maths interlinks</h3>
+      <p style="font-size: 13px; color: var(--muted); margin: 0 0 16px;">There are <strong>two ways</strong> to get to your Total GP. Both ways have to give you the same answer — that's why the sliders all stay in sync.</p>
+      <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; padding: 16px; background: #fafaf7; border-radius: 10px; border: 1px solid var(--border);">
+
+        <!-- Way 1: Volume × Value -->
+        <div style="padding: 14px; background: #fff; border: 1px solid var(--border); border-radius: 10px;">
+          <div style="font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 10px;">① Counting bookings</div>
+          <div style="display: grid; grid-template-columns: 1fr; gap: 8px; font-family: var(--mono); font-size: 13px;">
+            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Quoted</span><span style="font-weight: 700;" id="gfx-quoted">125</span></div>
+            <div style="text-align: center; color: var(--faint); font-size: 11px;">×</div>
+            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Conv %</span><span style="font-weight: 700;" id="gfx-conv">40.0%</span></div>
+            <div style="text-align: center; color: var(--faint); font-size: 11px;">=</div>
+            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Confirmed</span><span style="font-weight: 700;" id="gfx-conf">50</span></div>
+            <div style="text-align: center; color: var(--faint); font-size: 11px;">×</div>
+            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Avg GP</span><span style="font-weight: 700;" id="gfx-avg">$6,700</span></div>
+          </div>
+        </div>
+
+        <!-- Center arrow & equality -->
+        <div style="text-align: center; font-family: var(--mono);">
+          <div style="font-size: 28px; color: var(--accent); line-height: 1;">⇢</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 6px; max-width: 100px;">Both paths land here</div>
+          <div style="margin-top: 14px; padding: 14px 18px; background: var(--ink); color: #fff; border-radius: 12px;">
+            <div style="font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7;">Total GP</div>
+            <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; margin-top: 2px;" id="gfx-total">$335,000</div>
+          </div>
+          <div style="font-size: 28px; color: var(--accent); line-height: 1; margin-top: 14px; transform: rotate(180deg);">⇢</div>
+        </div>
+
+        <!-- Way 2: Revenue × Margin -->
+        <div style="padding: 14px; background: #fff; border: 1px solid var(--border); border-radius: 10px;">
+          <div style="font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 10px;">② From the revenue</div>
+          <div style="display: grid; grid-template-columns: 1fr; gap: 8px; font-family: var(--mono); font-size: 13px;">
+            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Revenue</span><span style="font-weight: 700;" id="gfx-rev">$957k</span></div>
+            <div style="text-align: center; color: var(--faint); font-size: 11px;">×</div>
+            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Margin %</span><span style="font-weight: 700;" id="gfx-margin">35.0%</span></div>
+            <div style="text-align: center; color: var(--faint); font-size: 11px;">=</div>
+            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Total GP</span><span style="font-weight: 700;" id="gfx-total-2">$335k</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 14px; padding: 12px 14px; background: #fff8e1; border: 1px solid #f5d890; border-radius: 8px; font-size: 12px; color: #6b5300; line-height: 1.6;">
+        <strong>So what?</strong> If you increase your <strong>Avg GP</strong> by $50 per booking, your Total GP grows. Same Total GP can be reached either by closing more bookings OR by selling higher-margin gigs at the same revenue. Play with both halves and see which lever moves your commission fastest.
       </div>
     </div>
   </section>
@@ -2396,28 +2454,45 @@ const SNAP_CHIPS = {
 
 // Shared funnel state — single source of truth used by BOTH the floater AND the Sales Planning tab.
 const FUNNEL_DEFAULTS = {
-  daniel: { quoted: 919,  conv: 40, confirmed: 364, avg: 919,  totalGP: 334400, margin: 35 },
-  nic:    { quoted: 959,  conv: 38, confirmed: 369, avg: 922,  totalGP: 340100, margin: 35 },
-  dane:   { quoted: 1000, conv: 45, confirmed: 446, avg: 882,  totalGP: 393300, margin: 35 },
-  evie:   { quoted: 540,  conv: 43, confirmed: 234, avg: 803,  totalGP: 187900, margin: 35 },
-  evie2:  { quoted: 270,  conv: 43, confirmed: 117, avg: 803,  totalGP: 94000,  margin: 35 }
+  daniel: { quoted: 919,  conv: 40, confirmed: 364, avg: 919,  totalGP: 334400, margin: 35, revenue: 955429  },
+  nic:    { quoted: 959,  conv: 38, confirmed: 369, avg: 922,  totalGP: 340100, margin: 35, revenue: 971714  },
+  dane:   { quoted: 1000, conv: 45, confirmed: 446, avg: 882,  totalGP: 393300, margin: 35, revenue: 1123714 },
+  evie:   { quoted: 540,  conv: 43, confirmed: 234, avg: 803,  totalGP: 187900, margin: 35, revenue: 536857  },
+  evie2:  { quoted: 270,  conv: 43, confirmed: 117, avg: 803,  totalGP: 94000,  margin: 35, revenue: 268571  }
 };
 const funnelDefaults = FUNNEL_DEFAULTS[EMPLOYEE_ID] || FUNNEL_DEFAULTS.daniel;
 const funnelState = { ...funnelDefaults };
 let funnelBaselineComm = null; // captured on first render
 
 function funnelRecalc(changed) {
+  // Section ① Volume × Value — these recompute Total GP; Revenue then updates from new Margin (Margin stays put)
   if (changed === 'quoted' || changed === 'conv') {
     funnelState.confirmed = Math.max(1, Math.round(funnelState.quoted * (funnelState.conv / 100)));
     funnelState.totalGP = Math.round(funnelState.confirmed * funnelState.avg);
   } else if (changed === 'confirmed') {
-    funnelState.conv = funnelState.quoted > 0 ? Math.round((funnelState.confirmed / funnelState.quoted) * 100) : 0;
+    funnelState.conv = funnelState.quoted > 0 ? +((funnelState.confirmed / funnelState.quoted) * 100).toFixed(1) : 0;
     funnelState.totalGP = Math.round(funnelState.confirmed * funnelState.avg);
   } else if (changed === 'avg') {
     funnelState.totalGP = Math.round(funnelState.confirmed * funnelState.avg);
-  } else if (changed === 'totalGP' || changed === 'gp') {
+  }
+  // Section ② Revenue × Margin — change Margin keeps Revenue constant → recompute Total GP → recompute Avg GP
+  else if (changed === 'margin') {
+    if (funnelState.revenue > 0) funnelState.totalGP = Math.round(funnelState.revenue * (funnelState.margin / 100));
+    if (funnelState.confirmed > 0) funnelState.avg = Math.max(0, Math.round(funnelState.totalGP / funnelState.confirmed));
+  } else if (changed === 'revenue') {
+    // Edit Revenue → keep Margin → Total GP = Revenue × Margin → Avg GP recomputes
+    if (funnelState.margin > 0) funnelState.totalGP = Math.round(funnelState.revenue * (funnelState.margin / 100));
+    if (funnelState.confirmed > 0) funnelState.avg = Math.max(0, Math.round(funnelState.totalGP / funnelState.confirmed));
+  }
+  // Direct Total GP edit — keep Avg GP & Margin, recompute Confirmed and Revenue
+  else if (changed === 'totalGP' || changed === 'gp') {
     if (funnelState.avg > 0) funnelState.confirmed = Math.max(1, Math.round(funnelState.totalGP / funnelState.avg));
-    funnelState.conv = funnelState.quoted > 0 ? Math.round((funnelState.confirmed / funnelState.quoted) * 100) : 0;
+    funnelState.conv = funnelState.quoted > 0 ? +((funnelState.confirmed / funnelState.quoted) * 100).toFixed(1) : 0;
+    if (funnelState.margin > 0) funnelState.revenue = Math.round(funnelState.totalGP / (funnelState.margin / 100));
+  }
+  // After all branches — keep Revenue consistent if not directly edited (Section ① path: Revenue derives from Margin)
+  if (changed === 'quoted' || changed === 'conv' || changed === 'confirmed' || changed === 'avg') {
+    if (funnelState.margin > 0) funnelState.revenue = Math.round(funnelState.totalGP / (funnelState.margin / 100));
   }
   // Push GP into the global scenario so the rest of the dashboard updates
   scenario.gp = funnelState.totalGP;
@@ -2458,10 +2533,17 @@ function paintFloater() {
   const comm = commissionFromBands(funnelState.totalGP);
   if (funnelBaselineComm === null) funnelBaselineComm = comm;
   const cv = $('gpf-comm-v'); if (cv) cv.textContent = fmtMoney(comm);
-  // Total package = base inc super + commission inc super (commission is already inc super in band rates)
+  // Total package = base inc super + GP commission (gated by production) + production commission on Event GP
   const sr = data.globals.superRate || 0.12;
   const baseInc = (emp.baseSalary || 0) * (1 + sr);
-  const tv = $('gpf-total-v'); if (tv) tv.textContent = fmtMoney(baseInc + comm);
+  const prodPct = (plan.includeProduction ? (plan.productionPct || 0) : 0);
+  const prodGateFactor = (typeof getProductionFactor === 'function') ? getProductionFactor(scenario.eventGP) : 1;
+  const gatedComm = comm * prodGateFactor;
+  const prodComm = scenario.eventGP * prodPct;
+  const totalVar = gatedComm + prodComm;
+  const tv = $('gpf-total-v'); if (tv) tv.textContent = fmtMoney(baseInc + totalVar);
+  // Update commission-only display to reflect the gated band commission too (keeps things honest)
+  if (cv) cv.textContent = fmtMoney(gatedComm);
   const cd = $('gpf-comm-d');
   if (cd) {
     const d = comm - funnelBaselineComm;
@@ -2638,14 +2720,23 @@ function syncSPFromFunnel() {
     const r2 = document.getElementById('sp-rate'); if (r2) r2.textContent = effRate.toFixed(1) + '%';
     const t2 = document.getElementById('sp-total'); if (t2) t2.textContent = fmtMoney(totalPkg);
     const fn = document.getElementById('sp-funnel'); if (fn) {
-      const rev = funnelState.margin > 0 ? funnelState.totalGP / (funnelState.margin / 100) : 0;
-      fn.textContent = `${funnelState.quoted} quoted → ${(+funnelState.conv).toFixed(1)}% conversion → ${funnelState.confirmed} confirmed × ${fmtMoney(funnelState.avg)} avg = ${fmtMoney(funnelState.totalGP)} GP @ ${(+funnelState.margin).toFixed(1)}% margin (= ${fmtMoney(rev)} revenue ex-GST)`;
+      fn.textContent = `${funnelState.quoted} quoted × ${(+funnelState.conv).toFixed(1)}% = ${funnelState.confirmed} confirmed × ${fmtMoney(funnelState.avg)} = ${fmtMoney(funnelState.totalGP)} GP (= ${fmtMoney(funnelState.revenue)} rev × ${(+funnelState.margin).toFixed(1)}% margin)`;
     }
     const mS = document.getElementById('sp-margin-slider'); if (mS) mS.value = funnelState.margin;
     const mI = document.getElementById('sp-margin-input'); if (mI) mI.value = (+funnelState.margin).toFixed(1);
-    const rev = funnelState.margin > 0 ? funnelState.totalGP / (funnelState.margin / 100) : 0;
-    const rS = document.getElementById('sp-revenue-slider'); if (rS) rS.value = Math.min(rev, +rS.max);
-    const rI = document.getElementById('sp-revenue-input'); if (rI) rI.value = fmtNum(Math.round(rev));
+    const rS = document.getElementById('sp-revenue-slider'); if (rS) rS.value = Math.min(funnelState.revenue, +rS.max);
+    const rI = document.getElementById('sp-revenue-input'); if (rI) rI.value = fmtNum(Math.round(funnelState.revenue));
+    // Paint the explainer graphic
+    const fmtK = (n) => n >= 1000 ? '$' + (n/1000).toFixed(0) + 'k' : fmtMoney(n);
+    const setText = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    setText('gfx-quoted', funnelState.quoted);
+    setText('gfx-conv', (+funnelState.conv).toFixed(1) + '%');
+    setText('gfx-conf', funnelState.confirmed);
+    setText('gfx-avg', fmtMoney(funnelState.avg));
+    setText('gfx-rev', fmtK(funnelState.revenue));
+    setText('gfx-margin', (+funnelState.margin).toFixed(1) + '%');
+    setText('gfx-total', fmtMoney(funnelState.totalGP));
+    setText('gfx-total-2', fmtK(funnelState.totalGP));
   }
 }
 
@@ -2682,19 +2773,19 @@ function wireSalesPlanning() {
   tS.addEventListener('input', onChange('totalGP'));
   tI.addEventListener('input', () => { funnelState.totalGP = parseNum(tI.value) || 0; funnelRecalc('gp'); paintFloater(); if (typeof update === 'function') update(); });
   const mS = document.getElementById('sp-margin-slider'); const mI = document.getElementById('sp-margin-input');
-  if (mS) mS.addEventListener('input', () => { funnelState.margin = +mS.value || 0; paintFloater(); });
-  if (mI) mI.addEventListener('input', () => { funnelState.margin = parseFloat(mI.value) || 0; paintFloater(); });
+  if (mS) mS.addEventListener('input', () => { funnelState.margin = +mS.value || 0; funnelRecalc('margin'); pushFunnelToAll(); });
+  if (mI) mI.addEventListener('input', () => { funnelState.margin = parseFloat(mI.value) || 0; funnelRecalc('margin'); pushFunnelToAll(); });
   // Revenue ex GST — derived from GP / margin, but editable: changing it updates margin
   const rS = document.getElementById('sp-revenue-slider'); const rI = document.getElementById('sp-revenue-input');
   if (rS) rS.addEventListener('input', () => {
-    const rev = +rS.value || 0;
-    if (rev > 0 && funnelState.totalGP > 0) funnelState.margin = (funnelState.totalGP / rev) * 100;
-    paintFloater();
+    funnelState.revenue = +rS.value || 0;
+    funnelRecalc('revenue');
+    pushFunnelToAll();
   });
   if (rI) rI.addEventListener('input', () => {
-    const rev = parseNum(rI.value) || 0;
-    if (rev > 0 && funnelState.totalGP > 0) funnelState.margin = (funnelState.totalGP / rev) * 100;
-    paintFloater();
+    funnelState.revenue = parseNum(rI.value) || 0;
+    funnelRecalc('revenue');
+    pushFunnelToAll();
   });
 
   // Initial paint
