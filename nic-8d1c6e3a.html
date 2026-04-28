@@ -101,24 +101,51 @@
   .key-terms-modal dd { font-size: 13px; color: var(--ink); line-height: 1.5; margin: 4px 0 0; }
   .key-terms-modal .close-x { position: absolute; top: 14px; right: 18px; cursor: pointer; font-size: 22px; color: var(--muted); border: none; background: none; }
 
-  /* Floating GP Quick-Adjust slider — always visible bottom-right */
-  /* Floating GP Quick-Adjust card (sticky bottom-right) — two rows: Annual GP + Event GP */
+  /* Floating Quick-Adjust card (sticky bottom-right) — collapsed: GP+Event GP, expanded: full funnel */
   .gp-floater {
     position: fixed; bottom: 18px; right: 18px;
     background: #fff; border: 1px solid var(--border); border-radius: 14px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-    padding: 12px 18px; z-index: 90;
-    min-width: 360px; max-width: 92vw;
+    padding: 14px 16px 12px; z-index: 90;
+    width: 320px; max-width: 92vw;
+    transition: width 0.18s ease;
   }
+  .gp-floater.expanded { width: 380px; }
+  .gp-floater-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .gp-floater-head .title { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .gp-floater-head .actions { display: flex; gap: 6px; }
+  .gp-floater-iconbtn { width: 26px; height: 26px; padding: 0; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: all 0.12s; }
+  .gp-floater-iconbtn:hover { background: #fafaf7; color: var(--ink); border-color: var(--muted); }
+  .gp-floater-iconbtn:active { transform: scale(0.96); }
+  .gp-floater-funnel { padding: 8px 0 8px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 4px 0 12px; }
+  .gp-floater-flow { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--faint); font-family: var(--mono); margin-bottom: 8px; padding: 0 2px; }
+  .gp-floater-flow .arrow { opacity: 0.5; }
+  .gp-floater-flow .step.headline { color: var(--navy); font-weight: 700; }
   .gp-floater-row {
-    display: grid; grid-template-columns: 90px 1fr 90px; gap: 12px; align-items: center;
-    padding: 6px 0;
+    display: grid; grid-template-columns: 78px 1fr 64px; gap: 10px; align-items: center;
+    padding: 4px 0;
   }
-  .gp-floater-row + .gp-floater-row { border-top: 1px dashed var(--border); }
-  .gp-floater .label-mini { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; line-height: 1.2; }
+  .gp-floater-row.gp { grid-template-columns: 78px 1fr 70px; }
+  .gp-floater .label-mini { font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: normal; font-weight: 500; line-height: 1.3; }
+  .gp-floater .label-mini .help-icon { color: var(--faint); cursor: help; margin-left: 2px; font-weight: 600; }
+  .gp-floater .num-input { font-family: var(--mono); font-size: 12px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; width: 100%; text-align: right; background: #fff; height: 26px; box-sizing: border-box; }
+  .gp-floater .num-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(45,90,180,0.2); border-color: var(--accent); }
   .gp-floater input[type="range"] { width: 100%; accent-color: var(--navy); }
   .gp-floater .value { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; text-align: right; }
-  @media (max-width: 600px) { .gp-floater { left: 14px; right: 14px; min-width: 0; } }
+  .gp-floater-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; padding-left: 88px; }
+  .gp-floater-chip { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; font-family: var(--mono); transition: all 0.12s; line-height: 1.4; }
+  .gp-floater-chip:hover { border-color: var(--muted); background: #fafaf7; color: var(--ink); }
+  .gp-floater-chip.target { color: var(--accent); border-color: var(--accent); background: #eaf3fb; }
+  .gp-floater-chip.target:hover { background: #d5e5f4; }
+  .gp-floater-derived { font-size: 10.5px; color: var(--faint); font-family: var(--mono); padding: 6px 2px 0; }
+  .gp-floater-derived strong { color: var(--muted); font-weight: 500; }
+  .gp-floater-footer { margin-top: 10px; padding: 8px 10px; border-radius: 6px; background: #fafaf7; display: flex; justify-content: space-between; align-items: baseline; }
+  .gp-floater-footer .ftr-label { font-size: 11px; color: var(--muted); }
+  .gp-floater-footer .ftr-value { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--navy); }
+  .gp-floater-footer .delta { font-size: 10px; font-family: var(--mono); margin-left: 4px; }
+  .gp-floater-footer .delta.up { color: #1f5e3c; }
+  .gp-floater-footer .delta.down { color: #a8281b; }
+  @media (max-width: 600px) { .gp-floater { left: 14px; right: 14px; width: auto; } }
   .scenario-row label { font-size: 13px; color: var(--muted); line-height: 1.3; }
 
   /* Scenario row variant: when the row contains a realistic-slider, give it a vertical layout
@@ -926,17 +953,69 @@
   </section>
 </main>
 
-<!-- Floating Quick-Adjust card (sticky bottom-right) — two sliders: Annual GP Sold + Event GP Produced -->
+<!-- Floating Quick-Adjust card (sticky bottom-right) — collapsed: GP+Event GP, expanded: full funnel + snap chips -->
 <div class="gp-floater" id="gp-floater" style="display: none;">
-  <div class="gp-floater-row">
-    <div class="label-mini" title="GP Received — Annual GP from bookings where the customer has paid">GP<br>Received</div>
-    <input type="range" id="gp-floater-slider" min="0" max="600000" step="5000">
-    <div class="value" id="gp-floater-value">—</div>
+  <div class="gp-floater-head">
+    <span class="title">Quick adjust</span>
+    <div class="actions">
+      <button class="gp-floater-iconbtn" id="gpf-reset-btn" title="Reset to defaults" aria-label="Reset">↻</button>
+      <button class="gp-floater-iconbtn" id="gpf-toggle-btn" title="Expand" aria-label="Expand">+</button>
+    </div>
   </div>
-  <div class="gp-floater-row" id="gp-floater-event-row">
-    <div class="label-mini" title="Event GP — GP on bookings whose event date has already passed (drives 1% production commission)">Event<br>GP</div>
-    <input type="range" id="event-floater-slider" min="0" max="800000" step="5000">
-    <div class="value" id="event-floater-value">—</div>
+
+  <div id="gpf-funnel" style="display: none;">
+    <div class="gp-floater-funnel">
+      <div class="gp-floater-flow">
+        <span class="step">quoted</span><span class="arrow">→</span>
+        <span class="step">conv %</span><span class="arrow">→</span>
+        <span class="step">confirmed</span><span class="arrow">×</span>
+        <span class="step">avg gp</span><span class="arrow">=</span>
+        <span class="step headline">gp received</span>
+      </div>
+      <div class="gp-floater-row">
+        <span class="label-mini">Quoted <span class="help-icon" title="Bookings quoted in the last 12 months">?</span></span>
+        <input type="range" id="gpf-quoted-r" min="50" max="1500" step="1">
+        <input type="number" class="num-input" id="gpf-quoted-i">
+      </div>
+      <div class="gp-floater-row">
+        <span class="label-mini">Conv % <span class="help-icon" title="Quoted to confirmed conversion rate">?</span></span>
+        <input type="range" id="gpf-conv-r" min="10" max="80" step="1">
+        <input type="number" class="num-input" id="gpf-conv-i">
+      </div>
+      <div class="gp-floater-row">
+        <span class="label-mini">Confirmed <span class="help-icon" title="Confirmed = Quoted × Conv%. Editing changes Conv%.">?</span></span>
+        <input type="range" id="gpf-conf-r" min="5" max="700" step="1">
+        <input type="number" class="num-input" id="gpf-conf-i">
+      </div>
+      <div class="gp-floater-row">
+        <span class="label-mini">Avg GP <span class="help-icon" title="Average GP per confirmed event ($)">?</span></span>
+        <input type="range" id="gpf-avg-r" min="200" max="2000" step="25">
+        <input type="number" class="num-input" id="gpf-avg-i">
+      </div>
+      <div class="gp-floater-row">
+        <span class="label-mini">Margin % <span class="help-icon" title="GP / (Revenue ex-GST). Drives the implied revenue figure below.">?</span></span>
+        <input type="range" id="gpf-margin-r" min="20" max="60" step="1">
+        <input type="number" class="num-input" id="gpf-margin-i">
+      </div>
+      <div class="gp-floater-derived">implied revenue ex-GST: <strong id="gpf-rev">—</strong></div>
+    </div>
+  </div>
+
+  <div class="gp-floater-row gp">
+    <span class="label-mini">GP<br>Received <span class="help-icon" title="Annual GP from bookings the customer has paid">?</span></span>
+    <input type="range" id="gp-floater-slider">
+    <span class="value" id="gp-floater-value">—</span>
+  </div>
+  <div class="gp-floater-chips" id="gpf-chips"></div>
+  <div class="gp-floater-row gp" id="gp-floater-event-row">
+    <span class="label-mini">Event<br>GP <span class="help-icon" title="GP on bookings whose event date has passed">?</span></span>
+    <input type="range" id="event-floater-slider">
+    <span class="value" id="event-floater-value">—</span>
+  </div>
+
+  <div class="gp-floater-footer">
+    <span class="ftr-label">Est. commission @ scenario</span>
+    <span><span class="ftr-value" id="gpf-comm-v">—</span><span class="delta" id="gpf-comm-d"></span></span>
   </div>
 </div>
 
@@ -1010,70 +1089,9 @@ async function load() {
       if (zb) { zb.href = emp.zohoDataUrl; zb.style.display = 'inline-block'; }
     }
 
-    // Show + wire the floating Quick-Adjust card (sticky bottom-right) — two sliders: GP + Event GP
-    const gpFloater = document.getElementById('gp-floater');
-    const gpFloatSlider = document.getElementById('gp-floater-slider');
-    const gpFloatValue = document.getElementById('gp-floater-value');
-    const eventFloatSlider = document.getElementById('event-floater-slider');
-    const eventFloatValue = document.getElementById('event-floater-value');
-    if (gpFloater && gpFloatSlider && gpFloatValue) {
-      const range = emp.realisticRange;
-      if (range) {
-        gpFloatSlider.min = range.absoluteMin || 0;
-        gpFloatSlider.max = range.absoluteMax || 600000;
-        gpFloatSlider.step = 1000;
-      }
-      // Event GP slider: linear over the plan's maxProductionValue
-      const maxProd = +plan.maxProductionValue || 800000;
-      if (eventFloatSlider) {
-        eventFloatSlider.min = 0;
-        eventFloatSlider.max = maxProd;
-        eventFloatSlider.step = 1000;
-      }
-      gpFloater.style.display = 'block';
-      const syncGpFloater = () => {
-        gpFloatSlider.value = scenario.gp;
-        gpFloatValue.textContent = fmtMoney(scenario.gp);
-      };
-      const syncEventFloater = () => {
-        if (!eventFloatSlider) return;
-        eventFloatSlider.value = Math.min(scenario.eventGP, +eventFloatSlider.max);
-        eventFloatValue.textContent = fmtMoney(scenario.eventGP);
-      };
-      // GP floater drag → update scenario.gp + main non-linear slider
-      gpFloatSlider.addEventListener('input', () => {
-        scenario.gp = +gpFloatSlider.value;
-        gpFloatValue.textContent = fmtMoney(scenario.gp);
-        const mainSlider = document.getElementById('gp-slider');
-        const mainInput = document.getElementById('gp-input');
-        if (mainSlider && range) mainSlider.value = nlsMoneyToPos(scenario.gp, { ...range, absoluteMin: range.absoluteMin || 0 });
-        if (mainInput) mainInput.value = fmtNum(scenario.gp);
-        update();
-      });
-      // Event GP floater drag → update scenario.eventGP + main event slider
-      if (eventFloatSlider) {
-        eventFloatSlider.addEventListener('input', () => {
-          scenario.eventGP = +eventFloatSlider.value;
-          eventFloatValue.textContent = fmtMoney(scenario.eventGP);
-          const mainEvSlider = document.getElementById('event-gp-slider');
-          const mainEvInput = document.getElementById('event-gp-input');
-          if (mainEvSlider) mainEvSlider.value = scenario.eventGP;
-          if (mainEvInput) mainEvInput.value = fmtNum(scenario.eventGP);
-          update();
-        });
-      }
-      // Keep floaters in sync when user moves the main sliders/inputs
-      const mainSlider = document.getElementById('gp-slider');
-      const mainInput = document.getElementById('gp-input');
-      const mainEvSlider = document.getElementById('event-gp-slider');
-      const mainEvInput = document.getElementById('event-gp-input');
-      if (mainSlider) mainSlider.addEventListener('input', syncGpFloater);
-      if (mainInput) mainInput.addEventListener('input', syncGpFloater);
-      if (mainEvSlider) mainEvSlider.addEventListener('input', syncEventFloater);
-      if (mainEvInput) mainEvInput.addEventListener('input', syncEventFloater);
-      syncGpFloater();
-      syncEventFloater();
-    }
+    // Show + wire the floating Quick-Adjust card with funnel + snap chips
+    if (typeof wireFloater === "function") wireFloater();
+
 
     // === SALES PLANNING TAB ===
     // Wire bookings funnel calculator + Zoho data link (sales-shared dashboard URL).
@@ -2309,6 +2327,233 @@ function update() {
 // with a marker line at the current scenario.gp position.
 // Sales Planning tab — bookings funnel calculator with bidirectional binding.
 // Quoted × ConversionRate = Confirmed; Confirmed × Avg = TotalGP. Edit any → others recalc.
+
+// === FLOATER (sticky bottom-right) — collapsed=2 sliders, expanded=full funnel ===
+// Snap chip presets per role (Last 365 / Target / Stretch)
+const SNAP_CHIPS = {
+  daniel: [{ label: '↺ Last 365', gp: 334400 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 500000 }],
+  nic:    [{ label: '↺ Last 365', gp: 340100 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 500000 }],
+  dane:   [{ label: '↺ Last 365', gp: 393300 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 500000 }],
+  evie:   [{ label: '↺ Last 365', gp: 187900 }, { label: '→ Target', gp: 250000, target: true }, { label: '↑ Stretch', gp: 325000 }],
+  evie2:  [{ label: '↺ Last 365', gp: 94000  }, { label: '→ Target', gp: 150000, target: true }, { label: '↑ Stretch', gp: 200000 }]
+};
+
+// Shared funnel state — single source of truth used by BOTH the floater AND the Sales Planning tab.
+const FUNNEL_DEFAULTS = {
+  daniel: { quoted: 919,  conv: 40, confirmed: 364, avg: 919,  totalGP: 334400, margin: 35 },
+  nic:    { quoted: 959,  conv: 38, confirmed: 369, avg: 922,  totalGP: 340100, margin: 35 },
+  dane:   { quoted: 1000, conv: 45, confirmed: 446, avg: 882,  totalGP: 393300, margin: 35 },
+  evie:   { quoted: 540,  conv: 43, confirmed: 234, avg: 803,  totalGP: 187900, margin: 35 },
+  evie2:  { quoted: 270,  conv: 43, confirmed: 117, avg: 803,  totalGP: 94000,  margin: 35 }
+};
+const funnelDefaults = FUNNEL_DEFAULTS[EMPLOYEE_ID] || FUNNEL_DEFAULTS.daniel;
+const funnelState = { ...funnelDefaults };
+let funnelBaselineComm = null; // captured on first render
+
+function funnelRecalc(changed) {
+  if (changed === 'quoted' || changed === 'conv') {
+    funnelState.confirmed = Math.max(1, Math.round(funnelState.quoted * (funnelState.conv / 100)));
+    funnelState.totalGP = Math.round(funnelState.confirmed * funnelState.avg);
+  } else if (changed === 'confirmed') {
+    funnelState.conv = funnelState.quoted > 0 ? Math.round((funnelState.confirmed / funnelState.quoted) * 100) : 0;
+    funnelState.totalGP = Math.round(funnelState.confirmed * funnelState.avg);
+  } else if (changed === 'avg') {
+    funnelState.totalGP = Math.round(funnelState.confirmed * funnelState.avg);
+  } else if (changed === 'totalGP' || changed === 'gp') {
+    if (funnelState.avg > 0) funnelState.confirmed = Math.max(1, Math.round(funnelState.totalGP / funnelState.avg));
+    funnelState.conv = funnelState.quoted > 0 ? Math.round((funnelState.confirmed / funnelState.quoted) * 100) : 0;
+  }
+  // Push GP into the global scenario so the rest of the dashboard updates
+  scenario.gp = funnelState.totalGP;
+}
+
+function commissionFromBands(gp) {
+  if (!plan || !plan.bands) return 0;
+  let total = 0;
+  const sorted = [...plan.bands].sort((a, b) => a.threshold - b.threshold);
+  for (let i = 0; i < sorted.length; i++) {
+    const b = sorted[i];
+    const next = i + 1 < sorted.length ? sorted[i + 1].threshold : Infinity;
+    total += Math.max(0, Math.min(gp, next) - b.threshold) * b.rate;
+  }
+  return total;
+}
+
+function paintFloater() {
+  const $ = id => document.getElementById(id);
+  if ($('gpf-quoted-r')) {
+    $('gpf-quoted-r').value = funnelState.quoted; $('gpf-quoted-i').value = funnelState.quoted;
+    $('gpf-conv-r').value = funnelState.conv;     $('gpf-conv-i').value = funnelState.conv;
+    $('gpf-conf-r').value = funnelState.confirmed; $('gpf-conf-i').value = funnelState.confirmed;
+    $('gpf-avg-r').value = funnelState.avg;       $('gpf-avg-i').value = funnelState.avg;
+    $('gpf-margin-r').value = funnelState.margin; $('gpf-margin-i').value = funnelState.margin;
+    const rev = funnelState.margin > 0 ? funnelState.totalGP / (funnelState.margin / 100) : 0;
+    $('gpf-rev').textContent = fmtMoney(rev);
+  }
+  const gpSlider = $('gp-floater-slider');
+  const gpVal = $('gp-floater-value');
+  if (gpSlider) gpSlider.value = Math.min(funnelState.totalGP, +gpSlider.max || 600000);
+  if (gpVal) gpVal.textContent = fmtMoney(funnelState.totalGP);
+  const evSlider = $('event-floater-slider');
+  const evVal = $('event-floater-value');
+  if (evSlider) evSlider.value = Math.min(scenario.eventGP, +evSlider.max || 800000);
+  if (evVal) evVal.textContent = fmtMoney(scenario.eventGP);
+  // Live commission preview + delta vs baseline
+  const comm = commissionFromBands(funnelState.totalGP);
+  if (funnelBaselineComm === null) funnelBaselineComm = comm;
+  const cv = $('gpf-comm-v'); if (cv) cv.textContent = fmtMoney(comm);
+  const cd = $('gpf-comm-d');
+  if (cd) {
+    const d = comm - funnelBaselineComm;
+    if (Math.abs(d) < 50) { cd.textContent = ''; cd.className = 'delta'; }
+    else { cd.textContent = (d > 0 ? '+' : '−') + fmtMoney(Math.abs(d)); cd.className = 'delta ' + (d > 0 ? 'up' : 'down'); }
+  }
+  // Sync the main GP slider + Sales Planning tab if they're rendered
+  const range = emp.realisticRange;
+  const mainSlider = $('gp-slider'); const mainInput = $('gp-input');
+  if (mainSlider && range) mainSlider.value = nlsMoneyToPos(funnelState.totalGP, { ...range, absoluteMin: range.absoluteMin || 0 });
+  if (mainInput) mainInput.value = fmtNum(funnelState.totalGP);
+  // Sync Sales Planning tab inputs (they read state from funnelState via syncSPFromFunnel)
+  if (typeof syncSPFromFunnel === 'function') syncSPFromFunnel();
+}
+
+function wireFloater() {
+  const fl = document.getElementById('gp-floater');
+  if (!fl) return;
+  fl.style.display = 'block';
+
+  // GP slider range
+  const gpS = document.getElementById('gp-floater-slider');
+  const range = emp.realisticRange;
+  if (gpS) {
+    gpS.min = range?.absoluteMin || 0;
+    gpS.max = range?.absoluteMax || 600000;
+    gpS.step = 1000;
+  }
+  // Event GP slider range
+  const evS = document.getElementById('event-floater-slider');
+  if (evS) {
+    evS.min = 0;
+    evS.max = +plan.maxProductionValue || 800000;
+    evS.step = 1000;
+    evS.value = scenario.eventGP;
+  }
+  // Adjust Quoted/Confirmed maxes for Evie
+  const isEvie = EMPLOYEE_ID === 'evie' || EMPLOYEE_ID === 'evie2';
+  const qR = document.getElementById('gpf-quoted-r'); if (qR) qR.max = isEvie ? 800 : 1500;
+  const cR = document.getElementById('gpf-conf-r');   if (cR) cR.max = isEvie ? 400 : 700;
+
+  // Bind the funnel inputs
+  const bindPair = (key, sliderId, inputId) => {
+    const s = document.getElementById(sliderId);
+    const i = document.getElementById(inputId);
+    const handler = (ev) => {
+      const v = parseFloat(ev.target.value) || 0;
+      funnelState[key] = v;
+      funnelRecalc(key);
+      paintFloater();
+      if (typeof update === 'function') update();
+    };
+    if (s) s.addEventListener('input', handler);
+    if (i) i.addEventListener('input', handler);
+  };
+  bindPair('quoted', 'gpf-quoted-r', 'gpf-quoted-i');
+  bindPair('conv', 'gpf-conv-r', 'gpf-conv-i');
+  bindPair('confirmed', 'gpf-conf-r', 'gpf-conf-i');
+  bindPair('avg', 'gpf-avg-r', 'gpf-avg-i');
+  bindPair('margin', 'gpf-margin-r', 'gpf-margin-i');
+
+  // GP slider — drives totalGP
+  if (gpS) gpS.addEventListener('input', () => {
+    funnelState.totalGP = +gpS.value;
+    funnelRecalc('gp');
+    paintFloater();
+    if (typeof update === 'function') update();
+  });
+  // Event GP slider
+  if (evS) evS.addEventListener('input', () => {
+    scenario.eventGP = +evS.value;
+    paintFloater();
+    if (typeof update === 'function') update();
+  });
+
+  // Snap chips
+  const chipsRow = document.getElementById('gpf-chips');
+  const chips = SNAP_CHIPS[EMPLOYEE_ID] || SNAP_CHIPS.daniel;
+  if (chipsRow) {
+    chipsRow.innerHTML = chips.map(c => `<button class="gp-floater-chip${c.target ? ' target' : ''}" data-snap="${c.gp}">${c.label} $${Math.round(c.gp/1000)}k</button>`).join('');
+    chipsRow.querySelectorAll('.gp-floater-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        funnelState.totalGP = parseInt(btn.dataset.snap, 10);
+        funnelRecalc('gp');
+        paintFloater();
+        if (typeof update === 'function') update();
+      });
+    });
+  }
+
+  // Toggle expand/collapse
+  const toggleBtn = document.getElementById('gpf-toggle-btn');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => {
+    const sec = document.getElementById('gpf-funnel');
+    if (sec.style.display === 'none') {
+      sec.style.display = 'block';
+      fl.classList.add('expanded');
+      toggleBtn.textContent = '−';
+      toggleBtn.title = 'Collapse';
+    } else {
+      sec.style.display = 'none';
+      fl.classList.remove('expanded');
+      toggleBtn.textContent = '+';
+      toggleBtn.title = 'Expand';
+    }
+  });
+  // Reset
+  const resetBtn = document.getElementById('gpf-reset-btn');
+  if (resetBtn) resetBtn.addEventListener('click', () => {
+    Object.assign(funnelState, funnelDefaults);
+    funnelBaselineComm = null;
+    paintFloater();
+    if (typeof update === 'function') update();
+  });
+
+  // Keep floater in sync when main GP/Event sliders change
+  const mainSlider = document.getElementById('gp-slider');
+  const mainInput = document.getElementById('gp-input');
+  const mainEvSlider = document.getElementById('event-gp-slider');
+  const mainEvInput = document.getElementById('event-gp-input');
+  if (mainSlider) mainSlider.addEventListener('input', () => { funnelState.totalGP = scenario.gp; funnelRecalc('gp'); paintFloater(); });
+  if (mainInput) mainInput.addEventListener('input', () => { funnelState.totalGP = scenario.gp; funnelRecalc('gp'); paintFloater(); });
+  if (mainEvSlider) mainEvSlider.addEventListener('input', () => paintFloater());
+  if (mainEvInput) mainEvInput.addEventListener('input', () => paintFloater());
+
+  paintFloater();
+}
+
+// Sync Sales Planning tab inputs from funnelState (called from paintFloater)
+function syncSPFromFunnel() {
+  const setEl = (id, v) => { const e = document.getElementById(id); if (e) e.value = v; };
+  setEl('sp-quoted-slider', funnelState.quoted);   setEl('sp-quoted-input', fmtNum(funnelState.quoted));
+  setEl('sp-conv-slider', funnelState.conv);       setEl('sp-conv-input', funnelState.conv);
+  setEl('sp-confirmed-slider', funnelState.confirmed); setEl('sp-confirmed-input', fmtNum(funnelState.confirmed));
+  const aS = document.getElementById('sp-avg-slider'); if (aS) aS.value = Math.min(funnelState.avg, +aS.max);
+  setEl('sp-avg-input', fmtNum(funnelState.avg));
+  const tS = document.getElementById('sp-totalgp-slider'); if (tS) tS.value = Math.min(funnelState.totalGP, +tS.max);
+  setEl('sp-totalgp-input', fmtNum(funnelState.totalGP));
+  const spComm = document.getElementById('sp-comm');
+  if (spComm) {
+    const c = commissionFromBands(funnelState.totalGP);
+    spComm.textContent = fmtMoney(c);
+    const sr = data.globals.superRate || 0.12;
+    const baseInc = (emp.baseSalary || 0) * (1 + sr);
+    const totalPkg = baseInc + c;
+    const effRate = funnelState.totalGP > 0 ? (c / funnelState.totalGP) * 100 : 0;
+    const r2 = document.getElementById('sp-rate'); if (r2) r2.textContent = effRate.toFixed(1) + '%';
+    const t2 = document.getElementById('sp-total'); if (t2) t2.textContent = fmtMoney(totalPkg);
+    const fn = document.getElementById('sp-funnel'); if (fn) fn.textContent = `${funnelState.quoted} quoted → ${funnelState.conv}% conversion → ${funnelState.confirmed} confirmed × ${fmtMoney(funnelState.avg)} avg = ${fmtMoney(funnelState.totalGP)} GP`;
+  }
+}
+
 function wireSalesPlanning() {
   const qS = document.getElementById('sp-quoted-slider'), qI = document.getElementById('sp-quoted-input');
   const cS = document.getElementById('sp-conv-slider'), cI = document.getElementById('sp-conv-input');
@@ -2316,79 +2561,34 @@ function wireSalesPlanning() {
   const aS = document.getElementById('sp-avg-slider'), aI = document.getElementById('sp-avg-input');
   const tS = document.getElementById('sp-totalgp-slider'), tI = document.getElementById('sp-totalgp-input');
   if (!qS) return;
-
-  // Per-employee defaults — pulled from last-365-days Zoho dashboard
-  const defaults = {
-    daniel: { quoted: 919,  conv: 40, confirmed: 364, avg: 919,  totalGP: 334400 },
-    nic:    { quoted: 959,  conv: 38, confirmed: 369, avg: 922,  totalGP: 340100 },
-    dane:   { quoted: 1000, conv: 45, confirmed: 446, avg: 882,  totalGP: 393300 },
-    evie:   { quoted: 540,  conv: 43, confirmed: 234, avg: 803,  totalGP: 187900 },
-    evie2:  { quoted: 270,  conv: 43, confirmed: 117, avg: 803,  totalGP: 94000 }
-  };
-  const def = defaults[EMPLOYEE_ID] || defaults.daniel;
-  let state = { ...def };
-
-  // Slider ranges — Sales reps get full ranges; Evie/Evie 2.0 get half (smaller sales role + bigger producer side)
   const isEvie = EMPLOYEE_ID === 'evie' || EMPLOYEE_ID === 'evie2';
   qS.max = isEvie ? 800 : 1500;
   fS.max = isEvie ? 400 : 700;
-  aS.max = 2000; aS.step = 25; // realistic average GP per booking $0–$2,000
+  aS.max = 2000; aS.step = 25;
   tS.max = isEvie ? 300000 : 600000;
 
-  const recalc = (changed) => {
-    if (changed === 'quoted' || changed === 'conv') {
-      state.confirmed = Math.round(state.quoted * (state.conv / 100));
-      state.totalGP = state.confirmed * state.avg;
-    } else if (changed === 'confirmed') {
-      state.conv = state.quoted > 0 ? Math.round((state.confirmed / state.quoted) * 100) : 0;
-      state.totalGP = state.confirmed * state.avg;
-    } else if (changed === 'avg') {
-      state.totalGP = state.confirmed * state.avg;
-    } else if (changed === 'totalGP') {
-      state.avg = state.confirmed > 0 ? Math.round(state.totalGP / state.confirmed) : 0;
-    }
-    renderState();
+  const onChange = (key) => () => {
+    const map = { quoted: [qS, qI, parseNum], conv: [cS, cI, parseFloat], confirmed: [fS, fI, parseNum], avg: [aS, aI, parseNum], totalGP: [tS, tI, parseNum] };
+    const [s, i, parser] = map[key];
+    // If event came from input, parse formatted; if from slider, use raw value
+    funnelState[key] = +s.value || 0;
+    funnelRecalc(key === 'totalGP' ? 'gp' : key);
+    paintFloater();
+    if (typeof update === 'function') update();
   };
-  const renderState = () => {
-    qS.value = state.quoted; qI.value = fmtNum(state.quoted);
-    cS.value = state.conv; cI.value = state.conv;
-    fS.value = state.confirmed; fI.value = fmtNum(state.confirmed);
-    aS.value = Math.min(state.avg, +aS.max); aI.value = fmtNum(state.avg);
-    tS.value = Math.min(state.totalGP, +tS.max); tI.value = fmtNum(state.totalGP);
+  qS.addEventListener('input', onChange('quoted'));
+  qI.addEventListener('input', () => { funnelState.quoted = parseNum(qI.value) || 0; funnelRecalc('quoted'); paintFloater(); if (typeof update === 'function') update(); });
+  cS.addEventListener('input', onChange('conv'));
+  cI.addEventListener('input', () => { funnelState.conv = parseFloat(cI.value) || 0; funnelRecalc('conv'); paintFloater(); if (typeof update === 'function') update(); });
+  fS.addEventListener('input', onChange('confirmed'));
+  fI.addEventListener('input', () => { funnelState.confirmed = parseNum(fI.value) || 0; funnelRecalc('confirmed'); paintFloater(); if (typeof update === 'function') update(); });
+  aS.addEventListener('input', onChange('avg'));
+  aI.addEventListener('input', () => { funnelState.avg = parseNum(aI.value) || 0; funnelRecalc('avg'); paintFloater(); if (typeof update === 'function') update(); });
+  tS.addEventListener('input', onChange('totalGP'));
+  tI.addEventListener('input', () => { funnelState.totalGP = parseNum(tI.value) || 0; funnelRecalc('gp'); paintFloater(); if (typeof update === 'function') update(); });
 
-    // Compute commission at this Total GP (using emp's annual bands, not band-based KPI)
-    const { total: bandComm } = (function() {
-      let total = 0;
-      const sorted = [...plan.bands].sort((a, b) => a.threshold - b.threshold);
-      for (let i = 0; i < sorted.length; i++) {
-        const b = sorted[i];
-        const next = i + 1 < sorted.length ? sorted[i + 1].threshold : Infinity;
-        total += Math.max(0, Math.min(state.totalGP, next) - b.threshold) * b.rate;
-      }
-      return { total };
-    })();
-    const sr = data.globals.superRate || 0.12;
-    const baseInc = (emp.baseSalary || 0) * (1 + sr);
-    const totalPkg = baseInc + bandComm;
-    const effRate = state.totalGP > 0 ? (bandComm / state.totalGP) * 100 : 0;
-    document.getElementById('sp-comm').textContent = fmtMoney(bandComm);
-    document.getElementById('sp-rate').textContent = effRate.toFixed(1) + '%';
-    document.getElementById('sp-total').textContent = fmtMoney(totalPkg);
-    document.getElementById('sp-funnel').textContent = `${state.quoted} quoted → ${state.conv}% conversion → ${state.confirmed} confirmed × ${fmtMoney(state.avg)} avg = ${fmtMoney(state.totalGP)} GP`;
-  };
-
-  qS.addEventListener('input', () => { state.quoted = +qS.value || 0; recalc('quoted'); });
-  qI.addEventListener('input', () => { state.quoted = parseNum(qI.value) || 0; recalc('quoted'); });
-  cS.addEventListener('input', () => { state.conv = +cS.value || 0; recalc('conv'); });
-  cI.addEventListener('input', () => { state.conv = parseFloat(cI.value) || 0; recalc('conv'); });
-  fS.addEventListener('input', () => { state.confirmed = +fS.value || 0; recalc('confirmed'); });
-  fI.addEventListener('input', () => { state.confirmed = parseNum(fI.value) || 0; recalc('confirmed'); });
-  aS.addEventListener('input', () => { state.avg = +aS.value || 0; recalc('avg'); });
-  aI.addEventListener('input', () => { state.avg = parseNum(aI.value) || 0; recalc('avg'); });
-  tS.addEventListener('input', () => { state.totalGP = +tS.value || 0; recalc('totalGP'); });
-  tI.addEventListener('input', () => { state.totalGP = parseNum(tI.value) || 0; recalc('totalGP'); });
-
-  renderState();
+  // Initial paint
+  if (typeof syncSPFromFunnel === 'function') syncSPFromFunnel();
 }
 
 // OTE Card — render at TOP of Payouts & Super tab. Reads emp.ote from data.json.
