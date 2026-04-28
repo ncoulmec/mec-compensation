@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compensation Dashboard · Daniel Steer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a3a5c;
+    --navy-dark: #132a42;
+    --ink: #0e0e0e;
+    --bg: #f5f3ee;
+    --card: #ffffff;
+    --border: #e5e2da;
+    --muted: #6b6b6b;
+    --faint: #a8a8a8;
+    --accent: #2d6a4f;
+    --accent-bg: #e8f1ec;
+    --danger: #b91c1c;
+    --warn: #b45309;
+    --warn-bg: #fef5e6;
+    --black-card: #0e0e0e;
+    --radius: 10px;
+    --mono: 'DM Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: var(--mono); }
+
+  header.top { background: var(--navy); color: #fff; padding: 32px 32px 28px; }
+  .top-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  header.top h1 { margin: 0 0 6px; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+  header.top .sub { margin: 0; font-size: 13px; color: #b8c7d8; font-family: var(--mono); }
+  .role-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; }
+
+  nav.tabs { background: #fff; border-bottom: 1px solid var(--border); padding: 0 32px; overflow-x: auto; }
+  .tabs-inner { max-width: 1200px; margin: 0 auto; display: flex; gap: 4px; }
+  .tab-btn { background: none; border: none; padding: 16px 22px; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 600; }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 28px 32px 60px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .banner { padding: 14px 20px; border-radius: 10px; font-size: 14px; margin-bottom: 22px; display: flex; align-items: center; gap: 10px; }
+  .banner.ok { background: var(--accent-bg); color: var(--accent); border: 1px solid #c3e4d0; }
+  .banner.warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #f5d890; }
+  .banner.info { background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8; }
+  .banner .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+  /* Section heading (Planning / Actual) — stacked, left-aligned for consistency */
+  .section-head { margin: 6px 0 22px; padding-bottom: 14px; border-bottom: 2px solid var(--navy); }
+  .section-head .tag { display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--navy); background: var(--accent-bg); padding: 5px 12px; border-radius: 999px; border: 1px solid #c3e4d0; margin-bottom: 10px; }
+  .section-head h2 { margin: 0 0 8px; font-size: 22px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .section-head .blurb { margin: 0; font-size: 13px; color: var(--muted); max-width: 820px; line-height: 1.5; }
+  .section-gap { height: 40px; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  @media (max-width: 900px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; }
+  .kpi-card .label { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .kpi-card .value { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; }
+  .kpi-card .sub { margin-top: 6px; font-size: 12px; color: var(--faint); font-family: var(--mono); }
+  .kpi-card.inverted { background: var(--black-card); border-color: var(--black-card); color: #fff; }
+  .kpi-card.inverted .label { color: #aaa; }
+  .kpi-card.inverted .value { color: #fff; }
+  .kpi-card.inverted .sub { color: #888; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; margin-bottom: 22px; }
+  .card h2 { margin: 0 0 6px; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .card h3 { margin: 22px 0 12px; font-size: 14px; font-weight: 600; color: var(--ink); }
+
+  .scenario-row { display: grid; grid-template-columns: 200px 1fr 140px; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .scenario-row:last-of-type { border-bottom: none; }
+  .scenario-row label { font-size: 13px; color: var(--muted); line-height: 1.3; }
+
+  /* Scenario row variant: when the row contains a realistic-slider, give it a vertical layout
+     so the slider gets full-width breathing room (instead of being squeezed into a 1fr column). */
+  .scenario-row.has-realistic-slider {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px 0 18px;
+  }
+  .scenario-row.has-realistic-slider .label-row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  }
+  .scenario-row.has-realistic-slider .label-row > label { font-size: 14px; color: var(--ink); font-weight: 600; }
+  .scenario-row.has-realistic-slider .value-cell {
+    display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+  }
+
+  /* Non-linear realistic-range slider */
+  .realistic-slider-wrap { position: relative; width: 100%; padding: 28px 0 38px; }
+  .realistic-slider-wrap .zone-bar {
+    position: absolute; top: 30px; left: 0; right: 0; height: 6px;
+    display: flex; border-radius: 3px; overflow: hidden;
+    pointer-events: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+  }
+  .realistic-slider-wrap .zone { height: 100%; }
+  .realistic-slider-wrap .zone.under { background: #fde2e1; }
+  .realistic-slider-wrap .zone.realistic { background: #c8efd9; }
+  .realistic-slider-wrap .zone.stretch { background: #ffeeb8; }
+  .realistic-slider-wrap input[type="range"] {
+    position: relative; width: 100%; z-index: 2; background: transparent;
+    margin: 22px 0 4px;
+  }
+  .realistic-slider-wrap .zone-labels {
+    position: absolute; left: 0; right: 0; top: 0; height: 18px;
+    pointer-events: none;
+  }
+  .realistic-slider-wrap .label-band {
+    position: absolute; top: 0; text-align: center;
+    font-size: 9px; color: #1f5e3c; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 1px 0;
+  }
+  .realistic-slider-wrap .label-band::before,
+  .realistic-slider-wrap .label-band::after {
+    content: ''; display: inline-block; width: 8px; height: 1px;
+    background: #1f5e3c; vertical-align: middle; margin: 0 4px;
+  }
+  .realistic-slider-wrap .ticks {
+    position: absolute; left: 0; right: 0; bottom: 12px;
+    pointer-events: none; height: 14px;
+  }
+  .realistic-slider-wrap .tick {
+    position: absolute; transform: translateX(-50%);
+    font-size: 10px; font-family: var(--mono); color: var(--muted);
+    white-space: nowrap;
+  }
+  .realistic-slider-wrap .tick::before {
+    content: ''; display: block; width: 1px; height: 6px;
+    background: var(--muted); margin: 0 auto -2px;
+  }
+  .realistic-slider-wrap .tick.endpoint { color: var(--faint); font-size: 9px; }
+  .realistic-slider-wrap .zone-legend {
+    position: absolute; left: 0; right: 0; bottom: -18px;
+    display: flex; justify-content: space-between;
+    font-size: 9px; font-family: var(--mono); color: var(--faint);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    pointer-events: none;
+  }
+  @media (max-width: 700px) { .scenario-row { grid-template-columns: 1fr; } }
+  .scenario-row input[type="range"] { width: 100%; accent-color: var(--navy); }
+  .scenario-row .value-input { font-family: var(--mono); font-size: 14px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; text-align: right; width: 100%; }
+  .scenario-row .value-input:focus { outline: none; border-color: var(--navy); }
+
+  .tooltip-trigger { display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 50%; background: var(--border); font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 4px; cursor: help; position: relative; font-family: 'DM Sans', sans-serif; text-transform: none; letter-spacing: normal; }
+  .tooltip-trigger:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 0; transform: translateY(-4px); background: var(--ink); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 400; line-height: 1.4; white-space: normal; width: 240px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+  .rate-calc { background: #fafaf7; border-left: 3px solid var(--navy); border-radius: 4px; padding: 14px 18px; margin: 14px 0 4px; font-size: 13px; }
+  .rate-calc .chip { font-family: var(--mono); background: #fff; border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; margin: 0 2px; font-size: 12px; }
+  .rate-calc .chip.result { background: var(--navy); color: #fff; border-color: var(--navy); font-weight: 600; }
+  .rate-calc .label { color: var(--muted); margin-top: 8px; font-size: 11px; display: block; }
+
+  table.bands { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.bands th { text-align: left; padding: 10px 10px; font-weight: 500; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); }
+  table.bands td { padding: 11px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  table.bands td.num { font-family: var(--mono); text-align: right; }
+  table.bands td.band-num { font-family: var(--mono); color: var(--muted); width: 34px; }
+  table.bands tr:last-child td { border-bottom: none; }
+  table.bands tr.active td { background: var(--accent-bg); }
+  table.bands tr.active td.band-num { color: var(--accent); font-weight: 600; }
+
+  table.breakdown { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.breakdown td { padding: 10px 4px; border-bottom: 1px solid var(--border); }
+  table.breakdown td:last-child { text-align: right; font-family: var(--mono); }
+  table.breakdown tr.plus td:last-child { color: var(--accent); }
+  table.breakdown tr.subtotal td { padding-top: 14px; font-weight: 600; border-top: 1px solid var(--border); }
+  table.breakdown tr.total td { font-weight: 700; font-size: 15px; border-bottom: none; padding-top: 12px; }
+
+  .context-msg { background: var(--accent-bg); color: var(--accent); border: 1px solid #c3e4d0; padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-top: 18px; }
+
+  .progress-wrap { margin-top: 8px; background: #eae6dc; border-radius: 999px; height: 8px; overflow: hidden; }
+  .progress-bar { background: var(--navy); height: 100%; transition: width 0.3s; }
+
+  /* Old vs new commission comparison card */
+  .compare-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 22px;
+  }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    margin-top: 16px;
+  }
+  @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-col { padding: 16px 20px; border: 1px solid var(--border); border-radius: 10px; }
+  .compare-col .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; }
+  .compare-col .val { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .compare-col .sub { font-size: 12px; color: var(--faint); margin-top: 4px; font-family: var(--mono); }
+  .compare-col.new { background: var(--accent-bg); border-color: #c3e4d0; }
+  .compare-col.new .val { color: var(--accent); }
+  .compare-col.old { background: #fafaf7; }
+  .compare-arrow { font-family: var(--mono); font-size: 18px; color: var(--muted); text-align: center; white-space: nowrap; }
+  .compare-arrow .delta { color: var(--accent); font-weight: 600; }
+  .compare-arrow .delta.negative { color: var(--danger); }
+
+  /* Monthly Payout (Actual) */
+  table.monthly { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.monthly th { text-align: left; padding: 10px 10px; font-weight: 500; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.monthly th.num { text-align: right; }
+  table.monthly td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  table.monthly td.mon { font-weight: 600; color: var(--navy); font-family: var(--mono); font-size: 12px; width: 90px; }
+  table.monthly td.num { font-family: var(--mono); text-align: right; font-size: 13px; }
+  table.monthly td.num.plus { color: var(--accent); }
+  table.monthly td.input-cell { padding: 4px 6px; width: 150px; }
+  table.monthly td.input-cell input { font-family: var(--mono); font-size: 13px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; text-align: right; width: 100%; background: #fff; }
+  table.monthly td.input-cell input:focus { outline: none; border-color: var(--navy); background: #fff; }
+  table.monthly tr.past td { background: #fafaf7; }
+  table.monthly tr.current td { background: #fffbf0; }
+  table.monthly tr.future td { background: #fff; }
+  table.monthly tr.totals td { background: var(--navy); color: #fff; font-weight: 700; font-size: 14px; padding: 14px 10px; border-bottom: none; }
+  table.monthly tr.totals td.num { color: #fff; }
+  table.monthly tr.totals td.mon { color: #fff; font-weight: 700; }
+  table.monthly tr.tu-capped td { background: #fef5e6; }
+  table.monthly tr.tu-capped td.mon { color: var(--warn); font-weight: 700; }
+  table.monthly tr.tu-locked td { background: #eef4fa; }
+  table.monthly tr.tu-locked td.mon { color: var(--navy); font-weight: 700; }
+  table.monthly tr.tu-locked td.input-cell input { background: #f1f5fa; color: var(--muted); cursor: not-allowed; }
+  table.monthly th small { display: block; font-weight: 400; color: var(--faint); font-size: 9px; margin-top: 2px; text-transform: none; letter-spacing: 0.03em; }
+  table.monthly tr.subtotal td { background: #f5f3ee; font-weight: 600; color: var(--navy); border-top: 2px solid var(--border); border-bottom: 2px solid var(--border); padding: 9px 10px; font-size: 12px; }
+  table.monthly tr.subtotal td.mon { font-weight: 700; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; color: var(--navy); }
+  table.monthly tr.subtotal td.num { font-family: var(--mono); }
+
+  /* Thermometer progress bar for quarterly cards */
+  .thermo-wrap { margin-top: 10px; }
+  .thermo-track { position: relative; height: 14px; background: #eae6dc; border-radius: 999px; overflow: visible; }
+  .thermo-green { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 999px 0 0 999px; }
+  .thermo-green.full { border-radius: 999px; }
+  .thermo-amber { position: absolute; top: 0; bottom: 0; background: var(--warn); border-radius: 0 999px 999px 0; }
+  .thermo-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--navy); z-index: 2; }
+  .thermo-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--faint); font-family: var(--mono); margin-top: 6px; }
+  .thermo-scale .entitled-label { color: var(--navy); font-weight: 600; }
+
+  /* Help / What is TU? */
+  details.tu-help { background: #fafaf7; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-top: 18px; }
+  details.tu-help summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--navy); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  details.tu-help summary::-webkit-details-marker { display: none; }
+  details.tu-help summary::after { content: "+"; font-size: 20px; font-weight: 400; color: var(--muted); }
+  details.tu-help[open] summary::after { content: "−"; }
+  details.tu-help .body { margin-top: 14px; font-size: 13px; color: var(--ink); line-height: 1.6; }
+  details.tu-help .body strong { color: var(--navy); }
+  details.tu-help .body ul { margin: 8px 0; padding-left: 20px; }
+  details.tu-help .body li { margin-bottom: 6px; }
+
+  .yt-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  @media (max-width: 900px) { .yt-row { grid-template-columns: repeat(2, 1fr); } }
+
+  /* KPI tab */
+  .kpi-draft-note { background: var(--warn-bg); border: 1px solid #f5d890; color: var(--warn); padding: 12px 16px; border-radius: 8px; margin-bottom: 22px; font-size: 13px; }
+  .kpi-slider-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; }
+  .kpi-big-value { font-family: var(--mono); font-size: 48px; font-weight: 700; text-align: center; color: var(--navy); margin: 12px 0; letter-spacing: -0.02em; }
+  .kpi-big-value .x { font-size: 28px; color: var(--muted); }
+
+  .super-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 22px 26px; margin-bottom: 22px; }
+  .super-line { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; font-family: var(--mono); font-size: 14px; }
+  .super-line.muted { color: var(--muted); font-size: 13px; }
+  .super-line.total { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px; font-weight: 700; font-size: 17px; }
+  .super-line .plus-line { color: var(--accent); font-weight: 500; }
+
+  .loading { padding: 80px; text-align: center; color: var(--muted); }
+  .error-banner { background: #fdf2f2; border: 1px solid #f2d5d5; color: var(--danger); padding: 16px 20px; border-radius: 10px; margin: 20px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div>
+      <h1 id="emp-name">Loading…</h1>
+      <p class="sub" id="emp-sub">&nbsp;</p>
+    </div>
+    <span class="role-badge" id="role-badge">—</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-inner" id="tab-bar">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="projects">Projects</button>
+    <button class="tab-btn" data-tab="kpi">KPI (Draft)</button>
+    <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
+  </div>
+</nav>
+
+<main>
+  <div id="error-slot"></div>
+  <div id="loading" class="loading">Loading compensation data…</div>
+
+  <!-- Overview -->
+  <section class="panel" id="panel-overview">
+
+    <!-- ============ PLANNING SECTION ============ -->
+    <div class="section-head">
+      <span class="tag">Planning</span>
+      <h2>Forecast your year</h2>
+      <p class="blurb">Model scenarios using the sliders below. These are your forward-looking projections — adjust the inputs to see how different GP targets affect your variable compensation. Numbers reset on reload.</p>
+    </div>
+    <div id="pay-increase-banner"></div>
+    <div id="planning-gate-banner"></div>
+
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="label">Base Salary</div>
+        <div class="value" id="card-base">—</div>
+        <div class="sub" id="card-base-sub">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">GP Commission</div>
+        <div class="value" id="card-comm">—</div>
+        <div class="sub" id="card-comm-sub">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">Production Commission</div>
+        <div class="value" id="card-production">—</div>
+        <div class="sub" id="card-production-sub">1% of Event GP</div>
+      </div>
+      <div class="kpi-card inverted">
+        <div class="label">Total Package</div>
+        <div class="value" id="card-total">—</div>
+        <div class="sub" id="card-total-sub">—</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="margin-bottom: 0;">
+        <h2>Scenario Inputs</h2>
+        <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Drag the sliders or type in exact figures to model different scenarios.</p>
+
+        <div class="scenario-row has-realistic-slider">
+          <div class="label-row">
+            <label>Annual GP Sold <span class="tooltip-trigger" data-tip="Enter your Annual GP Sold (ex. GST) for the last 365 days from your personal Zoho dashboard. The Realistic Range zone is highlighted on the slider.">?</span></label>
+            <div class="value-cell">
+              <div style="position: relative;">
+                <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+                <input type="text" inputmode="numeric" id="gp-input" class="value-input" style="padding-left: 22px; width: 150px;" value="300,000">
+              </div>
+              <div style="font-size: 11px; color: var(--muted); font-family: var(--mono);">÷ 12 = <span id="gp-monthly-chip" style="color:var(--navy);font-weight:600;">$25,000</span>/mo</div>
+            </div>
+          </div>
+          <div class="realistic-slider-wrap" id="gp-slider-wrap">
+            <div class="zone-labels"><span class="label-band">Realistic Range</span></div>
+            <div class="zone-bar">
+              <div class="zone under"></div>
+              <div class="zone realistic"></div>
+              <div class="zone stretch"></div>
+            </div>
+            <input type="range" id="gp-slider" min="0" max="100" step="0.1" value="50">
+            <div class="ticks"></div>
+            <div class="zone-legend"><span style="color:#c43c30;">↤ Under</span><span style="color:#1f5e3c;">Realistic</span><span style="color:#a17a00;">Stretch ↦</span></div>
+          </div>
+        </div>
+
+        <div class="scenario-row">
+          <label>Annual Event GP Produced <span class="tooltip-trigger" data-tip="Gross profit on bookings whose event date has passed. Drives the 1% production commission on top of your band commission.">?</span></label>
+          <input type="range" id="event-gp-slider" min="0" max="400000" step="1000" value="0">
+          <div style="display: flex; flex-direction: column; gap: 4px; align-items: stretch;">
+            <div style="position: relative;">
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+              <input type="text" inputmode="numeric" id="event-gp-input" class="value-input" style="padding-left: 22px;" value="0">
+            </div>
+            <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); text-align: right;">÷ 12 = <span id="event-gp-monthly-chip" style="color:var(--navy);font-weight:600;">$0</span>/mo</div>
+          </div>
+        </div>
+
+        <div class="scenario-row">
+          <label>KPI Score <span class="tooltip-trigger" data-tip="Coming soon — KPIs are still being finalised. For now the slider is capped at 1.0×.">?</span></label>
+          <input type="range" id="kpi-slider" min="0.7" max="1.3" step="0.01" value="1">
+          <input type="text" id="kpi-input" class="value-input" value="1.00">
+        </div>
+
+        <div class="rate-calc" id="rate-calc">
+          <div>
+            <span class="chip" id="calc-band">—</span>
+            <span style="color: var(--muted);">×</span>
+            <span class="chip" id="calc-kpi">1.00 KPI</span>
+            <span style="color: var(--muted);">=</span>
+            <span class="chip result" id="calc-eff">—</span>
+          </div>
+          <span class="label" id="calc-note">Effective rate at your current position</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom: 18px;">
+          <h2>Progress to Next Tier</h2>
+          <div style="margin-top: 14px;">
+            <div style="font-size: 14px;" id="next-tier-line">—</div>
+            <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width: 0%;"></div></div>
+            <div style="margin-top: 6px; font-size: 12px; color: var(--muted); font-family: var(--mono);" id="next-tier-sub">—</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 0;">
+          <h2>Breakdown</h2>
+          <table class="breakdown" id="breakdown-table"></table>
+          <div class="context-msg" id="context-msg" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commission Curve Chart -->
+    <div class="card">
+      <h2 style="margin-top: 0;" id="commission-curve-heading">Commission Curve</h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;" id="commission-curve-sublabel">Your commission earnings (super-inclusive) at every GP level. The vertical line marks your current scenario.</p>
+      <div id="commission-curve-wrap" style="width: 100%; overflow-x: auto;">
+        <svg id="commission-curve" viewBox="0 0 800 360" style="width: 100%; height: auto; min-width: 600px;" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div style="display: flex; gap: 18px; margin-top: 8px; font-size: 12px; font-family: var(--mono); color: var(--muted); flex-wrap: wrap;" id="commission-curve-legend">
+        <span><span style="display:inline-block; width:14px; height:3px; background: var(--navy); vertical-align: middle; margin-right: 6px;"></span>New plan (inc super)</span>
+        <span data-old-plan-legend><span style="display:inline-block; width:14px; height:3px; background: var(--muted); vertical-align: middle; margin-right: 6px;"></span>Old plan (3.5% × GP × 1.12)</span>
+        <span data-old-plan-legend><span style="display:inline-block; width:14px; height:3px; background: var(--accent); vertical-align: middle; margin-right: 6px;"></span>Difference</span>
+      </div>
+    </div>
+
+    <!-- Old vs New commission comparison (hidden for employees with hideOldPlan flag, e.g. Evies who never saw the old plan) -->
+    <div class="compare-card" id="old-vs-new-card">
+      <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Old vs New Commission</h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 0;">Side-by-side comparison at your current planned scenario, both figures super-inclusive for a fair apples-to-apples match. The old plan paid a flat rate ex-super with 12% super added on top; the new plan uses incremental bands whose output is already super-inclusive.</p>
+      <div class="compare-grid">
+        <div class="compare-col old">
+          <div class="label">Old plan (<span id="old-rate">3.5%</span> flat)</div>
+          <div class="val"><span id="old-comm">—</span><span style="font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 4px;">+ super</span></div>
+          <div class="sub" id="old-comm-sub">= $— inc. super</div>
+        </div>
+        <div class="compare-arrow">
+          <div id="delta-arrow">→</div>
+          <div class="delta" id="delta-val">—</div>
+          <div id="delta-gate-note" style="display: none; font-size: 11px; color: var(--warn); font-weight: 600; text-align: center; margin-top: 6px; line-height: 1.3;"></div>
+        </div>
+        <div class="compare-col new">
+          <div class="label">New plan (incremental bands)</div>
+          <div class="val" id="new-comm">—</div>
+          <div class="sub" id="new-comm-sub">inc. super · bands already include 12%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Commission Bands — Incremental</h2>
+      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 14px;">Each rate applies only to GP earned within that band. Highlighted rows reflect your current GP position.</p>
+      <table class="bands" id="bands-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">Band</th>
+            <th>Annual GP Range</th>
+            <th>Monthly GP Range</th>
+            <th style="text-align: right;">Rate</th>
+            <th style="text-align: right;">Band Earn <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
+            <th style="text-align: right;">Cumulative <span style="color:var(--faint);font-weight:400;">(inc. super)</span></th>
+          </tr>
+        </thead>
+        <tbody id="bands-body"></tbody>
+      </table>
+      <div style="margin-top: 12px; font-size: 12px; color: var(--muted); font-family: var(--mono);" id="production-note"></div>
+    </div>
+
+    <!-- Margin Calculator — sits below Commission Bands, styled to match Scenario Inputs -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px;">
+        <h2 style="margin: 0;">Margin Calculator</h2>
+        <span style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Margin Multipliers coming soon to the commission structure</span>
+      </div>
+      <p style="font-size: 13px; color: var(--muted); margin: 4px 0 16px;">Sanity-check your realised margin on bookings. GST is stripped from Revenue so the result lines up with the company P&amp;L (which is ex-GST). Higher-margin work will be rewarded once Margin Multipliers go live.</p>
+      <div class="scenario-row">
+        <label>Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(inc. GST)</span></label>
+        <input type="range" id="margin-rev-slider" min="0" max="1500000" step="10000" value="0">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="margin-revenue-input" class="value-input" style="padding-left: 22px;" value="0">
+        </div>
+      </div>
+      <div class="scenario-row">
+        <label>GP Sold <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(auto-pulls from Annual GP Sold above)</span></label>
+        <input type="range" id="margin-gp-slider" min="0" max="600000" step="5000" value="0">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="margin-gp-input" class="value-input" style="padding-left: 22px;" value="0">
+        </div>
+      </div>
+      <div style="margin-top: 16px; padding: 18px 22px; background: #f6f8fc; border: 1px solid var(--border); border-radius: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap;">
+          <div style="font-size: 14px; color: var(--ink); font-family: var(--mono); line-height: 1.7;">
+            <div>Revenue ex-GST: <strong id="margin-rev-chip" style="color: var(--ink); font-weight: 700; font-size: 16px;">$—</strong></div>
+            <div>GP: <strong id="margin-gp-chip" style="color: var(--ink); font-weight: 700; font-size: 16px;">$—</strong></div>
+            <div style="font-size: 11px; color: var(--faint); margin-top: 6px; font-weight: 400;">Formula: <span id="margin-formula">GP ÷ (Revenue − Revenue ÷ 11)</span></div>
+          </div>
+          <div style="text-align: center; min-width: 200px; padding: 16px 24px; border-radius: 10px; background: #f0f0eb;" id="margin-result-wrap">
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Realised Margin</div>
+            <div style="font-family: var(--mono); font-size: 36px; font-weight: 700; line-height: 1.1; margin-top: 4px;" id="margin-result">—</div>
+            <div style="font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;" id="margin-band-label">&nbsp;</div>
+          </div>
+        </div>
+        <details style="margin-top: 14px; font-size: 11px; color: var(--muted);">
+          <summary style="cursor: pointer; color: var(--navy); font-weight: 600;">How are High / Acceptable / Low margin set?</summary>
+          <div style="padding: 10px 12px; margin-top: 6px; background: #fff; border: 1px solid var(--border); border-radius: 6px; line-height: 1.6;">
+            Thresholds are placeholders for now: <strong style="color:#1f5e3c;">≥30% = High Margin</strong> (green), <strong style="color:#8a6a00;">≥20% = Acceptable</strong> (amber), <strong style="color:#a8281b;">&lt;20% = Low Margin</strong> (red). The 30% target is roughly your historical average — once Margin Multipliers go live, hitting High Margin will unlock a multiplier on commission. Nathan can re-tune these in code or via Plan Types editor in a future pass.
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="card" data-guardrail-card style="padding: 18px 24px;">
+      <h2>Company Guardrail</h2>
+      <div id="guardrail-banner" style="margin-top: 10px;"></div>
+      <p style="font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.5;">
+        The company maintains a minimum margin floor to ensure variable compensation is funded by real profitability.
+        If the rolling company margin drops below the guardrail threshold, <strong>variable compensation pauses</strong>
+        — base salary is unaffected. This protects both you and the business during low-margin periods.
+      </p>
+    </div>
+
+    <div class="section-gap"></div>
+
+    <!-- ============ ACTUAL SECTION ============ -->
+    <div class="section-head">
+      <span class="tag" style="background:#fef5e6;border-color:#f5d890;color:var(--warn);">Actual</span>
+      <h2>What you've earned</h2>
+      <p class="blurb">Enter your actual monthly GP Received and Event GP Produced below. Commissions are calculated month-by-month off these real numbers, with quarterly true-ups keeping your payouts fair over time. Edits persist on this device.</p>
+    </div>
+    <div id="prod-gate-banner"></div>
+
+    <div class="yt-row">
+      <div class="kpi-card inverted">
+        <div class="label">YTD Commission Paid</div>
+        <div class="value" id="ytd-cash">—</div>
+        <div class="sub" id="ytd-cash-sub">Nothing paid yet — enter monthly GP below</div>
+      </div>
+      <div class="kpi-card" style="border-left: 3px solid var(--accent); background: var(--accent-bg);">
+        <div class="label">Projected Annual Commission</div>
+        <div class="value" id="ytd-projection" style="color: var(--accent);">—</div>
+        <div class="sub" id="ytd-projection-sub">Enter a month or two to see your year-end projection</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">YTD GP Received</div>
+        <div class="value" id="ytd-gp">—</div>
+        <div class="sub" id="ytd-gp-sub">Sum of months entered</div>
+      </div>
+      <div class="kpi-card">
+        <div class="label">True-Up Balance Fwd <span class="tooltip-trigger" data-tip="If you've been paid more commission than the quarterly/annual calculation says you've earned, the excess becomes a running balance that reduces future commissions — never from base salary. See 'What is True-Up?' below the Quarterly True-Up Summary for the full explanation.">?</span></div>
+        <div class="value" id="trueup-delta">—</div>
+        <div class="sub" id="trueup-delta-sub">Amount owed into future months</div>
+      </div>
+    </div>
+
+    <!-- Monthly Scenario — sandbox slider for one month -->
+    <div class="card">
+      <h2>Monthly Scenario <span class="tooltip-trigger" data-tip="Play with single-month numbers without touching the monthly grid below. Useful for 'what if I sell $X this month' projections. Uses monthly bands (annual ÷ 12); shows raw monthly commission before any quarterly true-up.">?</span></h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 10px;">A sandbox for one month's performance. Move the sliders to see what you'd earn — this doesn't affect the Monthly Payout grid below. <strong>Raw monthly commission shown</strong> (before any quarterly true-up adjustment).</p>
+
+      <div class="two-col" style="margin-bottom: 0;">
+        <div>
+          <div class="scenario-row">
+            <label>This month's GP Received</label>
+            <input type="range" id="mscn-gp-slider" min="0" max="80000" step="500" value="25000">
+            <div style="position: relative;">
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+              <input type="text" inputmode="numeric" id="mscn-gp-input" class="value-input" style="padding-left: 22px;" value="25,000">
+            </div>
+          </div>
+          <div class="scenario-row">
+            <label>This month's Event GP Produced</label>
+            <input type="range" id="mscn-event-slider" min="0" max="30000" step="500" value="0">
+            <div style="position: relative;">
+              <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+              <input type="text" inputmode="numeric" id="mscn-event-input" class="value-input" style="padding-left: 22px;" value="0">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+            <div class="kpi-card" style="margin: 0; padding: 14px 18px;">
+              <div class="label" style="font-size: 11px;">GP Commission</div>
+              <div class="value" id="mscn-gpcomm" style="font-size: 22px;">—</div>
+              <div class="sub" id="mscn-gpcomm-sub">—</div>
+            </div>
+            <div class="kpi-card" style="margin: 0; padding: 14px 18px;">
+              <div class="label" style="font-size: 11px;">Production</div>
+              <div class="value" id="mscn-prodcomm" style="font-size: 22px;">—</div>
+              <div class="sub" id="mscn-prodcomm-sub">—</div>
+            </div>
+          </div>
+          <div class="kpi-card inverted" style="margin: 12px 0 0; padding: 14px 18px;">
+            <div class="label" style="font-size: 11px;">Monthly Commission Total (inc. super)</div>
+            <div class="value" id="mscn-total" style="font-size: 26px;">—</div>
+            <div class="sub" id="mscn-total-sub">Raw monthly — before quarterly true-up</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Monthly Payout <span class="tooltip-trigger" data-tip="Monthly bands pay each month for cash flow. At quarter-end the true-up reconciles against what you've actually earned. Any overpayment becomes a running balance that offsets future commissions — never a deduction from your base salary.">?</span></h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Each month's GP Received runs through the monthly bands (annual ÷ 12). Months 3 / 6 / 9 / 12 reconcile against <strong>quarterly entitlement</strong>, and any overpayment becomes a <strong>running true-up balance</strong> that reduces future commissions until worked off. If the balance is still positive at year-end, it carries into next year. Your base salary is never affected.</p>
+      <div style="overflow-x: auto;">
+        <table class="monthly" id="monthly-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">GP Received</th>
+              <th class="num">Event GP<br>Produced</th>
+              <th class="num">GP<br>Commission<small>Inc. Super</small></th>
+              <th class="num">Production<br>Commission<small>Inc. Super</small></th>
+              <th class="num">Monthly<br>Total<small>Inc. Super</small></th>
+              <th class="num">Monthly<br>Total<small>Ex. Super</small></th>
+            </tr>
+          </thead>
+          <tbody id="monthly-body"></tbody>
+        </table>
+      </div>
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Months highlighted amber are where a true-up adjustment applied. Tooltip on the GP Commission cell shows the raw monthly figure before adjustment.</p>
+    </div>
+
+    <!-- Quarterly summary strip -->
+    <div class="card">
+      <h2>Quarterly True-Up Summary <span class="tooltip-trigger" data-tip="Each quarter's entitled commission (using quarterly bands) vs what's been paid. If paid more than entitled, the excess carries into the next quarter's balance.">?</span></h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Each quarter reconciles commission paid vs entitled. Differences flow through the running balance shown under each bar.</p>
+      <div id="quarterly-strip" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;"></div>
+
+      <details class="tu-help">
+        <summary>What is True-Up?</summary>
+        <div class="body">
+          <p>Your GP commissions are paid <strong>monthly</strong> so you get cash flow through the year instead of waiting until year-end. But monthly payouts are only an estimate — your real entitlement depends on your <strong>quarterly</strong> and <strong>annual</strong> GP.</p>
+          <p>At the end of each quarter we check:</p>
+          <ul>
+            <li><strong>Did you get paid more than you earned this quarter?</strong> The extra becomes a <em>true-up balance</em> — future commissions are reduced until the balance is worked off. Your base salary never moves.</li>
+            <li><strong>Did you get paid less than you earned?</strong> Your month-3 commission tops up to match.</li>
+          </ul>
+          <p>If a true-up balance is still sitting there at year-end, it carries into next year and nets against your first months' commissions. This way monthly payouts stay generous and fair, without anyone being over- or under-paid in the long run.</p>
+          <p style="color: var(--muted); font-size: 12px;">Example: you sell $70k of GP in month 1 and $0 in months 2-3. The monthly bands pay you about $4,100 in month 1. But at the end of the quarter, your entitlement on $70k quarterly is only $1,900. The $2,200 difference becomes your true-up balance — it'll offset what you earn in Q2 until worked off.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- Projects -->
+  <section class="panel" id="panel-projects">
+    <div style="margin-bottom: 18px;">
+      <p style="color: var(--muted); font-size: 14px; margin: 0;">Projects are currently not enabled for the Sales Rep plan. If this changes, project bonuses will appear here.</p>
+    </div>
+    <div id="projects-empty" style="padding: 60px; text-align: center; color: var(--muted); background: #fafaf7; border: 1px dashed var(--border); border-radius: 10px;">
+      No projects currently assigned to you.
+    </div>
+  </section>
+
+  <!-- KPI -->
+  <section class="panel" id="panel-kpi">
+    <div class="kpi-draft-note">
+      <strong>Draft:</strong> KPI assignments and scoring are not yet finalised. The slider below shows how a KPI multiplier <em>would</em> affect variable compensation — currently capped at 1.0×.
+    </div>
+
+    <div class="two-col">
+      <div class="kpi-slider-card">
+        <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px;">Your KPI Score</h2>
+        <div class="kpi-big-value"><span id="kpi-big">1.00</span><span class="x">×</span></div>
+        <input type="range" id="kpi-slider-2" min="0.7" max="1.3" step="0.01" value="1" style="width: 100%; accent-color: var(--navy);">
+        <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px;">
+          <span>0.0×</span><span>1.0×</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 0;">
+        <h2>Effect on your comp</h2>
+        <div class="super-line muted" style="margin-top: 12px;"><span>Variable comp before KPI</span><span id="kpi-before">—</span></div>
+        <div class="super-line"><span>KPI multiplier</span><span id="kpi-mult">—</span></div>
+        <div class="super-line total" style="color: var(--navy);"><span>Variable comp after KPI</span><span id="kpi-after">—</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 22px;">
+      <h2>Your KPI Assignments</h2>
+      <div id="kpi-list" style="margin-top: 10px;">
+        <div style="padding: 30px; text-align: center; color: var(--muted); font-size: 14px; background: #fafaf7; border-radius: 8px;">
+          No KPIs assigned yet. Your manager will set these as the KPI framework is finalised.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Payouts -->
+  <section class="panel" id="panel-payouts">
+    <div class="banner info" id="payout-banner">
+      <span class="dot"></span>
+      <span id="payout-banner-text">—</span>
+    </div>
+
+    <div class="super-card">
+      <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px;">Superannuation &amp; Total Package (Planning)</h2>
+      <div class="super-line"><span>Base salary (ex-super)</span><span id="spr-base">—</span></div>
+      <div class="super-line"><span>+ GP Commission (ex-super portion)</span><span id="spr-comm" class="plus-line">—</span></div>
+      <div class="super-line"><span>+ Production Commission (ex-super portion)</span><span id="spr-prod" class="plus-line">—</span></div>
+      <div class="super-line muted"><span>Subtotal ex-super</span><span id="spr-subtotal">—</span></div>
+      <div class="super-line"><span id="spr-super-label">+ Superannuation (total)</span><span id="spr-super" class="plus-line">—</span></div>
+      <div class="super-line total"><span>Total package (inc. super)</span><span id="spr-total">—</span></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ============================================================
+   Employee Compensation Dashboard — Daniel Steer (Sales Rep, gp_bands)
+   Planning + Actual split, no margin multiplier, super-inclusive everywhere.
+   ============================================================ */
+
+const EMPLOYEE_ID = 'nic';
+const ACTUALS_LS_KEY = `dashboard-${EMPLOYEE_ID}-actuals-v2`;
+
+let data = null;
+let emp = null;
+let plan = null;
+let actualsMonths = []; // array of { month, gpReceived, eventGP, revenueReceivedIncGST }
+
+const scenario = {
+  gp: 300000,
+  eventGP: 0,
+  kpiScore: 1.0,
+  // Monthly Scenario sandbox (Actual section)
+  mscnGP: 25000,
+  mscnEvent: 0,
+};
+
+// Per-employee scenario overrides (from data.json scenarioDefaults) — applied after data loads.
+function applyScenarioDefaults() {
+  if (!emp || !emp.scenarioDefaults) return;
+  if (typeof emp.scenarioDefaults.gp === 'number') scenario.gp = emp.scenarioDefaults.gp;
+  if (typeof emp.scenarioDefaults.eventGP === 'number') scenario.eventGP = emp.scenarioDefaults.eventGP;
+}
+
+const fmtMoney = (n) => {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const v = Number(n);
+  const sign = v < 0 ? '-' : '';
+  return sign + '$' + Math.abs(v).toLocaleString('en-AU', { maximumFractionDigits: 0 });
+};
+const fmtPct = (n, d = 1) => (n * 100).toFixed(d) + '%';
+const fmtNum = (n) => Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 });
+const parseNum = (s) => { const c = String(s).replace(/[^0-9.-]/g, ''); return c === '' ? 0 : +c; };
+
+// --- Tabs ---
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+document.getElementById('panel-overview').classList.add('active');
+
+async function load() {
+  try {
+    const res = await fetch('data.json?' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    data = await res.json();
+    emp = data.employees.find(e => e.id === EMPLOYEE_ID);
+    if (!emp) throw new Error(`Employee "${EMPLOYEE_ID}" not found`);
+    plan = data.planTypes[emp.planType];
+    if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
+
+    // Per-employee scenario defaults from data.json (e.g., Evie starts at $175k not $300k)
+    applyScenarioDefaults();
+
+    // Hide Old plan elements for employees who never saw the old plan (e.g. Evies)
+    if (emp.hideOldPlan) {
+      const ovn = document.getElementById('old-vs-new-card');
+      if (ovn) ovn.style.display = 'none';
+      document.querySelectorAll('[data-old-plan-legend]').forEach(el => el.style.display = 'none');
+      const heading = document.getElementById('commission-curve-heading');
+      if (heading) heading.textContent = 'Commission Curve';
+      const sub = document.getElementById('commission-curve-sublabel');
+      if (sub) sub.textContent = 'Your commission earnings (super-inclusive) at every GP level. The vertical line marks your current scenario.';
+    }
+
+    // Initialise actuals months (from data.json baseline; override with localStorage if present)
+    const baseline = (emp.actuals && Array.isArray(emp.actuals.monthlyGP)) ? emp.actuals.monthlyGP : defaultMonths();
+    actualsMonths = baseline.map(m => ({
+      month: m.month,
+      gpReceived: +m.gpReceived || 0,
+      eventGP: +m.eventGP || 0,
+      revenueReceivedIncGST: +m.revenueReceivedIncGST || 0,
+    }));
+    try {
+      const saved = JSON.parse(localStorage.getItem(ACTUALS_LS_KEY) || 'null');
+      if (saved && Array.isArray(saved) && saved.length === actualsMonths.length) {
+        actualsMonths = saved.map((m, i) => ({
+          month: actualsMonths[i].month,
+          gpReceived: +m.gpReceived || 0,
+          eventGP: +m.eventGP || 0,
+          revenueReceivedIncGST: +m.revenueReceivedIncGST || 0,
+        }));
+      }
+    } catch (e) { /* ignore corrupt localStorage */ }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('emp-name').textContent = emp.name;
+    document.getElementById('emp-sub').textContent = `${emp.role} · Effective ${data.meta.effectiveDate}`;
+    document.getElementById('role-badge').textContent = emp.roleShort || emp.role;
+    document.title = `Compensation · ${emp.name}`;
+
+    // Apply plan-defined slider maxes (fall back to existing HTML defaults if missing)
+    const maxMetric = +plan.maxMetricValue || 600000;
+    const maxProd = +plan.maxProductionValue || 400000;
+    // GP slider is non-linear (0-100 position), DO NOT overwrite its max — its absolute money max
+    // comes from emp.realisticRange.absoluteMax instead. Only the legacy linear sliders need this.
+    if (!emp.realisticRange) document.getElementById('gp-slider').max = maxMetric;
+    document.getElementById('event-gp-slider').max = maxProd;
+    // Monthly Scenario sandbox — allow for bigger one-month scenarios than the annual/12 cap
+    // (a really strong month can easily exceed the linear monthly average).
+    const mscnGPEl = document.getElementById('mscn-gp-slider');
+    const mscnEvEl = document.getElementById('mscn-event-slider');
+    if (mscnGPEl) mscnGPEl.max = Math.max(80000, Math.ceil(maxMetric / 12 / 1000) * 1000);
+    if (mscnEvEl) mscnEvEl.max = Math.max(40000, Math.ceil(maxProd / 12 / 1000) * 1000);
+
+    // Hide guardrail if disabled globally
+    if (data.globals.guardrailEnabled === false) {
+      document.querySelectorAll('[data-guardrail-card]').forEach(el => el.style.display = 'none');
+    }
+    // Hide Projects tab if plan doesn't include projects, OR if no projects are assigned to this employee.
+    const myProjects = (data.projects || []).filter(p => Array.isArray(p.assignedTo) && p.assignedTo.includes(EMPLOYEE_ID));
+    const hideProjects = !plan.includeProjects || myProjects.length === 0;
+    if (hideProjects) {
+      const projTab = document.querySelector('[data-tab="projects"]');
+      if (projTab) projTab.style.display = 'none';
+    }
+    // Old commission rate on card
+    if (plan.showOldCommissionComparison) {
+      const rate = plan.oldCommissionRate || 0.035;
+      document.getElementById('old-rate').textContent = fmtPct(rate, 1);
+    }
+
+    wireInputs();
+    renderMonthlyGrid();
+    update();
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-slot').innerHTML =
+      `<div class="error-banner"><strong>Could not load dashboard.</strong> ${err.message}.</div>`;
+  }
+}
+
+function defaultMonths() {
+  // Daniel's comp year: Apr 2026 → Mar 2027. Quarters are Apr-Jun, Jul-Sep, Oct-Dec, Jan-Mar.
+  const labels = ['Apr 2026','May 2026','Jun 2026','Jul 2026','Aug 2026','Sep 2026',
+                  'Oct 2026','Nov 2026','Dec 2026','Jan 2027','Feb 2027','Mar 2027'];
+  return labels.map(m => ({ month: m, gpReceived: 0, eventGP: 0, revenueReceivedIncGST: 0 }));
+}
+
+function saveActualsLocal() {
+  try {
+    localStorage.setItem(ACTUALS_LS_KEY, JSON.stringify(actualsMonths));
+  } catch (e) { /* localStorage may be blocked — ignore */ }
+}
+
+// === Non-linear realistic-range slider helpers ===
+// Maps a 0-100 slider position to actual money via piecewise mapping. Realistic zone is the
+// middle 60% of slider width; under/stretch are 20% each. Effect: dragging through the
+// realistic range moves slowly so users can dial in $315k vs $325k easily.
+const NLS_UNDER = 20, NLS_REAL = 60, NLS_STRETCH = 20;
+function nlsPosToMoney(pos, range) {
+  const { min, max, absoluteMax, absoluteMin = 0 } = range;
+  if (pos <= NLS_UNDER) return absoluteMin + (pos / NLS_UNDER) * (min - absoluteMin);
+  if (pos <= NLS_UNDER + NLS_REAL) {
+    const t = (pos - NLS_UNDER) / NLS_REAL;
+    return min + t * (max - min);
+  }
+  const t = (pos - NLS_UNDER - NLS_REAL) / NLS_STRETCH;
+  return max + t * (absoluteMax - max);
+}
+function nlsMoneyToPos(money, range) {
+  const { min, max, absoluteMax, absoluteMin = 0 } = range;
+  if (money <= absoluteMin) return 0;
+  if (money <= min) return min === absoluteMin ? 0 : ((money - absoluteMin) / (min - absoluteMin)) * NLS_UNDER;
+  if (money <= max) return NLS_UNDER + ((money - min) / (max - min)) * NLS_REAL;
+  if (money >= absoluteMax) return 100;
+  return NLS_UNDER + NLS_REAL + ((money - max) / (absoluteMax - max)) * NLS_STRETCH;
+}
+function nlsRenderChrome(wrapEl, range) {
+  const { min, max, absoluteMax, absoluteMin = 0 } = range;
+  const zones = wrapEl.querySelectorAll('.zone');
+  if (zones.length === 3) { zones[0].style.width = NLS_UNDER + '%'; zones[1].style.width = NLS_REAL + '%'; zones[2].style.width = NLS_STRETCH + '%'; }
+  const band = wrapEl.querySelector('.label-band');
+  if (band) {
+    band.style.left = NLS_UNDER + '%';
+    band.style.width = NLS_REAL + '%';
+    band.textContent = `Realistic Range $${(min/1000).toFixed(0)}k–$${(max/1000).toFixed(0)}k`;
+  }
+  const ticks = wrapEl.querySelector('.ticks');
+  if (ticks) {
+    ticks.innerHTML = `
+      <span class="tick endpoint" style="left:0%;">$${(absoluteMin/1000).toFixed(0)}k</span>
+      <span class="tick" style="left:${NLS_UNDER}%;">$${(min/1000).toFixed(0)}k</span>
+      <span class="tick" style="left:${NLS_UNDER + NLS_REAL}%;">$${(max/1000).toFixed(0)}k</span>
+      <span class="tick endpoint" style="left:100%;">$${(absoluteMax/1000).toFixed(0)}k</span>`;
+  }
+}
+function wireNonLinearSlider(slider, input, range, onChange) {
+  const wrap = slider.closest('.realistic-slider-wrap');
+  if (wrap) nlsRenderChrome(wrap, range);
+  slider.addEventListener('input', () => {
+    const money = Math.round(nlsPosToMoney(+slider.value, range) / 100) * 100;
+    input.value = fmtNum(money);
+    onChange(money);
+  });
+  input.addEventListener('input', () => {
+    const money = parseNum(input.value);
+    const caret = input.selectionStart;
+    const digitsBefore = (input.value.slice(0, caret).match(/\d/g) || []).length;
+    input.value = fmtNum(money);
+    let cursor = 0, seen = 0;
+    while (cursor < input.value.length && seen < digitsBefore) {
+      if (/\d/.test(input.value[cursor])) seen++;
+      cursor++;
+    }
+    input.setSelectionRange(cursor, cursor);
+    slider.value = nlsMoneyToPos(money, range);
+    onChange(money);
+  });
+  return (initialMoney) => {
+    slider.value = nlsMoneyToPos(initialMoney, range);
+    input.value = fmtNum(initialMoney);
+  };
+}
+
+function wireInputs() {
+  const gpSlider = document.getElementById('gp-slider');
+  const gpInput = document.getElementById('gp-input');
+  const eventSlider = document.getElementById('event-gp-slider');
+  const eventInput = document.getElementById('event-gp-input');
+  const kpiSlider = document.getElementById('kpi-slider');
+  const kpiInput = document.getElementById('kpi-input');
+  const kpiSlider2 = document.getElementById('kpi-slider-2');
+
+  // Annual GP Sold uses the non-linear realistic-range slider.
+  // Falls back to a linear slider behaviour if no realisticRange is configured.
+  const range = emp.realisticRange ? { ...emp.realisticRange, absoluteMin: emp.realisticRange.absoluteMin || 0 } : null;
+  if (range) {
+    const setGp = wireNonLinearSlider(gpSlider, gpInput, range, (money) => { scenario.gp = money; update(); });
+    setGp(scenario.gp);
+  }
+  eventSlider.value = scenario.eventGP;
+  eventInput.value = fmtNum(scenario.eventGP);
+  kpiSlider.value = scenario.kpiScore;
+  kpiSlider2.value = scenario.kpiScore;
+  kpiInput.value = scenario.kpiScore.toFixed(2);
+
+  const syncMoney = (slider, input, field) => {
+    slider.addEventListener('input', () => { scenario[field] = +slider.value; input.value = fmtNum(scenario[field]); update(); });
+    input.addEventListener('input', () => {
+      scenario[field] = parseNum(input.value);
+      const caret = input.selectionStart;
+      const digitsBefore = (input.value.slice(0, caret).match(/\d/g) || []).length;
+      input.value = fmtNum(scenario[field]);
+      let cursor = 0, seen = 0;
+      while (cursor < input.value.length && seen < digitsBefore) {
+        if (/\d/.test(input.value[cursor])) seen++;
+        cursor++;
+      }
+      input.setSelectionRange(cursor, cursor);
+      slider.value = Math.min(scenario[field], +slider.max);
+      update();
+    });
+  };
+  // GP slider handled above via non-linear wiring (when range is set)
+  if (!range) syncMoney(gpSlider, gpInput, 'gp');
+  syncMoney(eventSlider, eventInput, 'eventGP');
+
+  // Monthly Scenario sandbox sliders
+  const mscnGPSlider = document.getElementById('mscn-gp-slider');
+  const mscnGPInput = document.getElementById('mscn-gp-input');
+  const mscnEvSlider = document.getElementById('mscn-event-slider');
+  const mscnEvInput = document.getElementById('mscn-event-input');
+  if (mscnGPSlider && mscnGPInput) {
+    mscnGPSlider.value = scenario.mscnGP;
+    mscnGPInput.value = fmtNum(scenario.mscnGP);
+    mscnEvSlider.value = scenario.mscnEvent;
+    mscnEvInput.value = fmtNum(scenario.mscnEvent);
+    syncMoney(mscnGPSlider, mscnGPInput, 'mscnGP');
+    syncMoney(mscnEvSlider, mscnEvInput, 'mscnEvent');
+  }
+
+  const syncKpi = (val) => {
+    const floor = data.globals.kpiScoreFloor || 0;
+    const cap = data.globals.kpiScoreCap || 1;
+    scenario.kpiScore = Math.max(floor, Math.min(+val || 0, cap));
+    kpiSlider.value = scenario.kpiScore;
+    kpiSlider2.value = scenario.kpiScore;
+    kpiInput.value = scenario.kpiScore.toFixed(2);
+    update();
+  };
+  kpiSlider.addEventListener('input', () => syncKpi(kpiSlider.value));
+  kpiSlider2.addEventListener('input', () => syncKpi(kpiSlider2.value));
+  kpiInput.addEventListener('input', () => syncKpi(kpiInput.value));
+
+  // Margin calculator — slider + input pairs styled like the rest of the page
+  const mRevSlider = document.getElementById('margin-rev-slider');
+  const mRevInput = document.getElementById('margin-revenue-input');
+  const mGpSlider = document.getElementById('margin-gp-slider');
+  const mGpInput = document.getElementById('margin-gp-input');
+  // Hybrid (Evie) gets half the range; full Sales (Daniel/Nic/Dane) gets full range
+  // Linked to the GP slider's absolute max from realisticRange schema.
+  if (emp.realisticRange) {
+    const gpAbsMax = emp.realisticRange.absoluteMax || 600000;
+    mGpSlider.max = gpAbsMax;
+    // Hybrid Sales/Producer roles (Evie) get $750k revenue ceiling, full Sales reps get $1.5M
+    const isHybrid = emp.planType === 'hybrid_gp' || emp.planType === 'hybrid_rev' || emp.planType === 'hybrid_rev_senior';
+    mRevSlider.max = isHybrid ? 750000 : 1500000;
+  }
+  if (mRevSlider && mRevInput && mGpSlider && mGpInput) {
+    const recalcMargin = () => {
+      const revInc = parseNum(mRevInput.value);
+      const gp = parseNum(mGpInput.value);
+      const revEx = revInc - revInc / 11; // strip 10% GST (Australian)
+      const margin = revEx > 0 ? gp / revEx : 0;
+      const result = document.getElementById('margin-result');
+      const wrap = document.getElementById('margin-result-wrap');
+      const bandLabel = document.getElementById('margin-band-label');
+      const revChip = document.getElementById('margin-rev-chip');
+      const gpChip = document.getElementById('margin-gp-chip');
+      if (revChip) revChip.textContent = fmtMoney(revEx);
+      if (gpChip) gpChip.textContent = fmtMoney(gp);
+      if (revEx > 0 && gp > 0) {
+        result.textContent = (margin * 100).toFixed(1) + '%';
+        if (margin >= 0.30) {
+          wrap.style.background = '#e6f7ee'; wrap.style.border = '2px solid #6fc792';
+          result.style.color = '#1f5e3c';
+          bandLabel.textContent = '✓ HIGH MARGIN';
+          bandLabel.style.color = '#1f5e3c';
+        } else if (margin >= 0.20) {
+          wrap.style.background = '#fff8e1'; wrap.style.border = '2px solid #f5d890';
+          result.style.color = '#8a6a00';
+          bandLabel.textContent = '— ACCEPTABLE';
+          bandLabel.style.color = '#8a6a00';
+        } else {
+          wrap.style.background = '#fdecea'; wrap.style.border = '2px solid #e89999';
+          result.style.color = '#a8281b';
+          bandLabel.textContent = '⚠ LOW MARGIN';
+          bandLabel.style.color = '#a8281b';
+        }
+      } else {
+        result.textContent = '—';
+        result.style.color = '';
+        wrap.style.background = '#f0f0eb';
+        wrap.style.border = '1px solid var(--border)';
+        bandLabel.textContent = '\u00A0';
+      }
+    };
+    const formatLive = (input) => {
+      const caret = input.selectionStart;
+      const digitsBefore = (input.value.slice(0, caret).match(/\d/g) || []).length;
+      input.value = fmtNum(parseNum(input.value));
+      let cursor = 0, seen = 0;
+      while (cursor < input.value.length && seen < digitsBefore) {
+        if (/\d/.test(input.value[cursor])) seen++;
+        cursor++;
+      }
+      input.setSelectionRange(cursor, cursor);
+    };
+    const syncMarginPair = (slider, input) => {
+      slider.addEventListener('input', () => { input.value = fmtNum(+slider.value); recalcMargin(); });
+      input.addEventListener('input', () => {
+        formatLive(input);
+        const n = parseNum(input.value);
+        slider.value = Math.min(n, +slider.max);
+        recalcMargin();
+      });
+    };
+    syncMarginPair(mRevSlider, mRevInput);
+    syncMarginPair(mGpSlider, mGpInput);
+    // Auto-pull GP from main scenario whenever it changes
+    const autoPull = () => {
+      mGpInput.value = fmtNum(scenario.gp);
+      mGpSlider.value = Math.min(scenario.gp, +mGpSlider.max);
+      recalcMargin();
+    };
+    document.getElementById('gp-slider').addEventListener('input', autoPull);
+    document.getElementById('gp-input').addEventListener('input', autoPull);
+    autoPull();
+  }
+}
+
+function calcBandCommission(metric, bands) {
+  let total = 0;
+  const breakdown = [];
+  const sorted = [...bands].sort((a, b) => a.threshold - b.threshold);
+  for (let i = 0; i < sorted.length; i++) {
+    const b = sorted[i];
+    const nextThreshold = i + 1 < sorted.length ? sorted[i + 1].threshold : Infinity;
+    const inBand = Math.max(0, Math.min(metric, nextThreshold) - b.threshold);
+    const earn = inBand * b.rate;
+    total += earn;
+    breakdown.push({
+      min: b.threshold,
+      max: nextThreshold === Infinity ? null : nextThreshold,
+      rate: b.rate,
+      earn,
+      cumulative: total,
+      active: metric > b.threshold,
+      partial: metric > b.threshold && metric < nextThreshold
+    });
+  }
+  return { total, breakdown };
+}
+
+// Production Gate resolver — checks plan-level minProductionGP first (new home, edited from MEC Group → Plan Types),
+// falls back to legacy per-employee field. Returns 0 if no gate is configured.
+function getProductionGate() {
+  const planMin = +data.planTypes?.[emp.planType]?.minProductionGP || 0;
+  const empMin = +emp.minProductionGP || 0;
+  return planMin || empMin;
+}
+
+// Planning-side calculation.
+// IMPORTANT: band output and production commission are ALREADY super-inclusive (gross).
+// ex-super portion = gross / (1 + superRate). super portion = gross − ex.
+function calcAll() {
+  const g = data.globals;
+  const sr = g.superRate;
+  const { total: bandCommGrossRaw, breakdown } = calcBandCommission(scenario.gp, plan.bands);
+
+  // PLANNING-SIDE PRODUCTION GATE — if getProductionGate() is set, scenario.eventGP must >= it
+  // for the GP commission to flow on the planning side. (Independent of the actual gate.)
+  const planningGatePassed = !getProductionGate() || scenario.eventGP >= getProductionGate();
+  const bandCommGross = planningGatePassed ? bandCommGrossRaw : 0;
+
+  const effectiveKpi = Math.min(Math.max(scenario.kpiScore, g.kpiScoreFloor || 0), g.kpiScoreCap || 1);
+  const commGross = bandCommGross * effectiveKpi;               // inc-super
+  const commEx = commGross / (1 + sr);                          // ex-super portion
+  const commSuper = commGross - commEx;                         // super portion
+
+  const prodGrossRaw = (plan.includeProduction ? (plan.productionPct || 0) : 0) * scenario.eventGP;
+  const prodGross = prodGrossRaw * effectiveKpi;                // inc-super
+  const prodEx = prodGross / (1 + sr);
+  const prodSuper = prodGross - prodEx;
+
+  const base = emp.baseSalary;                                  // ex-super
+  const baseSuper = base * sr;
+  const baseInc = base + baseSuper;
+
+  // Subtotal (ex-super) = base + ex-super portion of commissions
+  const subtotalExSuper = base + commEx + prodEx;
+  // Total super = super on base + super embedded in commissions
+  const totalSuper = baseSuper + commSuper + prodSuper;
+  const totalPackage = subtotalExSuper + totalSuper;            // = baseInc + commGross + prodGross
+
+  // Legacy aliases for the UI code that already refers to these names
+  const bandCommKpi = commEx;         // ex-super commission (post-KPI)
+  const commInc = commGross;          // gross commission
+  const variable = commEx + prodEx;   // ex-super variable comp
+  const productionKpi = prodEx;       // ex-super production
+  const prodInc = prodGross;
+  const production = prodGrossRaw / (1 + sr); // ex-super pre-KPI (legacy usage)
+
+  // Progress to next tier
+  let nextTier = null, progressPct = 100, toGo = 0;
+  const sortedBands = [...plan.bands].sort((a, b) => a.threshold - b.threshold);
+  for (let i = 0; i < sortedBands.length; i++) {
+    const b = sortedBands[i];
+    if (scenario.gp < b.threshold) {
+      nextTier = b;
+      const prevThreshold = i > 0 ? sortedBands[i - 1].threshold : 0;
+      const span = b.threshold - prevThreshold;
+      progressPct = span > 0 ? Math.max(0, Math.min(100, ((scenario.gp - prevThreshold) / span) * 100)) : 100;
+      toGo = b.threshold - scenario.gp;
+      break;
+    }
+  }
+
+  // Old vs new — also treat old 3.5% as inc-super for apples-to-apples
+  const oldRate = plan.oldCommissionRate || 0.035;
+  const oldComm = scenario.gp * oldRate;  // inc-super, matches the comparison
+
+  // Context message
+  let contextMsg = '';
+  if (nextTier) {
+    contextMsg = `At ${fmtMoney(scenario.gp)} GP, your commission is ${fmtMoney(commGross)} (inc. super). Grow to ${fmtMoney(nextTier.threshold)} to unlock the ${fmtPct(nextTier.rate, 1)} tier.`;
+  }
+
+  return {
+    bandCommGross, commGross, commEx, commSuper,
+    prodGross, prodEx, prodSuper,
+    effectiveKpi, breakdown,
+    base, baseSuper, baseInc,
+    subtotalExSuper, totalSuper, totalPackage,
+    nextTier, progressPct, toGo, contextMsg,
+    oldComm,
+    planningGatePassed,
+    // legacy aliases
+    bandCommKpi, commInc, production, productionKpi, prodInc, variable
+  };
+}
+
+function calcGuardrail() {
+  const pl = data.companyPL;
+  if (!pl || !pl.quarters || pl.quarters.length === 0) return { status: 'unknown', margin: null, basis: null };
+  const totals = pl.quarters.reduce((a, q) => ({
+    rev: a.rev + (+q.revenue || 0),
+    cogs: a.cogs + (+q.cogs || 0),
+    ce: a.ce + (+q.contribExp || 0),
+    ox: a.ox + (+q.opex || 0)
+  }), { rev: 0, cogs: 0, ce: 0, ox: 0 });
+  if (totals.rev === 0) return { status: 'unknown', margin: null, basis: null };
+  const basis = data.globals.guardrailBasis || 'gm';
+  let margin, basisLabel;
+  if (basis === 'gm') { margin = (totals.rev - totals.cogs) / totals.rev; basisLabel = 'Gross Margin'; }
+  else if (basis === 'np') { margin = (totals.rev - totals.cogs - totals.ce - totals.ox) / totals.rev; basisLabel = 'Net Margin'; }
+  else { margin = (totals.rev - totals.cogs - totals.ce) / totals.rev; basisLabel = 'Contribution Margin'; }
+  const floor = data.globals.guardrailMargin || 0.35;
+  return { status: margin >= floor ? 'clear' : 'breach', margin, floor, basis, basisLabel };
+}
+
+// --- Monthly grid rendering + actuals-driven calculation ---
+function renderMonthlyGrid() {
+  const tbody = document.getElementById('monthly-body');
+  const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
+  // Lock signal: admin has entered GP or Event GP for that month (commission is then auto-calculated by the plan bands)
+  const isLocked = (i) => {
+    const ap = actualPayouts[i];
+    if (!ap) return false;
+    const gpEntered = ap.gpReceived != null && ap.gpReceived !== '';
+    const evEntered = ap.eventGP != null && ap.eventGP !== '';
+    return gpEntered || evEntered;
+  };
+  const rowChunks = [];
+  actualsMonths.forEach((m, i) => {
+    const locked = isLocked(i);
+    const ap = actualPayouts[i] || {};
+    const gpVal = locked ? (ap.gpReceived || 0) : m.gpReceived;
+    const evVal = locked ? (ap.eventGP || 0) : m.eventGP;
+    const noteAttr = locked && ap.notes ? ` title="Payroll note: ${String(ap.notes).replace(/"/g,'&quot;')}"` : '';
+    const lockChip = locked ? `<span style="font-size:10px; color:var(--navy); font-weight:600; margin-left:4px;" title="Locked by payroll admin">🔒</span>` : '';
+    rowChunks.push(`
+    <tr data-mon-idx="${i}" class="${locked ? 'tu-locked' : ''}"${noteAttr}>
+      <td class="mon">${m.month}${lockChip}</td>
+      <td class="input-cell">
+        <input type="text" inputmode="numeric" data-field="gpReceived" data-idx="${i}" value="${gpVal ? fmtNum(gpVal) : ''}" placeholder="0" ${locked ? 'disabled' : ''}>
+      </td>
+      <td class="input-cell">
+        <input type="text" inputmode="numeric" data-field="eventGP" data-idx="${i}" value="${evVal ? fmtNum(evVal) : ''}" placeholder="0" ${locked ? 'disabled' : ''}>
+      </td>
+      <td class="num plus" data-cell="gpComm">—</td>
+      <td class="num plus" data-cell="prodComm">—</td>
+      <td class="num" data-cell="monTotal">—</td>
+      <td class="num" data-cell="monTotalEx">—</td>
+    </tr>
+  `);
+    // Insert quarterly sub-total after every 3rd month (indices 2, 5, 8, 11)
+    if (i % 3 === 2) {
+      const q = Math.floor(i / 3);
+      rowChunks.push(`
+    <tr class="subtotal" data-qtr-idx="${q}">
+      <td class="mon">Q-Total</td>
+      <td class="num" data-cell="qGP">—</td>
+      <td class="num" data-cell="qEventGP">—</td>
+      <td class="num" data-cell="qGpComm">—</td>
+      <td class="num" data-cell="qProdComm">—</td>
+      <td class="num" data-cell="qTotal">—</td>
+      <td class="num" data-cell="qTotalEx">—</td>
+    </tr>
+  `);
+    }
+  });
+  const rows = rowChunks.join('');
+
+  const totalsRow = `
+    <tr class="totals">
+      <td class="mon">Annual totals</td>
+      <td class="num" id="tot-gp">—</td>
+      <td class="num" id="tot-eventgp">—</td>
+      <td class="num" id="tot-gpcomm">—</td>
+      <td class="num" id="tot-prodcomm">—</td>
+      <td class="num" id="tot-total">—</td>
+      <td class="num" id="tot-total-ex">—</td>
+    </tr>
+  `;
+
+  tbody.innerHTML = rows + totalsRow;
+
+  // Delegate input handling
+  tbody.querySelectorAll('input[data-field]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const idx = +inp.dataset.idx;
+      const field = inp.dataset.field;
+      const val = parseNum(inp.value);
+      actualsMonths[idx][field] = val;
+      // Preserve caret by reformatting with number
+      const caret = inp.selectionStart;
+      const digitsBefore = (inp.value.slice(0, caret).match(/\d/g) || []).length;
+      inp.value = val ? fmtNum(val) : '';
+      let cursor = 0, seen = 0;
+      while (cursor < inp.value.length && seen < digitsBefore) {
+        if (/\d/.test(inp.value[cursor])) seen++;
+        cursor++;
+      }
+      inp.setSelectionRange(cursor, cursor);
+      saveActualsLocal();
+      update();
+    });
+  });
+}
+
+// Monthly / quarterly band scaling: annual thresholds ÷ 12 or ÷ 4, rates unchanged.
+// Monthly bands feed the per-month payout. Quarterly bands feed the quarterly true-up cap.
+function monthlyBands() {
+  return [...plan.bands].sort((a, b) => a.threshold - b.threshold).map(b => ({
+    threshold: b.threshold / 12,
+    rate: b.rate
+  }));
+}
+function quarterlyBands() {
+  return [...plan.bands].sort((a, b) => a.threshold - b.threshold).map(b => ({
+    threshold: b.threshold / 4,
+    rate: b.rate
+  }));
+}
+
+// Compute monthly rows with running-balance true-up (carry-forward, no base-salary deduction).
+// Semantics:
+//   - Each month starts by computing raw monthly commission via monthly bands × KPI.
+//   - If a positive "balance" exists (rep has been overpaid), it offsets this month's payout —
+//     pay = max(0, raw − balance_applied). Balance decrements by the offset.
+//   - At quarter-end (months 3/6/9/12): reconcile against quarterly entitlement.
+//     If month 1+2 paid < quarterly entitled, month 3 tops up to close the gap (minus any pending balance).
+//     If month 1+2 paid > quarterly entitled, month 3 = $0 and the excess adds to balance.
+//   - Annual cap on month 12 as a final check against annual entitled.
+//   - Any residual positive balance at year-end carries into next fiscal year (not implemented across files yet,
+//     but surfaced on the dashboard so Nathan can track it).
+//   - Production commission is flat 1% per month, never touched by true-up.
+function computeMonthlyRows() {
+  const g = data.globals;
+  const sr = g.superRate;
+  const effectiveKpi = Math.min(Math.max(scenario.kpiScore, g.kpiScoreFloor || 0), g.kpiScoreCap || 1);
+  const prodPct = plan.includeProduction ? (plan.productionPct || 0) : 0;
+  const mBands = monthlyBands();
+  const qBands = quarterlyBands();
+
+  // Raw monthly commissions (before offset/cap)
+  // If admin has entered actualPayouts for a month, admin's GP/eventGP take precedence — that's the "locked" row.
+  const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
+
+  // PRODUCTION GATE — for hybrid roles (Evie/Evie2): if YTD annualised Event GP < getProductionGate(),
+  // sales (GP) commission is paused for the year. Production commission (1% × Event GP) is unaffected.
+  let prodGatePassed = true;
+  let prodGateInfo = null;
+  if (getProductionGate() && getProductionGate() > 0) {
+    let ytdEvent = 0, monthsWithData = 0;
+    actualsMonths.forEach((m, i) => {
+      const ap = actualPayouts[i];
+      const ev = (ap && ap.eventGP != null && ap.eventGP !== '') ? +ap.eventGP : (+m.eventGP || 0);
+      const gp = (ap && ap.gpReceived != null && ap.gpReceived !== '') ? +ap.gpReceived : (+m.gpReceived || 0);
+      if (ev > 0 || gp > 0) monthsWithData += 1;
+      ytdEvent += ev;
+    });
+    const annualizedEvent = monthsWithData > 0 ? (ytdEvent / monthsWithData) * 12 : 0;
+    prodGatePassed = monthsWithData === 0 || annualizedEvent >= getProductionGate();
+    prodGateInfo = { ytdEvent, monthsWithData, annualizedEvent, target: getProductionGate(), passed: prodGatePassed };
+  }
+
+  const raw = actualsMonths.map((m, i) => {
+    const ap = actualPayouts[i];
+    const gpAdmin = ap && ap.gpReceived != null && ap.gpReceived !== '';
+    const evAdmin = ap && ap.eventGP != null && ap.eventGP !== '';
+    const locked = gpAdmin || evAdmin;
+    // When admin-entered, use admin values; fall back to employee's own entry for any null field
+    const gp = gpAdmin ? (+ap.gpReceived || 0) : (+m.gpReceived || 0);
+    const ev = evAdmin ? (+ap.eventGP || 0) : (+m.eventGP || 0);
+    const { total: mGross } = calcBandCommission(gp, mBands);
+    // If the production gate is not met, GP commission paused (production commission still flows)
+    const gpRaw = prodGatePassed ? mGross * effectiveKpi : 0;
+    return { gp, ev, gpRawInc: gpRaw, prodInc: ev * prodPct * effectiveKpi, locked };
+  });
+
+  let balance = 0;                  // >0 = rep owes future commissions (overpaid); carries between quarters/years
+  const paid = new Array(12).fill(0);
+  const balanceAtMonthStart = new Array(12).fill(0);
+  const quarters = [];
+
+  for (let q = 0; q < 4; q++) {
+    const mi = [q * 3, q * 3 + 1, q * 3 + 2];
+    const balanceStart = balance;
+    let qCash = 0;                  // cash paid to rep this quarter
+    let qOffset = 0;                // balance offset this quarter (rep's earnings that paid down the balance)
+
+    // Months 1 & 2: pay raw minus offset from balance
+    for (let j = 0; j < 2; j++) {
+      const i = mi[j];
+      balanceAtMonthStart[i] = balance;
+      const r = raw[i].gpRawInc;
+      const offset = Math.min(balance, r);
+      paid[i] = r - offset;
+      balance -= offset;
+      qCash += paid[i];
+      qOffset += offset;
+    }
+
+    // Month 3: quarter reconciliation
+    // Total value rep has received this quarter = cash + balance offset (both are "earnings consumed")
+    const i3 = mi[2];
+    balanceAtMonthStart[i3] = balance;
+    const qGP = mi.reduce((a, i) => a + raw[i].gp, 0);
+    const { total: qEntGross } = calcBandCommission(qGP, qBands);
+    const qEntitled = qEntGross * effectiveKpi;
+    const totalValueSoFar = qCash + qOffset;
+    const m3Remaining = qEntitled - totalValueSoFar;  // unearned portion of quarterly entitlement
+
+    if (m3Remaining >= 0) {
+      // Rep is owed more for the quarter. Apply to balance first, then pay cash.
+      const offset = Math.min(balance, m3Remaining);
+      paid[i3] = m3Remaining - offset;
+      balance -= offset;
+      qCash += paid[i3];
+      qOffset += offset;
+    } else {
+      // Rep was paid more cash than quarterly entitled (cannot happen if m1+m2 offsets prevented cash >entitled,
+      // but possible with chunking in month 1). Zero m3, add the overpayment to balance.
+      paid[i3] = 0;
+      balance += (-m3Remaining);
+    }
+
+    const qPaidNet = paid[mi[0]] + paid[mi[1]] + paid[mi[2]];
+    const qRawTotal = raw[mi[0]].gpRawInc + raw[mi[1]].gpRawInc + raw[mi[2]].gpRawInc;
+    quarters.push({
+      idx: q,
+      label: `Q${q + 1}`,
+      monthsLabel: `${actualsMonths[mi[0]].month.split(' ')[0]}–${actualsMonths[mi[2]].month.split(' ')[0]}`,
+      qGP,
+      qEntitled,
+      qRawTotal,
+      qPaidNet,
+      qCash,
+      qOffset,
+      balanceStart,
+      balanceEnd: balance,
+      balanceChange: balance - balanceStart,
+      m3ZeroedByTU: m3Remaining < 0,
+    });
+  }
+
+  // Annual reconciliation — two-stage check.
+  const annualGP = actualsMonths.reduce((a, m) => a + (+m.gpReceived || 0), 0);
+  const { total: annGross } = calcBandCommission(annualGP, plan.bands);
+  const annualEntitled = annGross * effectiveKpi;
+  let annualCapFired = false;
+  // Stage 1: cap M12 cash so year total ≤ annual entitled. No balance adjustment — this is just
+  // trimming a not-yet-paid amount to match annual (quarterly bands can over-estimate vs annual).
+  const paidM1to11 = paid.slice(0, 11).reduce((a, v) => a + v, 0);
+  const annualAllowedM12 = Math.max(0, annualEntitled - paidM1to11);
+  if (paid[11] > annualAllowedM12) {
+    paid[11] = annualAllowedM12;
+    annualCapFired = true;
+  }
+  // Stage 2: if total cash STILL exceeds annual entitled (M12 was already $0 or too small to close
+  // the gap), the residual becomes true-up balance carried forward. Subtract the existing balance
+  // so we don't double-count overpayment that quarterly TU already captured.
+  const totalPaidAfterCap = paid.reduce((a, v) => a + v, 0);
+  const targetBalance = totalPaidAfterCap - annualEntitled;   // what balance SHOULD be
+  const residualOverpay = targetBalance - balance;
+  if (residualOverpay > 0.01) {
+    balance += residualOverpay;
+    annualCapFired = true;
+  }
+  // Update Q4 summary to reflect annual adjustments
+  if (annualCapFired) {
+    quarters[3].balanceEnd = balance;
+    quarters[3].balanceChange = balance - quarters[3].balanceStart;
+    quarters[3].qPaidNet = paid[9] + paid[10] + paid[11];
+  }
+  const totalPaid = paid.reduce((a, v) => a + v, 0);
+
+  const rows = actualsMonths.map((m, i) => {
+    const r = raw[i];
+    const gpCommInc = paid[i];
+    const gpCommEx = gpCommInc / (1 + sr);
+    const gpCommSuper = gpCommInc - gpCommEx;
+    const prodCommInc = r.prodInc;
+    const prodCommEx = prodCommInc / (1 + sr);
+    const prodCommSuper = prodCommInc - prodCommEx;
+    const monTotalInc = gpCommInc + prodCommInc;
+    const wasCapped = gpCommInc < r.gpRawInc - 0.01;
+    const quarterIdx = Math.floor(i / 3);
+    const monthInQuarter = i % 3;
+    return {
+      idx: i,
+      month: m.month,
+      gpReceived: r.gp,
+      eventGP: r.ev,
+      gpCommInc, gpCommEx, gpCommSuper,
+      prodCommInc, prodCommEx, prodCommSuper,
+      monTotalInc,
+      rawMonthlyGPComm: r.gpRawInc,
+      balanceAtMonthStart: balanceAtMonthStart[i],
+      isQuarterEnd: monthInQuarter === 2,
+      isAnnualEnd: i === 11,
+      quarterIdx,
+      wasCapped,
+      annualCapFired: i === 11 && annualCapFired,
+    };
+  });
+
+  const totals = rows.reduce((a, r) => ({
+    gpReceived: a.gpReceived + r.gpReceived,
+    eventGP: a.eventGP + r.eventGP,
+    gpCommInc: a.gpCommInc + r.gpCommInc,
+    gpCommEx: a.gpCommEx + r.gpCommEx,
+    gpCommSuper: a.gpCommSuper + r.gpCommSuper,
+    prodCommInc: a.prodCommInc + r.prodCommInc,
+    prodCommEx: a.prodCommEx + r.prodCommEx,
+    prodCommSuper: a.prodCommSuper + r.prodCommSuper,
+    monTotalInc: a.monTotalInc + r.monTotalInc,
+    rawMonthlyGPComm: a.rawMonthlyGPComm + r.rawMonthlyGPComm,
+  }), { gpReceived: 0, eventGP: 0, gpCommInc: 0, gpCommEx: 0, gpCommSuper: 0, prodCommInc: 0, prodCommEx: 0, prodCommSuper: 0, monTotalInc: 0, rawMonthlyGPComm: 0 });
+
+  const annualSummary = {
+    annualGP,
+    annualEntitled,
+    paidTotal: totalPaid,
+    delta: annualEntitled - totalPaid,   // +ve = bonus at year-end, -ve = still overpaid (carries forward)
+    yearEndBalance: balance,             // what carries into next fiscal year
+    annualCapFired,
+  };
+
+  return { rows, totals, quarters, annualSummary, prodGateInfo };
+}
+
+// Monthly Scenario sandbox — same monthly band calc as a single month, no cap
+function computeMonthlyScenario() {
+  const g = data.globals;
+  const sr = g.superRate;
+  const effectiveKpi = Math.min(Math.max(scenario.kpiScore, g.kpiScoreFloor || 0), g.kpiScoreCap || 1);
+  const prodPct = plan.includeProduction ? (plan.productionPct || 0) : 0;
+  const mBands = monthlyBands();
+  const { total: mGross } = calcBandCommission(scenario.mscnGP, mBands);
+  const gpInc = mGross * effectiveKpi;
+  const gpEx = gpInc / (1 + sr);
+  const prodInc = scenario.mscnEvent * prodPct * effectiveKpi;
+  const prodEx = prodInc / (1 + sr);
+  return {
+    gpInc, gpEx, gpSuper: gpInc - gpEx,
+    prodInc, prodEx, prodSuper: prodInc - prodEx,
+    totalInc: gpInc + prodInc,
+  };
+}
+
+function update() {
+  const r = calcAll();
+  const g = data.globals;
+
+  // ===== PLANNING =====
+
+  // Guardrail banner (card may be hidden if disabled globally)
+  const gb = document.getElementById('guardrail-banner');
+  if (gb) {
+    const guard = calcGuardrail();
+    const label = guard.basisLabel || 'Margin';
+    if (guard.status === 'clear') {
+      gb.innerHTML = `<div class="banner ok"><span class="dot"></span>Clear — company ${label} ${fmtPct(guard.margin)} is above the ${fmtPct(guard.floor)} floor.</div>`;
+    } else if (guard.status === 'breach') {
+      gb.innerHTML = `<div class="banner warn"><span class="dot"></span>Breach — company ${label} ${fmtPct(guard.margin)} is below the ${fmtPct(guard.floor)} floor.</div>`;
+    } else {
+      gb.innerHTML = `<div class="banner info"><span class="dot"></span>Awaiting P&amp;L data.</div>`;
+    }
+  }
+
+  // Metric cards — all super-INCLUSIVE headline, ex-super $ + super $ in sub
+  document.getElementById('card-base').textContent = fmtMoney(r.baseInc);
+  document.getElementById('card-base-sub').textContent = `${fmtMoney(r.base)} + ${fmtMoney(r.baseSuper)} super`;
+
+  document.getElementById('card-comm').textContent = fmtMoney(r.commGross);
+  document.getElementById('card-comm-sub').textContent = r.commGross > 0
+    ? `${fmtMoney(r.commEx)} + ${fmtMoney(r.commSuper)} super`
+    : 'No commission at this level';
+
+  document.getElementById('card-production').textContent = fmtMoney(r.prodGross);
+  document.getElementById('card-production-sub').textContent = r.prodGross > 0
+    ? `${fmtMoney(r.prodEx)} + ${fmtMoney(r.prodSuper)} super`
+    : '1% of Event GP';
+
+  document.getElementById('card-total').textContent = fmtMoney(r.totalPackage);
+  document.getElementById('card-total-sub').textContent = `${fmtMoney(r.subtotalExSuper)} + ${fmtMoney(r.totalSuper)} super`;
+
+  // Rate calc — no margin chip anymore
+  const activeBand = r.breakdown.find(b => scenario.gp > b.min && scenario.gp <= (b.max ?? Infinity));
+  const bandRate = activeBand ? activeBand.rate : 0;
+  document.getElementById('calc-band').textContent = `${fmtPct(bandRate, 2)} base`;
+  document.getElementById('calc-kpi').textContent = `${scenario.kpiScore.toFixed(2)} KPI`;
+  document.getElementById('calc-eff').textContent = `${fmtPct(bandRate * r.effectiveKpi, 2)} effective`;
+  document.getElementById('calc-note').textContent = activeBand
+    ? `You're in band ${r.breakdown.indexOf(activeBand) + 1} · rate is super-inclusive (applies to GP within this band only)`
+    : `Below the first commission band`;
+
+  // Progress to next tier
+  const ntLine = document.getElementById('next-tier-line');
+  const ntSub = document.getElementById('next-tier-sub');
+  document.getElementById('progress-bar').style.width = r.progressPct + '%';
+  if (r.nextTier) {
+    const sortedBands = [...plan.bands].sort((a, b) => a.threshold - b.threshold);
+    const nextIdx = sortedBands.indexOf(r.nextTier) + 1;
+    ntLine.innerHTML = `<strong>Band ${nextIdx}</strong> — unlocks at ${fmtMoney(r.nextTier.threshold)} (${fmtPct(r.nextTier.rate, 1)})`;
+    ntSub.textContent = `${fmtMoney(r.toGo)} more GP to unlock`;
+  } else {
+    ntLine.innerHTML = `<strong>Top band reached.</strong> You're earning at the maximum rate.`;
+    ntSub.textContent = 'No further tiers to unlock';
+  }
+
+  // Breakdown
+  renderBreakdown(r);
+
+  // Context
+  if (r.contextMsg) {
+    document.getElementById('context-msg').style.display = 'block';
+    document.getElementById('context-msg').textContent = r.contextMsg;
+  } else {
+    document.getElementById('context-msg').style.display = 'none';
+  }
+
+  // Old vs new comparison.
+  // Old plan was ex-super (3.5% × GP), with 12% super added on top at payroll → inc-super = old × 1.12.
+  // New plan bands produce inc-super directly. Compare inc-super vs inc-super for a fair delta.
+  const oldIncSuper = r.oldComm * (1 + g.superRate);
+  document.getElementById('old-comm').textContent = fmtMoney(r.oldComm);
+  document.getElementById('old-comm-sub').textContent = `= ${fmtMoney(oldIncSuper)} inc. super`;
+  document.getElementById('new-comm').textContent = fmtMoney(r.commGross);
+  document.getElementById('new-comm-sub').textContent = `Bands × ${r.effectiveKpi.toFixed(2)} KPI · already inc. super`;
+  const delta = r.commGross - oldIncSuper;
+  const deltaEl = document.getElementById('delta-val');
+  const arrow = document.getElementById('delta-arrow');
+  deltaEl.textContent = (delta >= 0 ? '+' : '') + fmtMoney(delta);
+  deltaEl.classList.toggle('negative', delta < 0);
+  arrow.textContent = delta > 0 ? '▲' : delta < 0 ? '▼' : '→';
+  // Gate explainer — when a production gate exists AND it's not met, the new commission is $0,
+  // so the negative delta is misleading without context. Show a small note explaining why.
+  const gateNote = document.getElementById('delta-gate-note');
+  if (gateNote) {
+    if (delta < 0 && getProductionGate() > 0 && !r.planningGatePassed) {
+      gateNote.style.display = 'block';
+      gateNote.innerHTML = `⚠ Production gate not met<br><span style="font-weight: 400; color: var(--muted);">New commission paused — drag Annual Event GP to ${fmtMoney(getProductionGate())}+ to flow</span>`;
+    } else {
+      gateNote.style.display = 'none';
+    }
+  }
+
+  // Bands table — show both annual and monthly (÷12) ranges
+  const body = document.getElementById('bands-body');
+  body.innerHTML = r.breakdown.map((b, i) => {
+    const rangeAnnual = b.max === null ? `${fmtMoney(b.min)}+` : `${fmtMoney(b.min)} – ${fmtMoney(b.max)}`;
+    const rangeMonthly = b.max === null
+      ? `${fmtMoney(b.min / 12)}+`
+      : `${fmtMoney(b.min / 12)} – ${fmtMoney(b.max / 12)}`;
+    return `<tr class="${b.active ? 'active' : ''}">
+      <td class="band-num">${i + 1}</td>
+      <td>${rangeAnnual}</td>
+      <td style="color:var(--muted);font-family:var(--mono);font-size:12px;">${rangeMonthly}</td>
+      <td class="num">${fmtPct(b.rate, 2)}</td>
+      <td class="num">${b.active ? fmtMoney(b.earn) : '—'}</td>
+      <td class="num">${b.active ? fmtMoney(b.cumulative) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Production note
+  document.getElementById('production-note').textContent = plan.includeProduction
+    ? `+ ${fmtPct(plan.productionPct, 2)} production commission on Event GP ($${fmtNum(scenario.eventGP)}) = ${fmtMoney(r.prodGross)} inc. super · Total commission (inc. super, post-KPI): ${fmtMoney(r.commGross + r.prodGross)}`
+    : '';
+
+  // KPI tab — showing gross commission figures (inc. super)
+  document.getElementById('kpi-big').textContent = scenario.kpiScore.toFixed(2);
+  const preKpiGross = (r.bandCommGross) + ((plan.includeProduction ? (plan.productionPct || 0) : 0) * scenario.eventGP);
+  document.getElementById('kpi-before').textContent = fmtMoney(preKpiGross);
+  document.getElementById('kpi-mult').textContent = `× ${scenario.kpiScore.toFixed(2)}`;
+  document.getElementById('kpi-after').textContent = fmtMoney(r.commGross + r.prodGross);
+
+  // Super card (Payouts tab) — ex-super portions built up, super added as one line
+  document.getElementById('spr-base').textContent = fmtMoney(r.base);
+  document.getElementById('spr-comm').textContent = `+ ${fmtMoney(r.commEx)}`;
+  document.getElementById('spr-prod').textContent = `+ ${fmtMoney(r.prodEx)}`;
+  document.getElementById('spr-subtotal').textContent = fmtMoney(r.subtotalExSuper);
+  document.getElementById('spr-super-label').textContent = `+ Superannuation (${fmtPct(g.superRate, 0)} on base + embedded in commission)`;
+  document.getElementById('spr-super').textContent = `+ ${fmtMoney(r.totalSuper)}`;
+  document.getElementById('spr-total').textContent = fmtMoney(r.totalPackage);
+
+  // Payout banner — dynamic
+  const banner = document.getElementById('payout-banner-text');
+  const freq = plan.payoutFrequency || 'monthly';
+  const payoutPct = plan.payoutPercentage != null ? plan.payoutPercentage : 1.0;
+  if (payoutPct >= 0.999) {
+    banner.textContent = `Your commission is paid ${freq} — 100% paid out each period.`;
+  } else {
+    banner.textContent = `Your commission is paid ${freq} — ${(payoutPct*100).toFixed(0)}% paid out each period, ${((1-payoutPct)*100).toFixed(0)}% reconciled at year-end.`;
+  }
+
+  // /12 chips in Scenario Inputs (Planning)
+  const gpChip = document.getElementById('gp-monthly-chip');
+  if (gpChip) gpChip.textContent = fmtMoney(scenario.gp / 12);
+  const evChip = document.getElementById('event-gp-monthly-chip');
+  if (evChip) evChip.textContent = fmtMoney(scenario.eventGP / 12);
+
+  // Pay-increase celebration — shows previous → current base salary if higher
+  const payBanner = document.getElementById('pay-increase-banner');
+  if (payBanner) {
+    const prev = +emp.previousBaseSalary || 0;
+    const curr = +emp.baseSalary || 0;
+    if (prev > 0 && curr > prev) {
+      const superRate = (data.globals && data.globals.superRate) || 0.12;
+      const dBase = curr - prev;
+      const dSuper = dBase * superRate;
+      const totalLift = dBase + dSuper;
+      const pctLift = (dBase / prev) * 100;
+      payBanner.innerHTML = `
+        <div style="margin-bottom: 22px; padding: 16px 20px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div>
+              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🎉 Your pay increase</div>
+              <div style="font-family: var(--mono); font-size: 14px; color: var(--ink); margin-top: 6px;">
+                <span style="color: var(--muted); text-decoration: line-through;">${fmtMoney(prev)}</span>
+                &nbsp;→&nbsp;
+                <strong style="font-size: 18px; color: #1f5e3c;">${fmtMoney(curr)}</strong>
+                <span style="font-size: 12px; color: var(--muted);">base salary (ex super)</span>
+              </div>
+              <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px;">
+                +${fmtMoney(dBase)} base &nbsp;·&nbsp; +${fmtMoney(dSuper)} extra super (12%) &nbsp;·&nbsp; +${pctLift.toFixed(1)}%
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Total annual lift</div>
+              <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #1f5e3c;">+${fmtMoney(totalLift)}</div>
+              <div style="font-size: 11px; color: var(--muted);">before any commission earned on top</div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      payBanner.innerHTML = '';
+    }
+  }
+
+  // Planning gate banner — shown for hybrid roles with a minProductionGP target
+  const planningBanner = document.getElementById('planning-gate-banner');
+  if (planningBanner) {
+    if (getProductionGate() && getProductionGate() > 0) {
+      const target = getProductionGate();
+      if (r.planningGatePassed) {
+        planningBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} ≥ target ${fmtMoney(target)} — your GP sales commission flows. Drag Annual Event GP Produced below ${fmtMoney(target)} to see what happens to your commission if production drops.</span></div>`;
+      } else {
+        const gap = target - scenario.eventGP;
+        planningBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate not met:</strong> Modelled Event GP ${fmtMoney(scenario.eventGP)} is ${fmtMoney(gap)} short of the ${fmtMoney(target)} target. Under this scenario, <strong>your GP sales commission would be paused</strong>. Production commission (1% × Event GP) is unaffected.</span></div>`;
+      }
+    } else {
+      planningBanner.innerHTML = '';
+    }
+  }
+
+  // ===== ACTUAL =====
+  const { rows: mRows, totals: mTot, quarters: qSummary, annualSummary, prodGateInfo } = computeMonthlyRows();
+
+  // Production gate banner (only shown for employees with minProductionGP set)
+  const gateBanner = document.getElementById('prod-gate-banner');
+  if (gateBanner) {
+    if (prodGateInfo) {
+      const { ytdEvent, monthsWithData, annualizedEvent, target, passed } = prodGateInfo;
+      if (monthsWithData === 0) {
+        gateBanner.innerHTML = `<div class="banner info" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate:</strong> ${fmtMoney(target)} of Event GP per year required to unlock GP sales commission. Enter monthly Event GP below to track.</span></div>`;
+      } else if (passed) {
+        gateBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Pace ${fmtMoney(annualizedEvent)} ≥ target ${fmtMoney(target)}. GP sales commission flowing normally.</span></div>`;
+      } else {
+        const gap = target - annualizedEvent;
+        gateBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate not met:</strong> Annualised pace ${fmtMoney(annualizedEvent)} (YTD ${fmtMoney(ytdEvent)} over ${monthsWithData} months) is below the ${fmtMoney(target)} target — need <strong>${fmtMoney(gap)}/yr</strong> more event production. <strong>GP sales commission paused</strong> until pace meets target. Production commission (1% × Event GP) is unaffected.</span></div>`;
+      }
+    } else {
+      gateBanner.innerHTML = '';
+    }
+  }
+  const tbody = document.getElementById('monthly-body');
+  // Update the calc cells per row (leave inputs untouched so caret/focus survives)
+  mRows.forEach(r2 => {
+    const row = tbody.querySelector(`tr[data-mon-idx="${r2.idx}"]`);
+    if (!row) return;
+    row.classList.toggle('tu-capped', r2.wasCapped);
+    const mLabel = (r2.isAnnualEnd && r2.annualCapFired) ? ' 🔒 annual TU' : (r2.isQuarterEnd && r2.wasCapped ? ' 🔒 quarter TU' : '');
+    const gpCommCell = row.querySelector('[data-cell="gpComm"]');
+    gpCommCell.textContent = r2.gpCommInc > 0 ? fmtMoney(r2.gpCommInc) + mLabel : (r2.isQuarterEnd && r2.wasCapped ? '$0 🔒 TU' : '—');
+    gpCommCell.title = r2.wasCapped ? `Raw monthly calc: ${fmtMoney(r2.rawMonthlyGPComm)}. Capped by true-up.` : '';
+    row.querySelector('[data-cell="prodComm"]').textContent = r2.prodCommInc > 0 ? fmtMoney(r2.prodCommInc) : '—';
+    row.querySelector('[data-cell="monTotal"]').textContent = r2.monTotalInc > 0 ? fmtMoney(r2.monTotalInc) : '—';
+    const monTotalEx = r2.monTotalInc / (1 + g.superRate);
+    row.querySelector('[data-cell="monTotalEx"]').textContent = r2.monTotalInc > 0 ? fmtMoney(monTotalEx) : '—';
+  });
+
+  // Quarterly sub-total rows — sum the 3 months in each quarter
+  for (let q = 0; q < 4; q++) {
+    const mi = [q * 3, q * 3 + 1, q * 3 + 2];
+    const qRows = mi.map(i => mRows[i]);
+    const qGP = qRows.reduce((a, r) => a + r.gpReceived, 0);
+    const qEv = qRows.reduce((a, r) => a + r.eventGP, 0);
+    const qGPComm = qRows.reduce((a, r) => a + r.gpCommInc, 0);
+    const qProdComm = qRows.reduce((a, r) => a + r.prodCommInc, 0);
+    const qTotalInc = qRows.reduce((a, r) => a + r.monTotalInc, 0);
+    const qTotalEx = qTotalInc / (1 + g.superRate);
+    const qRow = tbody.querySelector(`tr.subtotal[data-qtr-idx="${q}"]`);
+    if (!qRow) continue;
+    const has = qGP > 0 || qEv > 0 || qTotalInc > 0;
+    qRow.querySelector('[data-cell="qGP"]').textContent = has ? fmtMoney(qGP) : '—';
+    qRow.querySelector('[data-cell="qEventGP"]').textContent = has ? fmtMoney(qEv) : '—';
+    qRow.querySelector('[data-cell="qGpComm"]').textContent = has ? fmtMoney(qGPComm) : '—';
+    qRow.querySelector('[data-cell="qProdComm"]').textContent = has ? fmtMoney(qProdComm) : '—';
+    qRow.querySelector('[data-cell="qTotal"]').textContent = has ? fmtMoney(qTotalInc) : '—';
+    qRow.querySelector('[data-cell="qTotalEx"]').textContent = has ? fmtMoney(qTotalEx) : '—';
+  }
+
+  document.getElementById('tot-gp').textContent = fmtMoney(mTot.gpReceived);
+  document.getElementById('tot-eventgp').textContent = fmtMoney(mTot.eventGP);
+  document.getElementById('tot-gpcomm').textContent = fmtMoney(mTot.gpCommInc);
+  document.getElementById('tot-prodcomm').textContent = fmtMoney(mTot.prodCommInc);
+  document.getElementById('tot-total').textContent = fmtMoney(mTot.monTotalInc);
+  document.getElementById('tot-total-ex').textContent = fmtMoney(mTot.monTotalInc / (1 + g.superRate));
+
+  // Months with data = any month where GP or Event GP is non-zero (employee or admin entered)
+  const monthsWithData = mRows.filter(row => row.gpReceived > 0 || row.eventGP > 0).length;
+
+  // YTD summary cards — prominent: YTD Commission Paid + Projection
+  document.getElementById('ytd-cash').textContent = fmtMoney(mTot.monTotalInc);
+  document.getElementById('ytd-cash-sub').textContent = monthsWithData > 0
+    ? `${monthsWithData}/12 months · ${fmtMoney(mTot.gpCommInc)} GP + ${fmtMoney(mTot.prodCommInc)} production`
+    : 'Nothing paid yet — enter monthly GP below';
+
+  // Projection: annualise YTD based on months with data, re-run through bands + production
+  const projEl = document.getElementById('ytd-projection');
+  const projSubEl = document.getElementById('ytd-projection-sub');
+  if (monthsWithData > 0) {
+    const annGPProj = (mTot.gpReceived / monthsWithData) * 12;
+    const annEvProj = (mTot.eventGP / monthsWithData) * 12;
+    const { total: annGrossComm } = calcBandCommission(annGPProj, plan.bands);
+    const prodPct = plan.includeProduction ? (plan.productionPct || 0) : 0;
+    const annProdComm = annEvProj * prodPct;
+    const projCommInc = (annGrossComm + annProdComm) * r.effectiveKpi;
+    const projTotalPackage = r.baseInc + projCommInc;
+    projEl.textContent = fmtMoney(projCommInc);
+    projSubEl.innerHTML = `At this pace your total package is <strong>${fmtMoney(projTotalPackage)}</strong> — keep it up!`;
+  } else {
+    projEl.textContent = '—';
+    projSubEl.textContent = 'Enter a month or two to see your year-end projection';
+  }
+
+  document.getElementById('ytd-gp').textContent = fmtMoney(mTot.gpReceived);
+  document.getElementById('ytd-gp-sub').textContent = `Event GP: ${fmtMoney(mTot.eventGP)}`;
+
+  // True-Up Balance Fwd card — small/standard, amount owed into future months
+  const tuEl = document.getElementById('trueup-delta');
+  const tuSub = document.getElementById('trueup-delta-sub');
+  const bal = annualSummary.yearEndBalance;
+  if (annualSummary.annualGP === 0) {
+    tuEl.textContent = '—';
+    tuSub.textContent = 'No data yet';
+  } else if (bal < 0.5) {
+    tuEl.textContent = fmtMoney(0);
+    tuSub.textContent = `All even · paid matches entitled so far`;
+  } else {
+    tuEl.textContent = fmtMoney(bal);
+    tuSub.textContent = `Offsets future commissions until worked off`;
+  }
+
+  // Monthly Scenario card (sandbox)
+  const ms = computeMonthlyScenario();
+  const mEl = (id) => document.getElementById(id);
+  if (mEl('mscn-gpcomm')) {
+    mEl('mscn-gpcomm').textContent = ms.gpInc > 0 ? fmtMoney(ms.gpInc) : '—';
+    mEl('mscn-gpcomm-sub').textContent = ms.gpInc > 0
+      ? `${fmtMoney(ms.gpEx)} + ${fmtMoney(ms.gpSuper)} super`
+      : 'Below monthly floor';
+    mEl('mscn-prodcomm').textContent = ms.prodInc > 0 ? fmtMoney(ms.prodInc) : '—';
+    mEl('mscn-prodcomm-sub').textContent = ms.prodInc > 0
+      ? `${fmtMoney(ms.prodEx)} + ${fmtMoney(ms.prodSuper)} super`
+      : '1% of Event GP';
+    mEl('mscn-total').textContent = fmtMoney(ms.totalInc);
+    mEl('mscn-total-sub').textContent = `Raw monthly — subject to quarterly true-up in actual payout`;
+  }
+
+  // Quarterly summary strip — thermometer bar per quarter
+  const qStrip = document.getElementById('quarterly-strip');
+  if (qStrip) {
+    qStrip.innerHTML = qSummary.map((q) => {
+      // Thermometer geometry. Scale so 100% = entitled (fits in 66% of the bar width),
+      // leaving 34% of visible bar for overpayment (amber zone). Bar visible max = ~150% of entitled.
+      const entitled = q.qEntitled || 1; // avoid div0
+      const barVisibleMax = Math.max(entitled * 1.5, q.qRawTotal * 1.05, 1); // accommodate overage
+      const markerPct = (entitled / barVisibleMax) * 100;                    // where the 100% line sits
+      const paidPct = Math.min((q.qRawTotal / barVisibleMax) * 100, 100);    // fill up to bar edge
+      const greenPct = Math.min(paidPct, markerPct);
+      const amberStart = markerPct;
+      const amberEnd = paidPct;
+      const amberPct = Math.max(0, amberEnd - amberStart);
+
+      const empty = q.qGP === 0 && q.balanceStart === 0 && q.balanceEnd === 0;
+
+      // Three-line Earned → True-up → Paid story
+      // "Earned" = quarterly entitled (what you earned this quarter based on bands)
+      // "True-up" = adjustment applied (+ = top-up from past, − = removed and rolled forward)
+      // "Paid" = actual cash paid (qCash in quarter)
+      const earned = q.qEntitled;
+      const paidCash = q.qCash != null ? q.qCash : q.qPaidNet;
+      // True-up amount = paid - earned (positive = overpaid this Q → goes to balance; negative = rep got less because balance offset)
+      const tuAmount = paidCash - earned;
+
+      let tuLine;
+      if (Math.abs(tuAmount) < 0.5) {
+        tuLine = `<div style="color:var(--muted);">True-up: <strong>$0</strong> (no adjustment)</div>`;
+      } else if (tuAmount > 0) {
+        // paid > earned means quarter overpaid (balance grew). But this only happens when raw m1 cash > q entitled.
+        // So the extra cash becomes true-up forward.
+        tuLine = `<div style="color:var(--warn);">True-up forward: <strong>+${fmtMoney(tuAmount)}</strong> (rolls to future commissions)</div>`;
+      } else {
+        // paid < earned means rep received less cash because old balance was worked off
+        tuLine = `<div style="color:var(--accent);">True-up taken: <strong>−${fmtMoney(-tuAmount)}</strong> (offsets prior balance)</div>`;
+      }
+
+      const storyBlock = empty ? '' : `
+        <div style="font-size:12px; font-family:var(--mono); margin-top:10px; line-height:1.7; border-top:1px solid var(--border); padding-top:10px;">
+          <div>You earned: <strong>${fmtMoney(earned)}</strong></div>
+          ${tuLine}
+          <div style="margin-top:4px; font-weight:700; color:var(--ink);">Cash paid: ${fmtMoney(paidCash)}</div>
+        </div>
+      `;
+
+      const carryLine = q.balanceEnd > 0.5
+        ? `<div style="font-size:11px; font-family:var(--mono); color:var(--warn); margin-top:6px;">Balance into next quarter: ${fmtMoney(q.balanceEnd)}</div>`
+        : '';
+
+      return `
+        <div style="background:#fafaf7; border:1px solid var(--border); border-radius:10px; padding:14px 16px;">
+          <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">${q.label} <span style="font-weight:400;">· ${q.monthsLabel}</span></div>
+          <div style="font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:6px;">GP ${fmtMoney(q.qGP)} · Entitled <span class="entitled-label" style="color:var(--navy); font-weight:600;">${fmtMoney(q.qEntitled)}</span></div>
+          ${empty ? '' : `
+          <div class="thermo-wrap">
+            <div class="thermo-track">
+              ${greenPct > 0 ? `<div class="thermo-green${amberPct === 0 && paidPct >= markerPct - 0.1 ? ' full' : ''}" style="width: ${greenPct}%;"></div>` : ''}
+              ${amberPct > 0 ? `<div class="thermo-amber" style="left: ${amberStart}%; width: ${amberPct}%;"></div>` : ''}
+              <div class="thermo-marker" style="left: ${markerPct}%;"></div>
+            </div>
+            <div class="thermo-scale"><span>$0</span><span>Over</span></div>
+          </div>
+          `}
+          ${storyBlock}
+          ${carryLine}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Refresh the commission curve chart (the marker tracks scenario.gp).
+  drawCommissionCurve();
+}
+
+// Draws the New-vs-Old commission curve as inline SVG.
+// Plots commission earnings (super-inclusive) across the full GP range,
+// with a marker line at the current scenario.gp position.
+function drawCommissionCurve() {
+  const svg = document.getElementById('commission-curve');
+  if (!svg || !emp) return;
+  const plan = data.planTypes[emp.planType];
+  if (!plan || !plan.bands) {
+    svg.innerHTML = '<text x="400" y="180" text-anchor="middle" fill="#888" font-size="14">No band plan available.</text>';
+    return;
+  }
+  const sr = data.globals.superRate || 0.12;
+  const oldRate = plan.oldCommissionRate || 0.035;
+  const maxGP = plan.maxMetricValue || 600000;
+  const W = 800, H = 360;
+  const padL = 70, padR = 18, padT = 22, padB = 50;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  // Sample 60 points
+  const samples = 60;
+  const points = [];
+  let maxY = 0;
+  for (let i = 0; i <= samples; i++) {
+    const gp = (maxGP / samples) * i;
+    const newComm = calcBandCommission(gp, plan.bands).total; // already super-inclusive
+    const oldComm = gp * oldRate * (1 + sr); // make super-inclusive for fair comparison
+    points.push({ gp, newComm, oldComm });
+    if (newComm > maxY) maxY = newComm;
+    if (oldComm > maxY) maxY = oldComm;
+  }
+  if (maxY === 0) maxY = 1; // avoid /0
+  const xScale = gp => padL + (gp / maxGP) * innerW;
+  const yScale = v => padT + innerH - (v / maxY) * innerH;
+  const pathFor = key => 'M ' + points.map(p => `${xScale(p.gp).toFixed(1)} ${yScale(p[key]).toFixed(1)}`).join(' L ');
+
+  // Y axis ticks
+  const yTicks = 5;
+  const yAxis = [];
+  for (let i = 0; i <= yTicks; i++) {
+    const v = (maxY / yTicks) * i;
+    const y = yScale(v);
+    yAxis.push(`<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#eee" stroke-width="1"/>`);
+    yAxis.push(`<text x="${padL - 6}" y="${y + 3}" text-anchor="end" fill="#888" font-size="10" font-family="DM Mono, monospace">$${(v/1000).toFixed(0)}k</text>`);
+  }
+
+  // X axis ticks (every 100k)
+  const xTicks = [];
+  for (let v = 0; v <= maxGP; v += 100000) {
+    const x = xScale(v);
+    xTicks.push(`<line x1="${x}" y1="${padT + innerH}" x2="${x}" y2="${padT + innerH + 4}" stroke="#888" stroke-width="1"/>`);
+    xTicks.push(`<text x="${x}" y="${padT + innerH + 16}" text-anchor="middle" fill="#888" font-size="10" font-family="DM Mono, monospace">$${(v/1000).toFixed(0)}k</text>`);
+  }
+
+  // Difference area shading (new - old) — skipped when hideOldPlan is set
+  const showOld = !emp.hideOldPlan;
+  const diffPath = showOld ? 'M ' + points.map(p => `${xScale(p.gp).toFixed(1)} ${yScale(p.newComm).toFixed(1)}`).join(' L ') +
+                   ' L ' + [...points].reverse().map(p => `${xScale(p.gp).toFixed(1)} ${yScale(p.oldComm).toFixed(1)}`).join(' L ') + ' Z' : '';
+
+  // Marker line at current scenario.gp
+  const markerX = xScale(Math.min(scenario.gp, maxGP));
+  const cur = points[Math.round((Math.min(scenario.gp, maxGP) / maxGP) * samples)] || points[points.length - 1];
+
+  svg.innerHTML = `
+    ${yAxis.join('')}
+    ${showOld ? `<path d="${diffPath}" fill="rgba(46, 168, 109, 0.08)" stroke="none"/>` : ''}
+    ${showOld ? `<path d="${pathFor('oldComm')}" fill="none" stroke="#8e8e93" stroke-width="2" stroke-dasharray="4 3"/>` : ''}
+    <path d="${pathFor('newComm')}" fill="none" stroke="#0a2540" stroke-width="2.5"/>
+    ${xTicks.join('')}
+    <line x1="${padL}" y1="${padT + innerH}" x2="${W - padR}" y2="${padT + innerH}" stroke="#888" stroke-width="1"/>
+    <line x1="${markerX}" y1="${padT}" x2="${markerX}" y2="${padT + innerH}" stroke="#d4351c" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <circle cx="${markerX}" cy="${yScale(cur.newComm)}" r="4" fill="#0a2540"/>
+    ${showOld ? `<circle cx="${markerX}" cy="${yScale(cur.oldComm)}" r="4" fill="#8e8e93"/>` : ''}
+    <text x="${markerX > W - 110 ? markerX - 6 : markerX + 6}" y="${padT + 14}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" fill="#d4351c" font-size="11" font-family="DM Mono, monospace" font-weight="600">Your GP: $${(scenario.gp/1000).toFixed(0)}k · Comm: $${(cur.newComm/1000).toFixed(1)}k</text>
+    ${showOld ? `<rect x="${W - padR - 130}" y="${padT + 26}" width="124" height="62" fill="#fff" stroke="#cdd9e8" stroke-width="1" rx="4"/>
+    <text x="${W - padR - 124}" y="${padT + 42}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace" font-weight="600">New: $${(cur.newComm/1000).toFixed(1)}k</text>
+    <text x="${W - padR - 124}" y="${padT + 58}" fill="#666" font-size="11" font-family="DM Mono, monospace">Old: $${(cur.oldComm/1000).toFixed(1)}k</text>
+    <text x="${W - padR - 124}" y="${padT + 76}" fill="${cur.newComm >= cur.oldComm ? '#1f5e3c' : '#a8281b'}" font-size="11" font-family="DM Mono, monospace" font-weight="700">Δ ${cur.newComm >= cur.oldComm ? '+' : ''}$${((cur.newComm - cur.oldComm)/1000).toFixed(1)}k</text>` : ''}
+    <text x="${padL}" y="${padT - 8}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace">Commission ($, super-inclusive)</text>
+    <text x="${W/2}" y="${H - 8}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace">Annual GP Sold</text>
+  `;
+}
+
+function renderBreakdown(r) {
+  const g = data.globals;
+  const table = document.getElementById('breakdown-table');
+  // Commission and Production are inc. super (gross). Base is ex-super.
+  table.innerHTML = `
+    <tr><td>Base salary (ex-super)</td><td>${fmtMoney(r.base)}</td></tr>
+    <tr class="plus"><td>Super on base (${fmtPct(g.superRate, 0)})</td><td>+ ${fmtMoney(r.baseSuper)}</td></tr>
+    <tr class="plus"><td>GP commission (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI)</td><td>+ ${fmtMoney(r.commGross)}</td></tr>
+    <tr class="plus"><td>Production commission (inc. super, 1% of Event GP)</td><td>+ ${fmtMoney(r.prodGross)}</td></tr>
+    <tr class="total"><td>Total package</td><td>${fmtMoney(r.totalPackage)}</td></tr>
+  `;
+}
+
+load();
+</script>
+</body>
+</html>
