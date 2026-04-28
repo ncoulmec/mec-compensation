@@ -133,7 +133,18 @@
 
   .loading { padding: 80px; text-align: center; color: var(--muted); }
   .error-banner { background: #fdf2f2; border: 1px solid #f2d5d5; color: var(--danger); padding: 16px 20px; border-radius: 10px; margin: 20px 0; font-size: 14px; }
-</style>
+
+  /* FAQ tab — accordion-style Q&A */
+  .faq-item { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; background: #fff; overflow: hidden; }
+  .faq-item summary { cursor: pointer; padding: 14px 18px; font-size: 14px; font-weight: 600; color: var(--ink); list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: background 0.12s; }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary:hover { background: #fafaf7; }
+  .faq-item[open] summary { background: #f6f8fc; border-bottom: 1px solid var(--border); }
+  .faq-item summary::after { content: '+'; font-family: var(--mono); font-size: 18px; color: var(--muted); font-weight: 400; flex-shrink: 0; transition: transform 0.15s; }
+  .faq-item[open] summary::after { content: '−'; }
+  .faq-item .faq-body { padding: 14px 18px 18px; font-size: 13px; line-height: 1.7; color: var(--ink); }
+  .faq-group-tag { display: inline-block; padding: 3px 10px; background: #eaf3fb; color: var(--accent); font-size: 11px; font-family: var(--mono); border-radius: 999px; font-weight: 500; margin-bottom: 14px; }
+  </style>
 </head>
 <body>
 
@@ -213,6 +224,7 @@
     <button class="tab-btn active" data-tab="overview">Overview</button>
     <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #fef5e6; color: #8a6a00; border: 1px solid #f5d890; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">draft</span></button>
     <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
+    <button class="tab-btn" data-tab="faq">FAQ</button>
     <button class="tab-btn" data-tab="howitworks">How This Works</button>
   </div>
 </nav>
@@ -431,7 +443,41 @@
   </section>
 
   <!-- How This Works (sourced from Variable Compensation Philosophy.docx — Director's framing) -->
+    <!-- FAQ -->
+  <section class="panel" id="panel-faq">
+    <div style="margin-bottom: 18px;">
+      <h2 style="margin: 0 0 6px;">Frequently Asked Questions</h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 0;">Common questions about how your variable compensation works. Click any question to expand.</p>
+    </div>
+    <div class="faq-group-tag" id="faq-group-tag">—</div>
+    <div id="faq-list"></div>
+    <div style="margin-top: 22px; padding: 14px 18px; background: #fafaf7; border: 1px dashed var(--border); border-radius: 10px; font-size: 13px; color: var(--muted); line-height: 1.6;">
+      <strong style="color: var(--ink);">Question not here?</strong> Speak to Hayley or Nathan directly — every question is welcome and we will add common ones to this tab.
+    </div>
+  </section>
+
   <section class="panel" id="panel-howitworks">
+    <!-- Why your plan looks like this — GM-specific context (April 2026) -->
+    <div class="card" style="background: linear-gradient(135deg, #fff8e8 0%, #ffffff 100%); border-left: 4px solid var(--accent); margin-bottom: 18px;">
+      <h2 style="margin: 0 0 10px;">Why your plan looks like this</h2>
+      <p style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0 0 12px;">
+        Your role is to make the whole business work — not to personally generate sales — so your variable compensation is tied to <strong>business-level performance</strong> rather than personal GP. Specifically, your plan is anchored on <strong>Contribution Margin (CM)</strong> and tracks <strong>Net Profit (NP)</strong> alongside it.
+      </p>
+      <p style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0 0 12px;">
+        In April 2026 we agreed your base salary moves to <strong>$120k</strong>, up from your previous package. The agreement was that the higher base needs to be paid for by the business performing well enough to absorb it. Two business-level gates were proposed at the time:
+      </p>
+      <ul style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0 0 12px; padding-left: 22px;">
+        <li><strong>Maintain Contribution Margin</strong> — variable comp triggers when annual CM passes <strong>$1.0M</strong> (the level of business performance that supports the higher base).</li>
+        <li><strong>Maintain Net Profit</strong> — discussed but not enforced as a hard gate in the plan as built. NP is tracked alongside and an NP-tied kicker scales additional reward as NP grows.</li>
+      </ul>
+      <p style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0;">
+        What this means in practice: <strong>your $120k base is fixed</strong> and never moves with business performance. Your variable comp only flows when the business is doing well enough to cover the cost — when CM is positive past the $1.0M baseline. Above that, the bands shown below kick in. The intent is that you and the business win together.
+      </p>
+      <div style="margin-top: 14px; padding: 10px 14px; background: #fafaf7; border-radius: 6px; font-size: 12px; color: var(--muted); line-height: 1.6;">
+        <strong style="color: var(--ink);">A note on the $1.1M-$1.4M zone.</strong> The rate dips to 5% in this band and recovers to 7.5% above $1.4M. This shape reflects the cost of the higher base salary being paid back through that growth zone. Once the business has cleared $1.4M CM, the rate climbs again to reward stretch performance.
+      </div>
+    </div>
+
     <div class="card" style="background: linear-gradient(135deg, #f6f8fc 0%, #ffffff 100%); border-left: 4px solid var(--navy);">
       <h2 style="margin: 0 0 6px;">How Your Variable Compensation Works</h2>
       <p style="font-size: 13px; color: var(--muted); margin: 0 0 14px; font-style: italic;">The thinking behind the plan, in plain English.</p>
@@ -619,6 +665,7 @@ async function load() {
     wireInputs();
     renderQuarterlyGrid();
     update();
+    if (typeof renderFaqTab === "function") renderFaqTab();
   } catch (err) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error-slot').innerHTML =
@@ -1248,6 +1295,25 @@ function recalcKpiOverall() {
   if (overallEl) {
     overallEl.innerHTML = `${weightedAvg.toFixed(0)}% (would map to ${previewMult.toFixed(2)}× — locked at 1.00× while DRAFT)`;
   }
+}
+
+
+function renderFaqTab() {
+  const wrap = document.getElementById('faq-list');
+  if (!wrap) return;
+  const group = (data.faqs || {})[emp.faqGroup];
+  if (!group || !Array.isArray(group.items)) {
+    wrap.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--muted); background: #fafaf7; border-radius: 8px;">No FAQ configured for this role yet.</div>';
+    return;
+  }
+  const tag = document.getElementById('faq-group-tag');
+  if (tag) tag.textContent = group.label;
+  wrap.innerHTML = group.items.map((item) => `
+    <details class="faq-item">
+      <summary>${item.q}</summary>
+      <div class="faq-body">${item.a}</div>
+    </details>
+  `).join('');
 }
 
 </script>

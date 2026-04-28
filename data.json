@@ -603,7 +603,8 @@
             ]
           }
         ]
-      }
+      },
+      "faqGroup": "gm"
     },
     {
       "id": "dane",
@@ -830,7 +831,8 @@
             ]
           }
         ]
-      }
+      },
+      "faqGroup": "sales_rep"
     },
     {
       "id": "daniel",
@@ -1057,7 +1059,8 @@
             ]
           }
         ]
-      }
+      },
+      "faqGroup": "sales_rep"
     },
     {
       "id": "nic",
@@ -1284,7 +1287,8 @@
             ]
           }
         ]
-      }
+      },
+      "faqGroup": "sales_rep"
     },
     {
       "id": "evie",
@@ -1513,7 +1517,8 @@
             ]
           }
         ]
-      }
+      },
+      "faqGroup": "hybrid_sales"
     },
     {
       "id": "evie2",
@@ -1742,7 +1747,8 @@
             ]
           }
         ]
-      }
+      },
+      "faqGroup": "hybrid_sales"
     },
     {
       "id": "tom",
@@ -1992,8 +1998,9 @@
         "variableMixPct": 16.8,
         "baseSuperOnBase": 10962,
         "baseInclSuper": 102312,
-        "snapToGP": 250000
-      }
+        "snapToGP": 220000
+      },
+      "faqGroup": "performer"
     },
     {
       "id": "michael",
@@ -2272,8 +2279,9 @@
         "variableMixPct": 19.0,
         "baseSuperOnBase": 8400,
         "baseInclSuper": 78400,
-        "snapToGP": 200000
-      }
+        "snapToGP": 125000
+      },
+      "faqGroup": "performer"
     },
     {
       "id": "sales4",
@@ -2290,7 +2298,8 @@
       "placeholder": true,
       "last365GPSold": 0,
       "annualGPTarget": 0,
-      "minProductionGP": null
+      "minProductionGP": null,
+      "faqGroup": "sales_rep"
     }
   ],
   "companyPL": {
@@ -2414,5 +2423,207 @@
     "bestCaseMultiplier": 1.15,
     "worstCaseFromCurrentDay": true,
     "zohoNote": "Zoho GP sold is slightly lower than Xero cash-basis GP due to internal buffers. Use Zoho figures for commission calc; Xero ratios used here for company P&L projection."
+  },
+  "faqs": {
+    "sales_rep": {
+      "label": "Sales Representative",
+      "items": [
+        {
+          "q": "When do I get paid commission?",
+          "a": "Commission is paid monthly on the same payroll cycle as your base salary. The figure is calculated from cash that has actually arrived in MEC's account that month — not from quotes sent or bookings confirmed. We pay when the customer pays."
+        },
+        {
+          "q": "What is the True-Up?",
+          "a": "Monthly commission is an estimate. At the end of each quarter we reconcile against your actual quarterly entitlement using the proper quarterly bands. If you have been paid more than you have earned, the excess becomes a balance that nets against future commission. If you have been paid less, the next month tops you up. Your base salary never moves either way."
+        },
+        {
+          "q": "What if a booking I made gets cancelled or refunded?",
+          "a": "Refunds reduce your future commission, never your base. The refunded amount appears as negative cash in Zoho on the booking, and is netted against your next commission cycle. Your paycheck never goes negative because of a refund."
+        },
+        {
+          "q": "What if I leave MEC mid-quarter?",
+          "a": "Cash that has already been paid to you stays with you. Cash that has already arrived at MEC but not yet been paid out to you is yours — it gets paid in your final paycheck. Cash that arrives after your last day stays with the company."
+        },
+        {
+          "q": "How is my band rate calculated?",
+          "a": "Your annual GP received climbs through bands. The first chunk earns at rate A%, the next at rate B%, etc. As you climb into higher bands, the marginal rate goes up — you earn more per dollar of GP at higher levels. The dashboard shows your Effective Rate which is the blended average across all bands you have already earned."
+        },
+        {
+          "q": "Why monthly bands instead of quarterly or annual?",
+          "a": "Monthly bands give you cash flow throughout the year. Annual bands would mean waiting until December for any commission. The quarterly true-up keeps things fair: monthly figures are an estimate, and at quarter-end we reconcile against your actual quarterly entitlement."
+        },
+        {
+          "q": "What is the difference between GP Sold and GP Received?",
+          "a": "GP Sold is the total expected GP from bookings you have quoted and converted. GP Received is the portion of that GP that has actually arrived as cash from customers. Commission is paid on GP Received only — that is the cash in is cash out principle."
+        },
+        {
+          "q": "Why is my band rate super-inclusive?",
+          "a": "Australian super (12%) is paid on top of every dollar you earn. Showing your commission as super-inclusive means the rate IS the total cost to the business — base + commission + super together. It makes pay packages comparable across employers and removes the mental math of adding super on top."
+        },
+        {
+          "q": "Can I see how the new plan compares to my old one?",
+          "a": "Yes — the Old vs New comparison card on your Overview tab shows what the same GP figure would have earned under both plans. The new plan rewards stretch (high performers earn proportionally more at higher GP) — most reps earn more on the new plan at realistic ranges."
+        },
+        {
+          "q": "What about KPIs — when do they affect my pay?",
+          "a": "KPIs are draft for Year 1 and locked at 1.0× — they do not affect your variable compensation right now. From Year 2, KPIs may apply a multiplier between 0.7× and 1.3× based on your scorecard. The full draft scorecard is on the KPIs tab so you can read it now and push back before activation."
+        },
+        {
+          "q": "Will my plan change next year?",
+          "a": "Expect annual band tweaks based on what we have learned and where the business is heading. Bigger structural changes (new shape, new mechanisms like team-pool commissions) will be communicated in advance and never applied retrospectively. Cash you have already earned is locked in."
+        },
+        {
+          "q": "What if I think a number is wrong?",
+          "a": "Raise it with Hayley or Nathan immediately. We would rather catch errors early. Bring the specific number, the figure you expected, and a Zoho or Xero screenshot if relevant. The sooner we look, the easier it is to fix."
+        },
+        {
+          "q": "Where does the dashboard data come from?",
+          "a": "GP and bookings data comes from Zoho. Company-level P&L data comes from Xero. Numbers are pulled at the start of each pay cycle. The dashboard is read-only — to change a number, the source system has to be updated first."
+        }
+      ]
+    },
+    "hybrid_sales": {
+      "label": "Sales + Production (Admin & Production Coordinator)",
+      "items": [
+        {
+          "q": "What is the production gate? Why does it exist?",
+          "a": "Your role has both sales and production responsibilities. The production gate sets a minimum annual Event GP Produced target (the GP you have shepherded through to actual event date). The gate ensures we are paying you for both sides of your role — not just Sales-style commission when you have not done the production side."
+        },
+        {
+          "q": "What happens if I do not hit the production gate?",
+          "a": "Below the floor ($150k Event GP) no Sales commission is paid (Production Commission of 1% on Event GP still flows). Between floor and full ($300k), Sales commission ramps linearly from 0% up to 100%. At full rate ($300k+), full Sales commission flows. You can see the ramp on your Planning area."
+        },
+        {
+          "q": "When do I get paid commission?",
+          "a": "Commission is paid monthly. Your monthly commission is calculated from the GP that has actually arrived as cash that month — same cash-in-cash-out principle as Sales reps."
+        },
+        {
+          "q": "What is the True-Up?",
+          "a": "Monthly commission is an estimate. At the end of each quarter we reconcile against your actual quarterly entitlement. If you have been paid too much, the excess nets against future commission. If too little, the next month tops you up. Your base salary never moves."
+        },
+        {
+          "q": "What if a booking I worked on gets cancelled or refunded?",
+          "a": "Refunds reduce your future commission, never your base. The refund appears as negative cash on the booking and nets against your next commission cycle."
+        },
+        {
+          "q": "What if I leave MEC mid-quarter?",
+          "a": "Cash already paid to you stays with you. Cash that has arrived at MEC but not yet been paid out is yours, paid in your final paycheck. Cash arriving after your last day stays with the company."
+        },
+        {
+          "q": "Why is my plan structured this way (compared to a Sales rep)?",
+          "a": "You have less time on pure sales because you are also doing production. The bands are tuned to that reality — they pay slightly differently to a pure Sales rep. The production gate is the structural piece that ensures you get rewarded for both sides of your role."
+        },
+        {
+          "q": "What about KPIs — when do they affect my pay?",
+          "a": "KPIs are draft for Year 1 and locked at 1.0× — they do not affect pay yet. From Year 2 they may apply a 0.7× to 1.3× multiplier. The draft scorecard for your role is on the KPIs tab — read it and push back before it goes live."
+        },
+        {
+          "q": "What if I think a number is wrong?",
+          "a": "Raise it with Hayley or Nathan straight away. Bring the figure you expected and a Zoho screenshot if you have one."
+        },
+        {
+          "q": "Where does the dashboard data come from?",
+          "a": "GP and Event GP figures come from Zoho. Numbers refresh each pay cycle."
+        }
+      ]
+    },
+    "gm": {
+      "label": "General Manager",
+      "items": [
+        {
+          "q": "Why is my plan based on Contribution Margin (CM) and Net Profit (NP), not personal GP?",
+          "a": "As GM your job is to make the whole business work — not to personally generate sales. Tying your variable comp to business-level metrics aligns your incentives with what is good for the company overall, not just one rep's funnel."
+        },
+        {
+          "q": "What is Contribution Margin (CM)?",
+          "a": "Revenue minus all direct costs of doing the work — talent fees, cost of goods sold, anything that scales with the gig. CM is what is left after the work is done, before fixed costs like salaries, rent, software."
+        },
+        {
+          "q": "What is Net Profit (NP)?",
+          "a": "CM minus all fixed costs (salaries, rent, software, etc.). NP is what is left for the business after every cost is paid for."
+        },
+        {
+          "q": "When does my CM band start paying?",
+          "a": "Your CM bands kick in at $1.0M of annual CM. Below $1.0M no variable comp flows from CM. From $1.0M-$1.1M you earn 10%. From $1.1M-$1.4M the rate is 5%. Above $1.4M the rate climbs back to 7.5%."
+        },
+        {
+          "q": "Why is the rate lower in the $1.1M-$1.4M zone?",
+          "a": "The $1.0M to $1.1M band is where your higher base salary (effective April 2026) is being paid back. The trough at 5% reflects the cost of the uplift — once you have grown CM beyond $1.4M, the rate climbs again to 7.5% to reward the stretch."
+        },
+        {
+          "q": "How does my NP kicker work?",
+          "a": "On top of CM commission, an NP-tied kicker scales with annual Net Profit. NP bonuses ramp from $0 to $30k at $1.5M annual NP — see the NP bonus card on your Overview tab for the band structure."
+        },
+        {
+          "q": "When do I get paid commission?",
+          "a": "Quarterly. At each quarter-end your trailing-12-month CM is calculated from the Xero P&L; your quarterly entitlement is paid in the next pay cycle."
+        },
+        {
+          "q": "What if a quarter is bad?",
+          "a": "Your trailing-12-month CM smooths quarterly variation — one bad quarter does not zero you out, but a sustained drop will reduce variable comp. Your base salary does not move."
+        },
+        {
+          "q": "What if I leave MEC mid-quarter?",
+          "a": "Variable comp earned on cash already arrived at MEC is yours — paid in your final paycheck. Variable comp on quarters not yet completed is forfeited."
+        },
+        {
+          "q": "What about KPIs — when do they affect my pay?",
+          "a": "KPIs are draft for Year 1 and locked at 1.0× — they do not affect your variable compensation. From Year 2, KPIs may apply a 0.7× to 1.3× multiplier. Your draft GM scorecard is on the KPIs tab."
+        },
+        {
+          "q": "What if I think a number is wrong?",
+          "a": "Raise it with Nathan immediately. Bring the figure you expected and the Xero P&L source data."
+        },
+        {
+          "q": "Where does the dashboard data come from?",
+          "a": "CM and NP figures come from Xero (P&L extract). The dashboard reads the LTM (last 12 months) plus current quarter. Numbers refresh each pay cycle."
+        }
+      ]
+    },
+    "performer": {
+      "label": "Performer / Sales & Talent Manager",
+      "items": [
+        {
+          "q": "How is my commission different from a pure Sales rep?",
+          "a": "Your bands are calculated from Performance Revenue (revenue you bring in as a performer) rather than GP Sold. Performer economics are different — you typically earn more per dollar of revenue than a Sales rep earns per dollar of GP, because the cost structure of a performance is different to a sale."
+        },
+        {
+          "q": "What counts as Performance Revenue?",
+          "a": "Total revenue (ex-GST) from your personally-booked performances over the period. Every gig you perform contributes to your annual Performance Revenue figure."
+        },
+        {
+          "q": "When do I get paid commission?",
+          "a": "Commission is paid quarterly. Your trailing-12-month Performance Revenue is computed at each quarter-end and your entitlement is paid in the next pay cycle."
+        },
+        {
+          "q": "What if I leave MEC mid-quarter?",
+          "a": "Cash already paid to you stays with you. Variable comp on already-arrived cash is paid in your final paycheck. Future quarters are forfeited."
+        },
+        {
+          "q": "What if a gig gets cancelled or refunded?",
+          "a": "The cancelled cash reduces your TTM revenue figure; future commissions adjust automatically at the next quarter-end. Your base salary does not move."
+        },
+        {
+          "q": "What about Sales-side responsibilities?",
+          "a": "If your role includes sales contributions, those are tracked separately on the Planning tab. Sales-side GP feeds into a separate calculation that runs alongside your performance-based commission."
+        },
+        {
+          "q": "What about KPIs — when do they affect my pay?",
+          "a": "KPIs are draft for Year 1 and locked at 1.0×. From Year 2 they may apply a 0.7× to 1.3× multiplier. Your full draft scorecard is on the KPIs tab — read it now and push back before activation."
+        },
+        {
+          "q": "Why is the rate super-inclusive?",
+          "a": "Australian super (12%) is paid on top of every dollar earned. Showing the rate as super-inclusive means the rate IS the total cost to the business — easier to compare with other offers and removes the mental math of adding super on top."
+        },
+        {
+          "q": "Will my plan change next year?",
+          "a": "Expect annual band tweaks. Bigger structural changes are communicated in advance and never applied retrospectively. Cash you have already earned is locked in."
+        },
+        {
+          "q": "What if I think a number is wrong?",
+          "a": "Raise it with Hayley or Nathan immediately. Bring the figure you expected and a Zoho or PandaDoc screenshot if relevant."
+        }
+      ]
+    }
   }
 }
