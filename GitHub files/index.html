@@ -116,6 +116,134 @@
   .panel { display: none; }
   .panel.active { display: block; }
 
+  /* Financial Planning sub-tabs */
+  .fp-subtab-bar {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin: 0 -24px 22px;
+    padding: 0 24px;
+    flex-wrap: wrap;
+  }
+  .fp-subtab-btn {
+    background: none;
+    border: none;
+    padding: 12px 18px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .fp-subtab-btn:hover { color: var(--ink); }
+  .fp-subtab-btn.active {
+    color: var(--navy);
+    border-bottom-color: var(--navy);
+    font-weight: 600;
+  }
+  .fp-subpanel { display: none; }
+  .fp-subpanel.active { display: block; }
+
+  /* Annual Targets section styling */
+  .annual-targets-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 980px) {
+    .annual-targets-grid { grid-template-columns: 1fr; }
+  }
+  .at-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .at-card.actuals { background: #fafaf7; }
+  .at-card.target { background: #eef4fa; border-color: #cdd9e8; }
+  .at-card h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .at-card .at-sub { font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+  .at-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .at-row:last-child { border-bottom: none; }
+  .at-row .at-label { color: var(--muted); }
+  .at-row .at-val { font-weight: 600; color: var(--ink); }
+  .at-row.computed { background: #eef4fa; padding: 6px 8px; border-radius: 4px; border: none; margin: 2px 0; }
+  .at-row.computed .at-label { color: var(--navy); font-weight: 500; }
+  .at-row.computed .at-val { color: var(--navy); }
+  .at-slider-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .at-slider-row:last-child { border-bottom: none; }
+  .at-slider-row .at-slider-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12px;
+  }
+  .at-slider-row .at-slider-head .at-label { color: var(--ink); font-weight: 500; }
+  .at-slider-row .at-slider-head .at-val {
+    font-family: var(--mono); font-weight: 700; color: var(--navy); font-size: 14px;
+  }
+  .at-slider-row input[type="range"] { width: 100%; accent-color: var(--navy); }
+  .pl-compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 0;
+  }
+  @media (max-width: 980px) {
+    .pl-compare-grid { grid-template-columns: 1fr; }
+  }
+  .pl-compare-card { padding: 16px 18px; border-radius: 10px; border: 1px solid var(--border); }
+  .pl-compare-card.actual { background: #fafaf7; }
+  .pl-compare-card.projected { background: #eef4fa; border-color: #cdd9e8; }
+  .pl-compare-card h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+  .pl-compare-card .pl-sub { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+  .pl-compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .pl-compare-table th, .pl-compare-table td {
+    padding: 6px 6px; text-align: right; font-family: var(--mono); border-bottom: 1px solid var(--border);
+  }
+  .pl-compare-table th:first-child, .pl-compare-table td:first-child {
+    text-align: left; font-family: inherit; color: var(--muted);
+  }
+  .pl-compare-table thead th {
+    font-weight: 500; color: var(--muted); font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.05em; border-bottom: 2px solid var(--border);
+  }
+  .pl-compare-table tr.tot td {
+    border-top: 2px solid var(--ink); border-bottom: none; font-weight: 700; padding-top: 8px;
+  }
+  .pl-compare-table tr.tot td:first-child { color: var(--ink); }
+
+  /* Per-employee 2026 allocation table */
+  .alloc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .alloc-table th, .alloc-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .alloc-table thead th {
+    font-weight: 500; color: var(--muted); font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.05em; text-align: left;
+  }
+  .alloc-table th.num, .alloc-table td.num { text-align: right; font-family: var(--mono); }
+  .alloc-table tfoot td { font-weight: 700; padding-top: 12px; }
+  .alloc-balance-ok { color: var(--accent); }
+  .alloc-balance-off { color: var(--warn); }
+
   .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -825,6 +953,61 @@
         <a id="zoho-link" class="btn primary" style="text-decoration: none; padding: 10px 16px; white-space: nowrap;" target="_blank" href="#">📊 Last 365 Days in Zoho ↗</a>
       </div>
 
+      <div class="fp-subtab-bar">
+        <button class="fp-subtab-btn active" data-fpsubtab="targets">Annual Targets</button>
+        <button class="fp-subtab-btn" data-fpsubtab="pl">Projected P&amp;L</button>
+        <button class="fp-subtab-btn" data-fpsubtab="cost">Cost Stack &amp; Margin</button>
+      </div>
+
+      <!-- ====================== SUB-TAB 1: ANNUAL TARGETS ====================== -->
+      <div class="fp-subpanel active" id="fp-sub-targets">
+
+      <!-- 2025 Actuals + 2026 Target sliders (NEW Annual Targets section) -->
+      <div class="annual-targets-grid">
+        <div class="at-card actuals" id="at-actuals-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px;">
+            <div>
+              <h3>2025 Actuals <span style="font-size:10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; margin-left: 6px;">Read-only · From Zoho</span></h3>
+              <div class="at-sub">Calendar 2025. The baseline we're growing from.</div>
+            </div>
+            <a id="at-zoho-2025-link" class="btn small" style="text-decoration: none; white-space: nowrap; background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef;" target="_blank" href="#">📊 Get Annual Zoho Data Here ↗</a>
+          </div>
+          <div id="at-actuals-body"></div>
+        </div>
+
+        <div class="at-card target" id="at-target-card">
+          <h3>2026 Target <span style="font-size:10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; margin-left: 6px;">Interactive · Drag sliders</span></h3>
+          <div class="at-sub">Tweak the levers. Quotes &amp; leads needed are computed from your conversion assumptions.</div>
+          <div id="at-target-body"></div>
+        </div>
+      </div>
+
+      <!-- Per-employee 2026 allocation -->
+      <div class="card" style="margin-top: 0; margin-bottom: 22px; border-left: 3px solid var(--navy);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
+          <div>
+            <h3 style="margin-top: 0;">2026 Per-Employee Allocation</h3>
+            <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px;">How the 2026 GP target divides across the team. Defaults are weighted by each rep's <code>OTE.snapToGP</code>. Editing a row updates that rep's <code>annualGPTarget</code> directly — same field as the table below.</p>
+          </div>
+          <button class="btn small" id="at-rebalance-btn" style="background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; white-space: nowrap;" title="Distribute the 2026 target across reps proportionally to their snapToGP.">⟲ Rebalance to Target by snapToGP</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="alloc-table" id="at-alloc-table">
+            <thead>
+              <tr>
+                <th>Contributor</th>
+                <th class="num">snapToGP</th>
+                <th class="num">Default Weight</th>
+                <th class="num">2026 Allocation</th>
+                <th class="num">vs 2025 Last 365</th>
+              </tr>
+            </thead>
+            <tbody id="at-alloc-body"></tbody>
+            <tfoot id="at-alloc-foot"></tfoot>
+          </table>
+        </div>
+      </div>
+
       <h3>Per-Employee GP Targets</h3>
       <p class="intro" style="margin-bottom: 10px;">Edit each contributor's Target. Last 365 days are Zoho actuals (editable). Worst Case and Best Case scale off Target by the percentages set below the table. Slider shifts the Target column up or down.</p>
       <div style="overflow-x: auto;">
@@ -886,6 +1069,29 @@
         </div>
       </div>
 
+      </div><!-- /fp-sub-targets -->
+
+      <!-- ====================== SUB-TAB 2: PROJECTED P&L ====================== -->
+      <div class="fp-subpanel" id="fp-sub-pl">
+
+      <!-- NEW: Side-by-side P&L comparison (last 4Q actual vs next 4Q projected) -->
+      <div class="card" style="margin-top: 0; border-left: 3px solid var(--navy);">
+        <h3 style="margin-top: 0;">Last 4 Quarters vs Next 4 Quarters</h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Side-by-side view of where we've been (Xero last 4 quarters) versus where the 2026 target lands us. Same column structure on both, so the increase is visually clear. Projected quarters are evenly distributed for now — adjust on the Company P&amp;L tab to model seasonality.</p>
+        <div class="pl-compare-grid">
+          <div class="pl-compare-card actual" id="pl-compare-actual">
+            <h3>Last 4 Quarters · Actual <span style="font-size:10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; margin-left: 6px;">From Xero</span></h3>
+            <div class="pl-sub" id="pl-compare-actual-sub">Most recent 4 complete quarters from Company P&amp;L tab.</div>
+            <div id="pl-compare-actual-body"></div>
+          </div>
+          <div class="pl-compare-card projected" id="pl-compare-projected">
+            <h3>Next 4 Quarters · Projected <span style="font-size:10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; margin-left: 6px;">From 2026 Target</span></h3>
+            <div class="pl-sub" id="pl-compare-projected-sub">Driven by the 2026 GP target, scaled by LTM ratios.</div>
+            <div id="pl-compare-projected-body"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Current Margin from P&L -->
       <div class="card" style="margin-top: 18px;">
         <h3 style="margin-top: 0;">Current Margin (LTM from P&amp;L)</h3>
@@ -898,20 +1104,6 @@
         <h3 style="margin-top: 0;">Projected Company P&amp;L (After Commissions)</h3>
         <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Drives off the team Target total (highlighted blue below). Projects Revenue / GP / CM / NP using current LTM Gross Margin %. Then deducts the new Variable Comp Pool to surface the bottom-line impact. <span class="hint" style="display:block; margin-top: 4px;">Note: Zoho GP sold ≠ Xero cash-basis GP — buffers in Zoho mean Xero is usually higher.</span></p>
         <div id="fp-pl-body"></div>
-      </div>
-
-      <!-- New vs Old Commission Comparison -->
-      <div class="card" style="margin-top: 18px;">
-        <h3 style="margin-top: 0;">New vs Old Commission — At Last 365 Day GP Levels</h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">If the team hits exactly the same numbers as the last 365 days, how much more (or less) does the company pay in commissions under the new plan vs the old 3.5% flat plan?</p>
-        <div id="fp-newvsold-body"></div>
-      </div>
-
-      <!-- Compounding Cost Stack -->
-      <div class="card" style="margin-top: 18px; border-left: 3px solid var(--warn);">
-        <h3 style="margin-top: 0;">Compounding Cost Stack &amp; Breakeven</h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Total cost increase to MEC: base salary increases + super on those + new commission delta. The breakeven row shows how much extra GP the team needs to deliver (at LTM CM margin) to absorb the cost increase.</p>
-        <div id="fp-coststack-body"></div>
       </div>
 
       <!-- GM Commission Tweaker -->
@@ -933,6 +1125,28 @@
         </div>
         <div id="fp-hayley-body"></div>
       </div>
+
+      </div><!-- /fp-sub-pl -->
+
+      <!-- ====================== SUB-TAB 3: COST STACK & MARGIN ====================== -->
+      <div class="fp-subpanel" id="fp-sub-cost">
+
+      <!-- New vs Old Commission Comparison -->
+      <div class="card" style="margin-top: 0;">
+        <h3 style="margin-top: 0;">New vs Old Commission — At Last 365 Day GP Levels</h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">If the team hits exactly the same numbers as the last 365 days, how much more (or less) does the company pay in commissions under the new plan vs the old 3.5% flat plan?</p>
+        <div id="fp-newvsold-body"></div>
+      </div>
+
+      <!-- Compounding Cost Stack -->
+      <div class="card" style="margin-top: 18px; border-left: 3px solid var(--warn);">
+        <h3 style="margin-top: 0;">Compounding Cost Stack &amp; Breakeven</h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Total cost increase to MEC: base salary increases + super on those + new commission delta. The breakeven row shows how much extra GP the team needs to deliver (at LTM CM margin) to absorb the cost increase.</p>
+        <div id="fp-coststack-body"></div>
+      </div>
+
+      </div><!-- /fp-sub-cost -->
+
     </div>
   </section>
 </main>
@@ -1113,7 +1327,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v2';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v3';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -1448,6 +1662,19 @@ $$('.tab-btn').forEach(btn => {
 });
 // Show first panel by default
 $('#panel-employees').classList.add('active');
+
+/* ---------- FP SUB-TABS ---------- */
+$$('.fp-subtab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.fp-subtab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    $$('.fp-subpanel').forEach(p => p.classList.remove('active'));
+    const sub = $('#fp-sub-' + btn.dataset.fpsubtab);
+    if (sub) sub.classList.add('active');
+    // Re-render so newly-visible cards have fresh values (sliders, projections, etc).
+    try { renderFinancialPlanning(); } catch (e) { /* defensive */ }
+  });
+});
 
 /* ---------- EMPLOYEES ---------- */
 function renderEmployees() {
@@ -2812,6 +3039,342 @@ function getFpSentiment() {
   return isNaN(v) ? 0 : v;
 }
 
+// ----------------- ANNUAL TARGETS (NEW Phase 2b) -----------------
+// 2025 actuals (read-only, from Zoho), 2026 target sliders + computed funnel,
+// per-employee allocation table that drives off employee.annualGPTarget.
+
+function fmtInt(n) {
+  if (n == null || isNaN(n)) return '—';
+  return Math.round(+n).toLocaleString('en-US');
+}
+// fmtPct is defined globally near the top of the script (single-arg, .toFixed(1)).
+
+function renderAnnualTargets() {
+  // ---------- 2025 Actuals (left card) ----------
+  const a = data.globals?.actualsHistorical2025 || {};
+  const zohoLink = $('#at-zoho-2025-link');
+  if (zohoLink) zohoLink.href = a.sourceUrl || '#';
+  const actualsBody = $('#at-actuals-body');
+  if (actualsBody) {
+    actualsBody.innerHTML = `
+      <div class="at-row"><span class="at-label">Leads handled</span><span class="at-val">${fmtInt(a.leadsHandled)}</span></div>
+      <div class="at-row"><span class="at-label">Bookings created (from leads)</span><span class="at-val">${fmtInt(a.bookingsCreatedFromLeads)}</span></div>
+      <div class="at-row"><span class="at-label">Total quotes sent</span><span class="at-val">${fmtInt(a.totalQuotesSent)}</span></div>
+      <div class="at-row"><span class="at-label">Bookings won (from leads)</span><span class="at-val">${fmtInt(a.bookingsWonFromLeads)}</span></div>
+      <div class="at-row"><span class="at-label">Total bookings won</span><span class="at-val">${fmtInt(a.bookingsWonTotal)}</span></div>
+      <div class="at-row"><span class="at-label">Lead → Booking created</span><span class="at-val">${fmtPct(a.leadToBookingConv)}</span></div>
+      <div class="at-row"><span class="at-label">Booking → Won (from leads)</span><span class="at-val">${fmtPct(a.bookingToWonConv)}</span></div>
+      <div class="at-row"><span class="at-label">Lead → Won (true web-form conv)</span><span class="at-val">${fmtPct(a.leadToWonConv)}</span></div>
+      <div class="at-row"><span class="at-label">Total events</span><span class="at-val">${fmtInt(a.events)}</span></div>
+      <div class="at-row"><span class="at-label">Avg GP per event</span><span class="at-val">$${fmtInt(a.avgGPPerEvent)}</span></div>
+      <div class="at-row"><span class="at-label">Total entertainers booked</span><span class="at-val">${fmtInt(a.totalEntertainers)} <span style="font-size:10px; color: var(--faint);">(${(a.entertainersPerEvent || 0).toFixed(2)} per event)</span></span></div>
+      <div class="at-row" style="border-top: 2px solid var(--border); margin-top: 4px; padding-top: 8px;">
+        <span class="at-label" style="font-weight: 600; color: var(--ink);">Total Gig Profit 2025</span>
+        <span class="at-val" style="font-size: 16px; color: var(--navy);">${fmtMoney(a.totalGP)}</span>
+      </div>
+    `;
+  }
+
+  // ---------- 2026 Target sliders (right card) ----------
+  const t = data.globals?.targets2026 || {};
+  const targetBody = $('#at-target-body');
+  if (targetBody && !targetBody.dataset.built) {
+    targetBody.innerHTML = `
+      <div class="at-slider-row">
+        <div class="at-slider-head"><span class="at-label">Annual GP Target</span><span class="at-val" id="at-gp-display">${fmtMoney(t.annualGP)}</span></div>
+        <input type="range" id="at-gp-slider" min="${t.annualGPMin || 1000000}" max="${t.annualGPMax || 2500000}" step="${t.annualGPStep || 25000}" value="${t.annualGP || 2026600}">
+        <div style="font-size: 10px; color: var(--faint); font-family: var(--mono);">Default ${fmtMoney(t.annualGP)} · Max ${fmtMoney(t.annualGPMax)} · Zoho-side, before Xero adjustments</div>
+      </div>
+      <div class="at-slider-row">
+        <div class="at-slider-head"><span class="at-label">Target Events</span><span class="at-val" id="at-events-display">${fmtInt(t.targetEvents)}</span></div>
+        <input type="range" id="at-events-slider" min="${t.targetEventsMin || 1500}" max="${t.targetEventsMax || 2500}" step="${t.targetEventsStep || 25}" value="${t.targetEvents || 2000}">
+        <div style="font-size: 10px; color: var(--faint); font-family: var(--mono);">2025 actual was ${fmtInt(a.events)}</div>
+      </div>
+      <div class="at-row computed"><span class="at-label">Implied avg GP per event</span><span class="at-val" id="at-implied-avg-gp">—</span></div>
+
+      <div class="at-slider-row" style="margin-top: 8px;">
+        <div class="at-slider-head"><span class="at-label">Lead → Booking Conv. Rate</span><span class="at-val" id="at-leadconv-display">${fmtPct(t.leadToBookingConv)}</span></div>
+        <input type="range" id="at-leadconv-slider" min="30" max="90" step="1" value="${Math.round((t.leadToBookingConv || 0.662) * 100)}">
+      </div>
+      <div class="at-slider-row">
+        <div class="at-slider-head"><span class="at-label">Booking → Won Conv. Rate</span><span class="at-val" id="at-quoteconv-display">${fmtPct(t.bookingToWonConv)}</span></div>
+        <input type="range" id="at-quoteconv-slider" min="15" max="70" step="1" value="${Math.round((t.bookingToWonConv || 0.336) * 100)}">
+      </div>
+
+      <div class="at-row computed" style="margin-top: 8px;"><span class="at-label">Quotes needed <span style="font-size:10px; color: var(--faint);">= events ÷ booking-won conv</span></span><span class="at-val" id="at-quotes-needed">—</span></div>
+      <div class="at-row computed"><span class="at-label">Leads needed <span style="font-size:10px; color: var(--faint);">= quotes ÷ lead-booking conv</span></span><span class="at-val" id="at-leads-needed">—</span></div>
+      <div class="at-row computed"><span class="at-label">Implied true conv. (Lead → Won)</span><span class="at-val" id="at-true-conv">—</span></div>
+    `;
+    targetBody.dataset.built = '1';
+
+    // Wire up slider listeners (idempotent because dataset.built guards re-init).
+    // Each input writes to data.globals.targets2026 then triggers a full FP re-render
+    // so the alloc-table footer + side-by-side P&L stay in sync with the new target.
+    const wire = (id, dataKey, transform) => {
+      const sl = $('#' + id);
+      if (!sl) return;
+      sl.addEventListener('input', () => {
+        const raw = +sl.value || 0;
+        const stored = transform ? transform(raw) : raw;
+        if (dataKey) {
+          if (!data.globals.targets2026) data.globals.targets2026 = {};
+          data.globals.targets2026[dataKey] = stored;
+          setDirty();
+        }
+        renderFinancialPlanning();
+      });
+    };
+    wire('at-gp-slider', 'annualGP', null);
+    wire('at-events-slider', 'targetEvents', null);
+    wire('at-leadconv-slider', 'leadToBookingConv', v => v / 100);
+    wire('at-quoteconv-slider', 'bookingToWonConv', v => v / 100);
+  }
+  // Sync slider values from data on every render (e.g. after rebalance / external edit)
+  if ($('#at-gp-slider')) $('#at-gp-slider').value = t.annualGP || 2026600;
+  if ($('#at-events-slider')) $('#at-events-slider').value = t.targetEvents || 2000;
+  if ($('#at-leadconv-slider')) $('#at-leadconv-slider').value = Math.round((t.leadToBookingConv || 0.662) * 100);
+  if ($('#at-quoteconv-slider')) $('#at-quoteconv-slider').value = Math.round((t.bookingToWonConv || 0.336) * 100);
+
+  recomputeAnnualTargets();
+  renderAllocationTable();
+}
+
+function recomputeAnnualTargets() {
+  const t = data.globals?.targets2026 || {};
+  const gp = +t.annualGP || 0;
+  const events = +t.targetEvents || 1;
+  const leadConv = +t.leadToBookingConv || 0;
+  const winConv = +t.bookingToWonConv || 0;
+
+  const impliedAvgGp = events > 0 ? gp / events : 0;
+  const quotesNeeded = winConv > 0 ? events / winConv : 0;
+  const leadsNeeded = leadConv > 0 ? quotesNeeded / leadConv : 0;
+  const trueConv = leadsNeeded > 0 ? events / leadsNeeded : 0;
+
+  if ($('#at-gp-display')) $('#at-gp-display').textContent = fmtMoney(gp);
+  if ($('#at-events-display')) $('#at-events-display').textContent = fmtInt(events);
+  if ($('#at-leadconv-display')) $('#at-leadconv-display').textContent = fmtPct(leadConv);
+  if ($('#at-quoteconv-display')) $('#at-quoteconv-display').textContent = fmtPct(winConv);
+
+  if ($('#at-implied-avg-gp')) $('#at-implied-avg-gp').textContent = '$' + fmtInt(impliedAvgGp);
+  if ($('#at-quotes-needed')) $('#at-quotes-needed').textContent = fmtInt(quotesNeeded);
+  if ($('#at-leads-needed')) $('#at-leads-needed').textContent = fmtInt(leadsNeeded);
+  if ($('#at-true-conv')) $('#at-true-conv').textContent = fmtPct(trueConv);
+}
+
+// Per-employee 2026 allocation. Editing a row writes employee.annualGPTarget directly,
+// so this view stays in sync with the per-employee GP target table below.
+function renderAllocationTable() {
+  const t = data.globals?.targets2026 || {};
+  const targetGP = +t.annualGP || 0;
+
+  // Eligible contributors: employees with snapToGP > 0 OR an existing annualGPTarget,
+  // plus all external (non-dashboard) contributors so the math reconciles.
+  const empRows = data.employees
+    .map((e, i) => ({
+      kind: 'employee', i, id: e.id, name: e.name, role: e.role,
+      snap: +e.ote?.snapToGP || 0,
+      target: +e.annualGPTarget || 0,
+      last365: +e.last365GPSold || 0,
+      targetPath: `employees.${i}.annualGPTarget`,
+      emp: e,
+    }))
+    .filter(r => r.snap > 0 || r.target > 0 || r.last365 > 0);
+
+  const ext = data.financialPlanning?.externalContributors || [];
+  const extRows = ext.map((c, ei) => ({
+    kind: 'external', ei, name: c.name || '(unnamed)', role: 'Non-Dashboard',
+    snap: 0, // externals don't have OTE.snapToGP
+    target: +(c.annualGPTarget != null ? c.annualGPTarget : c.last365GPSold) || 0,
+    last365: +c.last365GPSold || 0,
+    targetPath: `financialPlanning.externalContributors.${ei}.annualGPTarget`,
+  }));
+
+  const rows = [...empRows, ...extRows];
+  const totalSnap = rows.reduce((s, r) => s + r.snap, 0);
+
+  let totalAlloc = 0;
+  let totalLast365 = 0;
+  const body = $('#at-alloc-body');
+  if (!body) return;
+
+  body.innerHTML = rows.map(r => {
+    const weight = totalSnap > 0 ? r.snap / totalSnap : 0;
+    totalAlloc += r.target;
+    totalLast365 += r.last365;
+    const deltaVs2025 = r.last365 > 0 ? (r.target - r.last365) : null;
+    const deltaPct = r.last365 > 0 ? (r.target / r.last365 - 1) : null;
+    const deltaTxt = deltaVs2025 == null
+      ? '<span style="color: var(--faint);">—</span>'
+      : `<span style="color: ${deltaVs2025 >= 0 ? 'var(--accent)' : 'var(--danger)'};">${deltaVs2025 >= 0 ? '+' : ''}${fmtMoney(deltaVs2025)}</span> <span style="font-size:10px; color: var(--faint);">(${deltaPct >= 0 ? '+' : ''}${(deltaPct * 100).toFixed(1)}%)</span>`;
+    const tag = r.kind === 'external' ? '<span style="font-size: 10px; color: var(--faint); font-family: var(--mono); margin-left: 4px;">non-dashboard</span>' : `<span style="font-size: 11px; color: var(--muted); margin-left: 6px;">${r.role}</span>`;
+    return `<tr>
+      <td><strong>${r.name}</strong> ${tag}</td>
+      <td class="num" style="color: var(--muted);">${r.snap > 0 ? fmtMoney(r.snap) : '—'}</td>
+      <td class="num" style="color: var(--muted);">${weight > 0 ? (weight * 100).toFixed(1) + '%' : '—'}</td>
+      <td class="num"><div style="display: flex; justify-content: flex-end;">${moneyInputHtml(r.targetPath, '0')}</div></td>
+      <td class="num">${deltaTxt}</td>
+    </tr>`;
+  }).join('');
+
+  const diff = totalAlloc - targetGP;
+  const balanceClass = Math.abs(diff) < 1 ? 'alloc-balance-ok' : 'alloc-balance-off';
+  const balanceTxt = Math.abs(diff) < 1
+    ? `Balanced to target ✓`
+    : `${diff > 0 ? 'Over' : 'Under'} target by ${fmtMoney(Math.abs(diff))}`;
+  $('#at-alloc-foot').innerHTML = `<tr style="background: var(--navy); color: #fff;">
+    <td><strong>Total</strong></td>
+    <td class="num" style="color: rgba(255,255,255,0.7);">${fmtMoney(totalSnap)}</td>
+    <td class="num" style="color: rgba(255,255,255,0.7);">100.0%</td>
+    <td class="num"><strong>${fmtMoney(totalAlloc)}</strong></td>
+    <td class="num"><strong style="color: #fff;">${diff >= 0 ? '+' : ''}${fmtMoney(totalAlloc - totalLast365)}</strong></td>
+  </tr>
+  <tr><td colspan="5" style="padding: 8px 10px; font-size: 12px; background: #fafaf7;">
+    2026 GP Target: <strong style="color: var(--navy); font-family: var(--mono);">${fmtMoney(targetGP)}</strong>
+    <span style="margin-left: 14px;" class="${balanceClass}"><strong>${balanceTxt}</strong></span>
+  </td></tr>`;
+
+  // Wire rebalance button (idempotent)
+  const reb = $('#at-rebalance-btn');
+  if (reb && !reb.dataset.listenerAttached) {
+    reb.addEventListener('click', () => {
+      const t2 = data.globals?.targets2026 || {};
+      const tgt = +t2.annualGP || 0;
+      // Only employees with snapToGP > 0 get rebalanced; external + zero-snap rows keep current.
+      const eligible = data.employees
+        .map((e, i) => ({ i, snap: +e.ote?.snapToGP || 0 }))
+        .filter(r => r.snap > 0);
+      const sumSnap = eligible.reduce((s, r) => s + r.snap, 0);
+      // Subtract the fixed (non-eligible) allocations from the target.
+      const fixedExt = (data.financialPlanning?.externalContributors || [])
+        .reduce((s, c) => s + (+c.annualGPTarget || +c.last365GPSold || 0), 0);
+      const fixedZeroSnap = data.employees
+        .filter(e => !((+e.ote?.snapToGP || 0) > 0))
+        .reduce((s, e) => s + (+e.annualGPTarget || 0), 0);
+      const distributable = Math.max(0, tgt - fixedExt - fixedZeroSnap);
+      eligible.forEach(({ i, snap }) => {
+        data.employees[i].annualGPTarget = Math.round((snap / sumSnap) * distributable);
+      });
+      setDirty();
+      renderFinancialPlanning();
+    });
+    reb.dataset.listenerAttached = '1';
+  }
+}
+
+// ----------------- SIDE-BY-SIDE P&L COMPARISON (NEW Phase 2b §3.C) -----------------
+// Left: Last 4 quarters actual (Xero, from companyPL.quarters)
+// Right: Next 4 quarters projected, driven by 2026 GP target (evenly split for now,
+//        scaled by LTM CM and NM ratios; non-Zoho baseline held constant from LTM).
+function renderPLCompare() {
+  const qs = data.companyPL?.quarters || [];
+  const actualBody = $('#pl-compare-actual-body');
+  const projBody = $('#pl-compare-projected-body');
+  const actualSub = $('#pl-compare-actual-sub');
+  const projSub = $('#pl-compare-projected-sub');
+  if (!actualBody || !projBody) return;
+
+  // -------- Actual (last 4 quarters from Xero) --------
+  if (!qs.length) {
+    actualBody.innerHTML = `<div style="color: var(--muted); font-size: 12px;">No P&amp;L quarters yet — fill in the Company P&amp;L tab.</div>`;
+    projBody.innerHTML = `<div style="color: var(--muted); font-size: 12px;">Need P&amp;L data to project.</div>`;
+    return;
+  }
+
+  let aTotRev = 0, aTotGP = 0, aTotCM = 0, aTotNP = 0;
+  const actualRows = qs.map(q => {
+    const rev = +q.revenue || 0, cogs = +q.cogs || 0, ce = +q.contribExp || 0, op = +q.opex || 0;
+    const gp = rev - cogs;
+    const cm = gp - ce;
+    const np = cm - op;
+    aTotRev += rev; aTotGP += gp; aTotCM += cm; aTotNP += np;
+    return { label: q.label, rev, gp, cm, np };
+  });
+  const labelHead = actualRows.map(r => `<th>${r.label}</th>`).join('');
+  if (actualSub) actualSub.textContent = `${actualRows[0].label} → ${actualRows[actualRows.length - 1].label} · LTM total ${fmtMoney(aTotRev)}`;
+  actualBody.innerHTML = `
+    <table class="pl-compare-table">
+      <thead>
+        <tr><th></th>${labelHead}<th>LTM</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Revenue</td>${actualRows.map(r => `<td>${fmtMoney(r.rev)}</td>`).join('')}<td><strong>${fmtMoney(aTotRev)}</strong></td></tr>
+        <tr><td>Gross Profit</td>${actualRows.map(r => `<td>${fmtMoney(r.gp)}</td>`).join('')}<td><strong>${fmtMoney(aTotGP)}</strong></td></tr>
+        <tr><td>Contribution Margin</td>${actualRows.map(r => `<td>${fmtMoney(r.cm)}</td>`).join('')}<td><strong>${fmtMoney(aTotCM)}</strong></td></tr>
+        <tr class="tot"><td>Net Profit</td>${actualRows.map(r => `<td>${fmtMoney(r.np)}</td>`).join('')}<td>${fmtMoney(aTotNP)}</td></tr>
+      </tbody>
+    </table>
+  `;
+
+  // -------- Projected (next 4 quarters, driven by 2026 GP target) --------
+  const ltm = fpComputeLTM();
+  const t = data.globals?.targets2026 || {};
+  const targetGP = +t.annualGP || 0;
+  if (!ltm || ltm.revenue <= 0 || targetGP <= 0) {
+    projBody.innerHTML = `<div style="color: var(--muted); font-size: 12px;">Need P&amp;L data + 2026 target to project.</div>`;
+    return;
+  }
+
+  const gmXero = ltm.gp / ltm.revenue;
+  const cmRatio = ltm.cm / ltm.revenue;
+  const npRatio = ltm.np / ltm.revenue;
+
+  // The Xero LTM has revenue NOT tracked in Zoho (production fees, retainers, ad-hoc).
+  // Hold that as a baseline — same logic as the existing Projected P&L card.
+  const ltmZohoGP = fpTotalLast365();
+  const zohoImpliedLtmRev = gmXero > 0 ? ltmZohoGP / gmXero : 0;
+  const nonZohoBaselineRev = Math.max(0, ltm.revenue - zohoImpliedLtmRev);
+  const nonZohoBaselineGP = nonZohoBaselineRev * gmXero;
+
+  // Projected annual figures
+  const projGP = targetGP + nonZohoBaselineGP;
+  const projRevAnnual = gmXero > 0 ? projGP / gmXero : 0;
+  const projCMAnnual = projRevAnnual * cmRatio;
+  const projNPAnnual = projRevAnnual * npRatio;
+
+  // Build next 4 quarter labels: shift the last actual quarter forward by 1 year.
+  // (Simple even split until per-quarter seasonality is added.)
+  const nextLabels = actualRows.map(r => shiftQuarterLabelByYear(r.label, 1));
+  const perQ = (annual) => annual / 4;
+
+  let pTotRev = 0, pTotGP = 0, pTotCM = 0, pTotNP = 0;
+  const projRows = nextLabels.map(label => {
+    const rev = perQ(projRevAnnual);
+    const gp = perQ(projGP);
+    const cm = perQ(projCMAnnual);
+    const np = perQ(projNPAnnual);
+    pTotRev += rev; pTotGP += gp; pTotCM += cm; pTotNP += np;
+    return { label, rev, gp, cm, np };
+  });
+  const labelHeadP = projRows.map(r => `<th>${r.label}</th>`).join('');
+  const dRev = pTotRev - aTotRev;
+  const dPctRev = aTotRev > 0 ? (dRev / aTotRev) * 100 : 0;
+  if (projSub) projSub.textContent = `${nextLabels[0]} → ${nextLabels[nextLabels.length - 1]} · ${dRev >= 0 ? '+' : ''}${fmtMoney(dRev)} (${dPctRev >= 0 ? '+' : ''}${dPctRev.toFixed(1)}%) on revenue vs last 4Q`;
+
+  projBody.innerHTML = `
+    <table class="pl-compare-table">
+      <thead>
+        <tr><th></th>${labelHeadP}<th>FY26</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Revenue</td>${projRows.map(r => `<td>${fmtMoney(r.rev)}</td>`).join('')}<td><strong>${fmtMoney(pTotRev)}</strong></td></tr>
+        <tr><td>Gross Profit</td>${projRows.map(r => `<td>${fmtMoney(r.gp)}</td>`).join('')}<td><strong>${fmtMoney(pTotGP)}</strong></td></tr>
+        <tr><td>Contribution Margin</td>${projRows.map(r => `<td>${fmtMoney(r.cm)}</td>`).join('')}<td><strong>${fmtMoney(pTotCM)}</strong></td></tr>
+        <tr class="tot"><td>Net Profit</td>${projRows.map(r => `<td>${fmtMoney(r.np)}</td>`).join('')}<td>${fmtMoney(pTotNP)}</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 8px; font-size: 10px; color: var(--faint); font-family: var(--mono); line-height: 1.5;">
+      Driven by 2026 GP target ${fmtMoney(targetGP)} (Zoho) + ${fmtMoney(nonZohoBaselineGP)} non-Zoho baseline → projected GP ${fmtMoney(projGP)} ÷ LTM GM ${(gmXero * 100).toFixed(1)}% = revenue. Quarterly = annual ÷ 4.
+    </div>
+  `;
+}
+
+// "Apr-Jun 2025" → "Apr-Jun 2026" (shift the trailing year by yearOffset)
+function shiftQuarterLabelByYear(label, yearOffset) {
+  if (!label) return '';
+  return label.replace(/(\d{4})\s*$/, (_m, y) => String(parseInt(y, 10) + yearOffset));
+}
+
 function renderFinancialPlanning() {
   // Preserve focus across re-renders so typing in money inputs doesn't get blocked.
   const active = document.activeElement;
@@ -2821,6 +3384,12 @@ function renderFinancialPlanning() {
   // Zoho link
   const zoho = $('#zoho-link');
   if (zoho) zoho.href = data.globals?.zohoDashboardUrl || '#';
+
+  // ----- NEW Annual Targets section: 2025 actuals + 2026 sliders + per-employee allocation -----
+  renderAnnualTargets();
+
+  // ----- NEW Side-by-side P&L (last 4 quarters actual vs next 4 quarters projected) -----
+  renderPLCompare();
 
   // Two-slider sentiment: Worst Case slider+input drive worstMult, Best Case slider+input drive bestMult.
   // No additional sentiment multiplier — these directly multiply Target to produce Worst/Best columns.
