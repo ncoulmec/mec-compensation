@@ -149,8 +149,20 @@
   }
   .gp-floater-row.gp { grid-template-columns: 100px 1fr 70px; }
   .gp-floater .label-mini { font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: normal; font-weight: 500; line-height: 1.3; white-space: nowrap; }
-  .gp-floater .num-input { font-family: var(--mono); font-size: 12px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; width: 100%; text-align: center; background: #fff; height: 26px; box-sizing: border-box; }
+  .gp-floater .num-input { font-family: var(--mono); font-size: 12px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; width: 100%; text-align: right; background: #fff; height: 26px; box-sizing: border-box; }
   .gp-floater .num-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(45,90,180,0.2); border-color: var(--accent); }
+  /* Input wrapper that adds a prefix ($) or suffix (%) inside the box */
+  .gp-floater .num-input-wrap { position: relative; }
+  .gp-floater .num-input-wrap.prefix-dollar::before {
+    content: '$'; position: absolute; left: 6px; top: 50%; transform: translateY(-50%);
+    font-family: var(--mono); font-size: 11px; color: var(--muted); pointer-events: none; line-height: 1;
+  }
+  .gp-floater .num-input-wrap.prefix-dollar .num-input { padding-left: 16px; }
+  .gp-floater .num-input-wrap.suffix-pct::after {
+    content: '%'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-family: var(--mono); font-size: 11px; color: var(--muted); pointer-events: none; line-height: 1;
+  }
+  .gp-floater .num-input-wrap.suffix-pct .num-input { padding-right: 18px; }
   .gp-floater input[type="range"] { width: 100%; accent-color: var(--navy); }
   .gp-floater .value { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; text-align: right; }
   .gp-floater-chip { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; font-family: var(--mono); transition: all 0.12s; line-height: 1.4; }
@@ -833,7 +845,7 @@
       </div>
       <div class="scenario-row">
         <label>Conversion Rate <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(quoted → confirmed)</span></label>
-        <input type="range" id="sp-conv-slider" min="0" max="100" step="0.5" value="40">
+        <input type="range" id="sp-conv-slider" min="0" max="100" step="0.1" value="40">
         <div class="input-with-suffix" style="position: relative;"><input type="text" inputmode="decimal" id="sp-conv-input" class="value-input" style="padding-right: 22px;" value="40.0" step="0.1"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">%</span></div>
       </div>
       <div class="scenario-row">
@@ -863,7 +875,7 @@
       </div>
       <div class="scenario-row">
         <label>Your Margin <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(GP / revenue ex-GST)</span></label>
-        <input type="range" id="sp-margin-slider" min="20" max="60" step="0.5" value="35">
+        <input type="range" id="sp-margin-slider" min="20" max="60" step="0.1" value="35">
         <div class="input-with-suffix" style="position: relative;"><input type="text" inputmode="decimal" id="sp-margin-input" class="value-input" style="padding-right: 22px;" value="35.0"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">%</span></div>
       </div>
 
@@ -1106,8 +1118,8 @@
       </div>
       <div class="gp-floater-row">
         <span class="label-mini">Conv % <span class="help-icon" data-tip="Quoted to confirmed conversion rate">?</span></span>
-        <input type="range" id="gpf-conv-r" min="10" max="80" step="0.5">
-        <input type="number" class="num-input" id="gpf-conv-i" step="0.1">
+        <input type="range" id="gpf-conv-r" min="10" max="80" step="0.1">
+        <div class="num-input-wrap suffix-pct"><input type="number" class="num-input" id="gpf-conv-i" step="0.1"></div>
       </div>
       <div class="gp-floater-row">
         <span class="label-mini">Confirmed <span class="help-icon" data-tip="Confirmed = Quoted × Conv%. Editing changes Conv%.">?</span></span>
@@ -1117,12 +1129,12 @@
       <div class="gp-floater-row">
         <span class="label-mini">Avg GP <span class="help-icon" data-tip="Average GP per confirmed event ($)">?</span></span>
         <input type="range" id="gpf-avg-r" min="200" max="2000" step="25">
-        <input type="number" class="num-input" id="gpf-avg-i">
+        <div class="num-input-wrap prefix-dollar"><input type="number" class="num-input" id="gpf-avg-i"></div>
       </div>
       <div class="gp-floater-row">
         <span class="label-mini">Margin % <span class="help-icon" data-tip="GP / (Revenue ex-GST). Drives the implied revenue figure below.">?</span></span>
-        <input type="range" id="gpf-margin-r" min="20" max="60" step="0.5">
-        <input type="number" class="num-input" id="gpf-margin-i" step="0.1">
+        <input type="range" id="gpf-margin-r" min="20" max="60" step="0.1">
+        <div class="num-input-wrap suffix-pct"><input type="number" class="num-input" id="gpf-margin-i" step="0.1"></div>
       </div>
       <div class="gp-floater-derived">implied revenue ex-GST: <strong id="gpf-rev">—</strong></div>
     </div>
