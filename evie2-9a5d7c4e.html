@@ -148,15 +148,25 @@
   .gp-floater-chip.target:hover { background: #d5e5f4; }
   .gp-floater-derived { font-size: 10.5px; color: var(--faint); font-family: var(--mono); padding: 6px 2px 0; }
   .gp-floater-derived strong { color: var(--muted); font-weight: 500; }
-  .gp-floater-footer { margin-top: 10px; padding: 8px 10px; border-radius: 6px; background: #fafaf7; display: flex; justify-content: space-between; align-items: baseline; }
+  .gp-floater-footer { margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: #fafaf7; display: flex; justify-content: space-between; align-items: baseline; }
   .gp-floater-footer .ftr-label { font-size: 11px; color: var(--muted); }
   .gp-floater-footer .ftr-value { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--navy); }
+  .gp-floater-footer.dark { background: var(--navy); }
+  .gp-floater-footer.dark .ftr-label { color: rgba(255,255,255,0.75); }
+  .gp-floater-footer.dark .ftr-value { color: #fff; }
   .gp-floater-footer .delta { font-size: 10px; font-family: var(--mono); margin-left: 4px; }
   .gp-floater-footer .delta.up { color: #1f5e3c; }
   .gp-floater-footer .delta.down { color: #a8281b; }
   /* CSS-based tooltips on the ? help icons — replaces broken native title= */
-  .gp-floater .help-icon { color: var(--faint); cursor: help; margin-left: 2px; font-weight: 600; position: relative; display: inline-block; }
-  .gp-floater .help-icon:hover { color: var(--accent); }
+  .gp-floater .help-icon {
+    color: var(--muted); cursor: help; margin-left: 4px;
+    font-weight: 600; font-size: 9px; line-height: 1;
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid var(--border); background: #fff;
+    transition: all 0.12s;
+  }
+  .gp-floater .help-icon:hover { color: var(--accent); border-color: var(--accent); background: #eaf3fb; }
   .gp-floater .help-icon::after {
     content: attr(data-tip);
     position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
@@ -503,7 +513,6 @@
             </div>
             <input type="range" id="gp-slider" min="0" max="100" step="0.1" value="50">
             <div class="ticks"></div>
-            <div class="zone-legend"><span style="color:#c43c30;">↤ Under</span><span style="color:#1f5e3c;">Realistic</span><span style="color:#a17a00;">Stretch ↦</span></div>
           </div>
         </div>
 
@@ -836,6 +845,11 @@
           <input type="text" inputmode="numeric" id="sp-totalgp-input" class="value-input" style="padding-left: 22px;" value="335,000">
         </div>
       </div>
+      <div class="scenario-row">
+        <label>Your Margin <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(GP / revenue ex-GST)</span></label>
+        <input type="range" id="sp-margin-slider" min="20" max="60" step="0.5" value="35">
+        <div class="input-with-suffix" style="position: relative;"><input type="text" inputmode="decimal" id="sp-margin-input" class="value-input" style="padding-right: 22px;" value="35.0"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">%</span></div>
+      </div>
       <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
         <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this Total GP, you earn</div>
         <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
@@ -1014,8 +1028,8 @@
       </div>
       <div class="gp-floater-row">
         <span class="label-mini">Conv % <span class="help-icon" data-tip="Quoted to confirmed conversion rate">?</span></span>
-        <input type="range" id="gpf-conv-r" min="10" max="80" step="1">
-        <input type="number" class="num-input" id="gpf-conv-i">
+        <input type="range" id="gpf-conv-r" min="10" max="80" step="0.5">
+        <input type="number" class="num-input" id="gpf-conv-i" step="0.1">
       </div>
       <div class="gp-floater-row">
         <span class="label-mini">Confirmed <span class="help-icon" data-tip="Confirmed = Quoted × Conv%. Editing changes Conv%.">?</span></span>
@@ -1029,8 +1043,8 @@
       </div>
       <div class="gp-floater-row">
         <span class="label-mini">Margin % <span class="help-icon" data-tip="GP / (Revenue ex-GST). Drives the implied revenue figure below.">?</span></span>
-        <input type="range" id="gpf-margin-r" min="20" max="60" step="1">
-        <input type="number" class="num-input" id="gpf-margin-i">
+        <input type="range" id="gpf-margin-r" min="20" max="60" step="0.5">
+        <input type="number" class="num-input" id="gpf-margin-i" step="0.1">
       </div>
       <div class="gp-floater-derived">implied revenue ex-GST: <strong id="gpf-rev">—</strong></div>
     </div>
@@ -1050,6 +1064,10 @@
   <div class="gp-floater-footer">
     <span class="ftr-label">Est. commission @ scenario</span>
     <span><span class="ftr-value" id="gpf-comm-v">—</span><span class="delta" id="gpf-comm-d"></span></span>
+  </div>
+  <div class="gp-floater-footer dark">
+    <span class="ftr-label">Est. total package @ scenario</span>
+    <span class="ftr-value" id="gpf-total-v">—</span>
   </div>
 </div>
 
@@ -1264,10 +1282,8 @@ function nlsRenderChrome(wrapEl, range) {
   const ticks = wrapEl.querySelector('.ticks');
   if (ticks) {
     ticks.innerHTML = `
-      <span class="tick endpoint" style="left:0%;">$${(absoluteMin/1000).toFixed(0)}k</span>
       <span class="tick" style="left:${NLS_UNDER}%;">$${(min/1000).toFixed(0)}k</span>
-      <span class="tick" style="left:${NLS_UNDER + NLS_REAL}%;">$${(max/1000).toFixed(0)}k</span>
-      <span class="tick endpoint" style="left:100%;">$${(absoluteMax/1000).toFixed(0)}k</span>`;
+      <span class="tick" style="left:${NLS_UNDER + NLS_REAL}%;">$${(max/1000).toFixed(0)}k</span>`;
   }
 }
 function wireNonLinearSlider(slider, input, range, onChange) {
@@ -2417,10 +2433,10 @@ function paintFloater() {
   const $ = id => document.getElementById(id);
   if ($('gpf-quoted-r')) {
     $('gpf-quoted-r').value = funnelState.quoted; $('gpf-quoted-i').value = funnelState.quoted;
-    $('gpf-conv-r').value = funnelState.conv;     $('gpf-conv-i').value = funnelState.conv;
+    $('gpf-conv-r').value = funnelState.conv;     $('gpf-conv-i').value = (+funnelState.conv).toFixed(1);
     $('gpf-conf-r').value = funnelState.confirmed; $('gpf-conf-i').value = funnelState.confirmed;
     $('gpf-avg-r').value = funnelState.avg;       $('gpf-avg-i').value = funnelState.avg;
-    $('gpf-margin-r').value = funnelState.margin; $('gpf-margin-i').value = funnelState.margin;
+    $('gpf-margin-r').value = funnelState.margin; $('gpf-margin-i').value = (+funnelState.margin).toFixed(1);
     const rev = funnelState.margin > 0 ? funnelState.totalGP / (funnelState.margin / 100) : 0;
     $('gpf-rev').textContent = fmtMoney(rev);
   }
@@ -2436,6 +2452,10 @@ function paintFloater() {
   const comm = commissionFromBands(funnelState.totalGP);
   if (funnelBaselineComm === null) funnelBaselineComm = comm;
   const cv = $('gpf-comm-v'); if (cv) cv.textContent = fmtMoney(comm);
+  // Total package = base inc super + commission inc super (commission is already inc super in band rates)
+  const sr = data.globals.superRate || 0.12;
+  const baseInc = (emp.baseSalary || 0) * (1 + sr);
+  const tv = $('gpf-total-v'); if (tv) tv.textContent = fmtMoney(baseInc + comm);
   const cd = $('gpf-comm-d');
   if (cd) {
     const d = comm - funnelBaselineComm;
@@ -2600,7 +2620,12 @@ function syncSPFromFunnel() {
     const effRate = funnelState.totalGP > 0 ? (c / funnelState.totalGP) * 100 : 0;
     const r2 = document.getElementById('sp-rate'); if (r2) r2.textContent = effRate.toFixed(1) + '%';
     const t2 = document.getElementById('sp-total'); if (t2) t2.textContent = fmtMoney(totalPkg);
-    const fn = document.getElementById('sp-funnel'); if (fn) fn.textContent = `${funnelState.quoted} quoted → ${funnelState.conv}% conversion → ${funnelState.confirmed} confirmed × ${fmtMoney(funnelState.avg)} avg = ${fmtMoney(funnelState.totalGP)} GP`;
+    const fn = document.getElementById('sp-funnel'); if (fn) {
+      const rev = funnelState.margin > 0 ? funnelState.totalGP / (funnelState.margin / 100) : 0;
+      fn.textContent = `${funnelState.quoted} quoted → ${(+funnelState.conv).toFixed(1)}% conversion → ${funnelState.confirmed} confirmed × ${fmtMoney(funnelState.avg)} avg = ${fmtMoney(funnelState.totalGP)} GP @ ${(+funnelState.margin).toFixed(1)}% margin (= ${fmtMoney(rev)} revenue ex-GST)`;
+    }
+    const mS = document.getElementById('sp-margin-slider'); if (mS) mS.value = funnelState.margin;
+    const mI = document.getElementById('sp-margin-input'); if (mI) mI.value = (+funnelState.margin).toFixed(1);
   }
 }
 
@@ -2636,6 +2661,9 @@ function wireSalesPlanning() {
   aI.addEventListener('input', () => { funnelState.avg = parseNum(aI.value) || 0; funnelRecalc('avg'); paintFloater(); if (typeof update === 'function') update(); });
   tS.addEventListener('input', onChange('totalGP'));
   tI.addEventListener('input', () => { funnelState.totalGP = parseNum(tI.value) || 0; funnelRecalc('gp'); paintFloater(); if (typeof update === 'function') update(); });
+  const mS = document.getElementById('sp-margin-slider'); const mI = document.getElementById('sp-margin-input');
+  if (mS) mS.addEventListener('input', () => { funnelState.margin = +mS.value || 0; paintFloater(); });
+  if (mI) mI.addEventListener('input', () => { funnelState.margin = parseFloat(mI.value) || 0; paintFloater(); });
 
   // Initial paint
   if (typeof syncSPFromFunnel === 'function') syncSPFromFunnel();

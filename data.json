@@ -786,7 +786,7 @@
       "previousBaseSalary": 85000,
       "realisticRange": {
         "min": 250000,
-        "max": 425000,
+        "max": 450000,
         "absoluteMax": 600000
       },
       "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000023895089",
@@ -1013,7 +1013,7 @@
       "previousBaseSalary": 71250,
       "realisticRange": {
         "min": 250000,
-        "max": 425000,
+        "max": 450000,
         "absoluteMax": 600000
       },
       "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000103655232",
@@ -1240,7 +1240,7 @@
       "previousBaseSalary": 70000,
       "realisticRange": {
         "min": 250000,
-        "max": 425000,
+        "max": 450000,
         "absoluteMax": 600000
       },
       "zohoDataUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000215439047",
@@ -1991,7 +1991,8 @@
         "baseMixPct": 83.2,
         "variableMixPct": 16.8,
         "baseSuperOnBase": 10962,
-        "baseInclSuper": 102312
+        "baseInclSuper": 102312,
+        "snapToGP": 250000
       }
     },
     {
@@ -2270,7 +2271,8 @@
         "baseMixPct": 81.0,
         "variableMixPct": 19.0,
         "baseSuperOnBase": 8400,
-        "baseInclSuper": 78400
+        "baseInclSuper": 78400,
+        "snapToGP": 200000
       }
     },
     {

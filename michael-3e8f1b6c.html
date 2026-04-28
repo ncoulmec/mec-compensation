@@ -567,6 +567,75 @@
     margin: 20px 0;
     font-size: 14px;
   }
+  /* Floating Quick-Adjust card (sticky bottom-right) — simple revenue scenario */
+  .gp-floater {
+    position: fixed; bottom: 18px; right: 18px;
+    background: #fff; border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    padding: 14px 16px 12px; z-index: 90;
+    width: 340px; max-width: 92vw;
+  }
+  .gp-floater-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; position: relative; }
+  .gp-floater-head .title-wrap { display: flex; align-items: center; gap: 6px; }
+  .gp-floater-head .title { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .gp-floater-head .actions { display: flex; gap: 6px; }
+  .gp-floater-iconbtn { width: 26px; height: 26px; padding: 0; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: all 0.12s; }
+  .gp-floater-iconbtn:hover { background: #fafaf7; color: var(--ink); border-color: var(--muted); }
+  .gp-floater-iconbtn:active { transform: scale(0.96); }
+  .gp-floater-iconbtn.active { background: #eaf3fb; color: var(--accent); border-color: var(--accent); }
+  .gp-floater-snap-popover {
+    position: absolute; top: 32px; left: 0; z-index: 5;
+    background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    padding: 6px; min-width: 180px; display: none;
+  }
+  .gp-floater-snap-popover.open { display: block; }
+  .gp-floater-snap-popover .gp-floater-chip { display: block; width: 100%; text-align: left; margin: 2px 0; padding: 6px 10px; }
+  .gp-floater-row { display: grid; grid-template-columns: 110px 1fr 70px; gap: 10px; align-items: center; padding: 4px 0; }
+  .gp-floater .label-mini { font-size: 11px; color: var(--muted); font-weight: 500; line-height: 1.3; white-space: nowrap; }
+  .gp-floater input[type="range"] { width: 100%; accent-color: var(--navy); }
+  .gp-floater .value { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; text-align: right; }
+  .gp-floater-chip { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; font-family: var(--mono); transition: all 0.12s; line-height: 1.4; }
+  .gp-floater-chip:hover { border-color: var(--muted); background: #fafaf7; color: var(--ink); }
+  .gp-floater-chip.target { color: var(--accent); border-color: var(--accent); background: #eaf3fb; }
+  .gp-floater-footer { margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: #fafaf7; display: flex; justify-content: space-between; align-items: baseline; }
+  .gp-floater-footer .ftr-label { font-size: 11px; color: var(--muted); }
+  .gp-floater-footer .ftr-value { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--navy); }
+  .gp-floater-footer .delta { font-size: 10px; font-family: var(--mono); margin-left: 4px; }
+  .gp-floater-footer .delta.up { color: #1f5e3c; }
+  .gp-floater-footer .delta.down { color: #a8281b; }
+  .gp-floater-footer.dark { background: var(--navy); }
+  .gp-floater-footer.dark .ftr-label { color: rgba(255,255,255,0.75); }
+  .gp-floater-footer.dark .ftr-value { color: #fff; }
+  .gp-floater .help-icon {
+    color: var(--muted); cursor: help; margin-left: 4px;
+    font-weight: 600; font-size: 9px; line-height: 1;
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid var(--border); background: #fff;
+    transition: all 0.12s;
+  }
+  .gp-floater .help-icon:hover { color: var(--accent); border-color: var(--accent); background: #eaf3fb; }
+  .gp-floater .help-icon::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff;
+    padding: 6px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 400; line-height: 1.4;
+    white-space: normal; width: max-content; max-width: 220px;
+    text-align: left; pointer-events: none;
+    opacity: 0; transition: opacity 0.15s ease; z-index: 100;
+  }
+  .gp-floater .help-icon::before {
+    content: '';
+    position: absolute; bottom: calc(100% + 1px); left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: var(--ink);
+    opacity: 0; transition: opacity 0.15s ease; z-index: 100;
+    pointer-events: none;
+  }
+  .gp-floater .help-icon:hover::after,
+  .gp-floater .help-icon:hover::before { opacity: 1; }
+  @media (max-width: 600px) { .gp-floater { left: 14px; right: 14px; width: auto; } }
 </style>
 </head>
 <body>
@@ -689,7 +758,6 @@
             </div>
             <input type="range" id="rev-slider" min="0" max="100" step="0.1" value="50">
             <div class="ticks"></div>
-            <div class="zone-legend"><span style="color:#c43c30;">↤ Under</span><span style="color:#1f5e3c;">Realistic</span><span style="color:#a17a00;">Stretch ↦</span></div>
           </div>
         </div>
 
@@ -699,7 +767,7 @@
           <input type="text" id="kpi-input" class="value-input" value="1.00">
         </div>
 
-        <div class="rate-calc" id="rate-calc">
+        <div class="rate-calc" id="rate-calc" style="display: none;">
           <div>
             <span class="chip" id="calc-band">—</span>
             <span style="color: var(--muted);">×</span>
@@ -1043,6 +1111,35 @@
   </section>
 </main>
 
+<!-- Floating Quick-Adjust card (sticky bottom-right) — single revenue slider for Performer & Systems Manager -->
+<div class="gp-floater" id="gp-floater" style="display: none;">
+  <div class="gp-floater-head">
+    <div class="title-wrap">
+      <button class="gp-floater-iconbtn" id="gpf-snap-btn" title="Snap to preset" aria-label="Snap presets">⋯</button>
+      <span class="title">Quick adjust</span>
+    </div>
+    <div class="actions">
+      <button class="gp-floater-iconbtn" id="gpf-reset-btn" title="Reset to defaults" aria-label="Reset">↻</button>
+    </div>
+    <div class="gp-floater-snap-popover" id="gpf-snap-popover"></div>
+  </div>
+
+  <div class="gp-floater-row gp">
+    <span class="label-mini">Performance Revenue <span class="help-icon" data-tip="Annual performance revenue brought into the business from your personal gigs">?</span></span>
+    <input type="range" id="gp-floater-slider">
+    <span class="value" id="gp-floater-value">—</span>
+  </div>
+
+  <div class="gp-floater-footer">
+    <span class="ftr-label">Est. commission @ scenario</span>
+    <span><span class="ftr-value" id="gpf-comm-v">—</span><span class="delta" id="gpf-comm-d"></span></span>
+  </div>
+  <div class="gp-floater-footer dark">
+    <span class="ftr-label">Est. total package @ scenario</span>
+    <span class="ftr-value" id="gpf-total-v">—</span>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    Employee Compensation Dashboard — Michael Kourkov v2
@@ -1184,10 +1281,8 @@ function nlsRenderChrome(wrapEl, range) {
   const ticks = wrapEl.querySelector('.ticks');
   if (ticks) {
     ticks.innerHTML = `
-      <span class="tick endpoint" style="left:0%;">$${(absoluteMin/1000).toFixed(0)}k</span>
       <span class="tick" style="left:${NLS_UNDER}%;">$${(min/1000).toFixed(0)}k</span>
-      <span class="tick" style="left:${NLS_UNDER + NLS_REAL}%;">$${(max/1000).toFixed(0)}k</span>
-      <span class="tick endpoint" style="left:100%;">$${(absoluteMax/1000).toFixed(0)}k</span>`;
+      <span class="tick" style="left:${NLS_UNDER + NLS_REAL}%;">$${(max/1000).toFixed(0)}k</span>`;
   }
 }
 function wireNonLinearSlider(slider, input, range, onChange) {
@@ -2030,6 +2125,120 @@ function renderSuperCard(r) {
 }
 
 load();
+
+// === FLOATER (sticky bottom-right) — simple revenue scenario ===
+const SIMPLE_SNAP_CHIPS = {"michael": [{"label": "\u21ba Last 365", "gp": 98250}, {"label": "\u2192 Target", "gp": 200000, "target": true}, {"label": "\u2191 Stretch", "gp": 250000}]};
+
+function commissionFromBandsRev(rev) {
+  if (!plan || !plan.bands) return 0;
+  let total = 0;
+  const sorted = [...plan.bands].sort((a, b) => a.threshold - b.threshold);
+  for (let i = 0; i < sorted.length; i++) {
+    const b = sorted[i];
+    const next = i + 1 < sorted.length ? sorted[i + 1].threshold : Infinity;
+    total += Math.max(0, Math.min(rev, next) - b.threshold) * b.rate;
+  }
+  return total;
+}
+
+let _floaterBaseline = null;
+
+function paintSimpleFloater() {
+  const slider = document.getElementById('gp-floater-slider');
+  const valueEl = document.getElementById('gp-floater-value');
+  if (!slider) return;
+  slider.value = scenario.revenue;
+  if (valueEl) valueEl.textContent = fmtMoney(scenario.revenue);
+  const comm = commissionFromBandsRev(scenario.revenue);
+  if (_floaterBaseline === null) _floaterBaseline = comm;
+  const cv = document.getElementById('gpf-comm-v'); if (cv) cv.textContent = fmtMoney(comm);
+  const cd = document.getElementById('gpf-comm-d');
+  if (cd) {
+    const d = comm - _floaterBaseline;
+    if (Math.abs(d) < 50) { cd.textContent = ''; cd.className = 'delta'; }
+    else { cd.textContent = (d > 0 ? '+' : '−') + fmtMoney(Math.abs(d)); cd.className = 'delta ' + (d > 0 ? 'up' : 'down'); }
+  }
+  const sr = data.globals.superRate || 0.12;
+  const baseInc = (emp.baseSalary || 0) * (1 + sr);
+  const tv = document.getElementById('gpf-total-v'); if (tv) tv.textContent = fmtMoney(baseInc + comm);
+}
+
+function wireSimpleFloater() {
+  const fl = document.getElementById('gp-floater');
+  if (!fl) return;
+  fl.style.display = 'block';
+  const slider = document.getElementById('gp-floater-slider');
+  const range = emp.realisticRange || {};
+  if (slider) {
+    slider.min = range.absoluteMin || 0;
+    slider.max = range.absoluteMax || (plan.maxMetricValue || 400000);
+    slider.step = 1000;
+    slider.addEventListener('input', () => {
+      scenario.revenue = +slider.value;
+      paintSimpleFloater();
+      // Sync the main rev slider + input
+      const main = document.getElementById('rev-slider');
+      const mainI = document.getElementById('rev-input');
+      if (main && range && range.min) main.value = nlsMoneyToPos(scenario.revenue, { ...range, absoluteMin: range.absoluteMin || 0 });
+      if (mainI) mainI.value = fmtNum(scenario.revenue);
+      if (typeof update === 'function') update();
+    });
+  }
+  // Snap chips
+  const popover = document.getElementById('gpf-snap-popover');
+  const snapBtn = document.getElementById('gpf-snap-btn');
+  const chips = SIMPLE_SNAP_CHIPS[EMPLOYEE_ID] || [];
+  if (popover) {
+    popover.innerHTML = chips.map(c => `<button class="gp-floater-chip${c.target ? ' target' : ''}" data-snap="${c.gp}">${c.label} $${Math.round(c.gp/1000)}k</button>`).join('');
+    popover.querySelectorAll('.gp-floater-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        scenario.revenue = parseInt(btn.dataset.snap, 10);
+        paintSimpleFloater();
+        const main = document.getElementById('rev-slider');
+        const mainI = document.getElementById('rev-input');
+        if (main && range && range.min) main.value = nlsMoneyToPos(scenario.revenue, { ...range, absoluteMin: range.absoluteMin || 0 });
+        if (mainI) mainI.value = fmtNum(scenario.revenue);
+        popover.classList.remove('open');
+        snapBtn.classList.remove('active');
+        if (typeof update === 'function') update();
+      });
+    });
+  }
+  if (snapBtn && popover) {
+    snapBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      popover.classList.toggle('open');
+      snapBtn.classList.toggle('active');
+    });
+    document.addEventListener('click', (ev) => {
+      if (!popover.contains(ev.target) && ev.target !== snapBtn) {
+        popover.classList.remove('open');
+        snapBtn.classList.remove('active');
+      }
+    });
+  }
+  // Reset
+  const resetBtn = document.getElementById('gpf-reset-btn');
+  if (resetBtn) resetBtn.addEventListener('click', () => {
+    const def = (emp.scenarioDefaults && emp.scenarioDefaults.revenue) || 0;
+    scenario.revenue = def;
+    _floaterBaseline = null;
+    paintSimpleFloater();
+    const main = document.getElementById('rev-slider');
+    const mainI = document.getElementById('rev-input');
+    if (main && range && range.min) main.value = nlsMoneyToPos(scenario.revenue, { ...range, absoluteMin: range.absoluteMin || 0 });
+    if (mainI) mainI.value = fmtNum(scenario.revenue);
+    if (typeof update === 'function') update();
+  });
+  // Sync floater when main rev slider changes
+  const mainSlider = document.getElementById('rev-slider');
+  const mainInput = document.getElementById('rev-input');
+  if (mainSlider) mainSlider.addEventListener('input', () => paintSimpleFloater());
+  if (mainInput) mainInput.addEventListener('input', () => paintSimpleFloater());
+
+  paintSimpleFloater();
+}
+
 </script>
 </body>
 </html>
