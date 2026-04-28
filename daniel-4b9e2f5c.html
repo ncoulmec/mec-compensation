@@ -102,17 +102,22 @@
   .key-terms-modal .close-x { position: absolute; top: 14px; right: 18px; cursor: pointer; font-size: 22px; color: var(--muted); border: none; background: none; }
 
   /* Floating GP Quick-Adjust slider — always visible bottom-right */
+  /* Floating GP Quick-Adjust card (sticky bottom-right) — two rows: Annual GP + Event GP */
   .gp-floater {
     position: fixed; bottom: 18px; right: 18px;
-    background: #fff; border: 1px solid var(--border); border-radius: 999px;
+    background: #fff; border: 1px solid var(--border); border-radius: 14px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-    padding: 8px 16px 8px 18px; z-index: 90;
-    display: flex; gap: 12px; align-items: center;
-    min-width: 320px; max-width: 92vw;
+    padding: 12px 18px; z-index: 90;
+    min-width: 360px; max-width: 92vw;
   }
-  .gp-floater .label-mini { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
-  .gp-floater input[type="range"] { flex: 1; min-width: 100px; accent-color: var(--navy); }
-  .gp-floater .value { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--navy); white-space: nowrap; }
+  .gp-floater-row {
+    display: grid; grid-template-columns: 90px 1fr 90px; gap: 12px; align-items: center;
+    padding: 6px 0;
+  }
+  .gp-floater-row + .gp-floater-row { border-top: 1px dashed var(--border); }
+  .gp-floater .label-mini { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; line-height: 1.2; }
+  .gp-floater input[type="range"] { width: 100%; accent-color: var(--navy); }
+  .gp-floater .value { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; text-align: right; }
   @media (max-width: 600px) { .gp-floater { left: 14px; right: 14px; min-width: 0; } }
   .scenario-row label { font-size: 13px; color: var(--muted); line-height: 1.3; }
 
@@ -791,13 +796,18 @@
   </section>
 </main>
 
-<!-- Floating GP Quick-Adjust slider (sticky bottom-right) — always visible, drives the same scenario.gp -->
+<!-- Floating Quick-Adjust card (sticky bottom-right) — two sliders: Annual GP Sold + Event GP Produced -->
 <div class="gp-floater" id="gp-floater" style="display: none;">
-  <div>
-    <div class="label-mini">Annual GP</div>
+  <div class="gp-floater-row">
+    <div class="label-mini">Annual<br>GP Sold</div>
+    <input type="range" id="gp-floater-slider" min="0" max="600000" step="5000">
     <div class="value" id="gp-floater-value">—</div>
   </div>
-  <input type="range" id="gp-floater-slider" min="0" max="600000" step="5000">
+  <div class="gp-floater-row" id="gp-floater-event-row">
+    <div class="label-mini">Event GP<br>Produced</div>
+    <input type="range" id="event-floater-slider" min="0" max="800000" step="5000">
+    <div class="value" id="event-floater-value">—</div>
+  </div>
 </div>
 
 <script>
@@ -870,10 +880,12 @@ async function load() {
       if (zb) { zb.href = emp.zohoDataUrl; zb.style.display = 'inline-block'; }
     }
 
-    // Show + wire the floating GP Quick-Adjust slider (sticky bottom-right)
+    // Show + wire the floating Quick-Adjust card (sticky bottom-right) — two sliders: GP + Event GP
     const gpFloater = document.getElementById('gp-floater');
     const gpFloatSlider = document.getElementById('gp-floater-slider');
     const gpFloatValue = document.getElementById('gp-floater-value');
+    const eventFloatSlider = document.getElementById('event-floater-slider');
+    const eventFloatValue = document.getElementById('event-floater-value');
     if (gpFloater && gpFloatSlider && gpFloatValue) {
       const range = emp.realisticRange;
       if (range) {
@@ -881,27 +893,56 @@ async function load() {
         gpFloatSlider.max = range.absoluteMax || 600000;
         gpFloatSlider.step = 1000;
       }
-      gpFloater.style.display = 'flex';
-      const syncFloater = () => {
+      // Event GP slider: linear over the plan's maxProductionValue
+      const maxProd = +plan.maxProductionValue || 800000;
+      if (eventFloatSlider) {
+        eventFloatSlider.min = 0;
+        eventFloatSlider.max = maxProd;
+        eventFloatSlider.step = 1000;
+      }
+      gpFloater.style.display = 'block';
+      const syncGpFloater = () => {
         gpFloatSlider.value = scenario.gp;
         gpFloatValue.textContent = fmtMoney(scenario.gp);
       };
+      const syncEventFloater = () => {
+        if (!eventFloatSlider) return;
+        eventFloatSlider.value = Math.min(scenario.eventGP, +eventFloatSlider.max);
+        eventFloatValue.textContent = fmtMoney(scenario.eventGP);
+      };
+      // GP floater drag → update scenario.gp + main non-linear slider
       gpFloatSlider.addEventListener('input', () => {
         scenario.gp = +gpFloatSlider.value;
         gpFloatValue.textContent = fmtMoney(scenario.gp);
-        // Reflect in main slider + input on the Scenario Inputs card
         const mainSlider = document.getElementById('gp-slider');
         const mainInput = document.getElementById('gp-input');
         if (mainSlider && range) mainSlider.value = nlsMoneyToPos(scenario.gp, { ...range, absoluteMin: range.absoluteMin || 0 });
         if (mainInput) mainInput.value = fmtNum(scenario.gp);
         update();
       });
-      // Keep floater in sync when user moves the main slider/input
+      // Event GP floater drag → update scenario.eventGP + main event slider
+      if (eventFloatSlider) {
+        eventFloatSlider.addEventListener('input', () => {
+          scenario.eventGP = +eventFloatSlider.value;
+          eventFloatValue.textContent = fmtMoney(scenario.eventGP);
+          const mainEvSlider = document.getElementById('event-gp-slider');
+          const mainEvInput = document.getElementById('event-gp-input');
+          if (mainEvSlider) mainEvSlider.value = scenario.eventGP;
+          if (mainEvInput) mainEvInput.value = fmtNum(scenario.eventGP);
+          update();
+        });
+      }
+      // Keep floaters in sync when user moves the main sliders/inputs
       const mainSlider = document.getElementById('gp-slider');
       const mainInput = document.getElementById('gp-input');
-      if (mainSlider) mainSlider.addEventListener('input', syncFloater);
-      if (mainInput) mainInput.addEventListener('input', syncFloater);
-      syncFloater();
+      const mainEvSlider = document.getElementById('event-gp-slider');
+      const mainEvInput = document.getElementById('event-gp-input');
+      if (mainSlider) mainSlider.addEventListener('input', syncGpFloater);
+      if (mainInput) mainInput.addEventListener('input', syncGpFloater);
+      if (mainEvSlider) mainEvSlider.addEventListener('input', syncEventFloater);
+      if (mainEvInput) mainEvInput.addEventListener('input', syncEventFloater);
+      syncGpFloater();
+      syncEventFloater();
     }
 
     // Hide Old plan elements for employees who never saw the old plan (e.g. Evie 2.0)
