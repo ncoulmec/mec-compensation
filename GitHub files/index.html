@@ -602,6 +602,50 @@
   .pw-gate-error { color: #a8281b; font-size: 12px; margin-top: 8px; min-height: 16px; }
   .pw-gate-loading { font-size: 12px; color: #666; margin-top: 8px; min-height: 16px; }
 
+  
+  .plan-section[data-plan-key="gm"].gm-locked > *:not(.gm-lock-banner) {
+    pointer-events: none; opacity: 0.55;
+    filter: grayscale(0.4); user-select: none;
+  }
+  .gm-lock-banner {
+    background: linear-gradient(135deg, #fff8e1 0%, #fff2c5 100%);
+    border: 2px solid #f5d890; border-radius: 10px;
+    padding: 14px 18px; margin: 0 0 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap;
+  }
+  .gm-lock-banner .lock-text { font-size: 13px; color: #6b5300; line-height: 1.5; flex: 1; min-width: 240px; }
+  .gm-lock-banner .lock-text strong { color: #8a6a00; }
+  .gm-lock-banner button {
+    background: var(--ink); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
+    font-family: var(--mono);
+  }
+  .gm-lock-banner button:hover { background: var(--accent); }
+  .director-pin-overlay {
+    position: fixed; inset: 0; z-index: 11000;
+    background: rgba(252, 252, 248, 0.96); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, sans-serif;
+  }
+  .director-pin-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 16px;
+    padding: 28px 32px; max-width: 380px; width: 90%; text-align: center;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  }
+  .director-pin-card h2 { margin: 0 0 6px; font-size: 17px; }
+  .director-pin-card .sub { font-size: 12px; color: var(--muted); margin: 0 0 18px; line-height: 1.5; }
+  .director-pin-card input { width: 100%; padding: 12px 14px; box-sizing: border-box;
+    font-family: var(--mono); font-size: 18px; letter-spacing: 4px; text-align: center;
+    border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; }
+  .director-pin-card input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,90,180,0.15); }
+  .director-pin-card .actions { display: flex; gap: 8px; justify-content: center; }
+  .director-pin-card button { padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
+  .director-pin-card button.primary { background: var(--ink); color: #fff; }
+  .director-pin-card button.primary:hover { background: var(--accent); }
+  .director-pin-card button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .director-pin-error { color: #a8281b; font-size: 12px; margin-top: 8px; min-height: 16px; }
+
   </style>
 </head>
 <body>
@@ -632,8 +676,6 @@
     <button class="tab-btn active" data-tab="employees">Employees</button>
     <button class="tab-btn" data-tab="plans">Plan Types</button>
     <button class="tab-btn" data-tab="globals">Global Settings</button>
-    <button class="tab-btn" data-tab="projects">Projects</button>
-    <button class="tab-btn" data-tab="kpis">KPIs (draft)</button>
     <button class="tab-btn" data-tab="pl">Company P&amp;L</button>
     <button class="tab-btn" data-tab="planning">Financial Planning</button>
   </div>
@@ -708,41 +750,7 @@
   </section>
 
   <!-- Projects -->
-  <section class="panel" id="panel-projects">
-    <div class="card">
-      <h2>Project Bonuses</h2>
-      <p class="intro">Discrete bonuses for completing named projects. Assign to specific employees — the bonus appears on their dashboard.</p>
-      <div id="projects-list"></div>
-      <div style="margin-top: 14px;">
-        <button class="btn small" onclick="addProject()">+ Add project</button>
-      </div>
-    </div>
-  </section>
-
   <!-- KPIs -->
-  <section class="panel" id="panel-kpis">
-    <div class="card">
-      <h2>KPI Definitions <span class="pill warn">Draft</span></h2>
-      <p class="intro">Master list of KPIs. Each employee is assigned a subset of these with their own weight and target (configured per employee later). KPI score flows into a multiplier on variable comp — currently capped at 1.0× until the real KPIs are finalised.</p>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 28%">Name</th>
-            <th style="width: 14%">Unit</th>
-            <th style="width: 14%">Direction</th>
-            <th style="width: 14%">Default Weight</th>
-            <th style="width: 22%">ID (internal)</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="kpi-body"></tbody>
-      </table>
-      <div style="margin-top: 12px;">
-        <button class="btn small" onclick="addKpi()">+ Add KPI</button>
-      </div>
-    </div>
-  </section>
-
   <!-- P&L -->
   <section class="panel" id="panel-pl">
     <div class="card">
@@ -1383,6 +1391,7 @@ async function load() {
 function renderAll() {
   renderEmployees();
   renderPlans();
+  if (typeof applyDirectorLock === "function") applyDirectorLock();
   renderGlobals();
   renderProjects();
   renderKpis();
@@ -1416,7 +1425,7 @@ function rerenderPreservingOpen(renderFn, selector, attr) {
     if (el) el.classList.add('open');
   });
 }
-const rerenderPlans = () => rerenderPreservingOpen(renderPlans, '.plan-section', 'data-plan-key');
+const rerenderPlans = () => { rerenderPreservingOpen(renderPlans, '.plan-section', 'data-plan-key'); if (typeof applyDirectorLock === 'function') applyDirectorLock(); };
 const rerenderProjects = () => rerenderPreservingOpen(renderProjects, '.project-section', 'data-project-id');
 
 /* ---------- TABS ---------- */
@@ -3296,6 +3305,97 @@ function removeExternalContributor(i) {
   data.financialPlanning.externalContributors.splice(i, 1);
   setDirty();
   renderFinancialPlanning();
+}
+
+
+// =========================================================================
+// DIRECTOR PIN GATE — soft-locks editing of the GM plan section.
+// Master-password holders (Hayley/Nathan) can view all data, but editing
+// the GM bands requires an additional 6-digit Director PIN that only Nathan has.
+// =========================================================================
+let _directorUnlocked = false;
+
+async function attemptDirectorUnlock(pin) {
+  if (!_adminEncryptedMasterFile || !_adminEncryptedMasterFile.director_test) {
+    throw new Error('No director test ciphertext in master file. Re-encrypt with build-encrypted.py.');
+  }
+  const wrap = _adminEncryptedMasterFile.director_test;
+  const kek = await _deriveKEKBytes(pin, _b64decode(wrap.salt), wrap.iter);
+  const iv = new Uint8Array(_b64decode(wrap.iv));
+  const ct = new Uint8Array(_b64decode(wrap.ct));
+  const plainBytes = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek, ct);
+  const sentinel = new TextDecoder().decode(plainBytes);
+  if (sentinel !== 'MEC-DIRECTOR-OK') throw new Error('Sentinel mismatch');
+  return true;
+}
+
+function showDirectorPrompt() {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'director-pin-overlay';
+    overlay.innerHTML = `
+      <div class="director-pin-card">
+        <h2>Director PIN required</h2>
+        <p class="sub">Editing the General Manager plan is locked. Enter the 6-digit Director PIN to unlock for this session.</p>
+        <input type="password" inputmode="numeric" maxlength="6" id="dir-pin-input" placeholder="••••••" autocomplete="off">
+        <div class="actions">
+          <button class="secondary" id="dir-pin-cancel">Cancel</button>
+          <button class="primary" id="dir-pin-submit">Unlock</button>
+        </div>
+        <div class="director-pin-error" id="dir-pin-error"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const input = overlay.querySelector('#dir-pin-input');
+    const submit = overlay.querySelector('#dir-pin-submit');
+    const cancel = overlay.querySelector('#dir-pin-cancel');
+    const errorEl = overlay.querySelector('#dir-pin-error');
+    input.focus();
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit.click(); });
+    cancel.addEventListener('click', () => { document.body.removeChild(overlay); resolve(false); });
+    submit.addEventListener('click', async () => {
+      errorEl.textContent = '';
+      const pin = input.value.trim();
+      if (pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+        errorEl.textContent = 'Enter a 6-digit PIN.';
+        return;
+      }
+      submit.disabled = true; submit.textContent = 'Checking…';
+      try {
+        await attemptDirectorUnlock(pin);
+        _directorUnlocked = true;
+        document.body.removeChild(overlay);
+        applyDirectorLock();
+        resolve(true);
+      } catch (err) {
+        errorEl.textContent = 'Wrong PIN.';
+        input.value = ''; input.focus();
+        submit.disabled = false; submit.textContent = 'Unlock';
+      }
+    });
+  });
+}
+
+function applyDirectorLock() {
+  const section = document.querySelector('.plan-section[data-plan-key="gm"]');
+  if (!section) return;
+  const existingBanner = section.querySelector('.gm-lock-banner');
+  if (existingBanner) existingBanner.remove();
+  if (_directorUnlocked) {
+    section.classList.remove('gm-locked');
+    return;
+  }
+  section.classList.add('gm-locked');
+  const banner = document.createElement('div');
+  banner.className = 'gm-lock-banner';
+  banner.innerHTML = `
+    <div class="lock-text">
+      <strong>🔒 Editing locked.</strong> The General Manager commission structure can only be edited by the Director. Enter the Director PIN to unlock for this session.
+    </div>
+    <button id="gm-unlock-btn">Unlock with Director PIN</button>
+  `;
+  section.insertBefore(banner, section.firstChild);
+  banner.querySelector('#gm-unlock-btn').addEventListener('click', showDirectorPrompt);
 }
 
 load();

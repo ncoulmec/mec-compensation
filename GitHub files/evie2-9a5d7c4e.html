@@ -2713,6 +2713,8 @@ function update() {
 
   // Refresh the commission curve chart (the marker tracks scenario.gp).
   drawCommissionCurve();
+  // Refresh the OTE card on Payouts & Super tab (live updates as scenario changes)
+  if (typeof refreshOTECard === 'function') refreshOTECard(r);
 }
 
 // Draws the New-vs-Old commission curve as inline SVG.
