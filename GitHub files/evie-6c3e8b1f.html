@@ -1265,7 +1265,7 @@ const EMPLOYEE_ID = 'evie';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v1`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v2`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -3156,8 +3156,12 @@ function refreshOTECard(r) {
   const variableSub = document.getElementById('ote-variable-sub');
   const totalLive = document.getElementById('ote-total-live');
   if (!variableLive) return;
-  // r.variable is super-inclusive variable comp at current scenario
-  const liveVar = r.variable + (r.projectsExSuper ? r.projectsExSuper * (1 + (data.globals.superRate || 0.12)) : 0);
+  // Variable inc-super = GP commission gross + Production commission gross + project bonuses (super-inclusive)
+  const sr = data.globals.superRate || 0.12;
+  const commGross = +r.commGross || 0;
+  const prodGross = +r.prodGross || 0;
+  const projInc = (r.projectsExSuper ? r.projectsExSuper * (1 + sr) : 0);
+  const liveVar = commGross + prodGross + projInc;
   variableLive.textContent = fmtMoney(liveVar);
   variableSub.textContent = `at ${fmtMoney(scenario.gp)} GP Received`;
   totalLive.textContent = fmtMoney((ote.baseInclSuper || 0) + liveVar);

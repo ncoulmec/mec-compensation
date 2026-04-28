@@ -603,9 +603,12 @@
   .pw-gate-loading { font-size: 12px; color: #666; margin-top: 8px; min-height: 16px; }
 
   
-  .plan-section[data-plan-key="gm"].gm-locked > *:not(.gm-lock-banner) {
-    pointer-events: none; opacity: 0.55;
-    filter: grayscale(0.4); user-select: none;
+  /* GM section locked — readable but inputs/buttons are disabled until Director PIN entered */
+  .plan-section[data-plan-key="gm"].gm-locked input,
+  .plan-section[data-plan-key="gm"].gm-locked select,
+  .plan-section[data-plan-key="gm"].gm-locked textarea,
+  .plan-section[data-plan-key="gm"].gm-locked button:not(#gm-unlock-btn) {
+    pointer-events: none; opacity: 0.5; cursor: not-allowed; background: #fafaf7 !important;
   }
   .gm-lock-banner {
     background: linear-gradient(135deg, #fff8e1 0%, #fff2c5 100%);
@@ -1109,7 +1112,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v1';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v2';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -1886,6 +1889,7 @@ function removeMarginMult(i) {
 /* ---------- PROJECTS ---------- */
 function renderProjects() {
   const container = $('#projects-list');
+  if (!container) return;  // panel-projects removed in v42 — no-op safely
   if (!data.projects.length) {
     container.innerHTML = '<div class="empty-state">No projects yet. Click "Add project" to create one.</div>';
     return;
@@ -2004,6 +2008,7 @@ function removeProject(i) {
 /* ---------- KPIs ---------- */
 function renderKpis() {
   const tbody = $('#kpi-body');
+  if (!tbody) return;  // panel-kpis removed in v42 — no-op safely
   tbody.innerHTML = (data.kpis.definitions || []).map((k, i) => `
     <tr>
       <td><input type="text" class="name-input" value="${k.name}" oninput="data.kpis.definitions[${i}].name=this.value; setDirty()"></td>
@@ -3383,14 +3388,20 @@ function applyDirectorLock() {
   if (existingBanner) existingBanner.remove();
   if (_directorUnlocked) {
     section.classList.remove('gm-locked');
+    section.querySelectorAll('input, select, textarea').forEach(el => { el.readOnly = (el.dataset._wasReadonly === '1'); el.tabIndex = 0; });
+    section.querySelectorAll('button').forEach(el => { el.disabled = false; });
     return;
   }
   section.classList.add('gm-locked');
+  // Disable all interactive controls inside the GM section (inputs, selects, buttons)
+  // while leaving them visible/expandable for read-only reference
+  section.querySelectorAll('input, select, textarea').forEach(el => { el.dataset._wasReadonly = el.readOnly ? '1' : '0'; el.readOnly = true; el.tabIndex = -1; });
+  section.querySelectorAll('button').forEach(el => { if (el.id !== 'gm-unlock-btn') el.disabled = true; });
   const banner = document.createElement('div');
   banner.className = 'gm-lock-banner';
   banner.innerHTML = `
     <div class="lock-text">
-      <strong>🔒 Editing locked.</strong> The General Manager commission structure can only be edited by the Director. Enter the Director PIN to unlock for this session.
+      <strong>🔒 Editing locked.</strong> You can read the General Manager commission structure freely. To <em>change</em> any of these values, enter the Director PIN.
     </div>
     <button id="gm-unlock-btn">Unlock with Director PIN</button>
   `;
