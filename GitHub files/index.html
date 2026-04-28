@@ -580,9 +580,42 @@
     margin-left: 14px;
   }
   .gh-status.connected { color: var(--accent); }
-</style>
+
+  .pw-gate-overlay { position: fixed; inset: 0; z-index: 10000;
+    background: rgba(252, 252, 248, 0.96); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, sans-serif; }
+  .pw-gate-card { background: #fff; border: 1px solid #ddd; border-radius: 16px;
+    padding: 32px 36px; max-width: 400px; width: 90%;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08); text-align: center; }
+  .pw-gate-card h2 { margin: 0 0 6px; font-size: 18px; }
+  .pw-gate-card .sub { font-size: 13px; color: #666; margin: 0 0 24px; }
+  .pw-gate-card input { width: 100%; padding: 12px 14px; box-sizing: border-box;
+    font-family: monospace; font-size: 14px; border: 1px solid #ddd; border-radius: 8px;
+    margin-bottom: 12px; }
+  .pw-gate-card input:focus { outline: none; border-color: #2d5ab4;
+    box-shadow: 0 0 0 3px rgba(45,90,180,0.15); }
+  .pw-gate-card button { padding: 10px 22px; background: #1a1a1a; color: #fff;
+    border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .pw-gate-card button:hover { background: #2d5ab4; }
+  .pw-gate-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .pw-gate-error { color: #a8281b; font-size: 12px; margin-top: 8px; min-height: 16px; }
+  .pw-gate-loading { font-size: 12px; color: #666; margin-top: 8px; min-height: 16px; }
+
+  </style>
 </head>
 <body>
+<div class="pw-gate-overlay" id="pw-gate" style="display: none;">
+  <div class="pw-gate-card">
+    <h2 id="pw-gate-title">Admin access</h2>
+    <p class="sub">Enter the master password to unlock the MEC compensation panel.</p>
+    <input type="password" id="pw-gate-input" placeholder="Master password" autocomplete="off">
+    <div><button id="pw-gate-submit">Unlock</button></div>
+    <div class="pw-gate-error" id="pw-gate-error"></div>
+    <div class="pw-gate-loading" id="pw-gate-loading"></div>
+  </div>
+</div>
+
 
 <header class="top">
   <div class="top-inner">
@@ -947,6 +980,202 @@
 <div class="save-toast" id="save-toast"></div>
 
 <script>
+
+// =========================================================================
+// ENCRYPTION LIBRARY (v41)
+// Mirrors build-encrypted.py — uses Web Crypto API for AES-GCM + PBKDF2
+// =========================================================================
+const ENC_PBKDF2_ITERATIONS = 250000;
+const ENC_DEK_LEN = 32;       // 256 bits
+const ENC_IV_LEN = 12;
+const ENC_SALT_LEN = 16;
+
+function _b64encode(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function _b64decode(s) {
+  const bin = atob(s);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr.buffer;
+}
+async function _deriveKEKBytes(password, salt, iterations) {
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits', 'deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: new Uint8Array(salt), iterations, hash: 'SHA-256' },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+async function _encryptBytes(plaintextBytes, dekKey) {
+  const iv = crypto.getRandomValues(new Uint8Array(ENC_IV_LEN));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, dekKey, plaintextBytes);
+  return { iv: _b64encode(iv), ct: _b64encode(ct) };
+}
+async function _decryptPayload(payload, dekKey) {
+  const iv = new Uint8Array(_b64decode(payload.iv));
+  const ct = new Uint8Array(_b64decode(payload.ct));
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, dekKey, ct);
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+async function _wrapDEK(dekRaw, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(ENC_SALT_LEN));
+  const kek = await _deriveKEKBytes(password, salt, ENC_PBKDF2_ITERATIONS);
+  const iv = crypto.getRandomValues(new Uint8Array(ENC_IV_LEN));
+  const wrapped = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, kek, dekRaw);
+  return { salt: _b64encode(salt), iv: _b64encode(iv), ct: _b64encode(wrapped), iter: ENC_PBKDF2_ITERATIONS };
+}
+async function _unwrapDEKToKey(wrap, password) {
+  const kek = await _deriveKEKBytes(password, _b64decode(wrap.salt), wrap.iter);
+  const iv = new Uint8Array(_b64decode(wrap.iv));
+  const ct = new Uint8Array(_b64decode(wrap.ct));
+  const dekBytes = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, kek, ct);
+  return crypto.subtle.importKey('raw', dekBytes, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+}
+
+// Decrypt a master encrypted file with master password. Returns the decrypted JSON.
+async function decryptMasterFile(encryptedFile, masterPassword) {
+  const dek = await _unwrapDEKToKey(encryptedFile.wrap_master, masterPassword);
+  return _decryptPayload(encryptedFile.data, dek);
+}
+
+// Build a per-employee subset, mirroring build-encrypted.py's build_employee_subset
+function _buildEmployeeSubset(fullData, employeeId) {
+  const emp = (fullData.employees || []).find(e => e.id === employeeId);
+  if (!emp) throw new Error(`Employee not found: ${employeeId}`);
+  const projects = (fullData.projects || []).filter(p => Array.isArray(p.assignedTo) && p.assignedTo.includes(employeeId));
+  return {
+    meta: fullData.meta,
+    globals: fullData.globals,
+    planTypes: fullData.planTypes,
+    faqs: fullData.faqs,
+    projects,
+    employees: [emp]
+  };
+}
+
+// Encrypt a per-employee subset with both PIN and master.
+async function encryptForEmployee(subset, pin, master) {
+  const dekRawArr = crypto.getRandomValues(new Uint8Array(ENC_DEK_LEN));
+  const dekRaw = dekRawArr.buffer;
+  const dekKey = await crypto.subtle.importKey('raw', dekRaw, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+  const plaintext = new TextEncoder().encode(JSON.stringify(subset));
+  const data = await _encryptBytes(plaintext, dekKey);
+  const wrap_pin = await _wrapDEK(dekRaw, pin);
+  const wrap_master = await _wrapDEK(dekRaw, master);
+  return { version: 1, alg: 'AES-256-GCM', kdf: { name: 'PBKDF2', hash: 'SHA-256' }, data, wrap_pin, wrap_master };
+}
+
+// Encrypt the master file (full data + pins) with master password only.
+async function encryptMasterFile(fullData, pins, master) {
+  const bundle = Object.assign({}, fullData, { _pinsForAdminUse: pins });
+  const dekRawArr = crypto.getRandomValues(new Uint8Array(ENC_DEK_LEN));
+  const dekRaw = dekRawArr.buffer;
+  const dekKey = await crypto.subtle.importKey('raw', dekRaw, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+  const plaintext = new TextEncoder().encode(JSON.stringify(bundle));
+  const data = await _encryptBytes(plaintext, dekKey);
+  const wrap_master = await _wrapDEK(dekRaw, master);
+  return { version: 1, alg: 'AES-256-GCM', kdf: { name: 'PBKDF2', hash: 'SHA-256' }, data, wrap_master };
+}
+
+// Build the full set of encrypted files for deployment.
+// Returns { 'master.enc.json': obj, 'daniel.enc.json': obj, ... }
+async function buildAllEncryptedFiles(fullData, pins, master) {
+  const out = {};
+  out['master.enc.json'] = await encryptMasterFile(fullData, pins, master);
+  for (const [empId, pin] of Object.entries(pins)) {
+    const exists = (fullData.employees || []).some(e => e.id === empId);
+    if (!exists) continue;
+    const subset = _buildEmployeeSubset(fullData, empId);
+    out[`${empId}.enc.json`] = await encryptForEmployee(subset, pin, master);
+  }
+  return out;
+}
+
+// =========================================================================
+// MASTER PASSWORD GATE — admin tools
+// =========================================================================
+const ADMIN_CACHE_KEY = 'mec-admin-master-v1';
+const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
+
+let _adminMasterPassword = null;       // held in memory after unlock for re-encrypt-on-save
+let _adminEncryptedMasterFile = null;  // raw encrypted master file (we re-write on save)
+
+function _readAdminCache() {
+  try {
+    const raw = localStorage.getItem(ADMIN_CACHE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj.expires || obj.expires < Date.now()) return null;
+    return obj;
+  } catch (e) { return null; }
+}
+function _writeAdminCache(masterPassword, decrypted) {
+  try {
+    localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify({
+      master: masterPassword, data: decrypted, expires: Date.now() + ADMIN_CACHE_TTL_MS
+    }));
+  } catch (e) {}
+}
+function _clearAdminCache() {
+  try { localStorage.removeItem(ADMIN_CACHE_KEY); } catch (e) {}
+}
+
+async function unlockAdmin() {
+  const cached = _readAdminCache();
+  if (cached) {
+    _adminMasterPassword = cached.master;
+    // Refresh the encrypted file so future saves use the latest base
+    try {
+      const r = await fetch(MASTER_ENCRYPTED_URL + '?' + Date.now());
+      if (r.ok) _adminEncryptedMasterFile = await r.json();
+    } catch (e) {}
+    return cached.data;
+  }
+  const r = await fetch(MASTER_ENCRYPTED_URL + '?' + Date.now());
+  if (!r.ok) throw new Error(`Could not fetch encrypted master file (HTTP ${r.status}).`);
+  _adminEncryptedMasterFile = await r.json();
+  return new Promise((resolve, reject) => {
+    const overlay = document.getElementById('pw-gate');
+    overlay.style.display = 'flex';
+    const input = document.getElementById('pw-gate-input');
+    const submit = document.getElementById('pw-gate-submit');
+    const errorEl = document.getElementById('pw-gate-error');
+    const loadEl = document.getElementById('pw-gate-loading');
+    input.focus();
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit.click(); });
+    submit.addEventListener('click', async () => {
+      errorEl.textContent = '';
+      const pw = input.value;
+      if (!pw) { errorEl.textContent = 'Enter the master password.'; return; }
+      submit.disabled = true;
+      loadEl.textContent = 'Decrypting…';
+      try {
+        const decrypted = await decryptMasterFile(_adminEncryptedMasterFile, pw);
+        _adminMasterPassword = pw;
+        _writeAdminCache(pw, decrypted);
+        loadEl.textContent = '';
+        overlay.style.display = 'none';
+        resolve(decrypted);
+      } catch (err) {
+        loadEl.textContent = '';
+        errorEl.textContent = 'Wrong master password.';
+        input.value = ''; input.focus();
+      } finally { submit.disabled = false; }
+    });
+  });
+}
+
+// Helper accessors used by saveToGitHub
+function getAdminMasterPassword() { return _adminMasterPassword; }
+
 /* ============================================================
    MEC Compensation Master — simple vanilla JS app
    Loads data.json, lets Nathan edit, exports updated JSON
@@ -1136,9 +1365,8 @@ function setDirty(d = true) {
 /* ---------- LOAD ---------- */
 async function load() {
   try {
-    const res = await fetch('data.json?' + Date.now());
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    data = await res.json();
+    // v41: Master password gate + decrypt the encrypted master file
+    data = await unlockAdmin();
     original = clone(data);
     $('#loading').style.display = 'none';
     renderAll();
@@ -2347,64 +2575,119 @@ async function saveToGitHub() {
     openGhModal();
     return;
   }
+  const master = getAdminMasterPassword();
+  if (!master) {
+    showToast('error', 'Not unlocked — refresh and re-enter master password.');
+    return;
+  }
 
-  const btn = $('#save-gh-btn');
+  const btn = document.getElementById('save-gh-btn');
   const orig = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Saving…';
-  showToast('saving', 'Saving data.json to GitHub…', 0);
+  btn.textContent = 'Encrypting…';
+  showToast('saving', 'Encrypting and saving to GitHub…', 0);
 
   try {
     // Update meta
+    data.meta = data.meta || {};
     data.meta.lastUpdatedBy = 'nathan';
     data.meta.effectiveDate = new Date().toISOString().slice(0, 10);
 
-    const content = JSON.stringify(data, null, 2);
-    const path = 'data.json';
-    const apiBase = `https://api.github.com/repos/${s.repo}/contents/${path}`;
+    // Pull PINs from the bundled `_pinsForAdminUse` field set by build-encrypted.py
+    const pins = data._pinsForAdminUse || {};
+    if (!pins || Object.keys(pins).length === 0) {
+      throw new Error('No PINs found in master file. Run build-encrypted.py once locally to bootstrap PINs.');
+    }
+    // Strip the pins from the in-memory data before re-encrypting per-employee files
+    // (encryptMasterFile re-adds them for the master)
+    const fullData = JSON.parse(JSON.stringify(data));
+    delete fullData._pinsForAdminUse;
 
-    // 1. Get current file SHA (required for update)
-    const getRes = await fetch(`${apiBase}?ref=${s.branch}`, {
-      headers: { Authorization: `Bearer ${s.pat}`, Accept: 'application/vnd.github+json' }
-    });
-    let sha = null;
-    if (getRes.ok) {
-      const meta = await getRes.json();
-      sha = meta.sha;
-    } else if (getRes.status !== 404) {
-      throw new Error(`Could not read current file (HTTP ${getRes.status}).`);
+    btn.textContent = 'Encrypting…';
+    const files = await buildAllEncryptedFiles(fullData, pins, master);
+
+    btn.textContent = 'Pushing…';
+    const baseUrl = `https://api.github.com/repos/${s.repo}`;
+    const headers = {
+      Authorization: `Bearer ${s.pat}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json'
+    };
+
+    // Use the Git Data API for an atomic single-commit multi-file push.
+    // 1) Get current ref
+    const refRes = await fetch(`${baseUrl}/git/ref/heads/${s.branch}`, { headers });
+    if (!refRes.ok) throw new Error(`Could not read branch ref (HTTP ${refRes.status})`);
+    const ref = await refRes.json();
+    const parentSha = ref.object.sha;
+
+    // 2) Get base tree from latest commit
+    const commitRes = await fetch(`${baseUrl}/git/commits/${parentSha}`, { headers });
+    if (!commitRes.ok) throw new Error(`Could not read base commit (HTTP ${commitRes.status})`);
+    const commit = await commitRes.json();
+    const baseTreeSha = commit.tree.sha;
+
+    // 3) Create blobs for each encrypted file
+    const blobShas = {};
+    for (const [filename, payload] of Object.entries(files)) {
+      const content = JSON.stringify(payload);
+      const blobRes = await fetch(`${baseUrl}/git/blobs`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ content, encoding: 'utf-8' })
+      });
+      if (!blobRes.ok) throw new Error(`Blob create failed for ${filename} (HTTP ${blobRes.status})`);
+      const blob = await blobRes.json();
+      blobShas[filename] = blob.sha;
     }
 
-    // 2. PUT new content
-    const body = {
-      message: `Update data.json via MEC Overview — ${new Date().toLocaleString('en-AU')}`,
-      content: encodeBase64Utf8(content),
-      branch: s.branch
-    };
-    if (sha) body.sha = sha;
-
-    const putRes = await fetch(apiBase, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${s.pat}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
+    // 4) Create new tree
+    const treeItems = Object.entries(blobShas).map(([filename, sha]) => ({
+      path: `GitHub files/encrypted/${filename}`,
+      mode: '100644',
+      type: 'blob',
+      sha
+    }));
+    const treeRes = await fetch(`${baseUrl}/git/trees`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems })
     });
+    if (!treeRes.ok) throw new Error(`Tree create failed (HTTP ${treeRes.status})`);
+    const tree = await treeRes.json();
 
-    if (!putRes.ok) {
-      const errData = await putRes.json().catch(() => ({}));
-      let msg = errData.message || `HTTP ${putRes.status}`;
-      if (putRes.status === 409) msg = 'Conflict — someone else edited this file in the meantime. Reload and try again.';
-      if (putRes.status === 401) msg = 'Token rejected. Click "GitHub: connected" in the bar to re-enter your token.';
-      if (putRes.status === 403) msg = 'Token lacks write permission. Re-create with Contents: Read and Write.';
+    // 5) Create commit
+    const newCommitRes = await fetch(`${baseUrl}/git/commits`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        message: `Update encrypted compensation data via MEC admin — ${new Date().toLocaleString('en-AU')}`,
+        tree: tree.sha,
+        parents: [parentSha]
+      })
+    });
+    if (!newCommitRes.ok) throw new Error(`Commit failed (HTTP ${newCommitRes.status})`);
+    const newCommit = await newCommitRes.json();
+
+    // 6) Update ref
+    const updateRes = await fetch(`${baseUrl}/git/refs/heads/${s.branch}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ sha: newCommit.sha, force: false })
+    });
+    if (!updateRes.ok) {
+      const errData = await updateRes.json().catch(() => ({}));
+      let msg = errData.message || `HTTP ${updateRes.status}`;
+      if (updateRes.status === 401) msg = 'Token rejected. Click "GitHub: connected" to re-enter.';
+      if (updateRes.status === 403) msg = 'Token lacks write permission. Re-create with Contents: Read and Write.';
       throw new Error(msg);
     }
 
-    original = clone(data);
-    setDirty(false);
-    showToast('success', '✓ Saved to GitHub. Employee dashboards will reflect this in ~30-60 seconds.');
+    // Refresh in-memory cache so subsequent saves don't re-bake stale state
+    _writeAdminCache(master, data);
+    if (typeof original !== 'undefined') original = clone(data);
+    if (typeof setDirty === 'function') setDirty(false);
+    showToast('success', '✓ Saved. Encrypted blobs pushed in one commit. GitHub Pages will refresh in ~30-60s.');
   } catch (err) {
     showToast('error', `Save failed: ${err.message}`, 8000);
   } finally {
