@@ -107,33 +107,42 @@
     background: #fff; border: 1px solid var(--border); border-radius: 14px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
     padding: 14px 16px 12px; z-index: 90;
-    width: 320px; max-width: 92vw;
+    width: 340px; max-width: 92vw;
     transition: width 0.18s ease;
   }
-  .gp-floater.expanded { width: 380px; }
-  .gp-floater-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .gp-floater.expanded { width: 400px; }
+  .gp-floater-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; position: relative; }
+  .gp-floater-head .title-wrap { display: flex; align-items: center; gap: 6px; }
   .gp-floater-head .title { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
   .gp-floater-head .actions { display: flex; gap: 6px; }
   .gp-floater-iconbtn { width: 26px; height: 26px; padding: 0; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: all 0.12s; }
   .gp-floater-iconbtn:hover { background: #fafaf7; color: var(--ink); border-color: var(--muted); }
   .gp-floater-iconbtn:active { transform: scale(0.96); }
+  .gp-floater-iconbtn.active { background: #eaf3fb; color: var(--accent); border-color: var(--accent); }
+  .gp-floater-snap-popover {
+    position: absolute; top: 32px; left: 0; z-index: 5;
+    background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    padding: 6px; min-width: 180px;
+    display: none;
+  }
+  .gp-floater-snap-popover.open { display: block; }
+  .gp-floater-snap-popover .gp-floater-chip { display: block; width: 100%; text-align: left; margin: 2px 0; padding: 6px 10px; }
   .gp-floater-funnel { padding: 8px 0 8px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 4px 0 12px; }
-  .gp-floater-flow { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--faint); font-family: var(--mono); margin-bottom: 8px; padding: 0 2px; }
+  .gp-floater-flow { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--faint); font-family: var(--mono); margin-bottom: 8px; padding: 0 2px; flex-wrap: wrap; }
   .gp-floater-flow .arrow { opacity: 0.5; }
   .gp-floater-flow .step.headline { color: var(--navy); font-weight: 700; }
   .gp-floater-row {
-    display: grid; grid-template-columns: 78px 1fr 64px; gap: 10px; align-items: center;
+    display: grid; grid-template-columns: 100px 1fr 64px; gap: 10px; align-items: center;
     padding: 4px 0;
   }
-  .gp-floater-row.gp { grid-template-columns: 78px 1fr 70px; }
-  .gp-floater .label-mini { font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: normal; font-weight: 500; line-height: 1.3; }
-  .gp-floater .label-mini .help-icon { color: var(--faint); cursor: help; margin-left: 2px; font-weight: 600; }
+  .gp-floater-row.gp { grid-template-columns: 100px 1fr 70px; }
+  .gp-floater .label-mini { font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: normal; font-weight: 500; line-height: 1.3; white-space: nowrap; }
   .gp-floater .num-input { font-family: var(--mono); font-size: 12px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; width: 100%; text-align: right; background: #fff; height: 26px; box-sizing: border-box; }
   .gp-floater .num-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(45,90,180,0.2); border-color: var(--accent); }
   .gp-floater input[type="range"] { width: 100%; accent-color: var(--navy); }
   .gp-floater .value { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; text-align: right; }
-  .gp-floater-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; padding-left: 88px; }
-  .gp-floater-chip { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; font-family: var(--mono); transition: all 0.12s; line-height: 1.4; }
+  .gp-floater-chip { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; font-family: var(--mono); transition: all 0.12s; line-height: 1.4; }
   .gp-floater-chip:hover { border-color: var(--muted); background: #fafaf7; color: var(--ink); }
   .gp-floater-chip.target { color: var(--accent); border-color: var(--accent); background: #eaf3fb; }
   .gp-floater-chip.target:hover { background: #d5e5f4; }
@@ -145,6 +154,28 @@
   .gp-floater-footer .delta { font-size: 10px; font-family: var(--mono); margin-left: 4px; }
   .gp-floater-footer .delta.up { color: #1f5e3c; }
   .gp-floater-footer .delta.down { color: #a8281b; }
+  /* CSS-based tooltips on the ? help icons — replaces broken native title= */
+  .gp-floater .help-icon { color: var(--faint); cursor: help; margin-left: 2px; font-weight: 600; position: relative; display: inline-block; }
+  .gp-floater .help-icon:hover { color: var(--accent); }
+  .gp-floater .help-icon::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff;
+    padding: 6px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 400; line-height: 1.4;
+    white-space: normal; width: max-content; max-width: 220px;
+    text-align: left; pointer-events: none;
+    opacity: 0; transition: opacity 0.15s ease; z-index: 100;
+  }
+  .gp-floater .help-icon::before {
+    content: '';
+    position: absolute; bottom: calc(100% + 1px); left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: var(--ink);
+    opacity: 0; transition: opacity 0.15s ease; z-index: 100;
+    pointer-events: none;
+  }
+  .gp-floater .help-icon:hover::after,
+  .gp-floater .help-icon:hover::before { opacity: 1; }
   @media (max-width: 600px) { .gp-floater { left: 14px; right: 14px; width: auto; } }
   .scenario-row label { font-size: 13px; color: var(--muted); line-height: 1.3; }
 
@@ -953,14 +984,18 @@
   </section>
 </main>
 
-<!-- Floating Quick-Adjust card (sticky bottom-right) — collapsed: GP+Event GP, expanded: full funnel + snap chips -->
+<!-- Floating Quick-Adjust card (sticky bottom-right) — collapsed: GP+Event GP, expanded: full funnel -->
 <div class="gp-floater" id="gp-floater" style="display: none;">
   <div class="gp-floater-head">
-    <span class="title">Quick adjust</span>
+    <div class="title-wrap">
+      <button class="gp-floater-iconbtn" id="gpf-snap-btn" title="Snap to preset" aria-label="Snap presets">⋯</button>
+      <span class="title">Quick adjust</span>
+    </div>
     <div class="actions">
       <button class="gp-floater-iconbtn" id="gpf-reset-btn" title="Reset to defaults" aria-label="Reset">↻</button>
       <button class="gp-floater-iconbtn" id="gpf-toggle-btn" title="Expand" aria-label="Expand">+</button>
     </div>
+    <div class="gp-floater-snap-popover" id="gpf-snap-popover"></div>
   </div>
 
   <div id="gpf-funnel" style="display: none;">
@@ -973,27 +1008,27 @@
         <span class="step headline">gp received</span>
       </div>
       <div class="gp-floater-row">
-        <span class="label-mini">Quoted <span class="help-icon" title="Bookings quoted in the last 12 months">?</span></span>
+        <span class="label-mini">Quoted <span class="help-icon" data-tip="Bookings quoted in the last 12 months">?</span></span>
         <input type="range" id="gpf-quoted-r" min="50" max="1500" step="1">
         <input type="number" class="num-input" id="gpf-quoted-i">
       </div>
       <div class="gp-floater-row">
-        <span class="label-mini">Conv % <span class="help-icon" title="Quoted to confirmed conversion rate">?</span></span>
+        <span class="label-mini">Conv % <span class="help-icon" data-tip="Quoted to confirmed conversion rate">?</span></span>
         <input type="range" id="gpf-conv-r" min="10" max="80" step="1">
         <input type="number" class="num-input" id="gpf-conv-i">
       </div>
       <div class="gp-floater-row">
-        <span class="label-mini">Confirmed <span class="help-icon" title="Confirmed = Quoted × Conv%. Editing changes Conv%.">?</span></span>
+        <span class="label-mini">Confirmed <span class="help-icon" data-tip="Confirmed = Quoted × Conv%. Editing changes Conv%.">?</span></span>
         <input type="range" id="gpf-conf-r" min="5" max="700" step="1">
         <input type="number" class="num-input" id="gpf-conf-i">
       </div>
       <div class="gp-floater-row">
-        <span class="label-mini">Avg GP <span class="help-icon" title="Average GP per confirmed event ($)">?</span></span>
+        <span class="label-mini">Avg GP <span class="help-icon" data-tip="Average GP per confirmed event ($)">?</span></span>
         <input type="range" id="gpf-avg-r" min="200" max="2000" step="25">
         <input type="number" class="num-input" id="gpf-avg-i">
       </div>
       <div class="gp-floater-row">
-        <span class="label-mini">Margin % <span class="help-icon" title="GP / (Revenue ex-GST). Drives the implied revenue figure below.">?</span></span>
+        <span class="label-mini">Margin % <span class="help-icon" data-tip="GP / (Revenue ex-GST). Drives the implied revenue figure below.">?</span></span>
         <input type="range" id="gpf-margin-r" min="20" max="60" step="1">
         <input type="number" class="num-input" id="gpf-margin-i">
       </div>
@@ -1002,13 +1037,12 @@
   </div>
 
   <div class="gp-floater-row gp">
-    <span class="label-mini">GP<br>Received <span class="help-icon" title="Annual GP from bookings the customer has paid">?</span></span>
+    <span class="label-mini">GP Received <span class="help-icon" data-tip="Annual GP from bookings the customer has paid">?</span></span>
     <input type="range" id="gp-floater-slider">
     <span class="value" id="gp-floater-value">—</span>
   </div>
-  <div class="gp-floater-chips" id="gpf-chips"></div>
   <div class="gp-floater-row gp" id="gp-floater-event-row">
-    <span class="label-mini">Event<br>GP <span class="help-icon" title="GP on bookings whose event date has passed">?</span></span>
+    <span class="label-mini">Event GP <span class="help-icon" data-tip="GP on bookings whose event date has passed">?</span></span>
     <input type="range" id="event-floater-slider">
     <span class="value" id="event-floater-value">—</span>
   </div>
@@ -2477,18 +2511,34 @@ function wireFloater() {
     if (typeof update === 'function') update();
   });
 
-  // Snap chips
-  const chipsRow = document.getElementById('gpf-chips');
+  // Snap chips — rendered into the popover, opened by the ⋯ menu button
+  const popover = document.getElementById('gpf-snap-popover');
+  const snapBtn = document.getElementById('gpf-snap-btn');
   const chips = SNAP_CHIPS[EMPLOYEE_ID] || SNAP_CHIPS.daniel;
-  if (chipsRow) {
-    chipsRow.innerHTML = chips.map(c => `<button class="gp-floater-chip${c.target ? ' target' : ''}" data-snap="${c.gp}">${c.label} $${Math.round(c.gp/1000)}k</button>`).join('');
-    chipsRow.querySelectorAll('.gp-floater-chip').forEach(btn => {
+  if (popover) {
+    popover.innerHTML = chips.map(c => `<button class="gp-floater-chip${c.target ? ' target' : ''}" data-snap="${c.gp}">${c.label} $${Math.round(c.gp/1000)}k</button>`).join('');
+    popover.querySelectorAll('.gp-floater-chip').forEach(btn => {
       btn.addEventListener('click', () => {
         funnelState.totalGP = parseInt(btn.dataset.snap, 10);
         funnelRecalc('gp');
         paintFloater();
+        popover.classList.remove('open');
+        snapBtn.classList.remove('active');
         if (typeof update === 'function') update();
       });
+    });
+  }
+  if (snapBtn && popover) {
+    snapBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      popover.classList.toggle('open');
+      snapBtn.classList.toggle('active');
+    });
+    document.addEventListener('click', (ev) => {
+      if (!popover.contains(ev.target) && ev.target !== snapBtn) {
+        popover.classList.remove('open');
+        snapBtn.classList.remove('active');
+      }
     });
   }
 
