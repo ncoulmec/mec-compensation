@@ -628,7 +628,16 @@
   .gp-floater-iconbtn { width: 26px; height: 26px; padding: 0; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: all 0.12s; }
   .gp-floater-iconbtn:hover { background: #fafaf7; color: var(--ink); border-color: var(--muted); }
   .gp-floater-iconbtn:active { transform: scale(0.96); }
-  .gp-floater-iconbtn.active { background: #eaf3fb; color: var(--accent); border-color: var(--accent); }
+    .gp-floater-iconbtn.active { background: #eaf3fb; color: var(--accent); border-color: var(--accent); }
+  .gp-floater.minimised { width: auto; padding: 6px 10px; }
+  .gp-floater.minimised .gp-floater-body { display: none; }
+  .gp-floater.minimised .gp-floater-head { margin-bottom: 0; }
+  .gp-floater.minimised #gpf-snap-btn,
+  .gp-floater.minimised #gpf-reset-btn,
+  .gp-floater.minimised #gpf-minimise-btn { display: none; }
+  .gp-floater #gpf-maximise-btn { display: none; }
+  .gp-floater.minimised #gpf-maximise-btn { display: inline-flex; }
+  .gp-floater.minimised .title { margin-right: 8px; }
   .gp-floater-snap-popover {
     position: absolute; top: 32px; left: 0; z-index: 5;
     background: #fff; border: 1px solid var(--border); border-radius: 8px;
@@ -1159,12 +1168,12 @@
 <!-- Floating Quick-Adjust card (sticky bottom-right) — single revenue slider for Sales & Talent Manager -->
 <div class="gp-floater" id="gp-floater" style="display: none;">
   <div class="gp-floater-head">
-    <div class="title-wrap">
-      <button class="gp-floater-iconbtn" id="gpf-snap-btn" title="Snap to preset" aria-label="Snap presets">⋯</button>
-      <span class="title">Quick adjust</span>
-    </div>
+    <span class="title">Quick adjust</span>
     <div class="actions">
+      <button class="gp-floater-iconbtn" id="gpf-snap-btn" title="Snap to preset" aria-label="Snap presets">⋯</button>
       <button class="gp-floater-iconbtn" id="gpf-reset-btn" title="Reset to defaults" aria-label="Reset">↻</button>
+      <button class="gp-floater-iconbtn" id="gpf-minimise-btn" title="Minimise" aria-label="Minimise">▾</button>
+      <button class="gp-floater-iconbtn" id="gpf-maximise-btn" title="Maximise" aria-label="Maximise">▴</button>
     </div>
     <div class="gp-floater-snap-popover" id="gpf-snap-popover"></div>
   </div>
@@ -1176,11 +1185,11 @@
   </div>
 
   <div class="gp-floater-footer">
-    <span class="ftr-label">Est. commission @ scenario</span>
+    <span class="ftr-label">Est. Commission @ Scenario</span>
     <span><span class="ftr-value" id="gpf-comm-v">—</span><span class="delta" id="gpf-comm-d"></span></span>
   </div>
   <div class="gp-floater-footer dark">
-    <span class="ftr-label">Est. total package @ scenario</span>
+    <span class="ftr-label">Est. Total Package @ Scenario</span>
     <span class="ftr-value" id="gpf-total-v">—</span>
   </div>
 </div>
@@ -2231,6 +2240,13 @@ function wireSimpleFloater() {
   const mainInput = document.getElementById('rev-input');
   if (mainSlider) mainSlider.addEventListener('input', () => paintSimpleFloater());
   if (mainInput) mainInput.addEventListener('input', () => paintSimpleFloater());
+
+  // Minimise / Maximise wiring
+  const _flM = document.getElementById('gp-floater');
+  const _minBtnM = document.getElementById('gpf-minimise-btn');
+  const _maxBtnM = document.getElementById('gpf-maximise-btn');
+  if (_minBtnM && _flM) _minBtnM.addEventListener('click', () => { _flM.classList.add('minimised'); });
+  if (_maxBtnM && _flM) _maxBtnM.addEventListener('click', () => { _flM.classList.remove('minimised'); });
 
   paintSimpleFloater();
 }

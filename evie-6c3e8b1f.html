@@ -119,6 +119,17 @@
   .gp-floater-iconbtn:hover { background: #fafaf7; color: var(--ink); border-color: var(--muted); }
   .gp-floater-iconbtn:active { transform: scale(0.96); }
   .gp-floater-iconbtn.active { background: #eaf3fb; color: var(--accent); border-color: var(--accent); }
+  /* Minimised floater state — single-line pill */
+  .gp-floater.minimised { width: auto; padding: 6px 10px; }
+  .gp-floater.minimised .gp-floater-body { display: none; }
+  .gp-floater.minimised .gp-floater-head { margin-bottom: 0; }
+  .gp-floater.minimised #gpf-snap-btn,
+  .gp-floater.minimised #gpf-reset-btn,
+  .gp-floater.minimised #gpf-toggle-btn,
+  .gp-floater.minimised #gpf-minimise-btn { display: none; }
+  .gp-floater #gpf-maximise-btn { display: none; }
+  .gp-floater.minimised #gpf-maximise-btn { display: inline-flex; }
+  .gp-floater.minimised .title { margin-right: 8px; }
   .gp-floater-snap-popover {
     position: absolute; top: 32px; right: 0; z-index: 5;
     background: #fff; border: 1px solid var(--border); border-radius: 8px;
@@ -871,7 +882,7 @@
         <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this Total GP, you earn</div>
         <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
           <div><div style="font-size: 10px; color: var(--muted);">GP COMMISSION (inc super)</div><div id="sp-comm" style="font-size: 18px; font-weight: 700; color: var(--accent);">—</div></div>
-          <div><div style="font-size: 10px; color: var(--muted);">EFFECTIVE RATE</div><div id="sp-rate" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
+          <div><div style="font-size: 10px; color: var(--muted);">EFFECTIVE RATE <span class="tooltip-trigger" data-tip="Your average commission rate at this Total GP — calculated as Commission ÷ Total GP. As you climb into higher bands, this number rises (the marginal rate on your last dollar is even higher; this is the blended average across everything you've earned).">?</span></div><div id="sp-rate" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
           <div><div style="font-size: 10px; color: var(--muted);">TOTAL PACKAGE</div><div id="sp-total" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
         </div>
         <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 8px;">
@@ -891,11 +902,11 @@
           <div style="font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 10px;">① Counting bookings</div>
           <div style="display: grid; grid-template-columns: 1fr; gap: 8px; font-family: var(--mono); font-size: 13px;">
             <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Quoted</span><span style="font-weight: 700;" id="gfx-quoted">125</span></div>
-            <div style="text-align: center; color: var(--faint); font-size: 11px;">×</div>
+            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">×</div>
             <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Conv %</span><span style="font-weight: 700;" id="gfx-conv">40.0%</span></div>
-            <div style="text-align: center; color: var(--faint); font-size: 11px;">=</div>
+            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">=</div>
             <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Confirmed</span><span style="font-weight: 700;" id="gfx-conf">50</span></div>
-            <div style="text-align: center; color: var(--faint); font-size: 11px;">×</div>
+            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">×</div>
             <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Avg GP</span><span style="font-weight: 700;" id="gfx-avg">$6,700</span></div>
           </div>
         </div>
@@ -916,9 +927,9 @@
           <div style="font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 10px;">② From the revenue</div>
           <div style="display: grid; grid-template-columns: 1fr; gap: 8px; font-family: var(--mono); font-size: 13px;">
             <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Revenue</span><span style="font-weight: 700;" id="gfx-rev">$957k</span></div>
-            <div style="text-align: center; color: var(--faint); font-size: 11px;">×</div>
+            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">×</div>
             <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Margin %</span><span style="font-weight: 700;" id="gfx-margin">35.0%</span></div>
-            <div style="text-align: center; color: var(--faint); font-size: 11px;">=</div>
+            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">=</div>
             <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Total GP</span><span style="font-weight: 700;" id="gfx-total-2">$335k</span></div>
           </div>
         </div>
@@ -1072,10 +1083,13 @@
       <button class="gp-floater-iconbtn" id="gpf-snap-btn" title="Snap to preset" aria-label="Snap presets">⋯</button>
       <button class="gp-floater-iconbtn" id="gpf-reset-btn" title="Reset to defaults" aria-label="Reset">↻</button>
       <button class="gp-floater-iconbtn" id="gpf-toggle-btn" title="Expand" aria-label="Expand">+</button>
+      <button class="gp-floater-iconbtn" id="gpf-minimise-btn" title="Minimise" aria-label="Minimise">▾</button>
+      <button class="gp-floater-iconbtn" id="gpf-maximise-btn" title="Maximise" aria-label="Maximise">▴</button>
     </div>
     <div class="gp-floater-snap-popover" id="gpf-snap-popover"></div>
   </div>
 
+  <div class="gp-floater-body">
   <div id="gpf-funnel" style="display: none;">
     <div class="gp-floater-funnel">
       <div class="gp-floater-flow">
@@ -1126,13 +1140,14 @@
   </div>
 
   <div class="gp-floater-footer">
-    <span class="ftr-label">Est. commission @ scenario</span>
+    <span class="ftr-label">Est. Commission @ Scenario</span>
     <span><span class="ftr-value" id="gpf-comm-v">—</span><span class="delta" id="gpf-comm-d"></span></span>
   </div>
   <div class="gp-floater-footer dark">
-    <span class="ftr-label">Est. total package @ scenario</span>
+    <span class="ftr-label">Est. Total Package @ Scenario</span>
     <span class="ftr-value" id="gpf-total-v">—</span>
   </div>
+  </div><!-- /.gp-floater-body -->
 </div>
 
 <script>
@@ -2533,16 +2548,21 @@ function paintFloater() {
   const comm = commissionFromBands(funnelState.totalGP);
   if (funnelBaselineComm === null) funnelBaselineComm = comm;
   const cv = $('gpf-comm-v'); if (cv) cv.textContent = fmtMoney(comm);
-  // Total package = base inc super + GP commission (gated by production) + production commission on Event GP
+  // Total package — match update()/calcAll() exactly:
+  //   bandComm = calcBandCommission(scenario.gp).total × productionGateFactor(scenario.eventGP) × KPI(=1)
+  //   prodComm = (plan.includeProduction ? plan.productionPct : 0) × scenario.eventGP × KPI(=1)
+  //   total = baseInc + bandComm + prodComm
   const sr = data.globals.superRate || 0.12;
   const baseInc = (emp.baseSalary || 0) * (1 + sr);
   const prodPct = (plan.includeProduction ? (plan.productionPct || 0) : 0);
   const prodGateFactor = (typeof getProductionFactor === 'function') ? getProductionFactor(scenario.eventGP) : 1;
-  const gatedComm = comm * prodGateFactor;
+  // Use scenario.gp (not funnelState.totalGP) so floater matches the rest of the dashboard exactly
+  const exactBandComm = (typeof calcBandCommission === 'function') ? calcBandCommission(scenario.gp, plan.bands).total : comm;
+  const gatedComm = exactBandComm * prodGateFactor;
   const prodComm = scenario.eventGP * prodPct;
   const totalVar = gatedComm + prodComm;
   const tv = $('gpf-total-v'); if (tv) tv.textContent = fmtMoney(baseInc + totalVar);
-  // Update commission-only display to reflect the gated band commission too (keeps things honest)
+  // Show gated band commission only in the est. commission box (keeps the math honest)
   if (cv) cv.textContent = fmtMoney(gatedComm);
   const cd = $('gpf-comm-d');
   if (cd) {
@@ -2695,6 +2715,13 @@ function wireFloater() {
   // Event GP main slider — keep floater event slider in sync
   if (mainEvSlider) mainEvSlider.addEventListener('input', () => { scenario.eventGP = +mainEvSlider.value; paintFloater(); });
   if (mainEvInput) mainEvInput.addEventListener('input', () => { scenario.eventGP = parseNum(mainEvInput.value); paintFloater(); });
+
+  // Minimise / Maximise wiring
+  const _fl = document.getElementById('gp-floater');
+  const _minBtn = document.getElementById('gpf-minimise-btn');
+  const _maxBtn = document.getElementById('gpf-maximise-btn');
+  if (_minBtn && _fl) _minBtn.addEventListener('click', () => { _fl.classList.add('minimised'); });
+  if (_maxBtn && _fl) _maxBtn.addEventListener('click', () => { _fl.classList.remove('minimised'); });
 
   paintFloater();
 }
