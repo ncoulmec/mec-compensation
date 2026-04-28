@@ -449,7 +449,7 @@
       "planType": "gm",
       "planOverrides": null,
       "kpiAssignments": [],
-      "dashboardFile": "hayley.html",
+      "dashboardFile": "hayley-a7f3c81d.html",
       "placeholder": false,
       "actuals": {
         "fiscalYearStart": "2026-04",
@@ -525,7 +525,7 @@
       "planType": "gp_bands_senior",
       "planOverrides": null,
       "kpiAssignments": [],
-      "dashboardFile": "dane.html",
+      "dashboardFile": "dane-2f7b4a9d.html",
       "placeholder": false,
       "actuals": {
         "fiscalYearStart": "2026-04",
@@ -710,7 +710,7 @@
       "planType": "gp_bands",
       "planOverrides": null,
       "kpiAssignments": [],
-      "dashboardFile": "daniel.html",
+      "dashboardFile": "daniel-4b9e2f5c.html",
       "placeholder": false,
       "actuals": {
         "fiscalYearStart": "2026-04",
@@ -895,7 +895,7 @@
       "planType": "gp_bands",
       "planOverrides": null,
       "kpiAssignments": [],
-      "dashboardFile": "nic.html",
+      "dashboardFile": "nic-8d1c6e3a.html",
       "placeholder": false,
       "actuals": {
         "fiscalYearStart": "2026-04",
@@ -1080,7 +1080,7 @@
       "planType": "hybrid_gp",
       "planOverrides": null,
       "kpiAssignments": [],
-      "dashboardFile": "evie.html",
+      "dashboardFile": "evie-6c3e8b1f.html",
       "placeholder": false,
       "actuals": {
         "fiscalYearStart": "2026-04",
@@ -1256,7 +1256,8 @@
       },
       "scenarioDefaults": {
         "gp": 175000
-      }
+      },
+      "hideOldPlan": true
     },
     {
       "id": "evie2",
@@ -1268,7 +1269,7 @@
       "planType": "hybrid_gp",
       "planOverrides": null,
       "kpiAssignments": [],
-      "dashboardFile": "evie2.html",
+      "dashboardFile": "evie2-9a5d7c4e.html",
       "placeholder": true,
       "actuals": {
         "fiscalYearStart": "2026-04",
@@ -1444,7 +1445,8 @@
       },
       "scenarioDefaults": {
         "gp": 175000
-      }
+      },
+      "hideOldPlan": true
     },
     {
       "id": "tom",
@@ -1456,7 +1458,7 @@
       "planType": "hybrid_rev_senior",
       "planOverrides": null,
       "kpiAssignments": [],
-      "dashboardFile": "tom.html",
+      "dashboardFile": "tom-7d2a9f4b.html",
       "placeholder": false,
       "actuals": {
         "fiscalYearStart": "2026-04",
@@ -1660,7 +1662,7 @@
       "planType": "hybrid_rev",
       "planOverrides": null,
       "kpiAssignments": [],
-      "dashboardFile": "michael.html",
+      "dashboardFile": "michael-3e8f1b6c.html",
       "placeholder": false,
       "actuals": {
         "fiscalYearStart": "2026-04",
@@ -1930,7 +1932,7 @@
       "planType": "gp_bands",
       "planOverrides": null,
       "kpiAssignments": [],
-      "dashboardFile": "sales4.html",
+      "dashboardFile": "sales4-5c6e1d8a.html",
       "placeholder": true,
       "last365GPSold": 0,
       "annualGPTarget": 0,
