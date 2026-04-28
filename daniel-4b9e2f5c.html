@@ -2895,7 +2895,7 @@ function renderOTECard() {
       </div>
     </div>
     <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6;">
-      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Today most roles run roughly <strong>${philosophy?.currentDefault || '80:20'}</strong> base/variable. As the team's confidence in the new plan grows and the business can support it, the goal is to gradually shift toward <strong>${philosophy?.futureGoal || '70:30'}</strong> — more of your earnings tied to performance, less guaranteed in the base.
+      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Today most roles run roughly <strong>${philosophy?.currentDefault || '80:20'}</strong> base/variable. As the team's confidence in the new plan grows and the business can support it, the goal is to gradually shift toward <strong>${philosophy?.futureGoal || '70:30'}</strong> — more of your earnings tied to performance.
     </div>
   `;
   wrap.insertBefore(card, wrap.firstChild);
@@ -2904,11 +2904,17 @@ function renderOTECard() {
   if (snapTo) {
     const btn = document.getElementById('ote-snap-btn');
     if (btn) btn.addEventListener('click', () => {
+      // Push the snap target through the unified funnel state so floater + main slider + sales planning all sync
+      if (typeof funnelState !== 'undefined') {
+        funnelState.totalGP = snapTo;
+        if (typeof funnelRecalc === 'function') funnelRecalc('gp');
+        if (typeof pushFunnelToAll === 'function') {
+          pushFunnelToAll();
+          return;
+        }
+      }
+      // Fallback for non-funnel dashboards
       scenario.gp = snapTo;
-      const main = document.getElementById('gp-slider'); if (main) main.value = snapTo;
-      const mainI = document.getElementById('gp-input'); if (mainI) mainI.value = snapTo.toLocaleString('en-AU');
-      const fl = document.getElementById('gp-floater-slider'); if (fl) fl.value = snapTo;
-      const flV = document.getElementById('gp-floater-value'); if (flV) flV.textContent = '$' + Math.round(snapTo/1000) + 'k';
       if (typeof update === 'function') update();
     });
   }

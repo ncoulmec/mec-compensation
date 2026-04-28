@@ -600,7 +600,7 @@
   }
   .gp-floater-snap-popover.open { display: block; }
   .gp-floater-snap-popover .gp-floater-chip { display: block; width: 100%; text-align: left; margin: 2px 0; padding: 6px 10px; }
-  .gp-floater-row { display: grid; grid-template-columns: 110px 1fr 70px; gap: 10px; align-items: center; padding: 4px 0; }
+  .gp-floater-row { display: grid; grid-template-columns: 140px 1fr 100px; gap: 12px; align-items: center; padding: 4px 0; }
   .gp-floater .label-mini { font-size: 11px; color: var(--muted); font-weight: 500; line-height: 1.3; white-space: nowrap; }
   .gp-floater input[type="range"] { width: 100%; accent-color: var(--navy); }
   .gp-floater .value { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; text-align: right; }
@@ -1282,6 +1282,7 @@ async function load() {
     renderQuarterInputs();
     update();
     wireSimpleFloater();
+    renderOTECard();
     renderFaqTab();
   } catch (err) {
     document.getElementById('loading').style.display = 'none';
@@ -2313,6 +2314,92 @@ function renderFaqTab() {
       <div class="faq-body">${item.a}</div>
     </details>
   `).join('');
+}
+
+
+// OTE Card — render on Payouts & Super tab. Adapted for revenue-based plans (Michael/Tom).
+function renderOTECard() {
+  const wrap = document.getElementById('panel-payouts');
+  if (!wrap || document.getElementById('ote-card')) return;
+  const ote = emp.ote;
+  const philosophy = data.globals?.payMixPhilosophy;
+  if (!ote) return;
+  const snapTo = ote.snapToGP || null;
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'ote-card';
+  card.style.cssText = 'background: linear-gradient(135deg, #eef4fa 0%, #ffffff 100%); border-left: 4px solid var(--accent); margin-bottom: 18px;';
+  card.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 6px;">
+      <h2 style="margin: 0;">Your On-Target Earnings (OTE)</h2>
+      ${snapTo ? `<button id="ote-snap-btn" style="background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k)</button>` : ''}
+    </div>
+    <p style="font-size: 13px; color: var(--muted); margin: 0 0 16px;">A normal year, when you hit target, looks like this. <strong>All figures are super-inclusive</strong>. The Variable cell updates live as you adjust the floating Performance Revenue slider.</p>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
+      <div style="padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Base Salary <span style="color: var(--faint); font-weight: 500;">(inc super)</span></div>
+        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(ote.baseInclSuper)}</div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">${fmtMoney(ote.baseSalary)} + ${fmtMoney(ote.baseSuperOnBase)} super</div>
+      </div>
+      <div style="padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Variable @ Current <span style="color: var(--faint); font-weight: 500;">(inc super)</span></div>
+        <div id="ote-variable-live" style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent); margin-top: 4px;">—</div>
+        <div id="ote-variable-sub" style="font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">at —</div>
+      </div>
+      <div style="padding: 12px 14px; background: var(--ink); color: #fff; border-radius: 8px;">
+        <div style="font-size: 10px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total <span style="color: rgba(255,255,255,0.5); font-weight: 500;">(inc super)</span></div>
+        <div id="ote-total-live" style="font-family: var(--mono); font-size: 22px; font-weight: 700; margin-top: 4px;">—</div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px;">Total cost-to-MEC at current scenario</div>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6;">
+      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Today most roles run roughly <strong>${philosophy?.currentDefault || '80:20'}</strong> base/variable. As the team's confidence in the new plan grows and the business can support it, the goal is to gradually shift toward <strong>${philosophy?.futureGoal || '70:30'}</strong> — more of your earnings tied to performance. This is a multi-year move, not a sudden change.
+    </div>
+  `;
+  wrap.insertBefore(card, wrap.firstChild);
+
+  if (snapTo) {
+    const btn = document.getElementById('ote-snap-btn');
+    if (btn) btn.addEventListener('click', () => {
+      scenario.revenue = snapTo;
+      // Sync main rev slider via nlsMoneyToPos
+      const range = emp.realisticRange || {};
+      const main = document.getElementById('rev-slider');
+      const mainI = document.getElementById('rev-input');
+      if (main && range.min) main.value = nlsMoneyToPos(snapTo, { ...range, absoluteMin: range.absoluteMin || 0 });
+      if (mainI) mainI.value = fmtNum(snapTo);
+      const fl = document.getElementById('gp-floater-slider'); if (fl) fl.value = snapTo;
+      const flV = document.getElementById('gp-floater-value'); if (flV) flV.textContent = fmtMoney(snapTo);
+      if (typeof update === 'function') update();
+      if (typeof paintSimpleFloater === 'function') paintSimpleFloater();
+    });
+  }
+}
+
+// Live OTE refresh — called from update() with the calc result `r`
+function refreshOTECard(r) {
+  const ote = emp && emp.ote;
+  if (!ote) return;
+  const variableLive = document.getElementById('ote-variable-live');
+  const variableSub = document.getElementById('ote-variable-sub');
+  const totalLive = document.getElementById('ote-total-live');
+  if (!variableLive) return;
+  // r.variable already includes commission + production (super-inclusive). Add active project bonuses.
+  const sr = data.globals.superRate || 0.12;
+  let projInc = 0;
+  if (scenario.projectsEnabled && Array.isArray(data.projects)) {
+    data.projects.forEach(p => {
+      if (Array.isArray(p.assignedTo) && p.assignedTo.includes(EMPLOYEE_ID) && scenario.projectsEnabled[p.id] !== false) {
+        const amt = +p.bonusAmount || 0;
+        projInc += p.bonusIncludesSuper ? amt : amt * (1 + sr);
+      }
+    });
+  }
+  const liveVar = (r && typeof r.variable === 'number' ? r.variable : 0) + projInc;
+  variableLive.textContent = fmtMoney(liveVar);
+  variableSub.textContent = `at ${fmtMoney(scenario.revenue)} revenue`;
+  totalLive.textContent = fmtMoney((ote.baseInclSuper || 0) + liveVar);
 }
 
 </script>
