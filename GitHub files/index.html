@@ -681,6 +681,7 @@
     <button class="tab-btn" data-tab="globals">Global Settings</button>
     <button class="tab-btn" data-tab="pl">Company P&amp;L</button>
     <button class="tab-btn" data-tab="planning">Financial Planning</button>
+    <button class="tab-btn" data-tab="globals">Global Settings</button>
   </div>
 </nav>
 
@@ -3393,6 +3394,7 @@ function applyDirectorLock() {
     return;
   }
   section.classList.add('gm-locked');
+  section.classList.add('open');  // auto-expand so Hayley can read bands without clicking
   // Disable all interactive controls inside the GM section (inputs, selects, buttons)
   // while leaving them visible/expandable for read-only reference
   section.querySelectorAll('input, select, textarea').forEach(el => { el.dataset._wasReadonly = el.readOnly ? '1' : '0'; el.readOnly = true; el.tabIndex = -1; });
@@ -3401,7 +3403,7 @@ function applyDirectorLock() {
   banner.className = 'gm-lock-banner';
   banner.innerHTML = `
     <div class="lock-text">
-      <strong>🔒 Editing locked.</strong> You can read the General Manager commission structure freely. To <em>change</em> any of these values, enter the Director PIN.
+      <strong>🔒 Editing locked — read-only mode.</strong> The General Manager commission structure is shown below for reference. To <em>change</em> any of these values, enter the Director PIN.
     </div>
     <button id="gm-unlock-btn">Unlock with Director PIN</button>
   `;
