@@ -2736,6 +2736,10 @@
           "a": "Total revenue (ex-GST) from your personally-booked performances over the period. Every gig you perform contributes to your annual Performance Revenue figure."
         },
         {
+          "q": "What if I Step In for Another Performer Last-Minute?",
+          "a": "You're looked after. Performance Revenue is attributed to whoever <em>actually performed</em> the gig \u2014 so if you cover for someone else and you're the one on the floor, the revenue (and the commission) flow to you, not to whoever was originally rostered. The Talent Manager updates the booking in Zoho to reflect who performed; the cash trail follows. No paperwork on your end \u2014 just turn up and do your thing."
+        },
+        {
           "q": "When Do I Get Paid Commission?",
           "a": "First fortnightly pay cycle of the <strong>quarter</strong> \u2014 once a quarter, not monthly. Your performance revenue is reconciled at quarter-end, so we wait for the full quarter to land before calculating and paying out. (Different cycle to the sales team \u2014 they're paid monthly.)"
         },
