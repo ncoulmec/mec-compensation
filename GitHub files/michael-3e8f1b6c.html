@@ -2392,7 +2392,7 @@ function renderSuperCard(r) {
 load();
 
 // === FLOATER (sticky bottom-right) — simple revenue scenario ===
-const SIMPLE_SNAP_CHIPS = {"michael": [{"label": "\u21ba Last 365", "gp": 98250}, {"label": "\u2192 Target", "gp": 200000, "target": true}, {"label": "\u2191 Stretch", "gp": 250000}]};
+const SIMPLE_SNAP_CHIPS = {"michael": [{"label": "\u21ba Last 365", "gp": 98250}, {"label": "\u2192 Target", "gp": 125000, "target": true}, {"label": "\u2191 Stretch", "gp": 150000}]};
 
 function commissionFromBandsRev(rev) {
   if (!plan || !plan.bands) return 0;
@@ -2402,6 +2402,13 @@ function commissionFromBandsRev(rev) {
     const b = sorted[i];
     const next = i + 1 < sorted.length ? sorted[i + 1].threshold : Infinity;
     total += Math.max(0, Math.min(rev, next) - b.threshold) * b.rate;
+  }
+  // Include flat milestone bonuses (e.g. Michael's $5k at $100k revenue) so the floater's
+  // commission line and the Total Package row match. Mirrors calcBandCommission().
+  if (Array.isArray(plan.flatBonuses)) {
+    plan.flatBonuses.forEach(k => {
+      if (rev >= k.threshold) total += k.amount;
+    });
   }
   return total;
 }
@@ -2425,19 +2432,18 @@ function paintSimpleFloater() {
   }
   const sr = data.globals.superRate || 0.12;
   const baseInc = (emp.baseSalary || 0) * (1 + sr);
-  // Sum ticked project bonuses (super-inclusive amounts)
-  let projBonus = 0;
+  // Sum ticked project bonuses (super-inclusive). Use p.bonusAmount (the actual data field)
+  // and respect p.bonusIncludesSuper, mirroring calcAll() so the floater matches Total Package.
+  let projBonusInc = 0;
   if (scenario.projectsEnabled && Array.isArray(data.projects)) {
     data.projects.forEach(p => {
       if (Array.isArray(p.assignedTo) && p.assignedTo.includes(EMPLOYEE_ID) && scenario.projectsEnabled[p.id] !== false) {
-        // Project values may be ex-super (rate) or inc-super depending on schema.
-        // Use the same convention update() uses — exSuper × (1 + sr) for bonus inc super
-        const pBonusEx = (typeof p.bonus === 'number') ? p.bonus : 0;
-        projBonus += pBonusEx * (1 + sr);
+        const amt = +p.bonusAmount || 0;
+        projBonusInc += p.bonusIncludesSuper ? amt : amt * (1 + sr);
       }
     });
   }
-  const tv = document.getElementById('gpf-total-v'); if (tv) tv.textContent = fmtMoney(baseInc + comm + projBonus);
+  const tv = document.getElementById('gpf-total-v'); if (tv) tv.textContent = fmtMoney(baseInc + comm + projBonusInc);
 }
 
 function wireSimpleFloater() {
