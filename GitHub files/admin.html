@@ -395,6 +395,50 @@
 
 <script>
 
+
+// =========================================================================
+// DEV_MODE — single switch to bypass encryption + cache during iteration.
+// Flick to false (and run prod-deploy) for production.
+// =========================================================================
+const DEV_MODE = true;
+
+// Try to load plaintext data.json from same folder. Returns null if not found.
+async function _devLoadPlaintext() {
+  try {
+    const res = await fetch('./data.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_) { return null; }
+}
+
+function _showDevBanner(label) {
+  if (document.getElementById('_dev-mode-banner')) return;
+  const b = document.createElement('div');
+  b.id = '_dev-mode-banner';
+  b.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 6px 16px; background: #fef5e6; border-bottom: 2px solid #f5d890; color: #8a6a00; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 600; text-align: center; line-height: 1.3;';
+  b.innerHTML = '🔓 DEV MODE — encryption + PIN gate disabled · data.json loaded plaintext · ' + (label || '') + ' · NEVER roll out in this mode';
+  document.body.insertBefore(b, document.body.firstChild);
+  // Push the rest of the page down so the banner doesn't overlap content
+  document.body.style.paddingTop = (parseInt(getComputedStyle(document.body).paddingTop) || 0) + 26 + 'px';
+}
+
+// Hide the password gate overlay if it exists (for both PIN and master gates).
+function _hideGate() {
+  ['pin-gate', 'pw-gate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+// DEV_MODE replacement for unlockAdmin — loads plaintext data.json (full).
+async function _devLoadAdmin() {
+  const full = await _devLoadPlaintext();
+  if (!full) throw new Error('DEV_MODE on but data.json not found at ./data.json — copy it from 🔒 DON\'T DELETE/ to GitHub files/, or set DEV_MODE = false.');
+  _hideGate();
+  _showDevBanner('admin');
+  return full;
+}
+
 // =========================================================================
 // ENCRYPTION LIBRARY (v41)
 // Mirrors build-encrypted.py — uses Web Crypto API for AES-GCM + PBKDF2
@@ -608,7 +652,7 @@ const parseNum = (s) => { const c = String(s).replace(/[^0-9.-]/g, ''); return c
 async function load() {
   try {
     // v41: Master password gate + decrypt the encrypted master file
-    data = await unlockAdmin();
+    data = await (DEV_MODE ? _devLoadAdmin() : unlockAdmin());
     $('#loading').style.display = 'none';
     $('#content').style.display = 'block';
     $('#meta-sub').textContent = `${data.meta.companyName} · Actuals for payroll — last edited ${data.meta.effectiveDate}`;
