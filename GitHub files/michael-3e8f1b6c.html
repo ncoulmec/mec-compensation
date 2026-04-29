@@ -1224,7 +1224,7 @@
       <h3 style="margin: 0 0 10px;">What we don&rsquo;t pay variable comp on</h3>
       <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Variable compensation is a sharp tool. Plenty of behaviour we deeply value sits outside it:</p>
       <ul style="font-size: 13px; line-height: 1.6; color: var(--ink); padding-left: 18px; margin: 0;">
-        <li><strong>Stepping in for another performer last-minute</strong> &mdash; appreciated, recognised, but not split into someone else&rsquo;s commission. That&rsquo;s the team.</li>
+        <li><strong>Stepping in for another performer last-minute</strong> &mdash; you&rsquo;re looked after. The performance revenue gets attributed to whoever actually performed the gig, so if it&rsquo;s you on the floor, the revenue (and commission) flow to you.</li>
         <li><strong>Doing your job exceptionally well in non-numerical ways</strong> &mdash; client experience, hand-offs, mentoring, the way you turn up. Reflected in your annual review and discretionary bonuses, not the plan multiplier.</li>
         <li><strong>Effort in itself</strong> &mdash; we pay for what lands. Effort is necessary but not sufficient.</li>
       </ul>
@@ -1681,7 +1681,7 @@ function wireInputs() {
 
   // Pull realistic range from emp record (Michael: $70k–$200k, max $300k by default)
   const range = emp.realisticRange ? { ...emp.realisticRange, absoluteMin: emp.realisticRange.absoluteMin || 0 } : { min: 70000, max: 200000, absoluteMax: 300000, absoluteMin: 0 };
-  const setRev = wireNonLinearSlider(revSlider, revInput, range, (money) => { scenario.revenue = money; update(); });
+  const setRev = wireNonLinearSlider(revSlider, revInput, range, (money) => { scenario.revenue = money; update(); if (typeof paintSimpleFloater === 'function') paintSimpleFloater(); });
   setRev(scenario.revenue);
 
   kpiSlider.value = scenario.kpiScore;
@@ -2946,8 +2946,7 @@ function renderOTECard() {
       </div>
     </div>
     <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6;">
-      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Today most roles run roughly <strong>${philosophy?.currentDefault || '80:20'}</strong> base/variable. As the team's confidence in the new plan grows and the business can support it, the goal is to gradually shift toward <strong>${philosophy?.futureGoal || '70:30'}</strong> — more of your earnings tied to performance. This is a multi-year move, not a sudden change.
-    </div>
+      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Historically most MEC roles sat at roughly <strong>${philosophy?.legacyMix || '85:15'}</strong> or even <strong>${philosophy?.legacyMixOlder || '90:10'}</strong> base-to-variable — comfortable, predictable, but with limited upside. The plan you're looking at nudges us toward <strong>${philosophy?.futureGoal || '75:25'}</strong> over the next few years — gradually putting more of your earnings inside your control. Not a flip-of-the-switch change, more a steady walk in that direction. Bigger ceiling, more reward for stretching. You&rsquo;ll notice this compensation plan starts moving the dial that way.</div>
   `;
   wrap.insertBefore(card, wrap.firstChild);
 

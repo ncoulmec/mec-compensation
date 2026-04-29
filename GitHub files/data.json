@@ -43,9 +43,11 @@
     "zohoDashboardUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
     "kpiScoreFloor": 0,
     "payMixPhilosophy": {
+      "legacyMix": "85:15",
+      "legacyMixOlder": "90:10",
       "currentDefault": "85:15",
       "futureGoal": "75:25",
-      "note": "Most roles currently sit at roughly 85:15 base/variable. The goal across all sales/production roles is to gradually shift to 75:25 over the next 1-2 years."
+      "note": "Historically most MEC roles sat at 85:15 or 90:10 base/variable. The plan moves us gradually toward 75:25 over a number of years \u2014 not a sudden flip."
     },
     "actualsHistorical2025": {
       "leadsHandled": 6234,
@@ -337,7 +339,7 @@
     },
     "hybrid_rev_senior": {
       "name": "Talent Senior (Performer-Revenue Hybrid)",
-      "description": "For Tom (Performer/Talent Manager). Higher-base version of the Talent plan with thresholds shifted to reflect his senior base salary of $91.35k. Target: $220k revenue \u2192 ~$100k base ex-super equivalent. Rates scaled \u00d7 1.12 in v16 to make band output super-INCLUSIVE while preserving commission amounts.",
+      "description": "For Tom (Performer/Talent Manager). Variable comp on revenue bands. Below $220k: $0 base rate. Above $220k: 10% per dollar. Plus a $9,688 milestone bonus that ramps linearly from $195k to $220k \u2014 replaces the previous special 38.75% accelerator with a cleaner ramp. Total compensation at any revenue level is identical to the prior plan. Bands \u00d7 1.12 to make output super-INCLUSIVE.",
       "metricLabel": "Annual Performance Revenue",
       "maxMetricValue": 400000,
       "metricBasis": "revenue",
@@ -348,8 +350,8 @@
       "includeProduction": false,
       "bands": [
         {
-          "threshold": 195000,
-          "rate": 0.38752
+          "threshold": 0,
+          "rate": 0.0
         },
         {
           "threshold": 220000,
@@ -358,7 +360,15 @@
       ],
       "productionPct": 0.01,
       "productionBasis": "revenue",
-      "includeProjects": false
+      "includeProjects": false,
+      "flatBonuses": [
+        {
+          "threshold": 220000,
+          "amount": 9688,
+          "rampFromRevenue": 195000,
+          "label": "$9,688 milestone bonus \u2014 ramps linearly from $195k to $220k revenue"
+        }
+      ]
     },
     "base_only": {
       "name": "Base Salary Only",

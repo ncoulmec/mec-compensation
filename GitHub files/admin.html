@@ -207,27 +207,29 @@
   .um-grid-heading .right { font-size: 11px; font-weight: 400; opacity: 0.9; text-transform: none; letter-spacing: normal; font-family: var(--mono); }
   .um-grid-heading + div { margin-top: 0 !important; }
 
-  /* Tooltip for Pay This Cycle (and other small ? hovers) */
+  /* Tooltip for Pay This Cycle (and other small ? hovers) — uses a JS-positioned
+     tooltip element appended to <body> so it escapes any overflow container. */
   .um-tooltip {
     display: inline-block; cursor: help; margin-left: 4px;
     width: 14px; height: 14px; border-radius: 50%; background: #fff;
     border: 1px solid var(--border); color: var(--muted);
     font-size: 9px; font-weight: 700; line-height: 13px; text-align: center;
     font-family: 'DM Sans', sans-serif; vertical-align: middle;
-    position: relative; transition: all 0.12s;
+    transition: all 0.12s;
   }
   .um-tooltip:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
-  .um-tooltip::after {
-    content: attr(data-tip);
-    position: absolute; bottom: calc(100% + 6px); right: 0;
+  /* The actual tooltip bubble is a body-level element (created by JS) */
+  #um-tooltip-bubble {
+    position: fixed; z-index: 10000;
     background: var(--ink); color: #fff;
     padding: 8px 12px; border-radius: 6px;
     font-size: 11px; font-weight: 400; line-height: 1.5;
-    white-space: normal; width: max-content; max-width: 240px;
-    text-align: left; pointer-events: none;
-    opacity: 0; transition: opacity 0.15s ease; z-index: 100;
+    max-width: 280px; pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    opacity: 0; transition: opacity 0.15s ease;
+    text-align: left; font-family: 'DM Sans', sans-serif;
   }
-  .um-tooltip:hover::after { opacity: 1; }
+  #um-tooltip-bubble.show { opacity: 1; }
 
   /* Future / disabled cells */
   table.unified-payroll td.future {
@@ -659,6 +661,7 @@ async function load() {
     populateEmployeeDropdown();
     initUnifiedView();
     wireAdminTabs();
+    wireUmTooltips();
     renderGhStatus();
   } catch (err) {
     $('#loading').style.display = 'none';
@@ -675,6 +678,46 @@ function wireAdminTabs() {
       const target = document.getElementById('admin-panel-' + btn.dataset.adminTab);
       if (target) target.classList.add('active');
     });
+  });
+}
+
+// Body-level tooltip for .um-tooltip elements — escapes the overflow:auto containers
+// so it can extend above/outside the table without being clipped.
+function wireUmTooltips() {
+  let bubble = document.getElementById('um-tooltip-bubble');
+  if (!bubble) {
+    bubble = document.createElement('div');
+    bubble.id = 'um-tooltip-bubble';
+    document.body.appendChild(bubble);
+  }
+  // Delegated mouseover/mouseout — works even after the table re-renders
+  document.addEventListener('mouseover', (ev) => {
+    const t = ev.target.closest('.um-tooltip');
+    if (!t) return;
+    const tip = t.dataset.tip || '';
+    if (!tip) return;
+    bubble.textContent = tip;
+    bubble.classList.add('show');
+    // Position above the trigger, centered, but clamp to viewport
+    const r = t.getBoundingClientRect();
+    bubble.style.left = '0px'; bubble.style.top = '0px';
+    // Force layout to get bubble dimensions
+    const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+    let left = r.left + (r.width / 2) - (bw / 2);
+    let top = r.top - bh - 8;
+    // Clamp horizontally
+    const margin = 8;
+    if (left < margin) left = margin;
+    if (left + bw > window.innerWidth - margin) left = window.innerWidth - bw - margin;
+    // If above trigger goes off-screen, flip below
+    if (top < margin) top = r.bottom + 8;
+    bubble.style.left = left + 'px';
+    bubble.style.top = top + 'px';
+  });
+  document.addEventListener('mouseout', (ev) => {
+    const t = ev.target.closest('.um-tooltip');
+    if (!t) return;
+    bubble.classList.remove('show');
   });
 }
 

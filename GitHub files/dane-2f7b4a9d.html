@@ -1727,7 +1727,7 @@ function wireInputs() {
   // Falls back to a linear slider behaviour if no realisticRange is configured.
   const range = emp.realisticRange ? { ...emp.realisticRange, absoluteMin: emp.realisticRange.absoluteMin || 0 } : null;
   if (range) {
-    const setGp = wireNonLinearSlider(gpSlider, gpInput, range, (money) => { scenario.gp = money; update(); });
+    const setGp = wireNonLinearSlider(gpSlider, gpInput, range, (money) => { scenario.gp = money; if (typeof funnelState !== 'undefined' && funnelState) { funnelState.totalGP = money; if (typeof funnelRecalc === 'function') funnelRecalc('totalGP'); } update(); if (typeof paintFloater === 'function') paintFloater(); });
     setGp(scenario.gp);
   }
   eventSlider.value = scenario.eventGP;
@@ -2861,8 +2861,11 @@ function paintFloater() {
   }
   const gpSlider = $('gp-floater-slider');
   const gpVal = $('gp-floater-value');
-  if (gpSlider) gpSlider.value = Math.min(funnelState.totalGP, +gpSlider.max || 600000);
-  if (gpVal) gpVal.textContent = fmtMoney(funnelState.totalGP);
+  // Display GP from scenario.gp (canonical source) — ensures Total Package on floater
+  // matches the Total Package card up top regardless of which slider triggered the change.
+  const _displayGp = (typeof scenario !== 'undefined' && scenario && typeof scenario.gp === 'number') ? scenario.gp : funnelState.totalGP;
+  if (gpSlider) gpSlider.value = Math.min(_displayGp, +gpSlider.max || 600000);
+  if (gpVal) gpVal.textContent = fmtMoney(_displayGp);
   const evSlider = $('event-floater-slider');
   const evVal = $('event-floater-value');
   if (evSlider) evSlider.value = Math.min(scenario.eventGP, +evSlider.max || 800000);
@@ -3180,8 +3183,7 @@ function renderOTECard() {
       </div>
     </div>
     <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6;">
-      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Today most roles run roughly <strong>${philosophy?.currentDefault || '80:20'}</strong> base/variable. As the team's confidence in the new plan grows and the business can support it, the goal is to gradually shift toward <strong>${philosophy?.futureGoal || '70:30'}</strong> — more of your earnings tied to performance.
-    </div>
+      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Historically most MEC roles sat at roughly <strong>${philosophy?.legacyMix || '85:15'}</strong> or even <strong>${philosophy?.legacyMixOlder || '90:10'}</strong> base-to-variable — comfortable, predictable, but with limited upside. The plan you're looking at nudges us toward <strong>${philosophy?.futureGoal || '75:25'}</strong> over the next few years — gradually putting more of your earnings inside your control. Not a flip-of-the-switch change, more a steady walk in that direction. Bigger ceiling, more reward for stretching. You&rsquo;ll notice this compensation plan starts moving the dial that way.</div>
   `;
   wrap.insertBefore(card, wrap.firstChild);
 
