@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="0">
 <title>MEC Group · Payroll Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,6 +63,81 @@
   table.payroll tr.filled td { background: #f5faf7; }
   table.payroll tr.filled td.mon { color: var(--accent); }
   table.payroll tr.filled td.mon::before { content: '🔒 '; }
+
+  /* Tab strip across the top of admin */
+  .admin-tabs {
+    display: flex; gap: 4px; border-bottom: 1px solid var(--border);
+    margin-bottom: 22px; flex-wrap: wrap;
+  }
+  .admin-tab-btn {
+    background: none; border: none; padding: 12px 18px; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 500; color: var(--muted);
+    border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.12s, border-color 0.12s;
+  }
+  .admin-tab-btn:hover { color: var(--ink); }
+  .admin-tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 600; }
+  .admin-panel { display: none; }
+  .admin-panel.active { display: block; }
+
+  /* Unified Monthly Payroll table */
+  .um-controls {
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    background: #fafaf7; border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 16px; margin-bottom: 14px;
+  }
+  .um-controls .um-period-label { font-size: 12px; color: var(--muted); font-family: var(--mono); margin-left: auto; }
+  table.unified-payroll {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+    table-layout: fixed;
+  }
+  table.unified-payroll th {
+    text-align: left; padding: 8px 6px; font-weight: 600; color: var(--muted);
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 2px solid var(--border); vertical-align: bottom;
+  }
+  table.unified-payroll th.num { text-align: right; }
+  table.unified-payroll th.history { background: #fafaf7; color: var(--faint); border-left: 1px solid var(--border); }
+  table.unified-payroll th.current { background: #eef4fa; color: var(--navy); border-left: 1px solid #cdd9e8; border-right: 1px solid #cdd9e8; }
+  table.unified-payroll th.computed { background: #f5faf7; color: var(--accent); border-left: 1px solid #c3e4d0; }
+  table.unified-payroll th.qend { background: #fef5e6; color: var(--warn); border-left: 1px solid #f5d890; }
+  table.unified-payroll td {
+    padding: 6px 6px; border-bottom: 1px solid var(--border);
+    vertical-align: middle; font-family: var(--mono); font-size: 12px;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  table.unified-payroll td.num { text-align: right; }
+  table.unified-payroll td.emp-cell {
+    font-family: 'DM Sans', sans-serif; font-weight: 600; color: var(--ink);
+    width: 130px; max-width: 130px;
+  }
+  table.unified-payroll td.emp-cell .role { display: block; font-weight: 400; font-size: 10px; color: var(--muted); margin-top: 1px; }
+  table.unified-payroll td.history { background: #fafaf7; color: var(--faint); border-left: 1px solid var(--border); }
+  table.unified-payroll td.current { background: #eef4fa; border-left: 1px solid #cdd9e8; border-right: 1px solid #cdd9e8; }
+  table.unified-payroll td.computed { background: #f5faf7; color: var(--accent); border-left: 1px solid #c3e4d0; font-weight: 600; }
+  table.unified-payroll td.qend { background: #fef5e6; border-left: 1px solid #f5d890; }
+  table.unified-payroll td.input-cell input {
+    width: 100%; padding: 4px 6px; border: 1px solid var(--border);
+    border-radius: 4px; font-family: var(--mono); font-size: 12px;
+    text-align: right; background: #fff;
+  }
+  table.unified-payroll td.input-cell input:focus { outline: none; border-color: var(--navy); }
+  table.unified-payroll td.input-cell input.locked,
+  table.unified-payroll td.input-cell input:disabled {
+    background: #fafaf7; color: var(--muted); cursor: not-allowed;
+  }
+  table.unified-payroll tr.gm-row td:not(.qend):not(.computed) { color: var(--faint); }
+  table.unified-payroll tr.gm-row td.role-na { font-style: italic; font-size: 10px; }
+  table.unified-payroll tr.perf-row td.history.na { color: var(--faint); font-size: 10px; font-style: italic; }
+  .um-legend {
+    display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--muted);
+    padding: 10px 14px; background: #fafaf7; border-radius: 6px; margin-top: 12px; font-family: var(--mono);
+  }
+  .um-legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .um-legend .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--border); }
+  .um-legend .swatch.history { background: #fafaf7; }
+  .um-legend .swatch.current { background: #eef4fa; }
+  .um-legend .swatch.computed { background: #f5faf7; }
+  .um-legend .swatch.qend { background: #fef5e6; }
 
   /* YTD summary cards */
   .ytd-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
@@ -148,37 +226,78 @@
   <div id="loading" class="loading">Loading data…</div>
   <div id="content" style="display: none;">
 
-    <div class="controls">
-      <div>
-        <label for="emp-select" style="display:block; margin-bottom:4px;">Employee</label>
-        <select id="emp-select"></select>
-      </div>
-      <div class="emp-context" id="emp-context">—</div>
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" data-admin-tab="unified">Monthly Payroll <span style="font-size:9px; color: var(--accent); margin-left: 6px;">●NEW</span></button>
+      <button class="admin-tab-btn" data-admin-tab="byemployee">By Employee (legacy detail)</button>
     </div>
 
-    <div class="ytd-row" id="ytd-row"></div>
+    <!-- ========== UNIFIED MONTHLY PAYROLL VIEW (NEW) ========== -->
+    <div class="admin-panel active" id="admin-panel-unified">
+      <div class="card" style="margin-bottom: 14px;">
+        <h2>Monthly Payroll · Single-Screen Entry</h2>
+        <p class="blurb">All employees on one screen. Pick the month you're entering for. Three prior months are shown as read-only context for cross-checking against Zoho. On quarter-end months, extra columns appear for Tom/Michael (Performance Revenue) and Hayley (CM/NP). Computed columns auto-calculate the figure you put into Xero.</p>
 
-    <div class="card">
-      <h2>Monthly Payroll Entries</h2>
-      <p class="blurb">Enter each month's <strong>GP Received</strong> (net of refunds) and <strong>Event GP Produced</strong>. The system auto-calculates commission using the employee's plan bands and monthly payout rules — you don't enter the $ paid, it's computed for you. Rows you've filled appear with a 🔒 and lock that month on the employee dashboard (read-only for the employee). Notes are a free-text audit trail.</p>
-      <div style="overflow-x: auto;">
-        <table class="payroll" id="payroll-table">
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th class="num">GP Received<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Net of refunds</small></th>
-              <th class="num">Event GP<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Produced</small></th>
-              <th class="num" style="background:#f5faf7;">GP Commission<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · ex super</small></th>
-              <th class="num" style="background:#f5faf7;">Production<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · ex super</small></th>
-              <th class="num" style="background:#f5faf7;">Pay this month<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Ex super — enter into Xero</small></th>
-              <th>Notes</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="payroll-body"></tbody>
-        </table>
+        <div class="um-controls">
+          <label for="um-month-select" style="font-size:12px; color: var(--muted);">Pay cycle for:</label>
+          <select id="um-month-select" style="font-family: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; min-width: 160px;"></select>
+          <span class="um-period-label" id="um-period-label">—</span>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="unified-payroll" id="unified-table">
+            <thead id="unified-thead"></thead>
+            <tbody id="unified-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="um-legend">
+          <span class="key"><span class="swatch history"></span> Prior 3 months · read-only</span>
+          <span class="key"><span class="swatch current"></span> Current month · enter here</span>
+          <span class="key"><span class="swatch computed"></span> Computed · enter into Xero</span>
+          <span class="key"><span class="swatch qend"></span> Quarter-end only · Tom/Michael/Hayley</span>
+        </div>
+
+        <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Tip: any value you enter locks the matching month on that employee's dashboard. Clear a cell on the legacy view to unlock it. Hayley's plan reads quarterly CM/NP straight from the Company P&amp;L tab in the MEC overview — entries here are a quarter-end input that flows into her dashboard.</p>
       </div>
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Highlighted green columns are calculated automatically from the employee's plan. Clear a row to unlock that month on the employee dashboard.</p>
+
+      <!-- Quarter-end summary -->
+      <div class="card" id="um-quarter-summary" style="display:none;"></div>
+    </div>
+
+    <!-- ========== LEGACY BY-EMPLOYEE VIEW ========== -->
+    <div class="admin-panel" id="admin-panel-byemployee">
+      <div class="controls">
+        <div>
+          <label for="emp-select" style="display:block; margin-bottom:4px;">Employee</label>
+          <select id="emp-select"></select>
+        </div>
+        <div class="emp-context" id="emp-context">—</div>
+      </div>
+
+      <div class="ytd-row" id="ytd-row"></div>
+
+      <div class="card">
+        <h2>Monthly Payroll Entries</h2>
+        <p class="blurb">Enter each month's <strong>GP Received</strong> (net of refunds) and <strong>Event GP Produced</strong>. The system auto-calculates commission using the employee's plan bands and monthly payout rules — you don't enter the $ paid, it's computed for you. Rows you've filled appear with a 🔒 and lock that month on the employee dashboard (read-only for the employee). Notes are a free-text audit trail.</p>
+        <div style="overflow-x: auto;">
+          <table class="payroll" id="payroll-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">GP Received<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Net of refunds</small></th>
+                <th class="num">Event GP<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Produced</small></th>
+                <th class="num" style="background:#f5faf7;">GP Commission<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · ex super</small></th>
+                <th class="num" style="background:#f5faf7;">Production<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · ex super</small></th>
+                <th class="num" style="background:#f5faf7;">Pay this month<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Ex super — enter into Xero</small></th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="payroll-body"></tbody>
+          </table>
+        </div>
+        <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Highlighted green columns are calculated automatically from the employee's plan. Clear a row to unlock that month on the employee dashboard.</p>
+      </div>
     </div>
 
   </div>
@@ -334,7 +453,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v2';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v3';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -432,11 +551,25 @@ async function load() {
     $('#content').style.display = 'block';
     $('#meta-sub').textContent = `${data.meta.companyName} · Actuals for payroll — last edited ${data.meta.effectiveDate}`;
     populateEmployeeDropdown();
+    initUnifiedView();
+    wireAdminTabs();
     renderGhStatus();
   } catch (err) {
     $('#loading').style.display = 'none';
     $('#error-slot').innerHTML = `<div class="error-banner"><strong>Could not load data.</strong> ${err.message}</div>`;
   }
+}
+
+function wireAdminTabs() {
+  document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('admin-panel-' + btn.dataset.adminTab);
+      if (target) target.classList.add('active');
+    });
+  });
 }
 
 function populateEmployeeDropdown() {
@@ -656,6 +789,274 @@ function setDirty(v = true) {
   $('#save-status').innerHTML = v
     ? '● Unsaved changes'
     : 'GitHub: <span id="gh-status">' + (getGhSettings()?.pat ? 'connected' : 'not connected') + '</span>';
+}
+
+/* ============================================================
+   UNIFIED MONTHLY PAYROLL VIEW (NEW)
+   - One screen, all employees as rows
+   - Pick the active month from dropdown
+   - 3 prior months shown read-only for cross-check
+   - Quarter-end columns appear on Mar/Jun/Sep/Dec for Tom/Michael (Performance Revenue) + Hayley (CM/NP)
+   ============================================================ */
+
+const QUARTER_END_LABELS = ['Mar', 'Jun', 'Sep', 'Dec'];
+
+function isQuarterEndMonth(label) {
+  // label like "Apr 2026" — strip year, take first 3 chars
+  if (!label) return false;
+  const m = label.trim().slice(0, 3);
+  return QUARTER_END_LABELS.includes(m);
+}
+
+function getEmployeeKind(emp) {
+  if (!emp || emp.placeholder) return 'placeholder';
+  const id = (emp.id || '').toLowerCase();
+  if (id === 'hayley') return 'gm';
+  if (id === 'tom' || id === 'michael') return 'performer';
+  return 'sales';
+}
+
+function ensureExtendedActuals(emp) {
+  // Make sure each actualPayout slot has the new fields used by performer/gm rows.
+  const arr = ensureActualPayouts(emp);
+  arr.forEach(p => {
+    if (!('performanceRev' in p)) p.performanceRev = null;
+    if (!('quarterlyCM' in p)) p.quarterlyCM = null;
+    if (!('quarterlyNP' in p)) p.quarterlyNP = null;
+  });
+  return arr;
+}
+
+function getMonthLabels() {
+  // Use the first non-placeholder employee's actualPayouts months as canonical
+  const ref = data.employees.find(e => !e.placeholder && Array.isArray(e.actualPayouts) && e.actualPayouts.length === 12);
+  if (ref) return ref.actualPayouts.map(m => m.month);
+  // Fallback — fabricate Apr-Mar fiscal labels from current year
+  const now = new Date();
+  const fyStart = now.getMonth() < 3 ? now.getFullYear() - 1 : now.getFullYear();
+  const months = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+  return months.map((m, i) => `${m} ${i < 9 ? fyStart : fyStart + 1}`);
+}
+
+function initUnifiedView() {
+  // Ensure every employee has the extended actuals fields
+  data.employees.forEach(e => { if (!e.placeholder) ensureExtendedActuals(e); });
+
+  const monthLabels = getMonthLabels();
+  // Default selected month: first non-future month with a value, otherwise first month
+  let defaultIdx = 0;
+  for (let i = monthLabels.length - 1; i >= 0; i--) {
+    const anyFilled = data.employees.some(e => {
+      const ap = e.actualPayouts && e.actualPayouts[i];
+      return ap && ((ap.gpReceived != null && ap.gpReceived !== '') || (ap.eventGP != null && ap.eventGP !== '') || (ap.performanceRev != null && ap.performanceRev !== '') || (ap.quarterlyCM != null && ap.quarterlyCM !== ''));
+    });
+    if (anyFilled) { defaultIdx = Math.min(i + 1, monthLabels.length - 1); break; }
+  }
+
+  const sel = document.getElementById('um-month-select');
+  sel.innerHTML = monthLabels.map((m, i) => `<option value="${i}">${m}${isQuarterEndMonth(m) ? ' · Quarter End' : ''}</option>`).join('');
+  sel.value = String(defaultIdx);
+  sel.addEventListener('change', () => renderUnifiedView(+sel.value));
+
+  renderUnifiedView(defaultIdx);
+}
+
+function renderUnifiedView(currentIdx) {
+  const monthLabels = getMonthLabels();
+  const isQ = isQuarterEndMonth(monthLabels[currentIdx]);
+
+  // Period summary label
+  const startIdx = Math.max(0, currentIdx - 3);
+  document.getElementById('um-period-label').textContent =
+    `Showing ${monthLabels[startIdx]} → ${monthLabels[currentIdx]} · ${isQ ? 'Quarter-end inputs visible' : 'Monthly inputs only'}`;
+
+  // Header row(s)
+  const historyMonths = [];
+  for (let i = startIdx; i < currentIdx; i++) historyMonths.push({ idx: i, label: monthLabels[i] });
+
+  let head = `<tr>
+    <th rowspan="2" style="width:130px;">Employee</th>`;
+  // History month group (3 prior)
+  if (historyMonths.length) {
+    head += `<th colspan="${historyMonths.length}" class="history" style="text-align:center;">Prior ${historyMonths.length} mo · GP Received (read-only)</th>`;
+  }
+  // Current month
+  head += `<th colspan="2" class="current" style="text-align:center;">${monthLabels[currentIdx]} · Enter</th>`;
+  if (isQ) {
+    head += `<th colspan="3" class="qend" style="text-align:center;">${monthLabels[currentIdx]} · Quarter-End (Performer + GM)</th>`;
+  }
+  head += `<th rowspan="2" class="computed num" style="width:110px;">Pay this Cycle<br><small style="font-size:8px; color: var(--faint); font-weight:400;">ex super → Xero</small></th>`;
+  head += `</tr><tr>`;
+  historyMonths.forEach(h => {
+    head += `<th class="history num" style="width:90px;">${h.label.slice(0, 3)}</th>`;
+  });
+  head += `<th class="current num" style="width:90px;">GP Received</th>`;
+  head += `<th class="current num" style="width:90px;">Event GP</th>`;
+  if (isQ) {
+    head += `<th class="qend num" style="width:90px;">Perf. Rev<br><small style="font-size:8px; color:var(--muted); font-weight:400;">Tom/Michael</small></th>`;
+    head += `<th class="qend num" style="width:90px;">CM<br><small style="font-size:8px; color:var(--muted); font-weight:400;">Hayley</small></th>`;
+    head += `<th class="qend num" style="width:90px;">NP<br><small style="font-size:8px; color:var(--muted); font-weight:400;">Hayley</small></th>`;
+  }
+  head += `</tr>`;
+  document.getElementById('unified-thead').innerHTML = head;
+
+  // Body rows — one per employee
+  const tbody = document.getElementById('unified-tbody');
+  tbody.innerHTML = '';
+
+  data.employees.filter(e => !e.placeholder).forEach(emp => {
+    const kind = getEmployeeKind(emp);
+    const ap = ensureExtendedActuals(emp);
+
+    const tr = document.createElement('tr');
+    tr.className = kind === 'gm' ? 'gm-row' : (kind === 'performer' ? 'perf-row' : 'sales-row');
+    let cells = `<td class="emp-cell">${emp.name.split(' ')[0]} <span class="role">${emp.roleShort || emp.role || ''}</span></td>`;
+
+    // History columns: GP Received per month (or appropriate metric per role)
+    historyMonths.forEach(h => {
+      const ap_h = ap[h.idx] || {};
+      let val;
+      if (kind === 'gm') {
+        // Hayley: only show CM/NP at quarter-end months in history
+        val = isQuarterEndMonth(h.label) && ap_h.quarterlyCM != null ? `CM ${fmtMoney(ap_h.quarterlyCM)}` : '—';
+      } else if (kind === 'performer') {
+        val = isQuarterEndMonth(h.label) && ap_h.performanceRev != null ? fmtMoney(ap_h.performanceRev) : '—';
+      } else {
+        val = ap_h.gpReceived != null && ap_h.gpReceived !== '' ? fmtMoney(ap_h.gpReceived) : '—';
+      }
+      const naClass = (kind === 'gm' || kind === 'performer') && !isQuarterEndMonth(h.label) ? ' na' : '';
+      cells += `<td class="num history${naClass}">${val}</td>`;
+    });
+
+    // Current month: GP Received + Event GP (sales only — performer/gm get NA on these and use Q-end columns)
+    const cap = ap[currentIdx] || {};
+    if (kind === 'sales') {
+      cells += `<td class="num current input-cell"><input type="text" inputmode="numeric" data-um-emp="${emp.id}" data-um-idx="${currentIdx}" data-um-field="gpReceived" value="${cap.gpReceived != null ? fmtNum(cap.gpReceived) : ''}" placeholder="0"></td>`;
+      cells += `<td class="num current input-cell"><input type="text" inputmode="numeric" data-um-emp="${emp.id}" data-um-idx="${currentIdx}" data-um-field="eventGP" value="${cap.eventGP != null ? fmtNum(cap.eventGP) : ''}" placeholder="0"></td>`;
+    } else {
+      cells += `<td class="num current" style="color: var(--faint); font-style: italic; font-size: 10px;">paid quarterly</td>`;
+      cells += `<td class="num current" style="color: var(--faint); font-style: italic; font-size: 10px;">—</td>`;
+    }
+
+    // Quarter-end columns
+    if (isQ) {
+      // Performance Revenue — only Tom/Michael
+      if (kind === 'performer') {
+        cells += `<td class="num qend input-cell"><input type="text" inputmode="numeric" data-um-emp="${emp.id}" data-um-idx="${currentIdx}" data-um-field="performanceRev" value="${cap.performanceRev != null ? fmtNum(cap.performanceRev) : ''}" placeholder="0"></td>`;
+      } else {
+        cells += `<td class="num qend" style="color: var(--faint); font-style: italic; font-size: 10px;">n/a</td>`;
+      }
+      // CM + NP — only Hayley
+      if (kind === 'gm') {
+        cells += `<td class="num qend input-cell"><input type="text" inputmode="numeric" data-um-emp="${emp.id}" data-um-idx="${currentIdx}" data-um-field="quarterlyCM" value="${cap.quarterlyCM != null ? fmtNum(cap.quarterlyCM) : ''}" placeholder="0"></td>`;
+        cells += `<td class="num qend input-cell"><input type="text" inputmode="numeric" data-um-emp="${emp.id}" data-um-idx="${currentIdx}" data-um-field="quarterlyNP" value="${cap.quarterlyNP != null ? fmtNum(cap.quarterlyNP) : ''}" placeholder="0"></td>`;
+      } else {
+        cells += `<td class="num qend" style="color: var(--faint); font-style: italic; font-size: 10px;">n/a</td>`;
+        cells += `<td class="num qend" style="color: var(--faint); font-style: italic; font-size: 10px;">n/a</td>`;
+      }
+    }
+
+    // Pay this cycle — computed
+    const payCell = computeUnifiedPayCell(emp, currentIdx);
+    cells += `<td class="num computed" data-um-pay="${emp.id}">${payCell}</td>`;
+
+    tr.innerHTML = cells;
+    tbody.appendChild(tr);
+  });
+
+  // Wire input handlers (delegated)
+  tbody.querySelectorAll('input[data-um-emp]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const empId = inp.dataset.umEmp;
+      const idx = +inp.dataset.umIdx;
+      const field = inp.dataset.umField;
+      const empNow = data.employees.find(e => e.id === empId);
+      ensureExtendedActuals(empNow);
+      const val = parseNum(inp.value);
+      empNow.actualPayouts[idx][field] = val;
+      if (val != null) inp.value = fmtNum(val);
+      setDirty();
+      // Recompute Pay cell for this row
+      const payCell = inp.closest('tr').querySelector('[data-um-pay]');
+      if (payCell) payCell.innerHTML = computeUnifiedPayCell(empNow, idx);
+    });
+  });
+}
+
+// Compute the cash-out figure for "Pay this cycle" cell on the unified view.
+// Sales reps: per the existing computePayouts() (monthly with quarterly true-up).
+// Performer (Tom/Michael): on quarter-end months, run revenue bands on performanceRev.
+// GM (Hayley): on quarter-end months, run CM bands + NP kicker (mirrors hayley dashboard math).
+function computeUnifiedPayCell(emp, idx) {
+  const kind = getEmployeeKind(emp);
+  const monthLabel = (emp.actualPayouts[idx] || {}).month || '';
+  const isQ = isQuarterEndMonth(monthLabel);
+  const sr = data.globals.superRate || 0.12;
+
+  if (kind === 'sales') {
+    const { rows } = computePayouts(emp);
+    const r = rows[idx];
+    return r && r.cashEx > 0 ? fmtMoney(r.cashEx) : '—';
+  }
+  if (kind === 'performer') {
+    if (!isQ) return '<span style="color: var(--faint); font-style: italic;">paid Q-end</span>';
+    const ap = emp.actualPayouts[idx] || {};
+    const pr = +ap.performanceRev || 0;
+    if (!pr) return '—';
+    const plan = data.planTypes[emp.planType];
+    if (!plan || !Array.isArray(plan.bands)) return '—';
+    let inc = 0;
+    const sorted = [...plan.bands].sort((a, b) => a.threshold - b.threshold);
+    for (let i = 0; i < sorted.length; i++) {
+      const b = sorted[i];
+      const next = i + 1 < sorted.length ? sorted[i + 1].threshold : Infinity;
+      inc += Math.max(0, Math.min(pr, next) - b.threshold) * b.rate;
+    }
+    if (Array.isArray(plan.flatBonuses)) {
+      plan.flatBonuses.forEach(k => {
+        const t = k.threshold;
+        const rf = k.rampFromRevenue;
+        if (rf && rf < t) {
+          inc += pr <= rf ? 0 : (pr >= t ? k.amount : k.amount * (pr - rf) / (t - rf));
+        } else if (pr >= t) inc += k.amount;
+      });
+    }
+    return fmtMoney(inc / (1 + sr));
+  }
+  if (kind === 'gm') {
+    if (!isQ) return '<span style="color: var(--faint); font-style: italic;">paid Q-end</span>';
+    const ap = emp.actualPayouts[idx] || {};
+    const cm = +ap.quarterlyCM || 0;
+    const np = +ap.quarterlyNP || 0;
+    if (!cm && !np) return '—';
+    const plan = data.planTypes[emp.planType];
+    if (!plan) return '—';
+    let inc = 0;
+    // CM bands (quarterly thresholds — assume plan.cmBands are annualised, so /4)
+    if (Array.isArray(plan.cmBands) && cm > 0) {
+      const baseline = (plan.cmBaseline || 0) / 4;
+      const eligible = Math.max(0, cm - baseline);
+      const sorted = [...plan.cmBands].sort((a, b) => a.threshold - b.threshold);
+      for (let i = 0; i < sorted.length; i++) {
+        const b = sorted[i];
+        const t = b.threshold / 4;
+        const next = i + 1 < sorted.length ? sorted[i + 1].threshold / 4 : Infinity;
+        inc += Math.max(0, Math.min(cm, next) - t) * b.rate;
+      }
+    }
+    // NP kicker bands
+    if (Array.isArray(plan.npBands) && np > 0) {
+      const sorted = [...plan.npBands].sort((a, b) => a.threshold - b.threshold);
+      for (let i = 0; i < sorted.length; i++) {
+        const b = sorted[i];
+        const t = b.threshold / 4;
+        const next = i + 1 < sorted.length ? sorted[i + 1].threshold / 4 : Infinity;
+        inc += Math.max(0, Math.min(np, next) - t) * b.rate;
+      }
+    }
+    return inc > 0 ? fmtMoney(inc / (1 + sr)) : '—';
+  }
+  return '—';
 }
 
 /* ===== GitHub save flow ===== */

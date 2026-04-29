@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="0">
 <title>Compensation Dashboard · Michael Kourkov</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1132,6 +1135,9 @@
 
   <!-- Payouts -->
   <section class="panel" id="panel-payouts">
+    <!-- Payroll-locked actuals (populated from admin entries) -->
+    <div id="payroll-locked-card"></div>
+
     <div class="banner info" id="payout-banner">
       <span class="dot"></span>
       <span id="payout-banner-text">—</span>
@@ -2050,6 +2056,104 @@ function update() {
   renderProjects(r);
   renderKpiTab(r);
   renderSuperCard(r);
+
+  // Live-refresh the OTE card on the Payouts & Super tab (was only rendered
+  // once on init and never updated).
+  if (typeof refreshOTECard === 'function') refreshOTECard(r);
+
+  // Render the payroll-locked quarterly actuals card (read-only display of
+  // anything Hayley/payroll has entered into admin for this employee).
+  if (typeof renderPayrollLockedCard === 'function') renderPayrollLockedCard();
+}
+
+// ----- Payroll-locked card: display admin-entered quarterly actuals (read-only) -----
+function renderPayrollLockedCard() {
+  const wrap = document.getElementById('payroll-locked-card');
+  if (!wrap) return;
+  const ap = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
+  const QUARTER_ENDS = ['Mar', 'Jun', 'Sep', 'Dec'];
+  const isQEnd = (label) => label && QUARTER_ENDS.includes(label.trim().slice(0, 3));
+
+  const rows = ap
+    .map((p, i) => ({ i, p, qEnd: isQEnd(p.month) }))
+    .filter(x => x.qEnd && x.p.performanceRev != null && x.p.performanceRev !== '');
+
+  if (!rows.length) {
+    wrap.innerHTML = `
+      <div class="card" style="background: #fafaf7; border: 1px dashed var(--border); margin-bottom: 18px; padding: 14px 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <div>
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">🔒 Payroll-Locked Quarters</div>
+            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Awaiting payroll entry — your actual quarterly performance revenue will appear here once Hayley enters it. Until then, the slider above is your scenario tool.</div>
+          </div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">0 of 4 quarters</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const sr = (data.globals && data.globals.superRate) || 0.12;
+  const planRef = data.planTypes[emp.planType];
+  let totalPay = 0;
+
+  const rowsHtml = rows.map(({ p }) => {
+    const pr = +p.performanceRev || 0;
+    let inc = 0;
+    if (planRef && Array.isArray(planRef.bands)) {
+      const sorted = [...planRef.bands].sort((a, b) => a.threshold - b.threshold);
+      for (let bi = 0; bi < sorted.length; bi++) {
+        const b = sorted[bi];
+        const next = bi + 1 < sorted.length ? sorted[bi + 1].threshold : Infinity;
+        inc += Math.max(0, Math.min(pr, next) - b.threshold) * b.rate;
+      }
+      // Inline cliff/ramp logic (in case milestoneAccrued helper not defined here)
+      if (Array.isArray(planRef.flatBonuses)) {
+        planRef.flatBonuses.forEach(k => {
+          const t = +k.threshold || 0;
+          const rf = +k.rampFromRevenue || null;
+          if (rf && rf < t) {
+            if (pr <= rf) {} else if (pr >= t) inc += k.amount;
+            else inc += k.amount * (pr - rf) / (t - rf);
+          } else if (pr >= t) inc += k.amount;
+        });
+      }
+    }
+    const ex = inc / (1 + sr);
+    totalPay += ex;
+    return `<tr>
+      <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${p.month}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${fmtMoney(pr)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(ex)}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="card" style="background: linear-gradient(135deg, #f5faf7 0%, #ffffff 100%); border-left: 3px solid var(--accent); margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 8px;">
+        <div>
+          <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🔒 Payroll-Locked Quarters</div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quarterly actuals entered by payroll. These figures are locked — your slider above is for modelling future quarters only.</div>
+        </div>
+        <div style="font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;">${rows.length} of 4 quarters</div>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border);">
+            <th style="text-align: left; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Quarter ending</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Performance Revenue</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Pay (ex super)</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+        <tfoot>
+          <tr style="border-top: 2px solid var(--ink);">
+            <td style="padding: 8px 10px; font-weight: 700;">YTD Total Paid</td>
+            <td></td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney(totalPay)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
 }
 
 function renderBreakdown(r) {

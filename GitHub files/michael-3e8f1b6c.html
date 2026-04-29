@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="0">
 <title>Compensation Dashboard · Michael Kourkov</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -607,6 +610,21 @@
   .gp-floater-chip { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: #fff; color: var(--muted); cursor: pointer; font-family: var(--mono); transition: all 0.12s; line-height: 1.4; }
   .gp-floater-chip:hover { border-color: var(--muted); background: #fafaf7; color: var(--ink); }
   .gp-floater-chip.target { color: var(--accent); border-color: var(--accent); background: #eaf3fb; }
+  /* Project bonus mini-pills row inside the floater */
+  .gp-floater-projrow {
+    display: grid; grid-template-columns: 140px 1fr;
+    gap: 12px; align-items: center; padding: 4px 0; margin-top: 2px;
+  }
+  .gp-floater-projrow .pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .gp-floater-projpill {
+    font-size: 10px; padding: 4px 9px; border-radius: 999px;
+    border: 1px solid var(--border); background: #fff; color: var(--muted);
+    cursor: pointer; font-family: var(--mono); transition: all 0.12s;
+    font-weight: 600; letter-spacing: 0.02em;
+  }
+  .gp-floater-projpill:hover { border-color: var(--accent); color: var(--ink); }
+  .gp-floater-projpill.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .gp-floater-projpill.on::before { content: '✓ '; }
   .gp-floater-footer { margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: #fafaf7; display: flex; justify-content: space-between; align-items: baseline; }
   .gp-floater-footer .ftr-label { font-size: 11px; color: var(--muted); }
   .gp-floater-footer .ftr-value { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--navy); }
@@ -1087,6 +1105,9 @@
 
   <!-- Payouts -->
   <section class="panel" id="panel-payouts">
+    <!-- Payroll-locked actuals (populated from admin entries) -->
+    <div id="payroll-locked-card"></div>
+
     <div class="banner info" id="payout-banner">
       <span class="dot"></span>
       <span id="payout-banner-text">—</span>
@@ -1229,6 +1250,12 @@
     <span class="label-mini">Performance Revenue <span class="help-icon" data-tip="Annual performance revenue brought into the business from your personal gigs">?</span></span>
     <input type="range" id="gp-floater-slider">
     <span class="value" id="gp-floater-value">—</span>
+  </div>
+
+  <!-- Project bonus quick toggles (live-render based on assigned projects) -->
+  <div class="gp-floater-projrow" id="gpf-projrow">
+    <span class="label-mini">Project Bonuses <span class="help-icon" data-tip="Tap a pill to include that project bonus in the Total Package below. Same as the tickboxes on the Projects tab — kept in sync.">?</span></span>
+    <div class="pills" id="gpf-projpills"></div>
   </div>
 
   <div class="gp-floater-footer">
@@ -1710,9 +1737,65 @@ function toggleProject(id, checked) {
   // Update visual state of label
   const lbl = document.querySelector(`.project-toggle input[id="proj-${id}"]`)?.closest('.project-toggle');
   if (lbl) lbl.classList.toggle('checked', checked);
+  // Sync the floater pill if present (bidirectional)
+  const pill = document.querySelector(`.gp-floater-projpill[data-pid="${id}"]`);
+  if (pill) pill.classList.toggle('on', checked);
+  // Mirror checked state on the Projects-tab tickbox if it has its own input
+  const tabBox = document.querySelector(`#panel-projects input[type="checkbox"][data-pid="${id}"]`);
+  if (tabBox) tabBox.checked = checked;
   update();
+  if (typeof paintSimpleFloater === 'function') paintSimpleFloater();
 }
 window.toggleProject = toggleProject;
+
+// Short labels for the floater pills — fall back to first word of project name.
+const PROJECT_PILL_LABELS = {
+  'rostering_system': 'Roster',
+  'quoting_tool': 'Quoting',
+  'client_portal': 'Portal',
+};
+function _shortPillLabel(p) {
+  if (PROJECT_PILL_LABELS[p.id]) return PROJECT_PILL_LABELS[p.id];
+  // Fallback: first significant word of the project name
+  return (p.name || '').split(/[\s-]/)[0] || 'Bonus';
+}
+
+// Render the project-pill row inside the floater + repaint on/off state.
+// Idempotent: builds buttons once, then just repaints classes on subsequent calls.
+function paintFloaterProjectPills() {
+  const wrap = document.getElementById('gpf-projpills');
+  const row = document.getElementById('gpf-projrow');
+  if (!wrap || !row) return;
+  if (typeof myProjects === 'undefined' || !Array.isArray(myProjects) || myProjects.length === 0) {
+    row.style.display = 'none';
+    return;
+  }
+  row.style.display = '';
+  if (!wrap.dataset.built) {
+    wrap.innerHTML = myProjects.map(p => {
+      const label = _shortPillLabel(p);
+      const tip = `${p.name} · ${p.bonusIncludesSuper ? fmtMoney(p.bonusAmount) + ' incl. super' : fmtMoney(p.bonusAmount) + ' + super'}`;
+      return `<button type="button" class="gp-floater-projpill" data-pid="${p.id}" title="${tip}">${label}</button>`;
+    }).join('');
+    wrap.dataset.built = '1';
+    wrap.querySelectorAll('.gp-floater-projpill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.pid;
+        const newState = !(scenario.projectsEnabled[id] !== false);
+        // Reuse toggleProject so all the sync logic fires (main page + projects tab + update)
+        toggleProject(id, newState);
+        // Make sure the main-page checkbox visual matches
+        const main = document.getElementById('proj-' + id);
+        if (main) main.checked = newState;
+      });
+    });
+  }
+  // Repaint on/off classes from current scenario state
+  wrap.querySelectorAll('.gp-floater-projpill').forEach(btn => {
+    const id = btn.dataset.pid;
+    btn.classList.toggle('on', scenario.projectsEnabled[id] !== false);
+  });
+}
 
 function renderQuarterInputs() {
   // Quarters start End of June 2026 (next quarter end) — FY26 Q1 ends Jun, Q2 Sep, Q3 Dec, Q4 Mar 2027.
@@ -1791,15 +1874,35 @@ function calcBandCommission(revenue, bands) {
       partial: revenue > b.threshold && revenue < nextThreshold
     });
   }
-  // Flat milestone bonuses ("kickers"): fire when metric crosses a threshold (e.g. $5k at $100k for Michael).
-  // Adds to totalComm but does NOT push as a breakdown row — kept off the bands table per Nathan
-  // ("just 2 bands for Michael now"). Kickers are surfaced separately as a Milestone Bonus callout.
+  // Flat milestone bonuses ("kickers"). Two modes:
+  //  • Cliff (default): fires the full amount when revenue crosses k.threshold.
+  //  • Ramp: if k.rampFromRevenue is set, the amount accrues LINEARLY from $0 at
+  //    rampFromRevenue to k.amount at k.threshold (no cliff, no demoraliser).
+  //    e.g. for Michael: $0 at $70k → $5k at $100k. At $85k he'd see $2,500 accrued.
+  //  Kickers stay off the bands table; they're surfaced in the Milestone Bonus callout.
   if (plan && Array.isArray(plan.flatBonuses)) {
     plan.flatBonuses.forEach(k => {
-      if (revenue >= k.threshold) totalComm += k.amount;
+      totalComm += milestoneAccrued(revenue, k);
     });
   }
   return { total: totalComm, breakdown };
+}
+
+// Pure helper used by both the full calc and the floater. Returns the dollar amount
+// of a milestone bonus accrued at a given revenue level, respecting ramp vs cliff.
+function milestoneAccrued(revenue, kicker) {
+  if (!kicker || typeof kicker.amount !== 'number') return 0;
+  const threshold = +kicker.threshold || 0;
+  const rampFrom = +kicker.rampFromRevenue || null;
+  if (rampFrom && rampFrom < threshold) {
+    // Linear ramp from rampFrom→threshold mapping to 0→amount.
+    if (revenue <= rampFrom) return 0;
+    if (revenue >= threshold) return kicker.amount;
+    const frac = (revenue - rampFrom) / (threshold - rampFrom);
+    return kicker.amount * frac;
+  }
+  // Cliff (legacy)
+  return revenue >= threshold ? kicker.amount : 0;
 }
 
 function calcAll() {
@@ -2016,24 +2119,65 @@ function update() {
     </tr>`;
   }).join('');
 
-  // Milestone Bonus callout — surfaces plan.flatBonuses (e.g. Michael's $5k at $100k)
-  // outside of the bands table since these are flat amounts, not band rates.
+  // Milestone Bonus callout — surfaces plan.flatBonuses with ramp-aware progress.
+  // Renders a progress bar showing how much of the bonus is currently accrued.
   const milestone = document.getElementById('milestone-bonus-callout');
   if (milestone && Array.isArray(plan.flatBonuses) && plan.flatBonuses.length > 0) {
     milestone.innerHTML = plan.flatBonuses.map(k => {
-      const reached = scenario.revenue >= k.threshold;
-      const bg = reached ? 'linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%)' : '#fafaf7';
-      const border = reached ? '1px solid #6fc792' : '1px solid var(--border)';
-      const colour = reached ? '#1f5e3c' : 'var(--muted)';
-      const icon = reached ? '✓' : '🎯';
-      const status = reached ? 'Unlocked at your current scenario' : `Unlocked when revenue reaches ${fmtMoney(k.threshold)}`;
-      return `<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: ${bg}; border: ${border}; border-radius: 8px;">
-        <div>
-          <div style="font-size: 11px; color: ${colour}; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">${icon} Milestone Bonus</div>
-          <div style="font-size: 13px; color: var(--ink); margin-top: 2px;">${k.label || ''}</div>
-          <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">${status}</div>
+      const accrued = milestoneAccrued(scenario.revenue, k);
+      const fullyEarned = accrued >= k.amount - 0.01;
+      const isRamp = !!(k.rampFromRevenue && k.rampFromRevenue < k.threshold);
+      const rampStart = +k.rampFromRevenue || 0;
+      const rampEnd = +k.threshold || 0;
+      // Progress fraction (0..1) — for ramps, smoothly fills; for cliffs, 0 or 1.
+      const fillFrac = k.amount > 0 ? Math.max(0, Math.min(1, accrued / k.amount)) : 0;
+
+      const bg = fullyEarned ? 'linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%)' : '#fafaf7';
+      const border = fullyEarned ? '1px solid #6fc792' : '1px solid var(--border)';
+      const colour = fullyEarned ? '#1f5e3c' : (accrued > 0 ? 'var(--ink)' : 'var(--muted)');
+      const icon = fullyEarned ? '✓' : (accrued > 0 ? '⚡' : '🎯');
+
+      let status;
+      if (isRamp) {
+        if (fullyEarned) {
+          status = `Fully unlocked — you crossed ${fmtMoney(rampEnd)} revenue.`;
+        } else if (scenario.revenue <= rampStart) {
+          status = `Bonus accrues linearly from ${fmtMoney(rampStart)} → ${fmtMoney(rampEnd)} revenue. Currently $0.`;
+        } else {
+          const remaining = k.amount - accrued;
+          const toGo = rampEnd - scenario.revenue;
+          status = `${fmtMoney(accrued)} of ${fmtMoney(k.amount)} accrued. ${fmtMoney(remaining)} left — earn ${fmtMoney(toGo)} more revenue to fully unlock.`;
+        }
+      } else {
+        status = fullyEarned ? 'Unlocked at your current scenario' : `Unlocks when revenue reaches ${fmtMoney(rampEnd)}`;
+      }
+
+      const rampHelp = isRamp
+        ? `<span class="help-icon" data-tip="Linear ramp from ${fmtMoney(rampStart)} (you get $0) to ${fmtMoney(rampEnd)} (you get the full ${fmtMoney(k.amount)}). Every dollar of revenue between counts — no all-or-nothing cliff." style="cursor: help; margin-left: 6px; font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 50%; padding: 1px 5px; font-weight: 600; background: #fff;">?</span>`
+        : '';
+
+      const fillColour = fullyEarned ? '#6fc792' : 'var(--accent)';
+      const progressBar = `
+        <div style="margin-top: 8px;">
+          <div style="height: 6px; background: rgba(0,0,0,0.06); border-radius: 999px; overflow: hidden;">
+            <div style="height: 100%; width: ${(fillFrac * 100).toFixed(1)}%; background: ${fillColour}; border-radius: 999px; transition: width 0.18s ease;"></div>
+          </div>
+          ${isRamp ? `<div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--faint); font-family: var(--mono); margin-top: 3px;"><span>${fmtMoney(rampStart)}</span><span>${fmtMoney(rampEnd)}</span></div>` : ''}
+        </div>`;
+
+      return `<div style="padding: 12px 16px; background: ${bg}; border: ${border}; border-radius: 8px; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+          <div style="flex: 1;">
+            <div style="font-size: 11px; color: ${colour}; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">${icon} Milestone Bonus${rampHelp}</div>
+            <div style="font-size: 13px; color: var(--ink); margin-top: 2px;">${k.label || ''}</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">${status}</div>
+          </div>
+          <div style="text-align: right; min-width: 100px;">
+            <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: ${colour};">${fmtMoney(accrued)}</div>
+            <div style="font-size: 10px; color: var(--muted); font-family: var(--mono);">of ${fmtMoney(k.amount)} max</div>
+          </div>
         </div>
-        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: ${colour};">${fmtMoney(k.amount)}</div>
+        ${progressBar}
       </div>`;
     }).join('');
   } else if (milestone) {
@@ -2047,6 +2191,99 @@ function update() {
   renderProjects(r);
   renderKpiTab(r);
   renderSuperCard(r);
+
+  // Live-refresh the OTE card on the Payouts & Super tab so Variable @ Current
+  // and OTE Total reflect the latest revenue + ticked projects (was only rendered
+  // once on init and never updated).
+  if (typeof refreshOTECard === 'function') refreshOTECard(r);
+
+  // Render the payroll-locked quarterly actuals card (read-only display of
+  // anything Hayley/payroll has entered into admin for this employee).
+  if (typeof renderPayrollLockedCard === 'function') renderPayrollLockedCard();
+}
+
+// ----- Payroll-locked card: display admin-entered quarterly actuals (read-only) -----
+function renderPayrollLockedCard() {
+  const wrap = document.getElementById('payroll-locked-card');
+  if (!wrap) return;
+  const ap = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
+  const QUARTER_ENDS = ['Mar', 'Jun', 'Sep', 'Dec'];
+  const isQEnd = (label) => label && QUARTER_ENDS.includes(label.trim().slice(0, 3));
+
+  // Performer-style: read performanceRev on quarter-end months
+  const rows = ap
+    .map((p, i) => ({ i, p, qEnd: isQEnd(p.month) }))
+    .filter(x => x.qEnd && x.p.performanceRev != null && x.p.performanceRev !== '');
+
+  if (!rows.length) {
+    wrap.innerHTML = `
+      <div class="card" style="background: #fafaf7; border: 1px dashed var(--border); margin-bottom: 18px; padding: 14px 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <div>
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">🔒 Payroll-Locked Quarters</div>
+            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Awaiting payroll entry — your actual quarterly performance revenue will appear here once Hayley enters it. Until then, the slider above is your scenario tool.</div>
+          </div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">0 of 4 quarters</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const sr = (data.globals && data.globals.superRate) || 0.12;
+  const planRef = data.planTypes[emp.planType];
+  let totalPay = 0;
+
+  const rowsHtml = rows.map(({ i, p }) => {
+    const pr = +p.performanceRev || 0;
+    // Recompute earned commission from bands + flatBonuses (ramp-aware) at this revenue
+    let inc = 0;
+    if (planRef && Array.isArray(planRef.bands)) {
+      const sorted = [...planRef.bands].sort((a, b) => a.threshold - b.threshold);
+      for (let bi = 0; bi < sorted.length; bi++) {
+        const b = sorted[bi];
+        const next = bi + 1 < sorted.length ? sorted[bi + 1].threshold : Infinity;
+        inc += Math.max(0, Math.min(pr, next) - b.threshold) * b.rate;
+      }
+      if (Array.isArray(planRef.flatBonuses)) {
+        planRef.flatBonuses.forEach(k => { inc += milestoneAccrued(pr, k); });
+      }
+    }
+    const ex = inc / (1 + sr);
+    totalPay += ex;
+    return `<tr>
+      <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${p.month}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${fmtMoney(pr)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(ex)}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="card" style="background: linear-gradient(135deg, #f5faf7 0%, #ffffff 100%); border-left: 3px solid var(--accent); margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 8px;">
+        <div>
+          <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🔒 Payroll-Locked Quarters</div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quarterly actuals entered by payroll. These figures are locked — your slider above is for modelling future quarters only.</div>
+        </div>
+        <div style="font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;">${rows.length} of 4 quarters</div>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border);">
+            <th style="text-align: left; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Quarter ending</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Performance Revenue</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Pay (ex super)</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+        <tfoot>
+          <tr style="border-top: 2px solid var(--ink);">
+            <td style="padding: 8px 10px; font-weight: 700;">YTD Total Paid</td>
+            <td></td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney(totalPay)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
 }
 
 function renderBreakdown(r) {
@@ -2403,11 +2640,10 @@ function commissionFromBandsRev(rev) {
     const next = i + 1 < sorted.length ? sorted[i + 1].threshold : Infinity;
     total += Math.max(0, Math.min(rev, next) - b.threshold) * b.rate;
   }
-  // Include flat milestone bonuses (e.g. Michael's $5k at $100k revenue) so the floater's
-  // commission line and the Total Package row match. Mirrors calcBandCommission().
+  // Include flat milestone bonuses with ramp/cliff logic — same as calcBandCommission.
   if (Array.isArray(plan.flatBonuses)) {
     plan.flatBonuses.forEach(k => {
-      if (rev >= k.threshold) total += k.amount;
+      total += milestoneAccrued(rev, k);
     });
   }
   return total;
@@ -2444,6 +2680,9 @@ function paintSimpleFloater() {
     });
   }
   const tv = document.getElementById('gpf-total-v'); if (tv) tv.textContent = fmtMoney(baseInc + comm + projBonusInc);
+  // Render/refresh the project pills inside the floater so their on/off state
+  // reflects the current scenario.projectsEnabled (kept in sync with main page).
+  paintFloaterProjectPills();
 }
 
 function wireSimpleFloater() {

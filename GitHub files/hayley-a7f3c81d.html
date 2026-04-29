@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="0">
 <title>Compensation Dashboard · Hayley Wilson</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -492,6 +495,9 @@
   </section>
 
   <section class="panel" id="panel-payouts">
+    <!-- Payroll-locked actuals (populated from admin entries) -->
+    <div id="payroll-locked-card"></div>
+
     <div class="banner info">
       <span class="dot"></span>
       <span id="payout-banner-text">Your commission is paid quarterly at 75%, with 25% held back for year-end reconciliation.</span>
@@ -1162,6 +1168,106 @@ function renderQuarterlyGrid() {
   });
 }
 
+// ----- Payroll-locked card: read CM/NP entries from admin (read-only display) -----
+function renderPayrollLockedCard() {
+  const wrap = document.getElementById('payroll-locked-card');
+  if (!wrap) return;
+  const ap = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
+  const QUARTER_ENDS = ['Mar', 'Jun', 'Sep', 'Dec'];
+  const isQEnd = (label) => label && QUARTER_ENDS.includes(label.trim().slice(0, 3));
+
+  const rows = ap
+    .map((p, i) => ({ i, p, qEnd: isQEnd(p.month) }))
+    .filter(x => x.qEnd && ((x.p.quarterlyCM != null && x.p.quarterlyCM !== '') || (x.p.quarterlyNP != null && x.p.quarterlyNP !== '')));
+
+  if (!rows.length) {
+    wrap.innerHTML = `
+      <div class="card" style="background: #fafaf7; border: 1px dashed var(--border); margin-bottom: 18px; padding: 14px 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <div>
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">🔒 Payroll-Locked Quarters</div>
+            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Awaiting payroll entry — once your quarterly Contribution Margin and Net Profit are entered into payroll admin, they'll show up here as locked actuals.</div>
+          </div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">0 of 4 quarters</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Compute the actual payout for each quarter using the same band logic as Hayley's plan.
+  const sr = (data.globals && data.globals.superRate) || 0.12;
+  const planRef = data.planTypes[emp.planType];
+  let totalPay = 0;
+
+  const calcQ = (cm, np) => {
+    if (!planRef) return 0;
+    let inc = 0;
+    if (Array.isArray(planRef.cmBands) && cm > 0) {
+      const sorted = [...planRef.cmBands].sort((a, b) => a.threshold - b.threshold);
+      for (let i = 0; i < sorted.length; i++) {
+        const b = sorted[i];
+        const t = b.threshold / 4;
+        const next = i + 1 < sorted.length ? sorted[i + 1].threshold / 4 : Infinity;
+        inc += Math.max(0, Math.min(cm, next) - t) * b.rate;
+      }
+    }
+    if (Array.isArray(planRef.npBands) && np > 0) {
+      const sorted = [...planRef.npBands].sort((a, b) => a.threshold - b.threshold);
+      for (let i = 0; i < sorted.length; i++) {
+        const b = sorted[i];
+        const t = b.threshold / 4;
+        const next = i + 1 < sorted.length ? sorted[i + 1].threshold / 4 : Infinity;
+        inc += Math.max(0, Math.min(np, next) - t) * b.rate;
+      }
+    }
+    return inc;
+  };
+
+  const rowsHtml = rows.map(({ p }) => {
+    const cm = +p.quarterlyCM || 0;
+    const np = +p.quarterlyNP || 0;
+    const inc = calcQ(cm, np);
+    const ex = inc / (1 + sr);
+    totalPay += ex;
+    return `<tr>
+      <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${p.month}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${cm > 0 ? fmtMoney(cm) : '—'}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${np > 0 ? fmtMoney(np) : '—'}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(ex)}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="card" style="background: linear-gradient(135deg, #f5faf7 0%, #ffffff 100%); border-left: 3px solid var(--accent); margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 8px;">
+        <div>
+          <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🔒 Payroll-Locked Quarters</div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quarterly CM / NP actuals entered by payroll. These are locked — your scenario inputs above are for modelling future quarters only.</div>
+        </div>
+        <div style="font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;">${rows.length} of 4 quarters</div>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border);">
+            <th style="text-align: left; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Quarter ending</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">CM</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">NP</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Pay (ex super)</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+        <tfoot>
+          <tr style="border-top: 2px solid var(--ink);">
+            <td style="padding: 8px 10px; font-weight: 700;">YTD Total Paid</td>
+            <td></td>
+            <td></td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney(totalPay)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
+}
+
 function computeQuarterlyPayouts() {
   const g = data.globals;
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, g.kpiScoreFloor || 0), g.kpiScoreCap || 1);
@@ -1315,6 +1421,9 @@ function update() {
   document.getElementById('spr-subtotal').textContent = fmtMoney(r.subtotalExSuper);
   document.getElementById('spr-super').textContent = `+ ${fmtMoney(r.totalSuper)}`;
   document.getElementById('spr-total').textContent = fmtMoney(r.totalPackage);
+
+  // Render the payroll-locked quarterly actuals card
+  if (typeof renderPayrollLockedCard === 'function') renderPayrollLockedCard();
 
   // ===== ACTUAL =====
   const { rows: qRows, totals: qTot, latestAnnual, holdback } = computeQuarterlyPayouts();
