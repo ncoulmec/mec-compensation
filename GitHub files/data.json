@@ -2485,10 +2485,6 @@
           "a": "Refunds aren't fun, but here's how it works: the refunded amount shows as negative cash on the booking in Zoho, and gets netted against your next commission cycle. Your base salary is never touched, and your paycheck never goes negative \u2014 at worst, that month's commission gets a bit thinner. We move on."
         },
         {
-          "q": "What if I Leave MEC Mid-quarter?",
-          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
-        },
-        {
           "q": "How is my Band Rate Calculated?",
           "a": "Your annual GP received climbs through bands like rungs on a ladder. The first chunk earns at rate A%, the next chunk at a higher rate, the next at higher again. The further you climb, the more you earn per dollar of GP \u2014 that's the whole point of a banded structure. The 'Effective Rate' shown on your dashboard is your blended average across every band you've already climbed through."
         },
@@ -2529,10 +2525,6 @@
           "a": "Payroll administration staff grab the actual data from Zoho, which is sent to Hayley for approval \u2014 then to Nathan for payment. The dashboard pulls automatically from Zoho (GP, payments) and Xero (P&L), so humans aren't hand-keying numbers \u2014 fewer fat-finger mistakes. If a figure looks off, raise it with Hayley or Nathan immediately and we'll trace the source together."
         },
         {
-          "q": "What Happens to my Commission if my Employment Ends?",
-          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
-        },
-        {
           "q": "Is There a Ceiling on the Bonus / Variable Comp?",
           "a": "No cap. The harder you push, the more you earn per dollar \u2014 that's deliberate. Bigger numbers mean higher band rates mean bigger commission cheques. If you want to chase a wild year, the system is built to reward it, not box you in."
         },
@@ -2551,6 +2543,14 @@
         {
           "q": "What About Bookings Confirmed Under the Old Plan? Will I Get Commission Twice?",
           "a": "No double-dipping in either direction. If your booking was confirmed BEFORE the new plan's effective date and you already received commission under the old 'paid on confirmation' scheme, that's it \u2014 you've been paid. The customer's eventual payment doesn't trigger a second commission. So a wedding booked in May 2026 (old plan, paid on confirmation) but happening in October 2026 \u2014 the eventual cash arriving in MEC's account doesn't pay you again. On the flip side: GP-attributed commission still flows on bookings CONFIRMED after the effective date, even if the event itself is later in the year. The cutoff is the booking confirmation date, not the event date."
+        },
+        {
+          "q": "What if I Leave MEC Mid-quarter?",
+          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
+        },
+        {
+          "q": "What Happens to my Commission if my Employment Ends?",
+          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
         }
       ]
     },
@@ -2578,10 +2578,6 @@
           "a": "Refunds aren't fun, but here's how it works: the refunded amount shows as negative cash on the booking in Zoho, and gets netted against your next commission cycle. Your base salary is never touched, and your paycheck never goes negative \u2014 at worst, that month's commission gets a bit thinner. We move on."
         },
         {
-          "q": "What if I Leave MEC Mid-quarter?",
-          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
-        },
-        {
           "q": "Why is my Plan Structured This Way (compared to a Sales Rep)?",
           "a": "You have less time on pure sales because you are also doing production. The bands are tuned to that reality \u2014 they pay slightly differently to a pure Sales rep. The production gate is the structural piece that ensures you get rewarded for both sides of your role."
         },
@@ -2600,10 +2596,6 @@
         {
           "q": "Who Calculates and Inputs the Actual Data?",
           "a": "Payroll administration staff grab the actual data from Zoho, which is sent to Hayley for approval \u2014 then to Nathan for payment. The dashboard pulls automatically from Zoho (GP, payments) and Xero (P&L), so humans aren't hand-keying numbers \u2014 fewer fat-finger mistakes. If a figure looks off, raise it with Hayley or Nathan immediately and we'll trace the source together."
-        },
-        {
-          "q": "What Happens to my Commission if my Employment Ends?",
-          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
         },
         {
           "q": "Is There a Ceiling on the Bonus / Variable Comp?",
@@ -2632,6 +2624,14 @@
         {
           "q": "What About Bookings Confirmed Under the Old Plan? Will I Get Commission Twice?",
           "a": "No double-dipping in either direction. If your booking was confirmed BEFORE the new plan's effective date and you already received commission under the old 'paid on confirmation' scheme, that's it \u2014 you've been paid. The customer's eventual payment doesn't trigger a second commission. So a wedding booked in May 2026 (old plan, paid on confirmation) but happening in October 2026 \u2014 the eventual cash arriving in MEC's account doesn't pay you again. On the flip side: GP-attributed commission still flows on bookings CONFIRMED after the effective date, even if the event itself is later in the year. The cutoff is the booking confirmation date, not the event date."
+        },
+        {
+          "q": "What if I Leave MEC Mid-quarter?",
+          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
+        },
+        {
+          "q": "What Happens to my Commission if my Employment Ends?",
+          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
         }
       ]
     },
@@ -2671,10 +2671,6 @@
           "a": "Your trailing-12-month CM smooths quarterly variation \u2014 one bad quarter does not zero you out, but a sustained drop will reduce variable comp. Your base salary does not move."
         },
         {
-          "q": "What if I Leave MEC Mid-quarter?",
-          "a": "Different to the sales team: because your variable comp is calculated <strong>quarterly</strong> (and the quarter hasn't fully landed yet), you need to be employed through the end of the quarter to be eligible for that quarter's commission. If you leave mid-quarter, that quarter's commission doesn't pay out. Anything from previous fully-completed quarters is yours and lands in your final paycheck. Base salary is never touched."
-        },
-        {
           "q": "What About KPIs \u2014 When Do They Affect my Pay?",
           "a": "Right now, nothing. KPIs are locked at 1.0\u00d7 for Year 1, so they don't move your variable comp at all. From Year 2, KPIs may apply a multiplier somewhere between 0.7\u00d7 and 1.3\u00d7 based on your scorecard. The full draft scorecard is on the KPIs tab \u2014 read it now, push back, ask questions. We'd rather sort it before activation than after."
         },
@@ -2689,10 +2685,6 @@
         {
           "q": "Who Calculates and Inputs the Actual Data?",
           "a": "Payroll administration staff grab the actual data from Zoho, which is sent to Hayley for approval \u2014 then to Nathan for payment. The dashboard pulls automatically from Zoho (GP, payments) and Xero (P&L), so humans aren't hand-keying numbers \u2014 fewer fat-finger mistakes. If a figure looks off, raise it with Hayley or Nathan immediately and we'll trace the source together."
-        },
-        {
-          "q": "What Happens to my Commission if my Employment Ends?",
-          "a": "Same logic as the mid-quarter answer above: any commission already paid out to you stays with you \u2014 no clawbacks. The current in-progress quarter only pays out if you're employed at the end of it (your plan is calculated on the full quarter's results). Any previous quarter's amounts already calculated but not yet paid land in your final paycheck. Base salary is never touched."
         },
         {
           "q": "Is There a Ceiling on the Bonus / Variable Comp?",
@@ -2721,6 +2713,14 @@
         {
           "q": "What About Bookings Confirmed Under the Old Plan? Will I Get Commission Twice?",
           "a": "No double-dipping in either direction. If your booking was confirmed BEFORE the new plan's effective date and you already received commission under the old 'paid on confirmation' scheme, that's it \u2014 you've been paid. The customer's eventual payment doesn't trigger a second commission. So a wedding booked in May 2026 (old plan, paid on confirmation) but happening in October 2026 \u2014 the eventual cash arriving in MEC's account doesn't pay you again. On the flip side: GP-attributed commission still flows on bookings CONFIRMED after the effective date, even if the event itself is later in the year. The cutoff is the booking confirmation date, not the event date."
+        },
+        {
+          "q": "What if I Leave MEC Mid-quarter?",
+          "a": "Different to the sales team: because your variable comp is calculated <strong>quarterly</strong> (and the quarter hasn't fully landed yet), you need to be employed through the end of the quarter to be eligible for that quarter's commission. If you leave mid-quarter, that quarter's commission doesn't pay out. Anything from previous fully-completed quarters is yours and lands in your final paycheck. Base salary is never touched."
+        },
+        {
+          "q": "What Happens to my Commission if my Employment Ends?",
+          "a": "Same logic as the mid-quarter answer above: any commission already paid out to you stays with you \u2014 no clawbacks. The current in-progress quarter only pays out if you're employed at the end of it (your plan is calculated on the full quarter's results). Any previous quarter's amounts already calculated but not yet paid land in your final paycheck. Base salary is never touched."
         }
       ]
     },
@@ -2742,10 +2742,6 @@
         {
           "q": "When Do I Get Paid Commission?",
           "a": "First fortnightly pay cycle of the <strong>quarter</strong> \u2014 once a quarter, not monthly. Your performance revenue is reconciled at quarter-end, so we wait for the full quarter to land before calculating and paying out. (Different cycle to the sales team \u2014 they're paid monthly.)"
-        },
-        {
-          "q": "What if I Leave MEC Mid-quarter?",
-          "a": "Different to the sales team: because your variable comp is calculated <strong>quarterly</strong> (and the quarter hasn't fully landed yet), you need to be employed through the end of the quarter to be eligible for that quarter's commission. If you leave mid-quarter, that quarter's commission doesn't pay out. Anything from previous fully-completed quarters is yours and lands in your final paycheck. Base salary is never touched."
         },
         {
           "q": "What if a Gig Gets Cancelled or Refunded?",
@@ -2776,16 +2772,20 @@
           "a": "Payroll administration staff grab the actual data from Zoho, which is sent to Hayley for approval \u2014 then to Nathan for payment. The dashboard pulls automatically from Zoho (GP, payments) and Xero (P&L), so humans aren't hand-keying numbers \u2014 fewer fat-finger mistakes. If a figure looks off, raise it with Hayley or Nathan immediately and we'll trace the source together."
         },
         {
-          "q": "What Happens to my Commission if my Employment Ends?",
-          "a": "Same logic as the mid-quarter answer above: any commission already paid out to you stays with you \u2014 no clawbacks. The current in-progress quarter only pays out if you're employed at the end of it (your plan is calculated on the full quarter's results). Any previous quarter's amounts already calculated but not yet paid land in your final paycheck. Base salary is never touched."
-        },
-        {
           "q": "Is There a Ceiling on the Bonus / Variable Comp?",
           "a": "No cap. The harder you push, the more you earn per dollar \u2014 that's deliberate. Bigger numbers mean higher band rates mean bigger commission cheques. If you want to chase a wild year, the system is built to reward it, not box you in."
         },
         {
           "q": "Are Commission Figures Audited?",
           "a": "Yes \u2014 back-audited. As part of each pay cycle the previous months are checked for any errors. But because the new plan is cash-received, any adjustments only ever flow forward \u2014 a refund this month reduces a future commission, never claws back from money already in your bank. Annual true-up at year-end catches any drift. Trust, but verify \u2014 applies to both sides."
+        },
+        {
+          "q": "What if I Leave MEC Mid-quarter?",
+          "a": "Different to the sales team: because your variable comp is calculated <strong>quarterly</strong> (and the quarter hasn't fully landed yet), you need to be employed through the end of the quarter to be eligible for that quarter's commission. If you leave mid-quarter, that quarter's commission doesn't pay out. Anything from previous fully-completed quarters is yours and lands in your final paycheck. Base salary is never touched."
+        },
+        {
+          "q": "What Happens to my Commission if my Employment Ends?",
+          "a": "Same logic as the mid-quarter answer above: any commission already paid out to you stays with you \u2014 no clawbacks. The current in-progress quarter only pays out if you're employed at the end of it (your plan is calculated on the full quarter's results). Any previous quarter's amounts already calculated but not yet paid land in your final paycheck. Base salary is never touched."
         }
       ]
     }
