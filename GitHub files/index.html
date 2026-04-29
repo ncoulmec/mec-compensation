@@ -19,7 +19,7 @@
     --border: #e5e2da;
     --ink: #1a1a1a;
     --muted: #6b6b6b;
-    --faint: #a8a8a8;
+    --faint: #8a8a8a;
     --accent: #2d6a4f;
     --accent-bg: #e8f1ec;
     --danger: #b91c1c;
@@ -243,6 +243,11 @@
     letter-spacing: 0.05em; text-align: left;
   }
   .alloc-table th.num, .alloc-table td.num { text-align: right; font-family: var(--mono); }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -2px; }
+  /* Tabular numerals — keeps numeric columns vertically aligned in financial tables. */
+  table td.num, table th.num,
+  .alloc-table td.num, .alloc-table th.num,
+  input[inputmode="numeric"], input[inputmode="decimal"] { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
   .alloc-table tfoot td { font-weight: 700; padding-top: 12px; }
   .alloc-balance-ok { color: var(--accent); }
   .alloc-balance-off { color: var(--warn); }
@@ -801,13 +806,13 @@
       <h1>MEC Group Compensation</h1>
       <p class="sub" id="sub-line">Master Dashboard · loading…</p>
     </div>
-    <span class="admin-badge">Admin</span>
+    <div style="display: flex; align-items: center; gap: 10px;"><button id="sign-out-btn" onclick="signOut()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 500;">Sign out</button><span class="admin-badge">Admin</span></div>
   </div>
 </header>
 
 <nav class="tabs">
   <div class="tabs-inner" id="tab-bar">
-    <button class="tab-btn active" data-tab="employees">Employees</button>
+    <button class="tab-btn active" aria-current="page" data-tab="employees">Employees</button>
     <button class="tab-btn" data-tab="plans">Plan Types</button>
     <button class="tab-btn" data-tab="pl">Company P&amp;L</button>
     <button class="tab-btn" data-tab="planning">Financial Planning</button>
@@ -956,7 +961,7 @@
       </div>
 
       <div class="fp-subtab-bar">
-        <button class="fp-subtab-btn active" data-fpsubtab="targets">Annual Targets</button>
+        <button class="fp-subtab-btn active" aria-current="page" data-fpsubtab="targets">Annual Targets</button>
         <button class="fp-subtab-btn" data-fpsubtab="pl">Projected P&amp;L</button>
         <button class="fp-subtab-btn" data-fpsubtab="cost">Cost Stack &amp; Margin</button>
       </div>
@@ -994,7 +999,7 @@
           <button class="btn small" id="at-rebalance-btn" style="background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; white-space: nowrap;" title="Distribute the 2026 target across reps proportionally to their snapToGP.">⟲ Rebalance to Target by snapToGP</button>
         </div>
         <div style="overflow-x: auto;">
-          <table class="alloc-table" id="at-alloc-table">
+          <div class="table-wrap"><table class="alloc-table" id="at-alloc-table">
             <thead>
               <tr>
                 <th>Contributor</th>
@@ -1006,7 +1011,7 @@
             </thead>
             <tbody id="at-alloc-body"></tbody>
             <tfoot id="at-alloc-foot"></tfoot>
-          </table>
+          </table></div>
         </div>
       </div>
 
@@ -1693,10 +1698,25 @@ const rerenderPlans = () => { rerenderPreservingOpen(renderPlans, '.plan-section
 const rerenderProjects = () => rerenderPreservingOpen(renderProjects, '.project-section', 'data-project-id');
 
 /* ---------- TABS ---------- */
+
+// --- Sign out: clear admin auth cache + reload ---
+function signOut() {
+  try { sessionStorage.clear(); } catch(e) {}
+  try {
+    Object.keys(localStorage).forEach(k => {
+      if (k === 'mec-admin-master-v3' || k.startsWith('dashboard-')) {
+        localStorage.removeItem(k);
+      }
+    });
+  } catch(e) {}
+  location.reload();
+}
+
 $$('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    $$('.tab-btn').forEach(b => b.classList.remove('active'));
+    $$('.tab-btn').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
     btn.classList.add('active');
+    btn.setAttribute('aria-current', 'page');
     $$('.panel').forEach(p => p.classList.remove('active'));
     $('#panel-' + btn.dataset.tab).classList.add('active');
     // Re-render Financial Planning when switching to it so it picks up
@@ -1712,8 +1732,9 @@ $('#panel-employees').classList.add('active');
 /* ---------- FP SUB-TABS ---------- */
 $$('.fp-subtab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    $$('.fp-subtab-btn').forEach(b => b.classList.remove('active'));
+    $$('.fp-subtab-btn').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
     btn.classList.add('active');
+    btn.setAttribute('aria-current', 'page');
     $$('.fp-subpanel').forEach(p => p.classList.remove('active'));
     const sub = $('#fp-sub-' + btn.dataset.fpsubtab);
     if (sub) sub.classList.add('active');
@@ -1974,7 +1995,7 @@ function renderStandardBands(key, plan) {
   return `
     <h3>Bands <span class="pill">${plan.bands.length}</span></h3>
     <p class="intro" style="margin-bottom:10px;font-size:12px;">Enter just the threshold (the starting point) of each band — the upper bound is automatically the next band's threshold. Each rate applies only to metric earned within that band. <strong>Band Earn</strong> shows max commission if that band is fully filled; <strong>Cumulative</strong> is the running total. Last band is open-ended.</p>
-    <table class="tight-table">
+    <div class="table-wrap"><table class="tight-table">
       <thead>
         <tr>
           <th style="width:30px">#</th>
@@ -1987,7 +2008,7 @@ function renderStandardBands(key, plan) {
         </tr>
       </thead>
       <tbody>${rows}</tbody>
-    </table>
+    </table></div>
     <div style="margin-top:10px;"><button class="btn small" onclick="addBand('${key}')">+ Add band</button></div>
   `;
 }
@@ -2012,17 +2033,17 @@ function renderGMBands(key, plan) {
       ${moneyInputHtml(`planTypes.${key}.cmBaseline`)}
     </div>
     <h3>Contribution Margin Bands</h3>
-    <table class="tight-table">
+    <div class="table-wrap"><table class="tight-table">
       <thead><tr><th style="width:40%">Threshold</th><th style="width:30%">Rate</th><th></th></tr></thead>
       <tbody>${cmRows}</tbody>
-    </table>
+    </table></div>
     <div style="margin-top:10px;"><button class="btn small" onclick="addGMBand('${key}','cmBands')">+ Add CM band</button></div>
 
     <h3>Net Profit Bands</h3>
-    <table class="tight-table">
+    <div class="table-wrap"><table class="tight-table">
       <thead><tr><th style="width:40%">Threshold</th><th style="width:30%">Rate</th><th></th></tr></thead>
       <tbody>${npRows}</tbody>
-    </table>
+    </table></div>
     <div style="margin-top:10px;"><button class="btn small" onclick="addGMBand('${key}','npBands')">+ Add NP band</button></div>
   `;
 }
@@ -3339,7 +3360,7 @@ function renderPLCompare() {
   const labelHead = actualRows.map(r => `<th>${r.label}</th>`).join('');
   if (actualSub) actualSub.textContent = `${actualRows[0].label} → ${actualRows[actualRows.length - 1].label} · LTM total ${fmtMoney(aTotRev)}`;
   actualBody.innerHTML = `
-    <table class="pl-compare-table">
+    <div class="table-wrap"><table class="pl-compare-table">
       <thead>
         <tr><th></th>${labelHead}<th>LTM</th></tr>
       </thead>
@@ -3349,7 +3370,7 @@ function renderPLCompare() {
         <tr><td>Contribution Margin</td>${actualRows.map(r => `<td>${fmtMoney(r.cm)}</td>`).join('')}<td><strong>${fmtMoney(aTotCM)}</strong></td></tr>
         <tr class="tot"><td>Net Profit</td>${actualRows.map(r => `<td>${fmtMoney(r.np)}</td>`).join('')}<td>${fmtMoney(aTotNP)}</td></tr>
       </tbody>
-    </table>
+    </table></div>
   `;
 
   // -------- Projected (next 4 quarters, driven by 2026 GP target) --------
@@ -3398,7 +3419,7 @@ function renderPLCompare() {
   if (projSub) projSub.textContent = `${nextLabels[0]} → ${nextLabels[nextLabels.length - 1]} · ${dRev >= 0 ? '+' : ''}${fmtMoney(dRev)} (${dPctRev >= 0 ? '+' : ''}${dPctRev.toFixed(1)}%) on revenue vs last 4Q`;
 
   projBody.innerHTML = `
-    <table class="pl-compare-table">
+    <div class="table-wrap"><table class="pl-compare-table">
       <thead>
         <tr><th></th>${labelHeadP}<th>FY26</th></tr>
       </thead>
@@ -3408,7 +3429,7 @@ function renderPLCompare() {
         <tr><td>Contribution Margin</td>${projRows.map(r => `<td>${fmtMoney(r.cm)}</td>`).join('')}<td><strong>${fmtMoney(pTotCM)}</strong></td></tr>
         <tr class="tot"><td>Net Profit</td>${projRows.map(r => `<td>${fmtMoney(r.np)}</td>`).join('')}<td>${fmtMoney(pTotNP)}</td></tr>
       </tbody>
-    </table>
+    </table></div>
     <div style="margin-top: 8px; font-size: 10px; color: var(--faint); font-family: var(--mono); line-height: 1.5;">
       Driven by 2026 GP target ${fmtMoney(targetGP)} (Zoho) + ${fmtMoney(nonZohoBaselineGP)} non-Zoho baseline → projected GP ${fmtMoney(projGP)} ÷ LTM GM ${(gmXero * 100).toFixed(1)}% = revenue. Quarterly = annual ÷ 4.
     </div>
