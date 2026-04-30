@@ -3199,6 +3199,12 @@ function computeMonthlyRows() {
   }
   const totalPaid = paid.reduce((a, v) => a + v, 0);
 
+  // Per-month end-of-month TU balance (for in-row tooltip display).
+  // For month i < 11: it's the start balance of i+1. For month 11: it's the final yearEndBalance.
+  const balanceAfterMonth = new Array(12).fill(0);
+  for (let i = 0; i < 11; i++) balanceAfterMonth[i] = balanceAtMonthStart[i + 1];
+  balanceAfterMonth[11] = balance;
+
   const rows = actualsMonths.map((m, i) => {
     const r = raw[i];
     const gpCommInc = paid[i];
@@ -3226,6 +3232,7 @@ function computeMonthlyRows() {
       quarterIdx,
       wasCapped,
       annualCapFired: i === 11 && annualCapFired,
+      balanceAfterMonth: balanceAfterMonth[i],
     };
   });
 
@@ -3517,10 +3524,16 @@ function update() {
         bandCell.title = `At $${fmtNum(r2.gpReceived)}/mo GP, the last dollar earned at ${(activeRate * 100).toFixed(2)}%. Earlier dollars earned at lower band rates.`;
       } else { bandCell.textContent = '—'; bandCell.title = ''; }
     }
+    // TU fires whenever the actual paid amount differs from the raw monthly calc — i.e. either
+    // a balance carry-forward offset chewed into this month's commission, OR a quarter-end /
+    // annual-end cap fired. We surface this on EVERY such month, not only the quarter/annual end.
     const tuFired = r2.wasCapped || (r2.isAnnualEnd && r2.annualCapFired);
-    const mLabel = (r2.isAnnualEnd && r2.annualCapFired) ? ' 🔒 annual TU' : (r2.isQuarterEnd && r2.wasCapped ? ' 🔒 quarter TU' : '');
+    let mLabel = '';
+    if (r2.isAnnualEnd && r2.annualCapFired) mLabel = ' 🔒 annual TU';
+    else if (r2.isQuarterEnd && r2.wasCapped) mLabel = ' 🔒 quarter TU';
+    else if (r2.wasCapped) mLabel = ' 🔒 TU offset';
     const gpCommCell = row.querySelector('[data-cell="gpComm"]');
-    gpCommCell.textContent = r2.gpCommInc > 0 ? fmtMoney(r2.gpCommInc) + mLabel : (r2.isQuarterEnd && r2.wasCapped ? '$0 🔒 TU' : '—');
+    gpCommCell.textContent = r2.gpCommInc > 0 ? fmtMoney(r2.gpCommInc) + mLabel : (r2.wasCapped ? '$0' + mLabel : '—');
     if (tuFired) {
       const raw = r2.rawMonthlyGPComm; const final = r2.gpCommInc;
       const tuAdj = final - raw; const adjSign = tuAdj >= 0 ? '+' : '−';
@@ -3528,11 +3541,33 @@ function update() {
       let activeRate = monthlyBandsArr[0]?.rate || 0;
       for (let bi = 0; bi < monthlyBandsArr.length; bi++) { if (r2.gpReceived > monthlyBandsArr[bi].threshold) activeRate = monthlyBandsArr[bi].rate; }
       const ratePct = (activeRate * 100).toFixed(1) + '%';
-      const tuTip = `<strong>How this true-up was calculated</strong><br><br>` +
+      const balAfter = +r2.balanceAfterMonth || 0;
+      const balLine = balAfter > 0.5
+        ? `<br><strong>True-up balance after this month: ${fmtMoney(balAfter)}</strong> still to offset against future commissions.`
+        : `<br>True-up balance after this month: <strong>$0</strong> — fully cleared. ✓`;
+      // Lead with a contextual opener depending on whether this was a full catch-up,
+      // partial offset, or quarter-end cap — much clearer for the employee than the generic version.
+      const isFullCatchUp = final < 0.5 && raw > 0.5;
+      const isPartialOffset = !r2.isQuarterEnd && !r2.isAnnualEnd && tuAdj < -0.5 && final > 0.5;
+      const isQuarterCap = (r2.isQuarterEnd || r2.isAnnualEnd) && tuAdj < -0.5;
+      let opener;
+      if (isFullCatchUp) {
+        opener = `<strong>This month was a catch-up payment.</strong><br>The ${fmtMoney(raw)} commission earned this month was used in full to pay down a previous true-up balance, so $0 cash hit your account this month. The math:<br><br>`;
+      } else if (isQuarterCap) {
+        opener = `<strong>Your monthly commission was capped at quarter-end</strong> to match what you actually earned for the quarter (banded over 3 months, not 1). The math:<br><br>`;
+      } else if (isPartialOffset) {
+        opener = `<strong>Part of this month's commission paid down a previous true-up balance.</strong> The math:<br><br>`;
+      } else if (tuAdj > 0.5) {
+        opener = `<strong>This month got a true-up top-up</strong> — the quarterly bands worked out higher than the monthly bands had paid you. The math:<br><br>`;
+      } else {
+        opener = `<strong>How this true-up was calculated</strong><br><br>`;
+      }
+      const tuTip = opener +
         `<strong>$${fmtNum(r2.gpReceived)}</strong> GP received this month places you in the <strong>${ratePct}</strong> monthly tier.<br>` +
         `That would normally yield <strong>${fmtMoney(raw)}</strong> in commission.<br>` +
-        `Quarterly true-up adjustment: <strong>${adjSign}${fmtMoney(Math.abs(tuAdj))}</strong>.<br>` +
-        `<strong>Final GP commission paid this month: ${fmtMoney(final)}.</strong>`;
+        `True-up adjustment: <strong>${adjSign}${fmtMoney(Math.abs(tuAdj))}</strong>.<br>` +
+        `<strong>Final GP commission paid this month: ${fmtMoney(final)}.</strong>` +
+        balLine;
       gpCommCell.innerHTML += ` <span class="tu-explainer-trigger" data-tip="${tuTip.replace(/"/g, '&quot;')}" style="display: inline-flex; width: 16px; height: 16px; line-height: 14px; text-align: center; border-radius: 50%; background: #fff; border: 1px solid var(--navy); color: var(--navy); font-size: 10px; font-weight: 700; cursor: help; vertical-align: middle; justify-content: center; align-items: center;">?</span>`;
       gpCommCell.title = '';
     } else { gpCommCell.title = ''; }
@@ -3557,7 +3592,30 @@ function update() {
     const has = qGP > 0 || qEv > 0 || qTotalInc > 0;
     qRow.querySelector('[data-cell="qGP"]').textContent = has ? fmtMoney(qGP) : '—';
     qRow.querySelector('[data-cell="qEventGP"]').textContent = has ? fmtMoney(qEv) : '—';
-    qRow.querySelector('[data-cell="qGpComm"]').textContent = has ? fmtMoney(qGPComm) : '—';
+    const qGpCommCell = qRow.querySelector('[data-cell="qGpComm"]');
+    qGpCommCell.textContent = has ? fmtMoney(qGPComm) : '—';
+    // Quarterly TU summary tooltip — only render the ? if there's actual TU activity to talk about.
+    const qSum = qSummary && qSummary[q];
+    if (has && qSum) {
+      const balDelta = qSum.balanceEnd - qSum.balanceStart;
+      const showQTip = Math.abs(balDelta) > 0.5 || qSum.balanceEnd > 0.5 || qSum.m3ZeroedByTU;
+      if (showQTip) {
+        const deltaLine = balDelta > 0.5
+          ? `<strong>Balance grew by ${fmtMoney(balDelta)}</strong> this quarter — your monthly cash payouts ran ahead of what the quarterly bands say you actually earned.`
+          : balDelta < -0.5
+          ? `<strong>Balance reduced by ${fmtMoney(Math.abs(balDelta))}</strong> this quarter — past overpayment got worked off.`
+          : `No net change in TU balance this quarter — paid right on entitlement.`;
+        const balLine = qSum.balanceEnd > 0.5
+          ? `<br><strong>${fmtMoney(qSum.balanceEnd)} TU balance</strong> carries forward to offset future commissions.`
+          : `<br>TU balance: <strong>$0</strong> — fully cleared this quarter. ✓`;
+        const qTuTip = `<strong>Q${q+1} true-up summary</strong><br><br>` +
+          `Quarterly entitlement (annual bands ÷ 4): <strong>${fmtMoney(qSum.qEntitled)}</strong><br>` +
+          `Cash actually paid this quarter: <strong>${fmtMoney(qSum.qPaidNet)}</strong><br><br>` +
+          deltaLine +
+          balLine;
+        qGpCommCell.innerHTML += ` <span class="tu-explainer-trigger" data-tip="${qTuTip.replace(/"/g, '&quot;')}" style="display: inline-flex; width: 16px; height: 16px; line-height: 14px; text-align: center; border-radius: 50%; background: #fff; border: 1px solid var(--navy); color: var(--navy); font-size: 10px; font-weight: 700; cursor: help; vertical-align: middle; justify-content: center; align-items: center;">?</span>`;
+      }
+    }
     qRow.querySelector('[data-cell="qProdComm"]').textContent = has ? fmtMoney(qProdComm) : '—';
     qRow.querySelector('[data-cell="qTotal"]').textContent = has ? fmtMoney(qTotalInc) : '—';
     qRow.querySelector('[data-cell="qTotalEx"]').textContent = has ? fmtMoney(qTotalEx) : '—';
