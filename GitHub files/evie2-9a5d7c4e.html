@@ -23,8 +23,8 @@
     --accent: #2d6a4f;
     --accent-bg: #e8f1ec;
     --danger: #b91c1c;
-    --warn: #b45309;
-    --warn-bg: #fef5e6;
+    --warn: #5a5a58;
+    --warn-bg: #ecebe5;
     --black-card: #0e0e0e;
     --radius: 10px;
     --mono: 'DM Mono', ui-monospace, monospace;
@@ -66,7 +66,7 @@
 
   .banner { padding: 14px 20px; border-radius: 10px; font-size: 14px; margin-bottom: 22px; display: flex; align-items: center; gap: 10px; }
   .banner.ok { background: var(--accent-bg); color: var(--accent); border: 1px solid #c3e4d0; }
-  .banner.warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #f5d890; }
+  .banner.warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #d3d1c7; }
   .banner.info { background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8; }
   .banner .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
@@ -81,7 +81,7 @@
   @media (max-width: 900px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
   .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; }
   .kpi-card .label { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
-  .kpi-card .value { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; }
+  .kpi-card .value { font-family: var(--mono); font-size: 32px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .kpi-card .sub { margin-top: 6px; font-size: 12px; color: var(--faint); font-family: var(--mono); }
   .kpi-card.inverted { background: var(--black-card); border-color: var(--black-card); color: #fff; }
   .kpi-card.inverted .label { color: #aaa; }
@@ -92,7 +92,7 @@
   @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
 
   .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; margin-bottom: 22px; }
-  .card h2 { margin: 0 0 6px; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
   .card h3 { margin: 22px 0 12px; font-size: 14px; font-weight: 600; color: var(--ink); }
 
   .scenario-row { display: grid; grid-template-columns: 200px 1fr 140px; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
@@ -124,7 +124,7 @@
   .gp-floater.expanded { width: 460px; }
   .gp-floater-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; position: relative; }
   .gp-floater-head .title-wrap { display: flex; align-items: center; gap: 6px; }
-  .gp-floater-head .title { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .gp-floater-head .title { font-size: 12px; color: var(--muted); font-weight: 500; }
   .gp-floater-head .actions { display: flex; gap: 6px; }
   .gp-floater-iconbtn { width: 26px; height: 26px; padding: 0; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: all 0.12s; }
   .gp-floater-iconbtn:hover { background: #fafaf7; color: var(--ink); border-color: var(--muted); }
@@ -303,7 +303,7 @@
   .rate-calc .label { color: var(--muted); margin-top: 8px; font-size: 11px; display: block; }
 
   table.bands { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.bands th { text-align: left; padding: 10px 10px; font-weight: 500; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); }
+  table.bands th { text-align: left; padding: 10px 10px; font-weight: 500; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); }
   table.bands td { padding: 11px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   table.bands td.num { font-family: var(--mono); text-align: right; }
   table.bands td.band-num { font-family: var(--mono); color: var(--muted); width: 34px; }
@@ -340,7 +340,7 @@
   }
   @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
   .compare-col { padding: 16px 20px; border: 1px solid var(--border); border-radius: 10px; }
-  .compare-col .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; }
+  .compare-col .label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
   .compare-col .val { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
   .compare-col .sub { font-size: 12px; color: var(--faint); margin-top: 4px; font-family: var(--mono); }
   .compare-col.new { background: var(--accent-bg); border-color: #c3e4d0; }
@@ -352,7 +352,7 @@
 
   /* Monthly Payout (Actual) */
   table.monthly { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.monthly th { text-align: left; padding: 10px 10px; font-weight: 500; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.monthly th { text-align: left; padding: 10px 10px; font-weight: 500; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
   table.monthly th.num { text-align: right; }
   table.monthly td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   table.monthly td.mon { font-weight: 600; color: var(--navy); font-family: var(--mono); font-size: 12px; width: 90px; }
@@ -367,7 +367,7 @@
   table.monthly tr.totals td { background: var(--navy); color: #fff; font-weight: 700; font-size: 14px; padding: 14px 10px; border-bottom: none; }
   table.monthly tr.totals td.num { color: #fff; }
   table.monthly tr.totals td.mon { color: #fff; font-weight: 700; }
-  table.monthly tr.tu-capped td { background: #fef5e6; }
+  table.monthly tr.tu-capped td { background: #ecebe5; }
   table.monthly tr.tu-capped td.mon { color: var(--warn); font-weight: 700; }
   table.monthly tr.tu-locked td { background: #eef4fa; }
   table.monthly tr.tu-locked td.mon { color: var(--navy); font-weight: 700; }
@@ -402,7 +402,7 @@
   @media (max-width: 900px) { .yt-row { grid-template-columns: repeat(2, 1fr); } }
 
   /* KPI tab */
-  .kpi-draft-note { background: var(--warn-bg); border: 1px solid #f5d890; color: var(--warn); padding: 12px 16px; border-radius: 8px; margin-bottom: 22px; font-size: 13px; }
+  .kpi-draft-note { background: var(--warn-bg); border: 1px solid #d3d1c7; color: var(--warn); padding: 12px 16px; border-radius: 8px; margin-bottom: 22px; font-size: 13px; }
   .kpi-slider-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; }
   .kpi-big-value { font-family: var(--mono); font-size: 48px; font-weight: 700; text-align: center; color: var(--navy); margin: 12px 0; letter-spacing: -0.02em; }
   .kpi-big-value .x { font-size: 28px; color: var(--muted); }
@@ -554,7 +554,7 @@
     <button class="tab-btn active" aria-current="page" data-tab="overview">Overview</button>
     <button class="tab-btn" data-tab="planning">Planning</button>
     <button class="tab-btn" data-tab="projects">Projects</button>
-    <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #fef5e6; color: #8a6a00; border: 1px solid #f5d890; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
+    <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
     <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
     <button class="tab-btn" data-tab="faq">FAQ</button>
     <button class="tab-btn" data-tab="howitworks">How This Works</button>
@@ -792,7 +792,7 @@
 
     <!-- ============ ACTUAL SECTION ============ -->
     <div class="section-head">
-      <span class="tag" style="background:#fef5e6;border-color:#f5d890;color:var(--warn);">Actual</span>
+      <span class="tag" style="background:#ecebe5;border-color:#d3d1c7;color:var(--warn);">Actual</span>
       <h2>What you've earned</h2>
       <p class="blurb">Enter your actual monthly GP Received and Event GP Produced below. Commissions are calculated month-by-month off these real numbers, with quarterly true-ups keeping your payouts fair over time. Edits persist on this device.</p>
     </div>
@@ -1037,7 +1037,7 @@
         </div>
       </div>
 
-      <div style="margin-top: 14px; padding: 12px 14px; background: #fff8e1; border: 1px solid #f5d890; border-radius: 8px; font-size: 12px; color: #6b5300; line-height: 1.6;">
+      <div style="margin-top: 14px; padding: 12px 14px; background: #fff8e1; border: 1px solid #d3d1c7; border-radius: 8px; font-size: 12px; color: #6b5300; line-height: 1.6;">
         <strong>So what?</strong> If you increase your <strong>Avg GP</strong> by $50 per booking, your Total GP grows. Same Total GP can be reached either by closing more bookings OR by selling higher-margin gigs at the same revenue. Play with both halves and see which lever moves your commission fastest.
       </div>
     </div>
@@ -1144,7 +1144,7 @@
 
   <!-- KPI -->
   <section class="panel" id="panel-kpi">
-    <div style="margin-bottom: 18px; padding: 14px 18px; background: linear-gradient(135deg, #fff8e1 0%, #fff2c5 100%); border: 2px solid #f5d890; border-radius: 10px;">
+    <div style="margin-bottom: 18px; padding: 14px 18px; background: linear-gradient(135deg, #fff8e1 0%, #fff2c5 100%); border: 2px solid #d3d1c7; border-radius: 10px;">
       <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">⚠ Beta — Being rolled out in Year 2</div>
       <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.5;">
         This scorecard is the <strong>draft</strong> of how KPIs will look when we go live. KPIs are not yet active — your variable compensation is <strong>not affected by anything below</strong>. We're sharing the draft now so you can read it, push back, and have input before we switch it on next year.
@@ -1286,7 +1286,7 @@ function _showDevBanner(label) {
   if (document.getElementById('_dev-mode-banner')) return;
   const b = document.createElement('div');
   b.id = '_dev-mode-banner';
-  b.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 6px 16px; background: #fef5e6; border-bottom: 2px solid #f5d890; color: #8a6a00; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 600; text-align: center; line-height: 1.3;';
+  b.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 6px 16px; background: #ecebe5; border-bottom: 2px solid #d3d1c7; color: #8a6a00; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 600; text-align: center; line-height: 1.3;';
   b.innerHTML = '🔓 DEV MODE — encryption + PIN gate disabled · data.json loaded plaintext · ' + (label || '') + ' · NEVER roll out in this mode';
   document.body.insertBefore(b, document.body.firstChild);
   // Push the rest of the page down so the banner doesn't overlap content
@@ -1870,7 +1870,7 @@ function wireInputs() {
           bandLabel.textContent = '✓ HIGH MARGIN';
           bandLabel.style.color = '#1f5e3c';
         } else if (margin >= 0.20) {
-          wrap.style.background = '#fff8e1'; wrap.style.border = '2px solid #f5d890';
+          wrap.style.background = '#fff8e1'; wrap.style.border = '2px solid #d3d1c7';
           result.style.color = '#8a6a00';
           bandLabel.textContent = '— ACCEPTABLE';
           bandLabel.style.color = '#8a6a00';
@@ -2599,7 +2599,7 @@ function update() {
       if (factor >= 1) {
         planningBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} ≥ ${fmtMoney(g.full)} — full GP sales commission flows. Drag Annual Event GP Produced below ${fmtMoney(g.full)} to see the ramp in action.</span></div>`;
       } else if (factor > 0) {
-        planningBanner.innerHTML = `<div class="banner info" style="margin-bottom: 22px; background: #fff8e1; color: #8a6a00; border-color: #f5d890;"><span class="dot"></span><span><strong>Production ramp — ${factorPct}% sales commission</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} sits between the floor (${fmtMoney(g.floor)}) and full rate (${fmtMoney(g.full)}). Commission scales linearly through this zone — hit ${fmtMoney(g.full)} to flow at 100%. Production commission (1% × Event GP) is unaffected.</span></div>`;
+        planningBanner.innerHTML = `<div class="banner info" style="margin-bottom: 22px; background: #fff8e1; color: #8a6a00; border-color: #d3d1c7;"><span class="dot"></span><span><strong>Production ramp — ${factorPct}% sales commission</strong> · Modelled Event GP ${fmtMoney(scenario.eventGP)} sits between the floor (${fmtMoney(g.floor)}) and full rate (${fmtMoney(g.full)}). Commission scales linearly through this zone — hit ${fmtMoney(g.full)} to flow at 100%. Production commission (1% × Event GP) is unaffected.</span></div>`;
       } else {
         const gap = g.floor - scenario.eventGP;
         planningBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 22px;"><span class="dot"></span><span><strong>Below production floor:</strong> Modelled Event GP ${fmtMoney(scenario.eventGP)} is ${fmtMoney(gap)} below the $${fmtNum(g.floor)} floor. <strong>GP sales commission paused</strong> until you reach floor; ramps from there to full at ${fmtMoney(g.full)}. Production commission (1% × Event GP) still flows.</span></div>`;
@@ -2624,7 +2624,7 @@ function update() {
         gateBanner.innerHTML = `<div class="banner ok" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Production gate cleared ✓</strong> · Annualised pace ${fmtMoney(annualizedEvent)} ≥ ${fmtMoney(full)}. Full GP sales commission flowing.</span></div>`;
       } else if (factor > 0) {
         const toFull = full - annualizedEvent;
-        gateBanner.innerHTML = `<div class="banner info" style="margin-bottom: 14px; background: #fff8e1; color: #8a6a00; border-color: #f5d890;"><span class="dot"></span><span><strong>Production ramp — ${factorPct}% sales commission</strong> · Annualised pace ${fmtMoney(annualizedEvent)} sits in the ramp zone (${fmtMoney(floor)} → ${fmtMoney(full)}). Commission scales linearly. Hit ${fmtMoney(full)} (need <strong>${fmtMoney(toFull)}/yr</strong> more) for 100%. Production commission (1% × Event GP) unaffected.</span></div>`;
+        gateBanner.innerHTML = `<div class="banner info" style="margin-bottom: 14px; background: #fff8e1; color: #8a6a00; border-color: #d3d1c7;"><span class="dot"></span><span><strong>Production ramp — ${factorPct}% sales commission</strong> · Annualised pace ${fmtMoney(annualizedEvent)} sits in the ramp zone (${fmtMoney(floor)} → ${fmtMoney(full)}). Commission scales linearly. Hit ${fmtMoney(full)} (need <strong>${fmtMoney(toFull)}/yr</strong> more) for 100%. Production commission (1% × Event GP) unaffected.</span></div>`;
       } else {
         const toFloor = floor - annualizedEvent;
         gateBanner.innerHTML = `<div class="banner warn" style="margin-bottom: 14px;"><span class="dot"></span><span><strong>Below production floor:</strong> Annualised pace ${fmtMoney(annualizedEvent)} (YTD ${fmtMoney(ytdEvent)} over ${monthsWithData} months) is ${fmtMoney(toFloor)}/yr below the ${fmtMoney(floor)} floor. <strong>GP sales commission paused</strong> — ramp starts at ${fmtMoney(floor)}, reaches 100% at ${fmtMoney(full)}. Production commission still flows.</span></div>`;

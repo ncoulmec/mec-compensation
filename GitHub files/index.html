@@ -23,7 +23,7 @@
     --accent: #2d6a4f;
     --accent-bg: #e8f1ec;
     --danger: #b91c1c;
-    --warn: #b45309;
+    --warn: #5a5a58;
     --radius: 10px;
   }
   * { box-sizing: border-box; }
@@ -260,11 +260,9 @@
     margin-bottom: 20px;
   }
   .card h2 {
-    margin: 0 0 6px;
+    margin: 0 0 8px;
     font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+    font-weight: 500;
     color: var(--muted);
   }
   .card p.intro {
@@ -539,7 +537,7 @@
     font-weight: 500;
     margin-left: 8px;
   }
-  .pill.warn { background: #fef5e6; color: var(--warn); }
+  .pill.warn { background: #ecebe5; color: var(--warn); }
   .empty-state {
     padding: 30px;
     text-align: center;
@@ -748,7 +746,7 @@
   }
   .gm-lock-banner {
     background: linear-gradient(135deg, #fff8e1 0%, #fff2c5 100%);
-    border: 2px solid #f5d890; border-radius: 10px;
+    border: 2px solid #d3d1c7; border-radius: 10px;
     padding: 14px 18px; margin: 0 0 14px;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     flex-wrap: wrap;
@@ -1125,9 +1123,9 @@
             <input type="text" inputmode="numeric" id="fp-gm-gp-input" value="1,827,000" style="font-family: var(--mono); font-size: 14px; padding: 8px 10px 8px 22px; border: 1px solid var(--border); border-radius: 6px; width: 130px;">
           </div>
           <button class="btn small" id="fp-gm-reset" style="font-size: 11px;">Reset to Target</button>
-          <button class="btn small" id="fp-gm-reset-ltm" style="font-size: 11px; background: #fff7e6; border-color: #f5d890; color: #8a6a00;" title="Pull current LTM Zoho actual GP-Sold (last 365 days) into the slider — the team's actual run-rate.">⟲ Reset to LTM Zoho Actuals</button>
+          <button class="btn small" id="fp-gm-reset-ltm" style="font-size: 11px; background: #fff7e6; border-color: #d3d1c7; color: #8a6a00;" title="Pull current LTM Zoho actual GP-Sold (last 365 days) into the slider — the team's actual run-rate.">⟲ Reset to LTM Zoho Actuals</button>
         </div>
-        <div style="background: #fef5e6; border: 1px solid #f5d890; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: var(--warn);">
+        <div style="background: #ecebe5; border: 1px solid #d3d1c7; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: var(--warn);">
           <strong>Disclaimer:</strong> This is a projection based on current LTM margin ratios staying constant. Actual GM commission depends on what the company's Contribution Margin and Net Profit end up being — those vary with costs that aren't captured here.
         </div>
         <div id="fp-hayley-body"></div>
@@ -1234,7 +1232,7 @@ function _showDevBanner(label) {
   if (document.getElementById('_dev-mode-banner')) return;
   const b = document.createElement('div');
   b.id = '_dev-mode-banner';
-  b.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 6px 16px; background: #fef5e6; border-bottom: 2px solid #f5d890; color: #8a6a00; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 600; text-align: center; line-height: 1.3;';
+  b.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; z-index: 9999; padding: 6px 16px; background: #ecebe5; border-bottom: 2px solid #d3d1c7; color: #8a6a00; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 600; text-align: center; line-height: 1.3;';
   b.innerHTML = '🔓 DEV MODE — encryption + PIN gate disabled · data.json loaded plaintext · ' + (label || '') + ' · NEVER roll out in this mode';
   document.body.insertBefore(b, document.body.firstChild);
   // Push the rest of the page down so the banner doesn't overlap content
@@ -3594,7 +3592,7 @@ function renderFinancialPlanning() {
           <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${(gmXero * 100).toFixed(1)}%</div>
           <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">(Revenue − CoGS) ÷ Revenue<br>${fmtMoney(ltm.gp)} ÷ ${fmtMoney(ltm.revenue)}</div>
         </div>
-        <div style="background: #fef5e6; padding: 12px 14px; border-radius: 8px; border: 1px solid #f5d890;">
+        <div style="background: #ecebe5; padding: 12px 14px; border-radius: 8px; border: 1px solid #d3d1c7;">
           <div style="font-size: 11px; color: var(--warn); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Gross Margin (Zoho)</div>
           <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${gmZero != null ? (gmZero * 100).toFixed(1) + '%' : '—'}</div>
           <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Zoho GP ÷ Xero Revenue<br>${gmZero != null ? fmtMoney(zohoGP) + ' ÷ ' + fmtMoney(ltm.revenue) : ''}</div>
