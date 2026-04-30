@@ -695,7 +695,7 @@
       <h2 style="margin-top: 0;" id="commission-curve-heading">Commission Curve</h2>
       <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;" id="commission-curve-sublabel">Your commission earnings (super-inclusive) at every GP level. The vertical line marks your current scenario.</p>
       <div id="commission-curve-wrap" style="width: 100%; overflow-x: auto;">
-        <svg id="commission-curve" role="img" aria-labelledby="commission-curve-title commission-curve-desc" viewBox="0 0 800 360" style="width: 100%; height: auto; min-width: 600px;" xmlns="http://www.w3.org/2000/svg"><title id="commission-curve-title">Commission curve — new plan vs old plan</title><desc id="commission-curve-desc">A line chart showing how your commission earned (super-inclusive, on the Y-axis) grows as your annual GP sold increases (X-axis). The new-plan curve is plotted alongside the old flat-rate plan for comparison; the gap between them widens as GP rises.</desc></svg>
+        <svg id="commission-curve" role="img" aria-labelledby="commission-curve-title commission-curve-desc" viewBox="0 0 800 380" style="width: 100%; height: auto; min-width: 600px;" xmlns="http://www.w3.org/2000/svg"><title id="commission-curve-title">Commission curve — new plan vs old plan</title><desc id="commission-curve-desc">A line chart showing how your commission earned (super-inclusive, on the Y-axis) grows as your annual GP sold increases (X-axis). The new-plan curve is plotted alongside the old flat-rate plan for comparison; the gap between them widens as GP rises.</desc></svg>
       </div>
       <div style="display: flex; gap: 18px; margin-top: 8px; font-size: 12px; font-family: var(--mono); color: var(--muted); flex-wrap: wrap;" id="commission-curve-legend">
         <span><span style="display:inline-block; width:14px; height:3px; background: var(--navy); vertical-align: middle; margin-right: 6px;"></span>New plan (inc super)</span>
@@ -3405,10 +3405,14 @@ function drawCommissionCurve() {
   const sr = data.globals.superRate || 0.12;
   const oldRate = plan.oldCommissionRate || 0.035;
   const maxGP = plan.maxMetricValue || 600000;
-  const W = 800, H = 360;
-  const padL = 70, padR = 18, padT = 22, padB = 50;
+  // Wider chart + extra bottom padding so the new "/mo" line under each x-tick has room.
+  const W = 800, H = 380;
+  const padL = 70, padR = 18, padT = 22, padB = 64;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
+
+  // Helper to format money in /yr or /mo style consistently across the chart.
+  const fmtK = (v) => `$${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k`;
 
   // Sample 60 points
   const samples = 60;
@@ -3427,22 +3431,24 @@ function drawCommissionCurve() {
   const yScale = v => padT + innerH - (v / maxY) * innerH;
   const pathFor = key => 'M ' + points.map(p => `${xScale(p.gp).toFixed(1)} ${yScale(p[key]).toFixed(1)}`).join(' L ');
 
-  // Y axis ticks
+  // Y axis ticks — paired annual + monthly equivalent
   const yTicks = 5;
   const yAxis = [];
   for (let i = 0; i <= yTicks; i++) {
     const v = (maxY / yTicks) * i;
     const y = yScale(v);
     yAxis.push(`<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#eee" stroke-width="1"/>`);
-    yAxis.push(`<text x="${padL - 6}" y="${y + 3}" text-anchor="end" fill="#888" font-size="10" font-family="DM Mono, monospace">$${(v/1000).toFixed(0)}k</text>`);
+    yAxis.push(`<text x="${padL - 6}" y="${y - 1}" text-anchor="end" fill="#888" font-size="10" font-family="DM Mono, monospace">${fmtK(v)}/yr</text>`);
+    yAxis.push(`<text x="${padL - 6}" y="${y + 10}" text-anchor="end" fill="#bbb" font-size="9" font-family="DM Mono, monospace">${fmtK(v / 12)}/mo</text>`);
   }
 
-  // X axis ticks (every 100k)
+  // X axis ticks (every 100k) — paired annual + monthly equivalent
   const xTicks = [];
   for (let v = 0; v <= maxGP; v += 100000) {
     const x = xScale(v);
     xTicks.push(`<line x1="${x}" y1="${padT + innerH}" x2="${x}" y2="${padT + innerH + 4}" stroke="#888" stroke-width="1"/>`);
-    xTicks.push(`<text x="${x}" y="${padT + innerH + 16}" text-anchor="middle" fill="#888" font-size="10" font-family="DM Mono, monospace">$${(v/1000).toFixed(0)}k</text>`);
+    xTicks.push(`<text x="${x}" y="${padT + innerH + 16}" text-anchor="middle" fill="#888" font-size="10" font-family="DM Mono, monospace">${fmtK(v)}/yr</text>`);
+    xTicks.push(`<text x="${x}" y="${padT + innerH + 28}" text-anchor="middle" fill="#bbb" font-size="9" font-family="DM Mono, monospace">${fmtK(v / 12)}/mo</text>`);
   }
 
   // Difference area shading (new - old) — skipped when hideOldPlan is set
@@ -3453,9 +3459,19 @@ function drawCommissionCurve() {
   // Marker line at current scenario.gp
   const markerX = xScale(Math.min(scenario.gp, maxGP));
   const cur = points[Math.round((Math.min(scenario.gp, maxGP) / maxGP) * samples)] || points[points.length - 1];
+  const markerLeft = markerX > W - 200;
+  const markerAnchor = markerLeft ? 'end' : 'start';
+  const markerOffset = markerLeft ? -6 : 6;
+  const deltaColour = cur.newComm >= cur.oldComm ? '#1f5e3c' : '#a8281b';
+
+  // Info box — wider to fit /yr · /mo on each row
+  const boxX = W - padR - 168;
+  const boxY = padT + 26;
+  const boxW = 162;
+  const boxH = showOld ? 90 : 50;
 
   svg.innerHTML = `
-    <title id="commission-curve-title">Commission curve — new plan vs old plan</title><desc id="commission-curve-desc">A line chart showing how your commission earned (super-inclusive, on the Y-axis) grows as your annual GP sold increases (X-axis). The new-plan curve is plotted alongside the old flat-rate plan for comparison; the gap between them widens as GP rises.</desc>
+    <title id="commission-curve-title">Commission curve — new plan vs old plan</title><desc id="commission-curve-desc">A line chart showing how your commission earned (super-inclusive, on the Y-axis) grows as your annual GP sold increases (X-axis). Both axes show annual figures with the monthly equivalents in lighter text underneath, so you can read your monthly target straight off the chart. The new-plan curve is plotted alongside the old flat-rate plan for comparison; the gap between them widens as GP rises.</desc>
     ${yAxis.join('')}
     ${showOld ? `<path d="${diffPath}" fill="rgba(46, 168, 109, 0.08)" stroke="none"/>` : ''}
     ${showOld ? `<path d="${pathFor('oldComm')}" fill="none" stroke="#8e8e93" stroke-width="2" stroke-dasharray="4 3"/>` : ''}
@@ -3465,13 +3481,14 @@ function drawCommissionCurve() {
     <line x1="${markerX}" y1="${padT}" x2="${markerX}" y2="${padT + innerH}" stroke="#d4351c" stroke-width="1.2" stroke-dasharray="3 3"/>
     <circle cx="${markerX}" cy="${yScale(cur.newComm)}" r="4" fill="#0a2540"/>
     ${showOld ? `<circle cx="${markerX}" cy="${yScale(cur.oldComm)}" r="4" fill="#8e8e93"/>` : ''}
-    <text x="${markerX > W - 110 ? markerX - 6 : markerX + 6}" y="${padT + 14}" text-anchor="${markerX > W - 110 ? 'end' : 'start'}" fill="#d4351c" font-size="11" font-family="DM Mono, monospace" font-weight="600">Your GP: $${(scenario.gp/1000).toFixed(0)}k · Comm: $${(cur.newComm/1000).toFixed(1)}k</text>
-    ${showOld ? `<rect x="${W - padR - 130}" y="${padT + 26}" width="124" height="62" fill="#fff" stroke="#cdd9e8" stroke-width="1" rx="4"/>
-    <text x="${W - padR - 124}" y="${padT + 42}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace" font-weight="600">New: $${(cur.newComm/1000).toFixed(1)}k</text>
-    <text x="${W - padR - 124}" y="${padT + 58}" fill="#666" font-size="11" font-family="DM Mono, monospace">Old: $${(cur.oldComm/1000).toFixed(1)}k</text>
-    <text x="${W - padR - 124}" y="${padT + 76}" fill="${cur.newComm >= cur.oldComm ? '#1f5e3c' : '#a8281b'}" font-size="11" font-family="DM Mono, monospace" font-weight="700">Δ ${cur.newComm >= cur.oldComm ? '+' : ''}$${((cur.newComm - cur.oldComm)/1000).toFixed(1)}k</text>` : ''}
-    <text x="${padL}" y="${padT - 8}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace">Commission ($, super-inclusive)</text>
-    <text x="${W/2}" y="${H - 8}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace">Annual GP Sold</text>
+    <text x="${markerX + markerOffset}" y="${padT + 14}" text-anchor="${markerAnchor}" fill="#d4351c" font-size="11" font-family="DM Mono, monospace" font-weight="600">Your GP: ${fmtK(scenario.gp)}/yr (${fmtK(scenario.gp / 12)}/mo) · Comm: ${fmtK(cur.newComm)}/yr (${fmtK(cur.newComm / 12)}/mo)</text>
+    ${showOld ? `<rect x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" fill="#fff" stroke="#cdd9e8" stroke-width="1" rx="4"/>
+    <text x="${boxX + 8}" y="${boxY + 16}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace" font-weight="600">New: ${fmtK(cur.newComm)}/yr · ${fmtK(cur.newComm / 12)}/mo</text>
+    <text x="${boxX + 8}" y="${boxY + 34}" fill="#666" font-size="11" font-family="DM Mono, monospace">Old: ${fmtK(cur.oldComm)}/yr · ${fmtK(cur.oldComm / 12)}/mo</text>
+    <text x="${boxX + 8}" y="${boxY + 56}" fill="${deltaColour}" font-size="11" font-family="DM Mono, monospace" font-weight="700">Δ ${cur.newComm >= cur.oldComm ? '+' : ''}${fmtK(cur.newComm - cur.oldComm)}/yr</text>
+    <text x="${boxX + 8}" y="${boxY + 72}" fill="${deltaColour}" font-size="11" font-family="DM Mono, monospace" font-weight="700">  ${cur.newComm >= cur.oldComm ? '+' : ''}${fmtK((cur.newComm - cur.oldComm) / 12)}/mo</text>` : ''}
+    <text x="${padL}" y="${padT - 8}" fill="#0a2540" font-size="11" font-family="DM Mono, monospace">Commission ($, super-inclusive · /yr · /mo)</text>
+    <text x="${W/2}" y="${H - 8}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace">Annual GP Sold (with monthly equivalent)</text>
   `;
 }
 
