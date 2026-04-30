@@ -295,7 +295,9 @@
   .scenario-row .value-input:focus { outline: none; border-color: var(--navy); }
 
   .tooltip-trigger { display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 50%; background: var(--border); font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 4px; cursor: help; position: relative; font-family: 'DM Sans', sans-serif; text-transform: none; letter-spacing: normal; }
-  .tooltip-trigger:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 0; transform: translateY(-4px); background: var(--ink); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 400; line-height: 1.4; white-space: normal; width: 240px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .tooltip-trigger:hover { color: var(--accent); background: var(--accent-bg); border-color: var(--accent); }
+  #tt-bubble { position: fixed; z-index: 10000; background: var(--ink); color: #fff; padding: 9px 13px; border-radius: 6px; font-size: 12px; font-weight: 400; line-height: 1.5; max-width: 320px; pointer-events: none; box-shadow: 0 4px 14px rgba(0,0,0,0.22); opacity: 0; transition: opacity 0.12s ease; text-align: left; font-family: 'DM Sans', sans-serif; white-space: normal; }
+  #tt-bubble.show { opacity: 1; }
 
   .rate-calc { background: #fafaf7; border-left: 3px solid var(--navy); border-radius: 4px; padding: 14px 18px; margin: 14px 0 4px; font-size: 13px; }
   .rate-calc .chip { font-family: var(--mono); background: #fff; border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; margin: 0 2px; font-size: 12px; }
@@ -358,7 +360,10 @@
   table.monthly td.mon { font-weight: 600; color: var(--navy); font-family: var(--mono); font-size: 12px; width: 90px; }
   table.monthly td.num { font-family: var(--mono); text-align: right; font-size: 13px; }
   table.monthly td.num.plus { color: var(--accent); }
-  table.monthly td.input-cell { padding: 4px 6px; width: 150px; }
+  table.monthly td.input-cell { padding: 4px 6px; width: 110px; }
+  table.monthly th.band-col, table.monthly td.band-cell { width: 78px; text-align: right; font-family: var(--mono); font-size: 12px; }
+  table.monthly td.band-cell { color: var(--muted); }
+  table.monthly tr.tu-capped td.band-cell, table.monthly tr.tu-locked td.band-cell { color: var(--navy); font-weight: 600; }
   table.monthly td.input-cell input { font-family: var(--mono); font-size: 13px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; text-align: right; width: 100%; background: #fff; }
   table.monthly td.input-cell input:focus { outline: none; border-color: var(--navy); background: #fff; }
   table.monthly tr.past td { background: #fafaf7; }
@@ -575,12 +580,10 @@
   <section class="panel" id="panel-overview">
 
     <!-- ============ PLANNING SECTION ============ -->
-    <div class="section-head">
-      <span class="tag">Planning</span>
-      <h2>Forecast your year</h2>
+    <div id="pay-increase-banner"></div>
+    <div class="section-head">      <h2>Forecast your year</h2>
       <p class="blurb">Drag the sliders below to model different GP scenarios — numbers reset on reload.</p>
     </div>
-    <div id="pay-increase-banner"></div>
     <div id="planning-gate-banner"></div>
 
     <div class="kpi-row">
@@ -796,9 +799,7 @@
     <div class="section-gap"></div>
 
     <!-- ============ ACTUAL SECTION ============ -->
-    <div class="section-head">
-      <span class="tag" style="background:#ecebe5;border-color:#d3d1c7;color:var(--warn);">Actual</span>
-      <h2>What you've earned</h2>
+    <div class="section-head">      <h2>What you've earned</h2>
       <p class="blurb">Enter your actual monthly GP Received and Event GP Produced below. Commissions are calculated month-by-month off these real numbers, with quarterly true-ups keeping your payouts fair over time. Edits persist on this device.</p>
     </div>
     <div id="prod-gate-banner"></div>
@@ -886,6 +887,7 @@
               <th>Month</th>
               <th class="num">GP Received</th>
               <th class="num">Event GP<br>Produced</th>
+              <th class="num band-col">Band <span class="tooltip-trigger" data-tip="The monthly band rate your GP Received this month falls into. Bands are annual ÷ 12. The rate applies only to the slice of monthly GP that lands inside this band — earlier dollars earn at lower rates.">?</span></th>
               <th class="num">GP<br>Commission<small>Inc. Super</small></th>
               <th class="num">Production<br>Commission<small>Inc. Super</small></th>
               <th class="num">Monthly<br>Total<small>Inc. Super</small></th>
@@ -2960,6 +2962,7 @@ function renderMonthlyGrid() {
       <td class="input-cell">
         <input type="text" inputmode="numeric" data-field="eventGP" data-idx="${i}" value="${evVal ? fmtNum(evVal) : ''}" placeholder="0" ${locked ? 'disabled' : ''}>
       </td>
+      <td class="num band-cell" data-cell="band">—</td>
       <td class="num plus" data-cell="gpComm">—</td>
       <td class="num plus" data-cell="prodComm">—</td>
       <td class="num" data-cell="monTotal">—</td>
@@ -2974,6 +2977,7 @@ function renderMonthlyGrid() {
       <td class="mon">Q-Total</td>
       <td class="num" data-cell="qGP">—</td>
       <td class="num" data-cell="qEventGP">—</td>
+      <td class="num band-cell"></td>
       <td class="num" data-cell="qGpComm">—</td>
       <td class="num" data-cell="qProdComm">—</td>
       <td class="num" data-cell="qTotal">—</td>
@@ -2989,6 +2993,7 @@ function renderMonthlyGrid() {
       <td class="mon">Annual totals</td>
       <td class="num" id="tot-gp">—</td>
       <td class="num" id="tot-eventgp">—</td>
+      <td class="num band-cell"></td>
       <td class="num" id="tot-gpcomm">—</td>
       <td class="num" id="tot-prodcomm">—</td>
       <td class="num" id="tot-total">—</td>
@@ -3501,10 +3506,36 @@ function update() {
     const row = tbody.querySelector(`tr[data-mon-idx="${r2.idx}"]`);
     if (!row) return;
     row.classList.toggle('tu-capped', r2.wasCapped);
+    // Band % cell
+    const bandCell = row.querySelector('[data-cell="band"]');
+    if (bandCell) {
+      if (r2.gpReceived > 0) {
+        const mb = monthlyBands();
+        let activeRate = mb[0]?.rate || 0;
+        for (let bi = 0; bi < mb.length; bi++) { if (r2.gpReceived > mb[bi].threshold) activeRate = mb[bi].rate; }
+        bandCell.textContent = (activeRate * 100).toFixed(1) + '%';
+        bandCell.title = `At $${fmtNum(r2.gpReceived)}/mo GP, the last dollar earned at ${(activeRate * 100).toFixed(2)}%. Earlier dollars earned at lower band rates.`;
+      } else { bandCell.textContent = '—'; bandCell.title = ''; }
+    }
+    const tuFired = r2.wasCapped || (r2.isAnnualEnd && r2.annualCapFired);
     const mLabel = (r2.isAnnualEnd && r2.annualCapFired) ? ' 🔒 annual TU' : (r2.isQuarterEnd && r2.wasCapped ? ' 🔒 quarter TU' : '');
     const gpCommCell = row.querySelector('[data-cell="gpComm"]');
     gpCommCell.textContent = r2.gpCommInc > 0 ? fmtMoney(r2.gpCommInc) + mLabel : (r2.isQuarterEnd && r2.wasCapped ? '$0 🔒 TU' : '—');
-    gpCommCell.title = r2.wasCapped ? `Raw monthly calc: ${fmtMoney(r2.rawMonthlyGPComm)}. Capped by true-up.` : '';
+    if (tuFired) {
+      const raw = r2.rawMonthlyGPComm; const final = r2.gpCommInc;
+      const tuAdj = final - raw; const adjSign = tuAdj >= 0 ? '+' : '−';
+      const monthlyBandsArr = monthlyBands();
+      let activeRate = monthlyBandsArr[0]?.rate || 0;
+      for (let bi = 0; bi < monthlyBandsArr.length; bi++) { if (r2.gpReceived > monthlyBandsArr[bi].threshold) activeRate = monthlyBandsArr[bi].rate; }
+      const ratePct = (activeRate * 100).toFixed(1) + '%';
+      const tuTip = `<strong>How this true-up was calculated</strong><br><br>` +
+        `<strong>$${fmtNum(r2.gpReceived)}</strong> GP received this month places you in the <strong>${ratePct}</strong> monthly tier.<br>` +
+        `That would normally yield <strong>${fmtMoney(raw)}</strong> in commission.<br>` +
+        `Quarterly true-up adjustment: <strong>${adjSign}${fmtMoney(Math.abs(tuAdj))}</strong>.<br>` +
+        `<strong>Final GP commission paid this month: ${fmtMoney(final)}.</strong>`;
+      gpCommCell.innerHTML += ` <span class="tu-explainer-trigger" data-tip="${tuTip.replace(/"/g, '&quot;')}" style="display: inline-flex; width: 16px; height: 16px; line-height: 14px; text-align: center; border-radius: 50%; background: #fff; border: 1px solid var(--navy); color: var(--navy); font-size: 10px; font-weight: 700; cursor: help; vertical-align: middle; justify-content: center; align-items: center;">?</span>`;
+      gpCommCell.title = '';
+    } else { gpCommCell.title = ''; }
     row.querySelector('[data-cell="prodComm"]').textContent = r2.prodCommInc > 0 ? fmtMoney(r2.prodCommInc) : '—';
     row.querySelector('[data-cell="monTotal"]').textContent = r2.monTotalInc > 0 ? fmtMoney(r2.monTotalInc) : '—';
     const monTotalEx = r2.monTotalInc / (1 + g.superRate);
@@ -4217,8 +4248,8 @@ function renderBreakdown(r) {
   table.innerHTML = `
     <tr><td>Base salary (ex-super)</td><td>${fmtMoney(r.base)}</td></tr>
     <tr class="plus"><td>Super on base (${fmtPct(g.superRate, 0)})</td><td>+ ${fmtMoney(r.baseSuper)}</td></tr>
-    <tr class="plus"><td>GP commission (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI)</td><td>+ ${fmtMoney(r.commGross)}</td></tr>
-    <tr class="plus"><td>Production commission (inc. super, 1% of Event GP)</td><td>+ ${fmtMoney(r.prodGross)}</td></tr>
+    <tr class="plus"><td>GP commission (inc. super)</td><td>+ ${fmtMoney(r.commGross)}</td></tr>
+    <tr class="plus"><td>Production commission (inc. super)</td><td>+ ${fmtMoney(r.prodGross)}</td></tr>
     <tr class="total"><td>Total package</td><td>${fmtMoney(r.totalPackage)}</td></tr>
   `;
 }
@@ -4391,6 +4422,31 @@ function renderFaqTab() {
     </details>
   `).join('');
 }
+
+
+(function wireTooltipBubble() {
+  if (window._ttBubbleWired) return;
+  window._ttBubbleWired = true;
+  let bubble = document.getElementById('tt-bubble');
+  if (!bubble) { bubble = document.createElement('div'); bubble.id = 'tt-bubble'; document.body.appendChild(bubble); }
+  document.addEventListener('mouseover', (ev) => {
+    const t = ev.target.closest('.tooltip-trigger, .tu-explainer-trigger');
+    if (!t) return;
+    const tip = t.dataset.tip || ''; if (!tip) return;
+    bubble.innerHTML = tip; bubble.classList.add('show');
+    bubble.style.left = '0px'; bubble.style.top = '0px';
+    const r = t.getBoundingClientRect();
+    const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+    let left = r.left + (r.width / 2) - (bw / 2); let top = r.top - bh - 8;
+    const margin = 8;
+    if (left < margin) left = margin;
+    if (left + bw > window.innerWidth - margin) left = window.innerWidth - bw - margin;
+    if (top < margin) top = r.bottom + 8;
+    bubble.style.left = left + 'px'; bubble.style.top = top + 'px';
+  });
+  document.addEventListener('mouseout', (ev) => { const t = ev.target.closest('.tooltip-trigger, .tu-explainer-trigger'); if (t) bubble.classList.remove('show'); });
+  document.addEventListener('scroll', () => { bubble.classList.remove('show'); }, true);
+})();
 
 </script>
 </body>

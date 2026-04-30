@@ -295,7 +295,20 @@
   .scenario-row .value-input:focus { outline: none; border-color: var(--navy); }
 
   .tooltip-trigger { display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 50%; background: var(--border); font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 4px; cursor: help; position: relative; font-family: 'DM Sans', sans-serif; text-transform: none; letter-spacing: normal; }
-  .tooltip-trigger:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 0; transform: translateY(-4px); background: var(--ink); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 400; line-height: 1.4; white-space: normal; width: 240px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  /* Body-level tooltip for .tooltip-trigger — escapes overflow containers (table wrappers etc) */
+  .tooltip-trigger:hover { color: var(--accent); background: var(--accent-bg); border-color: var(--accent); }
+  #tt-bubble {
+    position: fixed; z-index: 10000;
+    background: var(--ink); color: #fff;
+    padding: 9px 13px; border-radius: 6px;
+    font-size: 12px; font-weight: 400; line-height: 1.5;
+    max-width: 320px; pointer-events: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+    opacity: 0; transition: opacity 0.12s ease;
+    text-align: left; font-family: 'DM Sans', sans-serif;
+    white-space: normal;
+  }
+  #tt-bubble.show { opacity: 1; }
 
   .rate-calc { background: #fafaf7; border-left: 3px solid var(--navy); border-radius: 4px; padding: 14px 18px; margin: 14px 0 4px; font-size: 13px; }
   .rate-calc .chip { font-family: var(--mono); background: #fff; border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; margin: 0 2px; font-size: 12px; }
@@ -2663,7 +2676,8 @@ function update() {
     const gpCommCell = row.querySelector('[data-cell="gpComm"]');
     gpCommCell.textContent = r2.gpCommInc > 0 ? fmtMoney(r2.gpCommInc) + mLabel : (r2.isQuarterEnd && r2.wasCapped ? '$0 🔒 TU' : '—');
     if (tuFired) {
-      // Detailed TU explanation tooltip when a true-up adjustment fires
+      // Detailed TU explanation — render an inline "?" trigger that opens a
+      // body-level tooltip bubble (escapes the table's overflow:auto clipping).
       const raw = r2.rawMonthlyGPComm;
       const final = r2.gpCommInc;
       const tuAdj = final - raw;  // negative = capped down, positive = top-up
@@ -2674,7 +2688,14 @@ function update() {
         if (r2.gpReceived > monthlyBandsArr[bi].threshold) activeRate = monthlyBandsArr[bi].rate;
       }
       const ratePct = (activeRate * 100).toFixed(1) + '%';
-      gpCommCell.title = `$${fmtNum(r2.gpReceived)} GP received this month → places you in the ${ratePct} tier. Would normally yield ${fmtMoney(raw)} in commission. Quarterly true-up adjustment: ${adjSign}${fmtMoney(Math.abs(tuAdj))}. Final GP commission paid this month: ${fmtMoney(final)}.`;
+      const tuTip = `<strong>How this true-up was calculated</strong><br><br>` +
+        `<strong>$${fmtNum(r2.gpReceived)}</strong> GP received this month places you in the <strong>${ratePct}</strong> monthly tier.<br>` +
+        `That would normally yield <strong>${fmtMoney(raw)}</strong> in commission.<br>` +
+        `Quarterly true-up adjustment: <strong>${adjSign}${fmtMoney(Math.abs(tuAdj))}</strong>.<br>` +
+        `<strong>Final GP commission paid this month: ${fmtMoney(final)}.</strong>`;
+      // Append a visible "?" trigger after the existing label
+      gpCommCell.innerHTML += ` <span class="tu-explainer-trigger" data-tip="${tuTip.replace(/"/g, '&quot;')}" style="display: inline-flex; width: 16px; height: 16px; line-height: 14px; text-align: center; border-radius: 50%; background: #fff; border: 1px solid var(--navy); color: var(--navy); font-size: 10px; font-weight: 700; cursor: help; vertical-align: middle; justify-content: center; align-items: center;">?</span>`;
+      gpCommCell.title = '';  // suppress the native title in favour of the bubble
     } else {
       gpCommCell.title = '';
     }
@@ -3564,6 +3585,49 @@ function renderFaqTab() {
     </details>
   `).join('');
 }
+
+
+// Body-level tooltip for .tooltip-trigger and .tu-explainer-trigger elements.
+// Escapes the overflow:auto wrappers that clip the CSS ::after approach.
+(function wireTooltipBubble() {
+  if (window._ttBubbleWired) return;
+  window._ttBubbleWired = true;
+  let bubble = document.getElementById('tt-bubble');
+  if (!bubble) {
+    bubble = document.createElement('div');
+    bubble.id = 'tt-bubble';
+    document.body.appendChild(bubble);
+  }
+  document.addEventListener('mouseover', (ev) => {
+    const t = ev.target.closest('.tooltip-trigger, .tu-explainer-trigger');
+    if (!t) return;
+    const tip = t.dataset.tip || '';
+    if (!tip) return;
+    // Support \n and HTML in tips
+    bubble.innerHTML = tip;
+    bubble.classList.add('show');
+    // Position above the trigger; clamp to viewport
+    bubble.style.left = '0px'; bubble.style.top = '0px';
+    const r = t.getBoundingClientRect();
+    const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+    let left = r.left + (r.width / 2) - (bw / 2);
+    let top = r.top - bh - 8;
+    const margin = 8;
+    if (left < margin) left = margin;
+    if (left + bw > window.innerWidth - margin) left = window.innerWidth - bw - margin;
+    if (top < margin) top = r.bottom + 8;
+    bubble.style.left = left + 'px';
+    bubble.style.top = top + 'px';
+  });
+  document.addEventListener('mouseout', (ev) => {
+    const t = ev.target.closest('.tooltip-trigger, .tu-explainer-trigger');
+    if (!t) return;
+    bubble.classList.remove('show');
+  });
+  document.addEventListener('scroll', () => {
+    bubble.classList.remove('show');
+  }, true);
+})();
 
 </script>
 </body>
