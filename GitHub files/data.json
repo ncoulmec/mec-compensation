@@ -2343,7 +2343,8 @@
       "last365GPSold": 0,
       "annualGPTarget": 0,
       "minProductionGP": null,
-      "faqGroup": "sales_rep"
+      "faqGroup": "sales_rep",
+      "hideOldPlan": true
     }
   ],
   "companyPL": {

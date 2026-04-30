@@ -3456,22 +3456,83 @@ function drawCommissionCurve() {
   const markerX = xScale(Math.min(scenario.gp, maxGP));
   const cur = points[Math.round((Math.min(scenario.gp, maxGP) / maxGP) * samples)] || points[points.length - 1];
 
+  // Hint text shown briefly on hover, fades as you drag
+  svg.style.cursor = 'ew-resize';
   svg.innerHTML = `
-    <title id="commission-curve-title">Commission curve — new plan vs old plan</title><desc id="commission-curve-desc">A line chart showing how your commission earned (super-inclusive, on the Y-axis) grows as your annual GP sold increases (X-axis). The new-plan curve is plotted alongside the old flat-rate plan for comparison; the gap between them widens as GP rises. Detailed monthly equivalents are shown in the side panel beside the chart.</desc>
+    <title id="commission-curve-title">Commission curve — new plan vs old plan</title><desc id="commission-curve-desc">A line chart showing how your commission earned (super-inclusive, on the Y-axis) grows as your annual GP sold increases (X-axis). Click and drag anywhere on the chart to move the scenario marker. Detailed monthly equivalents are shown in the side panel beside the chart.</desc>
     ${yAxis.join('')}
     ${showOld ? `<path d="${diffPath}" fill="rgba(46, 168, 109, 0.08)" stroke="none"/>` : ''}
     ${showOld ? `<path d="${pathFor('oldComm')}" fill="none" stroke="#8e8e93" stroke-width="2" stroke-dasharray="4 3"/>` : ''}
     <path d="${pathFor('newComm')}" fill="none" stroke="#0a2540" stroke-width="2.5"/>
     ${xTicks.join('')}
     <line x1="${padL}" y1="${padT + innerH}" x2="${W - padR}" y2="${padT + innerH}" stroke="#888" stroke-width="1"/>
-    <line x1="${markerX}" y1="${padT}" x2="${markerX}" y2="${padT + innerH}" stroke="#d4351c" stroke-width="1.2" stroke-dasharray="3 3"/>
-    <circle cx="${markerX}" cy="${yScale(cur.newComm)}" r="4" fill="#0a2540"/>
-    ${showOld ? `<circle cx="${markerX}" cy="${yScale(cur.oldComm)}" r="4" fill="#8e8e93"/>` : ''}
-    <text x="${W/2}" y="${H - 6}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace">Annual GP Sold</text>
+    <!-- transparent overlay catches drags across the entire plot area; ensures rect on top of curves so it always wins clicks -->
+    <rect id="commission-curve-hit" x="${padL}" y="${padT}" width="${innerW}" height="${innerH}" fill="transparent" style="cursor: ew-resize;"/>
+    <line x1="${markerX}" y1="${padT}" x2="${markerX}" y2="${padT + innerH}" stroke="#d4351c" stroke-width="1.4" stroke-dasharray="3 3" pointer-events="none"/>
+    <circle cx="${markerX}" cy="${yScale(cur.newComm)}" r="5" fill="#0a2540" stroke="#fff" stroke-width="2" pointer-events="none"/>
+    ${showOld ? `<circle cx="${markerX}" cy="${yScale(cur.oldComm)}" r="4" fill="#8e8e93" stroke="#fff" stroke-width="1.5" pointer-events="none"/>` : ''}
+    <text x="${W/2}" y="${H - 6}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace" pointer-events="none">Annual GP Sold · drag the chart to set scenario</text>
   `;
+
+  // Wire drag-to-set-scenario on the chart — only attach once per page lifecycle.
+  if (!svg.dataset.dragWired) {
+    const setGpFromClientX = (clientX) => {
+      const r = svg.getBoundingClientRect();
+      // SVG renders at viewBox 800 wide; scale clientX into SVG coord space
+      const scale = r.width / W;
+      const svgX = (clientX - r.left) / scale;
+      let gp = ((svgX - padL) / innerW) * maxGP;
+      // Snap to nearest $1,000 for stable values
+      gp = Math.max(0, Math.min(maxGP, Math.round(gp / 1000) * 1000));
+      // Route through the existing funnel/sync pipeline so all sliders, floater, breakdown stay in lockstep
+      if (typeof funnelState !== 'undefined' && funnelState && typeof funnelRecalc === 'function') {
+        funnelState.totalGP = gp;
+        funnelRecalc('totalGP');
+      }
+      scenario.gp = gp;
+      if (typeof update === 'function') update();
+      if (typeof paintFloater === 'function') paintFloater();
+      if (typeof syncMainSlider === 'function') syncMainSlider();
+    };
+    let dragging = false;
+    const onDown = (ev) => {
+      dragging = true;
+      svg.style.cursor = 'grabbing';
+      const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+      setGpFromClientX(cx);
+      ev.preventDefault();
+    };
+    const onMove = (ev) => {
+      if (!dragging) return;
+      const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+      setGpFromClientX(cx);
+      ev.preventDefault();
+    };
+    const onUp = () => { dragging = false; svg.style.cursor = 'ew-resize'; };
+    svg.addEventListener('mousedown', onDown);
+    svg.addEventListener('touchstart', onDown, { passive: false });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', onUp);
+    svg.dataset.dragWired = '1';
+  }
 
   // Render the side panel summary (Your GP / New / Old / Δ with /yr + /mo on each)
   renderCommissionCurveSummary(cur);
+}
+
+// Tiered money formatter for the side panel.
+// - decimals=1 (default for big "Your scenario" tile): always 1 decimal
+// - decimals=2 (default for finer tiles): 2 decimals when >= $1k, full $ when < $1k
+function fmtSidePanelMoney(v, decimals) {
+  const abs = Math.abs(v);
+  const dp = decimals == null ? 2 : decimals;
+  if (abs < 1000) return `$${Math.round(v)}`;
+  if (dp === 1) return `$${(v / 1000).toFixed(1)}k`;
+  // 2-decimal mode: keep 2 decimals up to $99k, drop to 1 for $100k+ to avoid "$169.00k" clutter
+  if (abs >= 100000) return `$${(v / 1000).toFixed(1)}k`;
+  return `$${(v / 1000).toFixed(2)}k`;
 }
 
 // ---- Side panel summary that lives next to the commission curve ----
@@ -3479,7 +3540,8 @@ function renderCommissionCurveSummary(cur) {
   const wrap = document.getElementById('commission-curve-summary');
   if (!wrap || !cur) return;
   const showOld = !emp.hideOldPlan;
-  const fmtK = v => `$${(v / 1000).toFixed(Math.abs(v) >= 10000 ? 0 : 1)}k`;
+  const fmtBig = v => fmtSidePanelMoney(v, 1);   // Your scenario — 1 decimal
+  const fmtFine = v => fmtSidePanelMoney(v, 2);  // New / Old / Diff — 2 decimals
   const delta = cur.newComm - cur.oldComm;
   const deltaColour = delta >= 0 ? '#1f5e3c' : '#a8281b';
   const deltaSign = delta >= 0 ? '+' : '−';
@@ -3491,11 +3553,14 @@ function renderCommissionCurveSummary(cur) {
       <div style="font-family: var(--mono); font-size: 12px; color: ${opts.subColour || 'var(--muted)'}; margin-top: 2px;">${valueMo}<span style="font-size: 9px; color: var(--faint); margin-left: 2px;">/mo</span></div>
     </div>`;
 
-  let html = tile('Your scenario', fmtK(scenario.gp), fmtK(scenario.gp / 12), { bg: '#eef4fa', border: '#cdd9e8', labelColour: 'var(--navy)', colour: 'var(--navy)' });
-  html += tile('New plan commission', fmtK(cur.newComm), fmtK(cur.newComm / 12), { colour: '#0a2540', labelColour: '#0a2540' });
+  // Label switch: "Commission" if no old-plan comparison, otherwise "New plan commission".
+  const newLabel = showOld ? 'New plan commission' : 'Commission';
+
+  let html = tile('Your scenario', fmtBig(scenario.gp), fmtBig(scenario.gp / 12), { bg: '#eef4fa', border: '#cdd9e8', labelColour: 'var(--navy)', colour: 'var(--navy)' });
+  html += tile(newLabel, fmtFine(cur.newComm), fmtFine(cur.newComm / 12), { colour: '#0a2540', labelColour: '#0a2540' });
   if (showOld) {
-    html += tile('Old plan (3.5%)', fmtK(cur.oldComm), fmtK(cur.oldComm / 12), { bg: '#fafaf7', colour: '#666', labelColour: 'var(--muted)', subColour: 'var(--faint)' });
-    html += tile('Difference', `${deltaSign}${fmtK(Math.abs(delta))}`, `${deltaSign}${fmtK(Math.abs(delta) / 12)}`, { bg: delta >= 0 ? '#f5faf7' : '#fdf2f2', border: delta >= 0 ? '#c3e4d0' : '#f2d5d5', colour: deltaColour, labelColour: deltaColour, subColour: deltaColour });
+    html += tile('Old plan (3.5%)', fmtFine(cur.oldComm), fmtFine(cur.oldComm / 12), { bg: '#fafaf7', colour: '#666', labelColour: 'var(--muted)', subColour: 'var(--faint)' });
+    html += tile('Difference', `${deltaSign}${fmtFine(Math.abs(delta))}`, `${deltaSign}${fmtFine(Math.abs(delta) / 12)}`, { bg: delta >= 0 ? '#f5faf7' : '#fdf2f2', border: delta >= 0 ? '#c3e4d0' : '#f2d5d5', colour: deltaColour, labelColour: deltaColour, subColour: deltaColour });
   }
   wrap.innerHTML = html;
 }
