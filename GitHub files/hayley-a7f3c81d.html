@@ -282,19 +282,17 @@
     <dd>Extra bonus paid when company NP crosses certain milestones ($100k / $300k / $700k / $1M / $1.3M / $1.5M). Tiered — bigger NP unlocks bigger bonuses.</dd>
 
     <dt>Super-Inclusive</dt>
-    <dd>The dollar figures already include the 12% superannuation. So $46k commission means $41k to you + $5k super.</dd>
+    <dd>The dollar figures already include the 12% superannuation. So a $46k commission means $41k paid into your bank (pre-tax) and $5k paid into your super fund — $46k total in your name.</dd>
 
     <dt>75% Quarterly / 25% Holdback</dt>
     <dd>Each quarter pays 75% of commission earned to that point. The remaining 25% is held back and reconciled at year-end based on actual full-year CM/NP.</dd>
 
     <dt>Quarterly True-Up</dt>
-    <dd>Each quarter we look at cumulative CM/NP, calculate the commission earned to date, subtract what's been paid in earlier quarters, and pay the difference (capped at 75% per quarter).</dd>
-
+    <dd>Each quarter we look at cumulative CM/NP, calculate the commission earned to date, subtract what's been paid in earlier quarters, and pay the difference (capped at 75% per quarter).</dd><dt>Total Package</dt>
+    <dd>Base salary + super on base + CM commission + NP kicker. The full cost-to-MEC of employing you for the year.</dd>
+  
     <dt>KPI Multiplier</dt>
     <dd>A multiplier applied to your variable comp once KPIs go live. Indicative range is roughly 0.7× to 1.3×, but the exact range will be confirmed before activation. Currently locked at 1.0× — KPIs are still in DRAFT.</dd>
-
-    <dt>Total Package</dt>
-    <dd>Base salary + super on base + CM commission + NP kicker. The full cost-to-MEC of employing you for the year.</dd>
   </dl>
 </div>
 
@@ -309,10 +307,6 @@
 </nav>
 
 <main>
-  <div class="banner info super-banner" style="margin-top: 6px;" role="note" aria-label="Super-inclusive notice">
-    <span class="dot" aria-hidden="true"></span>
-    <span><strong>Heads-up:</strong> Every dollar figure on this dashboard is <strong>super-inclusive</strong> (12% super already included), unless explicitly labelled <em>ex super</em>. So a $16,000 figure means MEC pays $16,000 in your name — roughly $14,300 lands in your bank account, with the rest (~$1,700) going to your super fund.</span>
-  </div>
 
   <div id="error-slot"></div>
   <div id="loading" class="loading">Loading compensation data…</div>
@@ -322,7 +316,7 @@
     <div class="section-head">
       <span class="tag">Planning</span>
       <h2>Forecast your year</h2>
-      <p class="blurb">Model the company's full-year Contribution Margin (CM) and Net Profit (NP) — your incentive is driven by both. CM bonus = matched band rate × (CM − baseline). NP bonus = matched band rate × (NP − matched threshold). Both numbers are super-inclusive.</p>
+      <p class="blurb">Drag the sliders to model full-year CM and NP — your incentive is driven by both. Numbers are super-inclusive.</p>
     </div>
     <div id="pay-increase-banner"></div>
 
@@ -1426,26 +1420,16 @@ function update() {
       const totalLift = dBase + dSuper;
       const pctLift = (dBase / prev) * 100;
       payBanner.innerHTML = `
-        <div style="margin: 0 0 22px; padding: 16px 20px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
-            <div>
-              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🎉 Your pay increase</div>
-              <div style="font-family: var(--mono); font-size: 14px; color: var(--ink); margin-top: 6px;">
-                <span style="color: var(--muted); text-decoration: line-through;">${fmtMoney(prev)}</span>
-                &nbsp;→&nbsp;
-                <strong style="font-size: 18px; color: #1f5e3c;">${fmtMoney(curr)}</strong>
-                <span style="font-size: 12px; color: var(--muted);">base salary (ex super)</span>
-              </div>
-              <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px;">
-                +${fmtMoney(dBase)} base &nbsp;·&nbsp; +${fmtMoney(dSuper)} extra super (12%) &nbsp;·&nbsp; +${pctLift.toFixed(1)}%
-              </div>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Total annual lift</div>
-              <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #1f5e3c;">+${fmtMoney(totalLift)}</div>
-              <div style="font-size: 11px; color: var(--muted);">before any commission earned on top</div>
-            </div>
+        <div style="margin: 0 0 14px; padding: 10px 14px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px;">
+          <div style="font-family: var(--mono); color: var(--ink);">
+            <span style="font-size: 11px; color: #1f5e3c; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 8px;">🎉 Pay increase</span>
+            <span style="color: var(--muted); text-decoration: line-through;">${fmtMoney(prev)}</span> →
+            <strong style="color: #1f5e3c;">${fmtMoney(curr)}</strong>
+            <span style="color: var(--muted);">base ex-super</span>
+            <span style="color: var(--muted); margin: 0 6px;">·</span>
+            <span style="color: var(--muted);">+${fmtMoney(dBase)} base + ${fmtMoney(dSuper)} super (+${pctLift.toFixed(1)}%)</span>
           </div>
+          <div style="font-family: var(--mono); font-weight: 700; color: #1f5e3c; font-size: 14px;">+${fmtMoney(totalLift)} total annual lift</div>
         </div>`;
     } else {
       payBanner.innerHTML = '';

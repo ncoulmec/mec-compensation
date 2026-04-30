@@ -526,7 +526,7 @@
     <dd>Your GP total over the last 365 days. Updated each quarter — drives quarterly commission. Smooths out seasonal variation so you don't have to wait until year-end to be paid.</dd>
 
     <dt>Super-Inclusive</dt>
-    <dd>The dollar figures on your dashboard already include the 12% superannuation. So if it says $5,000 commission, that's $4,464 to you + $536 super = $5,000 total cost to MEC.</dd>
+    <dd>The dollar figures on your dashboard already include the 12% superannuation. So if it says $5,000 commission, that's $4,464 paid into your bank (pre-tax) and $536 paid into your super fund — $5,000 total in your name.</dd>
 
     <dt>Realistic Range</dt>
     <dd>The green zone on your Annual GP Sold slider — the window where most of your year is likely to land. The slider moves slowly through this zone so you can dial in the exact figure easily.</dd>
@@ -535,19 +535,17 @@
     <dd>Minimum annual Event GP Produced ($400k for Evie's role) required for Sales-side commission to flow. If you fall below the gate, only Production Commission (1% of Event GP) is paid.</dd>
 
     <dt>Quarterly True-Up</dt>
-    <dd>Your monthly commission is paid on monthly GP — but the real entitlement is your quarterly figure. At quarter-end, we reconcile: if you've been overpaid, the difference becomes a balance that reduces future commissions (never base salary). If underpaid, your month-3 cheque tops up.</dd>
-
-    <dt>KPI Multiplier</dt>
-    <dd>A multiplier applied to your variable comp once KPIs go live. Indicative range is roughly 0.7× to 1.3×, but the exact range will be confirmed before activation. Currently locked at 1.0× — KPIs are still in DRAFT.</dd>
-
-    <dt>Margin Calculator</dt>
+    <dd>Your monthly commission is paid on monthly GP — but the real entitlement is your quarterly figure. At quarter-end, we reconcile: if you've been overpaid, the difference becomes a balance that reduces future commissions (never base salary). If underpaid, your month-3 cheque tops up.</dd><dt>Margin Calculator</dt>
     <dd>Sanity-checks your realised margin (GP ÷ Revenue ex-GST) on bookings. Currently informational only — Margin Multipliers will reward higher-margin work in a future pass.</dd>
 
     <dt>Effective Rate</dt>
     <dd>The commission % you'd earn on the next dollar of GP at your current position — base band rate × KPI multiplier.</dd>
 
     <dt>Total Package</dt>
-    <dd>Base salary + super on base + commission earned + project bonuses. The full cost-to-MEC of employing you for the year.</dd>
+    <dd>Base salary + super on base + commission earned + project bonuses. The full amount paid in your name across the year, before the tax man takes his share.</dd>
+  
+    <dt>KPI Multiplier</dt>
+    <dd>A multiplier applied to your variable comp once KPIs go live. Indicative range is roughly 0.7× to 1.3×, but the exact range will be confirmed before activation. Currently locked at 1.0× — KPIs are still in DRAFT.</dd>
   </dl>
 </div>
 
@@ -564,10 +562,6 @@
 </nav>
 
 <main>
-  <div class="banner info super-banner" style="margin-top: 6px;" role="note" aria-label="Super-inclusive notice">
-    <span class="dot" aria-hidden="true"></span>
-    <span><strong>Heads-up:</strong> Every dollar figure on this dashboard is <strong>super-inclusive</strong> (12% super already included), unless explicitly labelled <em>ex super</em>. So a $16,000 figure means MEC pays $16,000 in your name — roughly $14,300 lands in your bank account, with the rest (~$1,700) going to your super fund.</span>
-  </div>
 
   <div id="error-slot"></div>
   <div id="loading" class="loading">Loading compensation data…</div>
@@ -579,7 +573,7 @@
     <div class="section-head">
       <span class="tag">Planning</span>
       <h2>Forecast your year</h2>
-      <p class="blurb">Model scenarios using the sliders below. These are your forward-looking projections — adjust the inputs to see how different GP targets affect your variable compensation. Numbers reset on reload.</p>
+      <p class="blurb">Drag the sliders below to model different GP scenarios — numbers reset on reload.</p>
     </div>
     <div id="pay-increase-banner"></div>
     <div id="planning-gate-banner"></div>
@@ -1262,7 +1256,7 @@
 
   <div class="gp-floater-footer">
     <span class="ftr-label">Est. Commission @ Scenario</span>
-    <span><span class="ftr-value" id="gpf-comm-v">—</span><span class="delta" id="gpf-comm-d"></span></span>
+    <span><span class="ftr-value" id="gpf-comm-v">—</span></span>
   </div>
   <div class="gp-floater-footer dark">
     <span class="ftr-label">Est. Total Package @ Scenario</span>
@@ -2579,26 +2573,16 @@ function update() {
       const totalLift = dBase + dSuper;
       const pctLift = (dBase / prev) * 100;
       payBanner.innerHTML = `
-        <div style="margin-bottom: 22px; padding: 16px 20px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
-            <div>
-              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🎉 Your pay increase</div>
-              <div style="font-family: var(--mono); font-size: 14px; color: var(--ink); margin-top: 6px;">
-                <span style="color: var(--muted); text-decoration: line-through;">${fmtMoney(prev)}</span>
-                &nbsp;→&nbsp;
-                <strong style="font-size: 18px; color: #1f5e3c;">${fmtMoney(curr)}</strong>
-                <span style="font-size: 12px; color: var(--muted);">base salary (ex super)</span>
-              </div>
-              <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px;">
-                +${fmtMoney(dBase)} base &nbsp;·&nbsp; +${fmtMoney(dSuper)} extra super (12%) &nbsp;·&nbsp; +${pctLift.toFixed(1)}%
-              </div>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Total annual lift</div>
-              <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #1f5e3c;">+${fmtMoney(totalLift)}</div>
-              <div style="font-size: 11px; color: var(--muted);">before any commission earned on top</div>
-            </div>
+        <div style="margin-bottom: 14px; padding: 10px 14px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px;">
+          <div style="font-family: var(--mono); color: var(--ink);">
+            <span style="font-size: 11px; color: #1f5e3c; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 8px;">🎉 Pay increase</span>
+            <span style="color: var(--muted); text-decoration: line-through;">${fmtMoney(prev)}</span> →
+            <strong style="color: #1f5e3c;">${fmtMoney(curr)}</strong>
+            <span style="color: var(--muted);">base ex-super</span>
+            <span style="color: var(--muted); margin: 0 6px;">·</span>
+            <span style="color: var(--muted);">+${fmtMoney(dBase)} base + ${fmtMoney(dSuper)} super (+${pctLift.toFixed(1)}%)</span>
           </div>
+          <div style="font-family: var(--mono); font-weight: 700; color: #1f5e3c; font-size: 14px;">+${fmtMoney(totalLift)} total annual lift</div>
         </div>`;
     } else {
       payBanner.innerHTML = '';
