@@ -3605,11 +3605,24 @@ function update() {
       const balDelta = qSum.balanceEnd - qSum.balanceStart;
       const showQTip = Math.abs(balDelta) > 0.5 || qSum.balanceEnd > 0.5 || qSum.m3ZeroedByTU;
       if (showQTip) {
-        const deltaLine = balDelta > 0.5
-          ? `<strong>Balance grew by ${fmtMoney(balDelta)}</strong> this quarter — your monthly cash payouts ran ahead of what the quarterly bands say you actually earned.`
-          : balDelta < -0.5
-          ? `<strong>Balance reduced by ${fmtMoney(Math.abs(balDelta))}</strong> this quarter — past overpayment got worked off.`
-          : `No net change in TU balance this quarter — paid right on entitlement.`;
+        // Detect offset-then-restored pattern: intra-quarter offsets paid down balance,
+        // but quarter-end reconciliation re-established it because monthly raws stacked
+        // above quarterly entitlement. Confusing without explanation.
+        const hadOffsets = (qSum.qOffset || 0) > 0.5;
+        let deltaLine;
+        if (hadOffsets && Math.abs(balDelta) <= 0.5) {
+          deltaLine = `<strong>Balance unchanged on the quarter — but lots of motion underneath.</strong> Your monthly earnings offset ${fmtMoney(qSum.qOffset)} of the carry-forward in earlier months, but the quarter-end reconciliation re-established the same balance because your monthly raws stacked above the quarterly entitlement. The offsets and the new overpayment cancelled out, so net change is $0.`;
+        } else if (hadOffsets && balDelta < -0.5) {
+          deltaLine = `<strong>Balance reduced by ${fmtMoney(Math.abs(balDelta))}</strong> this quarter — past overpayment got worked off via ${fmtMoney(qSum.qOffset)} of intra-quarter offsets.`;
+        } else if (hadOffsets && balDelta > 0.5) {
+          deltaLine = `<strong>Balance grew by ${fmtMoney(balDelta)} despite ${fmtMoney(qSum.qOffset)} of offsets.</strong> Your monthly earnings paid down the carry-forward temporarily, but you also over-earned this quarter (monthly raws stacked above quarterly entitlement), so a fresh overpayment replaced what was offset.`;
+        } else if (balDelta > 0.5) {
+          deltaLine = `<strong>Balance grew by ${fmtMoney(balDelta)}</strong> this quarter — your monthly cash payouts ran ahead of what the quarterly bands say you actually earned.`;
+        } else if (balDelta < -0.5) {
+          deltaLine = `<strong>Balance reduced by ${fmtMoney(Math.abs(balDelta))}</strong> this quarter — past overpayment got worked off.`;
+        } else {
+          deltaLine = `No net change in TU balance this quarter — paid right on entitlement.`;
+        }
         const balLine = qSum.balanceEnd > 0.5
           ? `<br><strong>${fmtMoney(qSum.balanceEnd)} TU balance</strong> carries forward to offset future commissions.`
           : `<br>TU balance: <strong>$0</strong> — fully cleared this quarter. ✓`;

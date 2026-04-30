@@ -803,10 +803,13 @@
 
     <dt>Quarterly Payout</dt>
     <dd>Your commission split into 4 cash flows. Each quarter, we look at your TTM revenue and pay you 1/4 of the annual commission that level would earn — so cash flow stays steady through the year.</dd><dt>Base Salary</dt>
-    <dd>Your guaranteed annual salary, paid fortnightly, regardless of performance. Shown ex-super on your dashboard with super added separately.</dd>
+    <dd>Your guaranteed annual salary, paid fortnightly, regardless of performance. Shown ex-super on your dashboard with super added separately. Increases as you complete project uplifts.</dd>
+
+    <dt>Project Base-Salary Uplift</dt>
+    <dd>For your role, completing a project (Rostering System, Quoting Tool, Client Portal) doesn't pay a one-off cash bonus — it <strong>permanently raises your base salary</strong> by the project amount on Definition of Done sign-off. Hayley/Nathan update Xero on approval day. The Projects tab tickboxes let you model what your future base salary looks like if a project were completed today.</dd>
 
     <dt>Total Package</dt>
-    <dd>Base salary + super on base + commission earned + project bonuses. The full amount paid in your name across the year, before the tax man takes his share.</dd>
+    <dd>Base salary + super on base + commission earned + completed project uplifts. The full amount paid in your name across the year, before the tax man takes his share.</dd>
 
     <dt>Production Commission</dt>
     <dd>(Sales/Producer hybrid roles only) An additional 1% paid on Event GP <em>after</em> the event has happened. Doesn't apply to your Performer role.</dd>
@@ -827,6 +830,10 @@
   <!-- Overview -->
   <section class="panel" id="panel-overview">
     <div id="pay-increase-banner"></div>
+
+    <!-- Base Salary Composition — projects build the base over time -->
+    <div id="base-composition-card"></div>
+
     <div class="kpi-row">
       <div class="kpi-card">
         <div class="label">Base Salary</div>
@@ -839,7 +846,7 @@
         <div class="sub" id="card-comm-sub">—</div>
       </div>
       <div class="kpi-card">
-        <div class="label">Project Bonus</div>
+        <div class="label">Project Uplift</div>
         <div class="value" id="card-projects">—</div>
         <div class="sub" id="card-projects-sub">—</div>
       </div>
@@ -895,7 +902,7 @@
         </div>
 
         <div id="planning-projects-section" style="display: none;">
-          <h3 style="margin-top: 22px;">Project Bonuses</h3>
+          <h3 style="margin-top: 22px;">Project Base-Salary Uplifts</h3>
           <p style="font-size: 12px; color: var(--muted); margin: 0 0 8px;">Tick to include each project in your projected total package.</p>
           <div id="project-toggles"></div>
         </div>
@@ -945,7 +952,7 @@
       <p style="font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.5;">
         The company maintains a minimum margin floor to ensure variable compensation is funded by real profitability.
         If the rolling company margin drops below the guardrail threshold, <strong>variable compensation pauses</strong>
-        — base salary and project bonuses are unaffected. This protects both you and the business during low-margin periods.
+        — base salary and project uplifts are unaffected. This protects both you and the business during low-margin periods.
       </p>
     </div>
 
@@ -1077,7 +1084,7 @@
   <!-- Projects -->
   <section class="panel" id="panel-projects">
     <div style="margin-bottom: 18px;">
-      <p style="color: var(--muted); font-size: 14px; margin: 0;">Project bonuses are paid on sign-off of the Definition of Done (DOD). Tick a project on the Overview tab to include it in your total package projection.</p>
+      <p style="color: var(--muted); font-size: 14px; margin: 0;"><strong>Each project is a base-salary uplift, not a one-off cash bonus.</strong> When you sign off the Definition of Done, the project amount gets added to your base salary going forward. Tick a project on the Overview tab to model your <em>future</em> base salary if it were completed today.</p>
     </div>
     <div id="projects-list"></div>
     <div id="projects-empty" style="display: none; padding: 60px; text-align: center; color: var(--muted); background: #fafaf7; border: 1px dashed var(--border); border-radius: 10px;">
@@ -1146,7 +1153,7 @@
       <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px;">Superannuation &amp; Total Package</h2>
       <div class="super-line"><span>Base salary</span><span id="spr-base">—</span></div>
       <div class="super-line"><span>+ Commission</span><span id="spr-comm" class="plus-line">—</span></div>
-      <div class="super-line"><span>+ Project bonuses (ex-super portion)</span><span id="spr-proj" class="plus-line">—</span></div>
+      <div class="super-line"><span>+ Project base uplifts (ex-super portion)</span><span id="spr-proj" class="plus-line">—</span></div>
       <div class="super-line muted"><span>Subtotal (ex-super)</span><span id="spr-subtotal">—</span></div>
       <div class="super-line"><span id="spr-super-label">+ Superannuation (12%)</span><span id="spr-super" class="plus-line">—</span></div>
       <div class="super-line total"><span>Total package</span><span id="spr-total">—</span></div>
@@ -1172,7 +1179,7 @@
       <h2 style="margin: 0 0 6px;">How Your Variable Compensation Works</h2>
       <p style="font-size: 13px; color: var(--muted); margin: 0 0 14px; font-style: italic;">The thinking behind your plan, in plain English. Different from the sales team — your plan is built around <strong>Performance Revenue</strong>, not GP.</p>
       <p style="font-size: 14px; color: var(--ink); line-height: 1.7; margin: 0 0 12px;">
-        Your role brings in revenue in two ways: by performing at gigs MEC books, and by leading the systems work that makes the whole business hum. Your variable comp rewards the first directly, and your project bonuses reward the second on delivery.
+        Your role brings in revenue in two ways: by performing at gigs MEC books, and by leading the systems work that makes the whole business hum. Your variable comp rewards the first directly. The systems work is rewarded with permanent <strong>base salary uplifts</strong> on completion — not one-off cash bonuses. Each project you finish raises your base for the rest of your time at MEC.
       </p>
       <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0;">
         Below is the spine of the plan and the deal we&rsquo;re making with you. Performers are paid on a different cycle to the sales team because performance revenue is a quarterly figure, not a monthly one — and your plan is structured to reflect that.
@@ -1211,12 +1218,12 @@
     </div>
 
     <div class="card" style="border-left: 3px solid var(--accent);">
-      <h3 style="margin: 0 0 10px;">Project bonuses (your second income stream)</h3>
+      <h3 style="margin: 0 0 10px;">Project base-salary uplifts (your second income stream)</h3>
       <p style="font-size: 13px; color: var(--ink); line-height: 1.6; margin: 0 0 10px;">
-        On top of revenue commission, you have project bonuses for the systems work you lead — Rostering System, Quoting Tool, Client Portal. These pay a flat amount on <strong>Definition of Done sign-off</strong>, not on time spent or progress. The slider on the Projects tab is a self-tracking tool only — it doesn&rsquo;t move the bonus.
+        On top of revenue commission, you have three projects whose completion <strong>permanently raises your base salary</strong> — Rostering System, Quoting Tool, Client Portal. Each lifts your base by its stated amount on <strong>Definition of Done sign-off</strong>, not on time spent or progress. The slider on the Projects tab is a self-tracking tool only — it doesn&rsquo;t move the trigger.
       </p>
       <p style="font-size: 12px; color: var(--muted); margin: 0; line-height: 1.6;">
-        Why structured this way: project work is genuinely additional. We don&rsquo;t want to discount it into your base salary or pretend it&rsquo;s part of the day-to-day. A clear DOD-trigger payout means you know exactly what you&rsquo;re aiming for and when the money lands.
+        Why structured this way: project work is genuinely additional, and we want to <strong>recognise it permanently</strong> rather than as a one-off cash payment. Once a project is signed off, it stays in your base salary for as long as you&rsquo;re at MEC. Hayley/Nathan update Xero on the day the DOD is approved.
       </p>
     </div>
 
@@ -1279,7 +1286,7 @@
 
   <!-- Project bonus quick toggles (live-render based on assigned projects) -->
   <div class="gp-floater-projrow" id="gpf-projrow">
-    <span class="label-mini">Project Bonuses <span class="help-icon" data-tip="Tap a pill to include that project bonus in the Total Package below. Same as the tickboxes on the Projects tab — kept in sync.">?</span></span>
+    <span class="label-mini">Base Uplift Projects <span class="help-icon" data-tip="Tap a pill to model your future base salary if that project were completed today. Each project becomes a permanent base-salary uplift on DOD sign-off — not a one-off cash bonus. Same as the tickboxes on the Projects tab — kept in sync.">?</span></span>
     <div class="pills" id="gpf-projpills"></div>
   </div>
 
@@ -1839,8 +1846,8 @@ function renderProjectToggles() {
   container.innerHTML = myProjects.map(p => {
     const checked = scenario.projectsEnabled[p.id] !== false;
     const amountLabel = p.bonusIncludesSuper
-      ? `${fmtMoney(p.bonusAmount)} incl. super`
-      : `${fmtMoney(p.bonusAmount)} + super`;
+      ? `+${fmtMoney(p.bonusAmount)} to base salary <small style="color: var(--faint); font-weight: 400;">(incl. super)</small>`
+      : `+${fmtMoney(p.bonusAmount)} to base salary <small style="color: var(--faint); font-weight: 400;">(+ super on top)</small>`;
     return `
       <label class="project-toggle ${checked ? 'checked' : ''}" for="proj-${p.id}">
         <div class="left">
@@ -1895,7 +1902,7 @@ function paintFloaterProjectPills() {
   if (!wrap.dataset.built) {
     wrap.innerHTML = myProjects.map(p => {
       const label = _shortPillLabel(p);
-      const tip = `${p.name} · ${p.bonusIncludesSuper ? fmtMoney(p.bonusAmount) + ' incl. super' : fmtMoney(p.bonusAmount) + ' + super'}`;
+      const tip = `${p.name} — adds ${p.bonusIncludesSuper ? fmtMoney(p.bonusAmount) + ' incl. super' : fmtMoney(p.bonusAmount) + ' + super'} to your base salary on DOD sign-off`;
       return `<button type="button" class="gp-floater-projpill" data-pid="${p.id}" title="${tip}">${label}</button>`;
     }).join('');
     wrap.dataset.built = '1';
@@ -2311,6 +2318,99 @@ function update() {
   // Render the payroll-locked quarterly actuals card (read-only display of
   // anything Hayley/payroll has entered into admin for this employee).
   if (typeof renderPayrollLockedCard === 'function') renderPayrollLockedCard();
+
+  // Render the Base Salary Composition card showing how project uplifts have built up the base.
+  if (typeof renderBaseComposition === 'function') renderBaseComposition();
+}
+
+// ----- Base Salary Composition card -----
+// Shows starting base + each project's contribution (locked or pending) → projected base.
+// Rationale: projects on Michael's plan permanently raise base salary on DOD sign-off,
+// so reps can see how their base has grown (and will grow) over time.
+function renderBaseComposition() {
+  const wrap = document.getElementById('base-composition-card');
+  if (!wrap || !emp || !plan) return;
+  if (myProjects.length === 0) { wrap.innerHTML = ''; return; }
+
+  const sr = data.globals.superRate || 0.12;
+  const currentBase = +emp.baseSalary || 0;
+
+  // Starting base salary = current base minus any already-completed project amounts.
+  // We treat a project as "completed" when status looks done, else "pending".
+  const isCompleted = (p) => {
+    const s = String(p.status || '').toLowerCase();
+    return s === 'completed' || s === 'complete' || s === 'done' || s === 'paid' || s === 'signed-off';
+  };
+  const completed = myProjects.filter(isCompleted);
+  const pending = myProjects.filter(p => !isCompleted(p));
+
+  // Project amounts ex-super for the salary view (since base is shown ex-super)
+  const projEx = (p) => p.bonusIncludesSuper
+    ? (+p.bonusAmount || 0) / (1 + sr)
+    : (+p.bonusAmount || 0);
+
+  const completedLift = completed.reduce((s, p) => s + projEx(p), 0);
+  const startingBase = currentBase - completedLift;
+  const pendingLift = pending.reduce((s, p) => s + projEx(p), 0);
+  const projectedBase = currentBase + pendingLift;
+
+  // Filter pending projects to only those currently TICKED (so the projected number
+  // mirrors what the rep is modelling). Untoggled projects show as "available".
+  const pendingTicked = pending.filter(p => scenario.projectsEnabled[p.id] !== false);
+  const tickedLift = pendingTicked.reduce((s, p) => s + projEx(p), 0);
+  const tickedBase = currentBase + tickedLift;
+
+  const segments = [];
+  segments.push(`<div style="flex: 1 1 0; min-width: 0; padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
+    <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Starting Base</div>
+    <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(startingBase)}</div>
+    <div style="font-size: 11px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">ex super</div>
+  </div>`);
+
+  if (completed.length > 0) {
+    const compRows = completed.map(p => `<div style="font-size: 11px; color: var(--accent); font-family: var(--mono); padding: 2px 0;">✓ ${p.name}: +${fmtMoney(projEx(p))}</div>`).join('');
+    segments.push(`<div style="flex: 1 1 0; min-width: 0; padding: 12px 14px; background: #f5faf7; border: 1px solid #c3e4d0; border-radius: 8px;">
+      <div style="font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Completed Uplifts</div>
+      <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--accent); margin-top: 4px;">+${fmtMoney(completedLift)}</div>
+      <div style="margin-top: 6px;">${compRows}</div>
+    </div>`);
+  }
+
+  if (pending.length > 0) {
+    const pendRows = pending.map(p => {
+      const ticked = scenario.projectsEnabled[p.id] !== false;
+      const colour = ticked ? 'var(--navy)' : 'var(--faint)';
+      const icon = ticked ? '⏵' : '◯';
+      return `<div style="font-size: 11px; color: ${colour}; font-family: var(--mono); padding: 2px 0;">${icon} ${p.name}: +${fmtMoney(projEx(p))}${ticked ? ' <span style="color: var(--faint);">(modelled)</span>' : ''}</div>`;
+    }).join('');
+    segments.push(`<div style="flex: 1 1 0; min-width: 0; padding: 12px 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
+      <div style="font-size: 10px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Pending Projects</div>
+      <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy); margin-top: 4px;">+${fmtMoney(pendingLift)}</div>
+      <div style="margin-top: 6px;">${pendRows}</div>
+    </div>`);
+  }
+
+  // Right-most card — current or projected base depending on scenario state
+  const showProjected = tickedLift > 0.5;
+  segments.push(`<div style="flex: 1 1 0; min-width: 0; padding: 12px 14px; background: var(--ink); color: #fff; border-radius: 8px;">
+    <div style="font-size: 10px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">${showProjected ? 'Modelled Base' : 'Current Base'}</div>
+    <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; margin-top: 4px;">${fmtMoney(showProjected ? tickedBase : currentBase)}</div>
+    <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; font-family: var(--mono);">${showProjected ? `if ${pendingTicked.length} project${pendingTicked.length===1?'':'s'} signed off today` : 'ex super'}</div>
+  </div>`);
+
+  wrap.innerHTML = `
+    <div class="card" style="margin-bottom: 18px; border-left: 3px solid var(--navy); padding: 16px 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;">
+        <div>
+          <h2 style="margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em;">Base Salary Composition</h2>
+          <p style="font-size: 12px; color: var(--muted); margin: 0; line-height: 1.4;">Each project completion permanently raises your base salary. Tick projects on the Projects tab to model what your future base would look like.</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch;">
+        ${segments.join('')}
+      </div>
+    </div>
+  `;
 }
 
 // ----- Payroll-locked card: display admin-entered quarterly actuals (read-only) -----
@@ -2509,7 +2609,7 @@ function updateQuarterlyDisplay(r) {
 }
 
 // Project completion is a self-tracking estimate stored in localStorage per project.
-// Bonus only pays on DOD sign-off — completion% is just a visual progress tool.
+// Project amount is added to base salary on DOD sign-off — completion% is just a visual progress tool.
 const PROJ_COMPLETION_KEY = (pid) => `michael-proj-completion-${pid}`;
 function getProjCompletion(pid) {
   try { return Math.max(0, Math.min(100, parseInt(localStorage.getItem(PROJ_COMPLETION_KEY(pid)) || '0', 10))); }
@@ -2557,8 +2657,8 @@ function renderProjects(r) {
             <span class="detail-value">${fmtDate(p.dueDate)}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Payout trigger</span>
-            <span class="detail-value">On DOD sign-off</span>
+            <span class="detail-label">Trigger</span>
+            <span class="detail-value">Added to base salary on DOD sign-off</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">Definition of Done</span>
@@ -2581,10 +2681,10 @@ function renderProjects(r) {
           </div>
           <div style="font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5;">
             ${pct >= 100
-              ? `<span style="color: #1f5e3c; font-weight: 600;">✓ Ready for sign-off</span> — bonus pays once DOD is approved by Hayley/Nathan.`
+              ? `<span style="color: #1f5e3c; font-weight: 600;">✓ Ready for sign-off</span> — once Hayley/Nathan approve, the amount above is permanently added to your base salary.`
               : pct >= 60
-              ? `Closing in. Bonus pays on DOD sign-off — your slider is just for self-tracking.`
-              : `In progress. Drag to update your estimate. Bonus pays on DOD sign-off, not on slider position.`}
+              ? `Closing in. Base salary uplift triggers on DOD sign-off — your slider is just for self-tracking.`
+              : `In progress. Drag to update your estimate. Base salary uplift triggers on DOD sign-off, not on slider position.`}
           </div>
         </div>
       </div>
