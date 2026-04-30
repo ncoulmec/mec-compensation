@@ -3452,9 +3452,15 @@ function drawCommissionCurve() {
   const diffPath = showOld ? 'M ' + points.map(p => `${xScale(p.gp).toFixed(1)} ${yScale(p.newComm).toFixed(1)}`).join(' L ') +
                    ' L ' + [...points].reverse().map(p => `${xScale(p.gp).toFixed(1)} ${yScale(p.oldComm).toFixed(1)}`).join(' L ') + ' Z' : '';
 
-  // Marker line at current scenario.gp — chart shows just the line + dots, no inline text
-  const markerX = xScale(Math.min(scenario.gp, maxGP));
-  const cur = points[Math.round((Math.min(scenario.gp, maxGP) / maxGP) * samples)] || points[points.length - 1];
+  // Marker line at current scenario.gp — compute the EXACT values at this GP rather than
+  // snapping to one of the 60 sampled points (which used to step the side-panel values $10k at a time).
+  const exactGP = Math.max(0, Math.min(scenario.gp, maxGP));
+  const markerX = xScale(exactGP);
+  const cur = {
+    gp: exactGP,
+    newComm: calcBandCommission(exactGP, plan.bands).total,
+    oldComm: exactGP * oldRate * (1 + sr),
+  };
 
   // Hint text shown briefly on hover, fades as you drag
   svg.style.cursor = 'ew-resize';
@@ -3483,7 +3489,7 @@ function drawCommissionCurve() {
       const svgX = (clientX - r.left) / scale;
       let gp = ((svgX - padL) / innerW) * maxGP;
       // Snap to nearest $1,000 for stable values
-      gp = Math.max(0, Math.min(maxGP, Math.round(gp / 1000) * 1000));
+      gp = Math.max(0, Math.min(maxGP, Math.round(gp / 100) * 100));
       // Route through the existing funnel/sync pipeline so all sliders, floater, breakdown stay in lockstep
       if (typeof funnelState !== 'undefined' && funnelState && typeof funnelRecalc === 'function') {
         funnelState.totalGP = gp;
