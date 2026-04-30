@@ -708,8 +708,8 @@
       <div class="compare-grid">
         <div class="compare-col old">
           <div class="label">Old plan (<span id="old-rate">3.5%</span> flat)</div>
-          <div class="val"><span id="old-comm">—</span><span style="font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 4px;">+ super</span></div>
-          <div class="sub" id="old-comm-sub">= $— inc. super</div>
+          <div class="val"><span id="old-comm">—</span><span style="font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 4px;">inc. super</span></div>
+          <div class="sub" id="old-comm-sub">= $— ex super · 3.5% × 1.12</div>
         </div>
         <div class="compare-arrow">
           <div id="delta-arrow">→</div>
@@ -3364,8 +3364,8 @@ function update() {
   // Old plan was ex-super (3.5% × GP), with 12% super added on top at payroll → inc-super = old × 1.12.
   // New plan bands produce inc-super directly. Compare inc-super vs inc-super for a fair delta.
   const oldIncSuper = r.oldComm * (1 + g.superRate);
-  document.getElementById('old-comm').textContent = fmtMoney(r.oldComm);
-  document.getElementById('old-comm-sub').textContent = `= ${fmtMoney(oldIncSuper)} inc. super`;
+  document.getElementById('old-comm').textContent = fmtMoney(oldIncSuper);
+  document.getElementById('old-comm-sub').textContent = `= ${fmtMoney(r.oldComm)} ex super · 3.5% × 1.12`;
   document.getElementById('new-comm').textContent = fmtMoney(r.commGross);
   document.getElementById('new-comm-sub').textContent = `Bands × ${r.effectiveKpi.toFixed(2)} KPI · already inc. super`;
   const delta = r.commGross - oldIncSuper;
