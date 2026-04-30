@@ -383,9 +383,8 @@
   table.monthly tr.totals td { background: var(--navy); color: #fff; font-weight: 700; font-size: 14px; padding: 14px 10px; border-bottom: none; }
   table.monthly tr.totals td.num { color: #fff; }
   table.monthly tr.totals td.mon { color: #fff; font-weight: 700; }
-  table.monthly tr.tu-capped td { background: #ecebe5; }
+  /* No row-level background on TU/locked rows — Q-Total stayed hidden by the tints. */
   table.monthly tr.tu-capped td.mon { color: var(--warn); font-weight: 700; }
-  table.monthly tr.tu-locked td { background: #eef4fa; }
   table.monthly tr.tu-locked td.mon { color: var(--navy); font-weight: 700; }
   table.monthly tr.tu-locked td.input-cell input { background: #f1f5fa; color: var(--muted); cursor: not-allowed; }
   table.monthly th small { display: block; font-weight: 400; color: var(--faint); font-size: 9px; margin-top: 2px; text-transform: none; letter-spacing: 0.03em; }
@@ -2363,7 +2362,13 @@ function computeMonthlyRows() {
     const prodCommEx = prodCommInc / (1 + sr);
     const prodCommSuper = prodCommInc - prodCommEx;
     const monTotalInc = gpCommInc + prodCommInc;
-    const wasCapped = gpCommInc < r.gpRawInc - 0.01;
+    // wasCapped now means a REAL true-up event occurred this month — i.e. balance carry-forward
+    // chewed into pay, balance grew because the rep was overpaid this quarter, OR the annual cap
+    // reduced month 12. Just hitting the quarterly band reconciliation (paid != monthly raw, but
+    // balance unchanged because total = entitled) is NOT flagged — that's normal band math.
+    const wasCapped_balanceChanged = Math.abs(balanceAtMonthStart[i] - balanceAfterMonth[i]) > 0.5;
+    const wasCapped_annualReduced = (i === 11) && annualCapFired;
+    const wasCapped = wasCapped_balanceChanged || wasCapped_annualReduced;
     const quarterIdx = Math.floor(i / 3);
     const monthInQuarter = i % 3;
     return {
