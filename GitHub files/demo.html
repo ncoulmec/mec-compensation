@@ -54,16 +54,16 @@
   header.top .sub { margin: 0; font-size: 13px; color: #b8c7d8; font-family: var(--mono); }
   .role-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; }
 
-  /* "How The Maths Interlinks" — equation-row layout */
+  /* "How The Maths Interlinks" — equation-row layout, palette matches result panels above */
   .maths-card {
-    background: #fafaf7;
-    border: 1px solid var(--border);
+    background: #eef4fa;
+    border: 1px solid #cdd9e8;
     border-radius: 10px;
     padding: 18px 20px;
   }
   .maths-path { margin-bottom: 16px; }
   .maths-path-label {
-    font-size: 11px; color: var(--accent);
+    font-size: 10px; color: var(--navy);
     text-transform: uppercase; letter-spacing: 0.06em;
     font-weight: 700; margin-bottom: 10px;
   }
@@ -72,7 +72,7 @@
     font-family: var(--mono);
   }
   .me-term {
-    background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    background: #fff; border: 1px solid #cdd9e8; border-radius: 8px;
     padding: 8px 14px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     min-width: 92px; text-align: center;
@@ -87,28 +87,29 @@
   }
   .me-op {
     display: inline-flex; align-items: center; justify-content: center;
-    font-size: 18px; color: var(--accent); font-weight: 700;
+    font-size: 16px; color: var(--navy); font-weight: 700;
     padding: 0 4px; flex-shrink: 0;
+    opacity: 0.55;
   }
   .maths-converge {
     display: flex; flex-direction: column; align-items: center;
-    margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);
+    margin-top: 14px; padding-top: 14px; border-top: 1px dashed #cdd9e8;
   }
   .maths-converge-arrow {
-    font-size: 22px; color: var(--accent); line-height: 1;
+    font-size: 18px; color: var(--navy); line-height: 1; opacity: 0.55;
   }
   .maths-converge-label {
-    font-size: 11px; color: var(--muted); margin: 6px 0 8px;
-    text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+    font-size: 10px; color: var(--navy); margin: 6px 0 8px;
+    text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
   }
   .maths-result {
-    background: var(--ink); color: #fff;
+    background: var(--navy); color: #fff;
     border-radius: 10px; padding: 12px 28px;
     text-align: center; min-width: 220px;
   }
   .maths-result-label {
     font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
-    opacity: 0.7; font-weight: 700;
+    opacity: 0.75; font-weight: 700;
   }
   .maths-result-val {
     font-family: var(--mono); font-size: 22px; font-weight: 700;
@@ -1132,7 +1133,7 @@
         <div class="sp-summary-head">
           <div>
             <div class="sp-summary-label">Path ① Result · Total GP</div>
-            <div class="sp-summary-sub">= Confirmed × Avg GP — live-linked to ③ below</div>
+            <div class="sp-summary-sub">= Confirmed × Avg GP — same answer as Path ② below</div>
           </div>
           <div class="sp-summary-value">
             <div class="sp-summary-yr" id="sp-path1-total">$—</div>
@@ -1161,27 +1162,22 @@
         <div class="input-with-suffix" style="position: relative;"><input type="text" inputmode="decimal" id="sp-margin-input" class="value-input" style="padding-right: 22px;" value="35.0"><span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">%</span></div>
       </div>
 
-      <div style="border-top: 2px solid var(--accent); margin: 18px 0 14px;"></div>
-
-      <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin: 4px 0 12px;">③ Total GP Confirmed = Both Paths Meet Here</div>
-      <div class="sp-summary-panel sp-summary-slider">
+      <div style="border-top: 1px dashed var(--border); margin: 18px 0 14px;"></div>
+      <div class="sp-summary-panel">
         <div class="sp-summary-head">
           <div>
-            <div class="sp-summary-label">Path ③ Result · Total GP <span style="color: var(--faint); font-weight: 500;">(both paths meet)</span></div>
-            <div class="sp-summary-sub">= Confirmed × Avg = Revenue × Margin · drag to override either path</div>
+            <div class="sp-summary-label">Path ② Result · Total GP</div>
+            <div class="sp-summary-sub">= Revenue × Margin — same answer as Path ① above</div>
           </div>
           <div class="sp-summary-value">
             <div class="sp-summary-yr">$<span id="sp-totalgp-input-display">—</span></div>
             <div class="sp-summary-mo"><span id="sp-totalgp-mo">$—</span> /mo</div>
           </div>
         </div>
-        <div class="scenario-row" style="margin-top: 10px;">
-          <label style="visibility: hidden; flex-shrink: 0;">_</label>
+        <!-- Hidden range + text input retained so existing JS (funnel sync, sliders) keeps working. -->
+        <div style="display: none;" aria-hidden="true">
           <input type="range" id="sp-totalgp-slider" min="0" max="800000" step="1000" value="335000">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="sp-totalgp-input" class="value-input" style="padding-left: 22px; font-weight: 700;" value="335,000">
-          </div>
+          <input type="text" inputmode="numeric" id="sp-totalgp-input" value="335,000">
         </div>
       </div>
       <div class="sp-summary-panel">
@@ -1234,8 +1230,8 @@
       </div>
       <div id="gfx-total-2" style="display: none;"></div>
 
-      <div style="margin-top: 14px; padding: 12px 14px; background: #fff8e1; border: 1px solid #d3d1c7; border-radius: 8px; font-size: 12px; color: #6b5300; line-height: 1.6;">
-        <strong>So what?</strong> If you increase your <strong>Avg GP</strong> by $50 per booking, your Total GP grows. Same Total GP can be reached either by closing more bookings OR by selling higher-margin gigs at the same revenue. Play with both halves and see which lever moves your commission fastest.
+      <div style="margin-top: 14px; padding: 12px 14px; background: #fafaf7; border: 1px dashed var(--border); border-radius: 8px; font-size: 12px; color: var(--muted); line-height: 1.6;">
+        <strong style="color: var(--navy);">So what?</strong> If you increase your <strong>Avg GP</strong> by $50 per booking, your Total GP grows. Same Total GP can be reached either by closing more bookings OR by selling higher-margin gigs at the same revenue. Play with both halves and see which lever moves your commission fastest.
       </div>
     </div>
   </section>
