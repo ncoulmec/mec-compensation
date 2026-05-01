@@ -54,6 +54,71 @@
   header.top .sub { margin: 0; font-size: 13px; color: #b8c7d8; font-family: var(--mono); }
   .role-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; }
 
+  /* "How The Maths Interlinks" — equation-row layout */
+  .maths-card {
+    background: #fafaf7;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .maths-path { margin-bottom: 16px; }
+  .maths-path-label {
+    font-size: 11px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 700; margin-bottom: 10px;
+  }
+  .maths-eq {
+    display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap;
+    font-family: var(--mono);
+  }
+  .me-term {
+    background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-width: 92px; text-align: center;
+  }
+  .me-label {
+    font-size: 9px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 600; margin-bottom: 3px;
+    white-space: nowrap;
+  }
+  .me-val {
+    font-size: 14px; font-weight: 700; color: var(--ink);
+  }
+  .me-op {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--accent); font-weight: 700;
+    padding: 0 4px; flex-shrink: 0;
+  }
+  .maths-converge {
+    display: flex; flex-direction: column; align-items: center;
+    margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);
+  }
+  .maths-converge-arrow {
+    font-size: 22px; color: var(--accent); line-height: 1;
+  }
+  .maths-converge-label {
+    font-size: 11px; color: var(--muted); margin: 6px 0 8px;
+    text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+  }
+  .maths-result {
+    background: var(--ink); color: #fff;
+    border-radius: 10px; padding: 12px 28px;
+    text-align: center; min-width: 220px;
+  }
+  .maths-result-label {
+    font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+    opacity: 0.7; font-weight: 700;
+  }
+  .maths-result-val {
+    font-family: var(--mono); font-size: 22px; font-weight: 700;
+    margin-top: 3px; line-height: 1.1;
+  }
+  .maths-result-mo {
+    font-family: var(--mono); font-size: 11px;
+    color: rgba(255,255,255,0.7); margin-top: 2px;
+  }
+
   /* Sales Planning — unified Total GP panel design */
   .sp-summary-panel {
     margin-top: 14px;
@@ -1135,46 +1200,39 @@
     <!-- Explainer graphic — how the two paths interlink -->
     <div class="card" style="margin-top: 14px;">
       <h3 style="margin: 0 0 6px;">How The Maths Interlinks</h3>
-      <p style="font-size: 13px; color: var(--muted); margin: 0 0 16px;">There are <strong>two ways</strong> to get to your Total GP. Both ways have to give you the same answer — that's why the sliders all stay in sync.</p>
-      <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; padding: 16px; background: #fafaf7; border-radius: 10px; border: 1px solid var(--border);">
-
-        <!-- Way 1: Volume × Value -->
-        <div style="padding: 14px; background: #fff; border: 1px solid var(--border); border-radius: 10px;">
-          <div style="font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 10px;">① Counting bookings</div>
-          <div style="display: grid; grid-template-columns: 1fr; gap: 8px; font-family: var(--mono); font-size: 13px;">
-            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Quoted</span><span style="font-weight: 700;" id="gfx-quoted">125</span></div>
-            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">×</div>
-            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Conv %</span><span style="font-weight: 700;" id="gfx-conv">40.0%</span></div>
-            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">=</div>
-            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Confirmed</span><span style="font-weight: 700;" id="gfx-conf">50</span></div>
-            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">×</div>
-            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Avg GP</span><span style="font-weight: 700;" id="gfx-avg">$6,700</span></div>
+      <p style="font-size: 13px; color: var(--muted); margin: 0 0 16px;">Two paths to the same Total GP — they always agree. The sliders stay in sync because moving any value updates both equations to keep them balanced.</p>
+      <div class="maths-card">
+        <div class="maths-path">
+          <div class="maths-path-label">Path ① · Counting bookings</div>
+          <div class="maths-eq">
+            <span class="me-term"><span class="me-label">Quoted</span><span class="me-val" id="gfx-quoted">125</span></span>
+            <span class="me-op">×</span>
+            <span class="me-term"><span class="me-label">Conv %</span><span class="me-val" id="gfx-conv">40.0%</span></span>
+            <span class="me-op">=</span>
+            <span class="me-term"><span class="me-label">Confirmed</span><span class="me-val" id="gfx-conf">50</span></span>
+            <span class="me-op">×</span>
+            <span class="me-term"><span class="me-label">Avg GP</span><span class="me-val" id="gfx-avg">$6,700</span></span>
           </div>
         </div>
-
-        <!-- Center arrow & equality -->
-        <div style="text-align: center; font-family: var(--mono);">
-          <div style="font-size: 28px; color: var(--accent); line-height: 1;">⇢</div>
-          <div style="font-size: 11px; color: var(--muted); margin-top: 6px; max-width: 100px;">Both paths land here</div>
-          <div style="margin-top: 14px; padding: 14px 18px; background: var(--ink); color: #fff; border-radius: 12px;">
-            <div style="font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7;">Total GP</div>
-            <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; margin-top: 2px;" id="gfx-total">$335,000</div>
+        <div class="maths-path">
+          <div class="maths-path-label">Path ② · From the revenue</div>
+          <div class="maths-eq">
+            <span class="me-term"><span class="me-label">Revenue ex GST</span><span class="me-val" id="gfx-rev">$957k</span></span>
+            <span class="me-op">×</span>
+            <span class="me-term"><span class="me-label">Margin %</span><span class="me-val" id="gfx-margin">35.0%</span></span>
           </div>
-          <div style="font-size: 28px; color: var(--accent); line-height: 1; margin-top: 14px; transform: rotate(180deg);">⇢</div>
         </div>
-
-        <!-- Way 2: Revenue × Margin -->
-        <div style="padding: 14px; background: #fff; border: 1px solid var(--border); border-radius: 10px;">
-          <div style="font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin-bottom: 10px;">② From the revenue</div>
-          <div style="display: grid; grid-template-columns: 1fr; gap: 8px; font-family: var(--mono); font-size: 13px;">
-            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Revenue</span><span style="font-weight: 700;" id="gfx-rev">$957k</span></div>
-            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">×</div>
-            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Margin %</span><span style="font-weight: 700;" id="gfx-margin">35.0%</span></div>
-            <div style="text-align: center; color: var(--accent); font-family: var(--mono); font-size: 18px; font-weight: 700; line-height: 1; padding: 2px 0;">=</div>
-            <div style="display: flex; justify-content: space-between;"><span style="color: var(--muted);">Total GP</span><span style="font-weight: 700;" id="gfx-total-2">$335k</span></div>
+        <div class="maths-converge">
+          <div class="maths-converge-arrow">↓</div>
+          <div class="maths-converge-label">Both paths agree at</div>
+          <div class="maths-result">
+            <div class="maths-result-label">Total GP</div>
+            <div class="maths-result-val" id="gfx-total">$335,000</div>
+            <div class="maths-result-mo" id="gfx-total-mo">$27,917 /mo</div>
           </div>
         </div>
       </div>
+      <div id="gfx-total-2" style="display: none;"></div>
 
       <div style="margin-top: 14px; padding: 12px 14px; background: #fff8e1; border: 1px solid #d3d1c7; border-radius: 8px; font-size: 12px; color: #6b5300; line-height: 1.6;">
         <strong>So what?</strong> If you increase your <strong>Avg GP</strong> by $50 per booking, your Total GP grows. Same Total GP can be reached either by closing more bookings OR by selling higher-margin gigs at the same revenue. Play with both halves and see which lever moves your commission fastest.
@@ -4245,6 +4303,7 @@ function syncSPFromFunnel() {
     setText('gfx-rev', fmtK(funnelState.revenue));
     setText('gfx-margin', (+funnelState.margin).toFixed(1) + '%');
     setText('gfx-total', fmtMoney(funnelState.totalGP));
+    setText('gfx-total-mo', '$' + Math.round((funnelState.totalGP || 0) / 12).toLocaleString('en-AU') + ' /mo');
     setText('gfx-total-2', fmtK(funnelState.totalGP));
   }
 }
