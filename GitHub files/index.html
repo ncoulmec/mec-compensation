@@ -820,7 +820,7 @@
 
 <main>
   <div id="error-slot"></div>
-  <div id="loading" class="loading">Loading data.json…</div>
+  <div id="loading" class="loading">Loading…</div>
 
   <!-- Employees -->
   <section class="panel" id="panel-employees">
@@ -1413,11 +1413,21 @@ async function unlockAdmin() {
     } catch (e) {}
     return cached.data;
   }
-  const r = await fetch(MASTER_ENCRYPTED_URL + '?' + Date.now());
-  if (!r.ok) throw new Error(`Could not fetch encrypted master file (HTTP ${r.status}).`);
-  _adminEncryptedMasterFile = await r.json();
+  let r;
+  try {
+    r = await fetch(MASTER_ENCRYPTED_URL + '?' + Date.now());
+  } catch (e) {
+    throw new Error(`Network error fetching ${MASTER_ENCRYPTED_URL}: ${e.message}`);
+  }
+  if (!r.ok) throw new Error(`Could not fetch ${MASTER_ENCRYPTED_URL} (HTTP ${r.status}). Make sure the 'encrypted' folder was uploaded to GitHub.`);
+  try {
+    _adminEncryptedMasterFile = await r.json();
+  } catch (e) {
+    throw new Error(`encrypted/master.enc.json is not valid JSON: ${e.message}`);
+  }
   return new Promise((resolve, reject) => {
     const overlay = document.getElementById('pw-gate');
+    if (!overlay) { reject(new Error('Master password gate element (#pw-gate) is missing from the page.')); return; }
     overlay.style.display = 'flex';
     const input = document.getElementById('pw-gate-input');
     const submit = document.getElementById('pw-gate-submit');
@@ -1647,10 +1657,11 @@ async function load() {
     $('#sub-line').textContent = `Master Dashboard · Effective ${data.meta.effectiveDate} · Schema v${data.meta.schemaVersion}`;
     $('#effective-info').textContent = `Last updated by ${data.meta.lastUpdatedBy}`;
   } catch (err) {
+    console.error('Master dashboard load failed:', err);
     $('#loading').style.display = 'none';
     $('#error-slot').innerHTML =
-      `<div class="error-banner"><strong>Could not load data.json.</strong> ${err.message}.
-       Make sure <code>data.json</code> is uploaded alongside this file in the same repo folder.</div>`;
+      `<div class="error-banner"><strong>Could not load the master dashboard.</strong><br>${err.message}<br><br>
+       Check that the <code>encrypted/master.enc.json</code> file is uploaded to GitHub alongside <code>index.html</code>.</div>`;
   }
 }
 
