@@ -1211,23 +1211,6 @@
 
 <script>
 
-// === Top-level error trap — surfaces ANY uncaught error, sync or async ===
-window.addEventListener('error', (ev) => {
-  console.error('[INDEX][window.error]', ev.error || ev.message, 'at', ev.filename + ':' + ev.lineno + ':' + ev.colno);
-  const banner = document.createElement('div');
-  banner.style.cssText = 'background:#a8281b;color:#fff;padding:14px 20px;font-family:sans-serif;font-size:13px;position:fixed;top:0;left:0;right:0;z-index:99999';
-  banner.innerHTML = '<strong>JS ERROR:</strong> ' + (ev.message || (ev.error && ev.error.message) || 'unknown') + '<br><small>' + (ev.filename || '') + ':' + (ev.lineno || '') + '</small>';
-  document.body && document.body.appendChild(banner);
-});
-window.addEventListener('unhandledrejection', (ev) => {
-  console.error('[INDEX][unhandledrejection]', ev.reason);
-  const banner = document.createElement('div');
-  banner.style.cssText = 'background:#a8281b;color:#fff;padding:14px 20px;font-family:sans-serif;font-size:13px;position:fixed;top:30px;left:0;right:0;z-index:99999';
-  banner.innerHTML = '<strong>UNHANDLED PROMISE:</strong> ' + (ev.reason && ev.reason.message ? ev.reason.message : String(ev.reason));
-  document.body && document.body.appendChild(banner);
-});
-console.log('[INDEX] script start, time:', new Date().toISOString());
-
 // =========================================================================
 // DEV_MODE — single switch to bypass encryption + cache during iteration.
 // Flick to false (and run prod-deploy) for production.
@@ -4074,28 +4057,7 @@ function applyDirectorLock() {
   banner.querySelector('#gm-unlock-btn').addEventListener('click', showDirectorPrompt);
 }
 
-// Loud diagnostic wrapper — surface ANY load() failure as a red banner on screen.
-// If the script never reaches this line, "Loading…" stays visible (= JS error earlier in the script).
-try {
-  console.log('[INDEX] Calling load(), DEV_MODE =', DEV_MODE);
-  const _loadPromise = load();
-  if (_loadPromise && typeof _loadPromise.catch === 'function') {
-    _loadPromise.catch(err => {
-      console.error('[INDEX] load() rejected:', err);
-      const slot = document.getElementById('error-slot') || document.body;
-      const loadingEl = document.getElementById('loading');
-      if (loadingEl) loadingEl.style.display = 'none';
-      const div = document.createElement('div');
-      div.style.cssText = 'background:#fdf2f2;border:1px solid #f2d5d5;color:#a8281b;padding:16px 20px;border-radius:10px;margin:20px;font-family:sans-serif;font-size:14px;';
-      div.innerHTML = '<strong>FATAL load() error:</strong><br>' + (err && err.message ? err.message : String(err)) + '<br><br><pre style="font-size:11px;white-space:pre-wrap">' + (err && err.stack ? err.stack : '') + '</pre>';
-      slot.appendChild(div);
-    });
-  }
-} catch (err) {
-  console.error('[INDEX] Synchronous error calling load():', err);
-  document.body.insertAdjacentHTML('afterbegin',
-    '<div style="background:#a8281b;color:#fff;padding:14px 20px;font-family:sans-serif;font-size:13px;position:relative;z-index:99999"><strong>SYNC FATAL:</strong> ' + (err && err.message ? err.message : String(err)) + '</div>');
-}
+load();
 </script>
 
 </body>
