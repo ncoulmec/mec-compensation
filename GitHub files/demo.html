@@ -54,6 +54,43 @@
   header.top .sub { margin: 0; font-size: 13px; color: #b8c7d8; font-family: var(--mono); }
   .role-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; }
 
+  /* Sales Planning — unified Total GP panel design */
+  .sp-summary-panel {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #eef4fa;
+    border: 1px solid #cdd9e8;
+    border-radius: 8px;
+  }
+  .sp-summary-panel.sp-summary-slider { padding-bottom: 4px; }
+  .sp-summary-head {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .sp-summary-label {
+    font-size: 10px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+  }
+  .sp-summary-sub {
+    font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4;
+  }
+  .sp-summary-value { text-align: right; }
+  .sp-summary-yr {
+    font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy); line-height: 1.1;
+  }
+  .sp-summary-mo {
+    font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px;
+  }
+  .sp-summary-metrics {
+    display: flex; gap: 22px; flex-wrap: wrap; margin-top: 10px;
+  }
+  .sp-metric { min-width: 130px; }
+  .sp-metric-label {
+    font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+  }
+  .sp-metric-value {
+    font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy); margin-top: 3px; line-height: 1.1;
+  }
+  .sp-metric-accent { color: var(--accent); }
+
   /* Compact pinned header — sits above the tabs in the sticky stack */
   .pinned-header {
     position: sticky;
@@ -65,12 +102,22 @@
   .pinned-compact {
     background: var(--navy);
     color: #fff;
-    padding: 8px 32px;
+    padding: 0 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     font-size: 13px;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.18s ease, opacity 0.18s ease, padding-top 0.18s ease, padding-bottom 0.18s ease;
+  }
+  .pinned-compact.visible {
+    max-height: 60px;
+    opacity: 1;
+    padding-top: 8px;
+    padding-bottom: 8px;
   }
   .pinned-compact .pc-name {
     font-weight: 600;
@@ -989,7 +1036,10 @@
       <div class="scenario-row">
         <label>Number of Bookings <strong>Quoted</strong></label>
         <input type="range" id="sp-quoted-slider" min="0" max="500" step="1" value="125">
-        <input type="text" inputmode="numeric" id="sp-quoted-input" class="value-input" value="125">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <input type="text" inputmode="numeric" id="sp-quoted-input" class="value-input" value="125">
+          <div style="text-align: right; font-family: var(--mono); font-size: 10px; color: var(--muted);">÷12 = <strong id="sp-quoted-mo" style="color: var(--navy);">—</strong>/mo</div>
+        </div>
       </div>
       <div class="scenario-row">
         <label>Conversion Rate <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(quoted → confirmed)</span></label>
@@ -999,7 +1049,10 @@
       <div class="scenario-row">
         <label>Number of Bookings <strong>Confirmed</strong> <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Quoted × Conversion)</span></label>
         <input type="range" id="sp-confirmed-slider" min="0" max="500" step="1" value="50">
-        <input type="text" inputmode="numeric" id="sp-confirmed-input" class="value-input" value="50">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <input type="text" inputmode="numeric" id="sp-confirmed-input" class="value-input" value="50">
+          <div style="text-align: right; font-family: var(--mono); font-size: 10px; color: var(--muted);">÷12 = <strong id="sp-confirmed-mo" style="color: var(--navy);">—</strong>/mo</div>
+        </div>
       </div>
       <div class="scenario-row">
         <label>Average GP per Booking <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
@@ -1010,14 +1063,16 @@
         </div>
       </div>
 
-      <div style="margin-top: 14px; padding: 10px 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap;">
-        <div>
-          <div style="font-size: 10px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Path ① result · Total GP</div>
-          <div style="font-size: 11px; color: var(--muted); margin-top: 1px;">= Confirmed × Avg GP — live-linked to ③ below</div>
-        </div>
-        <div style="text-align: right;">
-          <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy);" id="sp-path1-total">$—</div>
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--muted);" id="sp-path1-total-mo">$— /mo</div>
+      <div class="sp-summary-panel">
+        <div class="sp-summary-head">
+          <div>
+            <div class="sp-summary-label">Path ① Result · Total GP</div>
+            <div class="sp-summary-sub">= Confirmed × Avg GP — live-linked to ③ below</div>
+          </div>
+          <div class="sp-summary-value">
+            <div class="sp-summary-yr" id="sp-path1-total">$—</div>
+            <div class="sp-summary-mo" id="sp-path1-total-mo">$— /mo</div>
+          </div>
         </div>
       </div>
 
@@ -1027,9 +1082,12 @@
       <div class="scenario-row">
         <label>Revenue ex GST <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(total $ rung up, GST stripped out)</span></label>
         <input type="range" id="sp-revenue-slider" min="100000" max="2500000" step="5000" value="957143">
-        <div style="position: relative;">
-          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-          <input type="text" inputmode="numeric" id="sp-revenue-input" class="value-input" style="padding-left: 22px;" value="957,143">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+            <input type="text" inputmode="numeric" id="sp-revenue-input" class="value-input" style="padding-left: 22px;" value="957,143">
+          </div>
+          <div style="text-align: right; font-family: var(--mono); font-size: 10px; color: var(--muted);">÷12 = <strong id="sp-revenue-mo" style="color: var(--navy);">$—</strong>/mo</div>
         </div>
       </div>
       <div class="scenario-row">
@@ -1041,25 +1099,34 @@
       <div style="border-top: 2px solid var(--accent); margin: 18px 0 14px;"></div>
 
       <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin: 4px 0 12px;">③ Total GP Confirmed = Both Paths Meet Here</div>
-      <div class="scenario-row" style="background: #f6f8fc; padding: 10px 14px; border-radius: 8px; margin: -6px 0 6px;">
-        <label style="font-weight: 700; color: var(--navy);">Total GP <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Confirmed × Avg, AND = Revenue × Margin)</span></label>
-        <input type="range" id="sp-totalgp-slider" min="0" max="800000" step="1000" value="335000">
-        <div style="position: relative;">
-          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-          <input type="text" inputmode="numeric" id="sp-totalgp-input" class="value-input" style="padding-left: 22px; font-weight: 700;" value="335,000">
+      <div class="sp-summary-panel sp-summary-slider">
+        <div class="sp-summary-head">
+          <div>
+            <div class="sp-summary-label">Path ③ Result · Total GP <span style="color: var(--faint); font-weight: 500;">(both paths meet)</span></div>
+            <div class="sp-summary-sub">= Confirmed × Avg = Revenue × Margin · drag to override either path</div>
+          </div>
+          <div class="sp-summary-value">
+            <div class="sp-summary-yr">$<span id="sp-totalgp-input-display">—</span></div>
+            <div class="sp-summary-mo"><span id="sp-totalgp-mo">$—</span> /mo</div>
+          </div>
+        </div>
+        <div class="scenario-row" style="margin-top: 10px;">
+          <label style="visibility: hidden; flex-shrink: 0;">_</label>
+          <input type="range" id="sp-totalgp-slider" min="0" max="800000" step="1000" value="335000">
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+            <input type="text" inputmode="numeric" id="sp-totalgp-input" class="value-input" style="padding-left: 22px; font-weight: 700;" value="335,000">
+          </div>
         </div>
       </div>
-      <div style="text-align: right; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: -2px; padding-right: 14px;">
-        ÷ 12 = <strong id="sp-totalgp-mo" style="color: var(--navy);">$—</strong>/mo
-      </div>
-      <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
-        <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this Total GP, you earn</div>
-        <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
-          <div><div style="font-size: 10px; color: var(--muted);">GP COMMISSION (inc super)</div><div id="sp-comm" style="font-size: 18px; font-weight: 700; color: var(--accent);">—</div></div>
-          <div><div style="font-size: 10px; color: var(--muted);">EFFECTIVE RATE <span class="tooltip-trigger" data-tip="Your average commission rate at this Total GP — calculated as Commission ÷ Total GP. As you climb into higher bands, this number rises (the marginal rate on your last dollar is even higher; this is the blended average across everything you've earned).">?</span></div><div id="sp-rate" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
-          <div><div style="font-size: 10px; color: var(--muted);">TOTAL PACKAGE</div><div id="sp-total" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
+      <div class="sp-summary-panel">
+        <div class="sp-summary-label">At This Total GP, You Earn</div>
+        <div class="sp-summary-metrics">
+          <div class="sp-metric"><div class="sp-metric-label">GP Commission <span style="color: var(--faint); font-weight: 400; text-transform: none; letter-spacing: normal;">(inc super)</span></div><div class="sp-metric-value sp-metric-accent" id="sp-comm">—</div></div>
+          <div class="sp-metric"><div class="sp-metric-label">Effective Rate <span class="tooltip-trigger" data-tip="Your average commission rate at this Total GP — calculated as Commission ÷ Total GP. As you climb into higher bands, this number rises (the marginal rate on your last dollar is even higher; this is the blended average across everything you've earned).">?</span></div><div class="sp-metric-value" id="sp-rate">—</div></div>
+          <div class="sp-metric"><div class="sp-metric-label">Total Package</div><div class="sp-metric-value" id="sp-total">—</div></div>
         </div>
-        <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 8px;">
+        <div class="sp-summary-sub" style="font-family: var(--mono); margin-top: 10px;">
           <strong id="sp-funnel">125 quoted → 40% conv → 50 confirmed × $6,700 = $335k GP @ 35% margin (= $957k revenue)</strong>
         </div>
       </div>
@@ -4161,6 +4228,11 @@ function syncSPFromFunnel() {
     const p1El = document.getElementById('sp-path1-total'); if (p1El) p1El.textContent = '$' + Math.round(path1).toLocaleString('en-AU');
     const p1Mo = document.getElementById('sp-path1-total-mo'); if (p1Mo) p1Mo.textContent = '$' + Math.round(path1 / 12).toLocaleString('en-AU') + ' /mo';
     const tgMo = document.getElementById('sp-totalgp-mo'); if (tgMo) tgMo.textContent = '$' + Math.round(funnelState.totalGP / 12).toLocaleString('en-AU');
+    const tgDisp = document.getElementById('sp-totalgp-input-display'); if (tgDisp) tgDisp.textContent = Math.round(funnelState.totalGP).toLocaleString('en-AU');
+    // Monthly equivalents on Quoted / Confirmed / Revenue (per-row hints under each input)
+    const qMo = document.getElementById('sp-quoted-mo'); if (qMo) qMo.textContent = Math.round((funnelState.quoted || 0) / 12);
+    const cMo = document.getElementById('sp-confirmed-mo'); if (cMo) cMo.textContent = Math.round((funnelState.confirmed || 0) / 12);
+    const rMo = document.getElementById('sp-revenue-mo'); if (rMo) rMo.textContent = '$' + Math.round((funnelState.revenue || 0) / 12).toLocaleString('en-AU');
     const rS = document.getElementById('sp-revenue-slider'); if (rS) rS.value = Math.min(funnelState.revenue, +rS.max);
     const rI = document.getElementById('sp-revenue-input'); if (rI) rI.value = fmtNum(Math.round(funnelState.revenue));
     // Paint the explainer graphic
@@ -4729,6 +4801,34 @@ function renderFaqTab() {
   });
   document.addEventListener('mouseout', (ev) => { const t = ev.target.closest('.tooltip-trigger, .tu-explainer-trigger'); if (t) bubble.classList.remove('show'); });
   document.addEventListener('scroll', () => { bubble.classList.remove('show'); }, true);
+})();
+
+
+// Compact pinned bar — only visible when the big <header class="top"> has scrolled out of view.
+(function wireCompactBar() {
+  if (window._compactBarWired) return;
+  window._compactBarWired = true;
+  function init() {
+    const topBanner = document.querySelector('header.top');
+    const compact = document.querySelector('.pinned-compact');
+    if (!topBanner || !compact || !window.IntersectionObserver) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        // Show compact when big banner is mostly off-screen
+        if (entry.intersectionRatio > 0.15) {
+          compact.classList.remove('visible');
+        } else {
+          compact.classList.add('visible');
+        }
+      });
+    }, { threshold: [0, 0.05, 0.15, 0.5, 1] });
+    observer.observe(topBanner);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 
 </script>
