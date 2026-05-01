@@ -54,7 +54,46 @@
   header.top .sub { margin: 0; font-size: 13px; color: #b8c7d8; font-family: var(--mono); }
   .role-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; }
 
-  nav.tabs { background: #fff; border-bottom: 1px solid var(--border); padding: 0 32px; overflow-x: auto; position: sticky; top: 0; z-index: 10000; box-shadow: 0 1px 0 rgba(0,0,0,0.04); }
+  /* Compact pinned header — sits above the tabs in the sticky stack */
+  .pinned-header {
+    position: sticky;
+    top: 0;
+    z-index: 10000;
+    background: var(--navy);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .pinned-compact {
+    background: var(--navy);
+    color: #fff;
+    padding: 8px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+  }
+  .pinned-compact .pc-name {
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pinned-compact .pc-actions {
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .pinned-compact .pc-key-terms {
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--navy);
+    font-weight: 600;
+  }
+
+  nav.tabs { background: #fff; border-bottom: 1px solid var(--border); padding: 0 32px; overflow-x: auto; }
   .tabs-inner { max-width: 1200px; margin: 0 auto; display: flex; gap: 4px; }
   .tab-btn { background: none; border: none; padding: 16px 22px; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
   .tab-btn:hover { color: var(--ink); }
@@ -509,7 +548,7 @@
     </div>
     <div style="display: flex; align-items: center; gap: 10px;">
       <button id="key-terms-toggle" onclick="document.getElementById('key-terms-modal').classList.toggle('open')" style="background: #fff; border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; color: var(--navy); font-weight: 600;">📖 Key Terms</button>
-      <button id="sign-out-btn" onclick="signOut()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 500;">Sign out</button>
+      
       <span class="role-badge" id="role-badge">—</span>
     </div>
   </div>
@@ -553,7 +592,14 @@
   </dl>
 </div>
 
-<nav class="tabs">
+<div class="pinned-header">
+  <div class="pinned-compact">
+    <span class="pc-name" id="pc-name">—</span>
+    <div class="pc-actions">
+      <button class="pc-key-terms" onclick="document.getElementById('key-terms-modal').classList.toggle('open')">📖 Key Terms</button>
+    </div>
+  </div>
+  <nav class="tabs">
   <div class="tabs-inner" id="tab-bar">
     <button class="tab-btn active" aria-current="page" data-tab="overview">Overview</button>
     <button class="tab-btn" data-tab="planning">Planning</button>
@@ -564,6 +610,7 @@
     <button class="tab-btn" data-tab="howitworks">How This Works</button>
   </div>
 </nav>
+</div>
 
 <main>
   <div style="background: #fef5e6; border: 1px solid #f5d890; color: #8a6a00; padding: 10px 18px; border-radius: 10px; margin-top: 6px; margin-bottom: 12px; font-size: 13px; display: flex; align-items: center; gap: 12px;">
@@ -579,7 +626,6 @@
   <section class="panel" id="panel-overview">
 
     <!-- ============ PLANNING SECTION ============ -->
-    <div id="pay-increase-banner"></div>
     <div class="section-head">      <h2>Forecast your year</h2>
       <p class="blurb">Drag the sliders below to model different GP scenarios — numbers reset on reload.</p>
     </div>
@@ -964,6 +1010,17 @@
         </div>
       </div>
 
+      <div style="margin-top: 14px; padding: 10px 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 14px; flex-wrap: wrap;">
+        <div>
+          <div style="font-size: 10px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Path ① result · Total GP</div>
+          <div style="font-size: 11px; color: var(--muted); margin-top: 1px;">= Confirmed × Avg GP — live-linked to ③ below</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--navy);" id="sp-path1-total">$—</div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--muted);" id="sp-path1-total-mo">$— /mo</div>
+        </div>
+      </div>
+
       <div style="border-top: 1px dashed var(--border); margin: 18px 0 14px;"></div>
 
       <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; margin: 4px 0 12px;">② Revenue × Margin</div>
@@ -992,6 +1049,9 @@
           <input type="text" inputmode="numeric" id="sp-totalgp-input" class="value-input" style="padding-left: 22px; font-weight: 700;" value="335,000">
         </div>
       </div>
+      <div style="text-align: right; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: -2px; padding-right: 14px;">
+        ÷ 12 = <strong id="sp-totalgp-mo" style="color: var(--navy);">$—</strong>/mo
+      </div>
       <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
         <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this Total GP, you earn</div>
         <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
@@ -1007,7 +1067,7 @@
 
     <!-- Explainer graphic — how the two paths interlink -->
     <div class="card" style="margin-top: 14px;">
-      <h3 style="margin: 0 0 6px;">How the maths interlinks</h3>
+      <h3 style="margin: 0 0 6px;">How The Maths Interlinks</h3>
       <p style="font-size: 13px; color: var(--muted); margin: 0 0 16px;">There are <strong>two ways</strong> to get to your Total GP. Both ways have to give you the same answer — that's why the sliders all stay in sync.</p>
       <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; padding: 16px; background: #fafaf7; border-radius: 10px; border: 1px solid var(--border);">
 
@@ -2498,6 +2558,7 @@ async function load() {
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('emp-name').textContent = emp.name;
+    var _pcN = document.getElementById('pc-name'); if (_pcN) _pcN.textContent = emp.name;
     // Last updated stamp from data.meta.effectiveDate (AU format)
     try {
       const lu = document.getElementById('last-updated');
@@ -4095,6 +4156,11 @@ function syncSPFromFunnel() {
     }
     const mS = document.getElementById('sp-margin-slider'); if (mS) mS.value = funnelState.margin;
     const mI = document.getElementById('sp-margin-input'); if (mI) mI.value = (+funnelState.margin).toFixed(1);
+    // Path-1 preview Total GP (Confirmed × Avg) + monthly equivalents
+    const path1 = funnelState.confirmed * funnelState.avg;
+    const p1El = document.getElementById('sp-path1-total'); if (p1El) p1El.textContent = '$' + Math.round(path1).toLocaleString('en-AU');
+    const p1Mo = document.getElementById('sp-path1-total-mo'); if (p1Mo) p1Mo.textContent = '$' + Math.round(path1 / 12).toLocaleString('en-AU') + ' /mo';
+    const tgMo = document.getElementById('sp-totalgp-mo'); if (tgMo) tgMo.textContent = '$' + Math.round(funnelState.totalGP / 12).toLocaleString('en-AU');
     const rS = document.getElementById('sp-revenue-slider'); if (rS) rS.value = Math.min(funnelState.revenue, +rS.max);
     const rI = document.getElementById('sp-revenue-input'); if (rI) rI.value = fmtNum(Math.round(funnelState.revenue));
     // Paint the explainer graphic

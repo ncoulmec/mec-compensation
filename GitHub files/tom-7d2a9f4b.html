@@ -74,12 +74,51 @@
     font-weight: 500;
   }
 
+  /* Compact pinned header — sits above the tabs in the sticky stack */
+  .pinned-header {
+    position: sticky;
+    top: 0;
+    z-index: 10000;
+    background: var(--navy);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .pinned-compact {
+    background: var(--navy);
+    color: #fff;
+    padding: 8px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+  }
+  .pinned-compact .pc-name {
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pinned-compact .pc-actions {
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .pinned-compact .pc-key-terms {
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--navy);
+    font-weight: 600;
+  }
+
   nav.tabs {
     background: #fff;
     border-bottom: 1px solid var(--border);
     padding: 0 32px;
     overflow-x: auto;
-    position: sticky; top: 0; z-index: 10000; box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+   
   }
   .tabs-inner {
     max-width: 1200px;
@@ -792,13 +831,20 @@
     </div>
     <div style="display: flex; align-items: center; gap: 10px;">
       <button id="key-terms-toggle" onclick="document.getElementById('key-terms-modal').classList.toggle('open')" style="background: #fff; border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; color: var(--navy); font-weight: 600;">📖 Key Terms</button>
-      <button id="sign-out-btn" onclick="signOut()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: #fff; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 500;">Sign out</button>
+      
       <span class="role-badge" id="role-badge">—</span>
     </div>
   </div>
 </header>
 
-<nav class="tabs">
+<div class="pinned-header">
+  <div class="pinned-compact">
+    <span class="pc-name" id="pc-name">—</span>
+    <div class="pc-actions">
+      <button class="pc-key-terms" onclick="document.getElementById('key-terms-modal').classList.toggle('open')">📖 Key Terms</button>
+    </div>
+  </div>
+  <nav class="tabs">
   <div class="tabs-inner" id="tab-bar">
     <button class="tab-btn active" aria-current="page" data-tab="overview">Overview</button>
     <button class="tab-btn" data-tab="planning">Planning</button>
@@ -809,6 +855,7 @@
     <button class="tab-btn" data-tab="howitworks">How This Works</button>
   </div>
 </nav>
+</div>
 
 <div id="key-terms-modal" class="key-terms-modal">
   <button class="close-x" onclick="document.getElementById('key-terms-modal').classList.remove('open')" aria-label="Close">×</button>
@@ -1642,6 +1689,7 @@ async function load() {
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('emp-name').textContent = emp.name;
+    var _pcN = document.getElementById('pc-name'); if (_pcN) _pcN.textContent = emp.name;
     // Last updated stamp from data.meta.effectiveDate (AU format)
     try {
       const lu = document.getElementById('last-updated');
