@@ -779,18 +779,21 @@
             <div>GP: <strong id="margin-gp-chip" style="color: var(--ink); font-weight: 700; font-size: 16px;">$—</strong></div>
             <div style="font-size: 11px; color: var(--faint); margin-top: 6px; font-weight: 400;">Formula: <span id="margin-formula">GP ÷ (Revenue − Revenue ÷ 11)</span></div>
           </div>
-          <div style="text-align: center; min-width: 200px; padding: 16px 24px; border-radius: 10px; background: #f0f0eb;" id="margin-result-wrap">
-            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Realised Margin</div>
-            <div style="font-family: var(--mono); font-size: 36px; font-weight: 700; line-height: 1.1; margin-top: 4px;" id="margin-result">—</div>
-            <div style="font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;" id="margin-band-label">&nbsp;</div>
+          <div style="display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap;">
+            <div style="flex: 1 1 180px; min-width: 180px; text-align: center; padding: 14px 18px; border-radius: 10px; background: #f0f0eb;" id="margin-result-wrap">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Projected Margin</div>
+              <div style="font-size: 10px; color: var(--faint); font-family: var(--mono); margin-top: 1px;">from your scenario inputs</div>
+              <div style="font-family: var(--mono); font-size: 32px; font-weight: 700; line-height: 1.1; margin-top: 6px;" id="margin-result">—</div>
+              <div style="font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;" id="margin-band-label">&nbsp;</div>
+            </div>
+            <div style="flex: 1 1 180px; min-width: 180px; text-align: center; padding: 14px 18px; border-radius: 10px; background: #fafaf7; border: 1px solid var(--border);">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Actual Margin · last 365 days</div>
+              <div style="font-size: 10px; color: var(--faint); font-family: var(--mono); margin-top: 1px;" id="margin-actual-source">company-wide from Xero</div>
+              <div style="font-family: var(--mono); font-size: 32px; font-weight: 700; line-height: 1.1; margin-top: 6px; color: var(--navy);" id="margin-actual-result">—</div>
+              <div style="font-size: 10px; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);" id="margin-actual-sub">&nbsp;</div>
+            </div>
           </div>
         </div>
-        <details style="margin-top: 14px; font-size: 11px; color: var(--muted);">
-          <summary style="cursor: pointer; color: var(--navy); font-weight: 600;">How are High / Acceptable / Low margin set?</summary>
-          <div style="padding: 10px 12px; margin-top: 6px; background: #fff; border: 1px solid var(--border); border-radius: 6px; line-height: 1.6;">
-            Thresholds are placeholders for now: <strong style="color:#1f5e3c;">≥30% = High Margin</strong> (green), <strong style="color:#8a6a00;">≥20% = Acceptable</strong> (amber), <strong style="color:#a8281b;">&lt;20% = Low Margin</strong> (red). The 30% target is roughly your historical average — once Margin Multipliers go live, hitting High Margin will unlock a multiplier on commission. Nathan can re-tune these in code or via Plan Types editor in a future pass.
-          </div>
-        </details>
       </div>
     </div>
 
@@ -1689,6 +1692,7 @@ async function load() {
     }
 
     wireInputs();
+    renderActualMargin();
     renderMonthlyGrid();
     update();
     if (typeof renderFaqTab === "function") renderFaqTab();
@@ -1879,12 +1883,13 @@ function wireInputs() {
       if (gpChip) gpChip.textContent = fmtMoney(gp);
       if (revEx > 0 && gp > 0) {
         result.textContent = (margin * 100).toFixed(1) + '%';
-        if (margin >= 0.30) {
+        // Tiers anchored to company LTM performance: ≥50% high, ≥42.5% acceptable, <42.5% low
+        if (margin >= 0.50) {
           wrap.style.background = '#e6f7ee'; wrap.style.border = '2px solid #6fc792';
           result.style.color = '#1f5e3c';
           bandLabel.textContent = '✓ HIGH MARGIN';
           bandLabel.style.color = '#1f5e3c';
-        } else if (margin >= 0.20) {
+        } else if (margin >= 0.425) {
           wrap.style.background = '#fff8e1'; wrap.style.border = '2px solid #d3d1c7';
           result.style.color = '#8a6a00';
           bandLabel.textContent = '— ACCEPTABLE';
@@ -2516,7 +2521,7 @@ function update() {
   document.getElementById('old-comm').textContent = fmtMoney(oldIncSuper);
   document.getElementById('old-comm-sub').textContent = `= ${fmtMoney(r.oldComm)} ex super · 3.5% × 1.12`;
   document.getElementById('new-comm').textContent = fmtMoney(r.commGross);
-  document.getElementById('new-comm-sub').textContent = `Bands × ${r.effectiveKpi.toFixed(2)} KPI · already inc. super`;
+  document.getElementById('new-comm-sub').textContent = `Bands · already inc. super`;
   const delta = r.commGross - oldIncSuper;
   const deltaEl = document.getElementById('delta-val');
   const arrow = document.getElementById('delta-arrow');
@@ -3395,6 +3400,46 @@ function refreshOTECard(r) {
   variableLive.textContent = fmtMoney(liveVar);
   variableSub.textContent = `at ${fmtMoney(scenario.gp)} GP Received`;
   totalLive.textContent = fmtMoney((ote.baseInclSuper || 0) + liveVar);
+}
+
+
+// Actual Margin (last 365 days) — computed from companyPL.quarters (Xero LTM data).
+// Per-rep margin not currently tracked separately, so we use the company-wide LTM as a proxy.
+function renderActualMargin() {
+  const resultEl = document.getElementById('margin-actual-result');
+  const subEl = document.getElementById('margin-actual-sub');
+  const sourceEl = document.getElementById('margin-actual-source');
+  if (!resultEl) return;
+  const qs = (data.companyPL && Array.isArray(data.companyPL.quarters)) ? data.companyPL.quarters : [];
+  if (!qs.length) {
+    resultEl.textContent = '—';
+    if (subEl) subEl.textContent = 'No P&L data yet';
+    return;
+  }
+  const totals = qs.reduce((a, q) => ({
+    rev: a.rev + (+q.revenue || 0),
+    cogs: a.cogs + (+q.cogs || 0),
+  }), { rev: 0, cogs: 0 });
+  if (totals.rev <= 0) {
+    resultEl.textContent = '—';
+    if (subEl) subEl.textContent = 'Awaiting P&L revenue data';
+    return;
+  }
+  const ltmGP = totals.rev - totals.cogs;
+  const margin = ltmGP / totals.rev;
+  resultEl.textContent = (margin * 100).toFixed(1) + '%';
+  // Colour-code the result the same way as the projected box (≥30 high, ≥20 acceptable, else low)
+  // Tiers anchored to company LTM performance: ≥50% high, ≥42.5% acceptable, <42.5% low
+  let band, colour;
+  if (margin >= 0.50) { band = 'HIGH'; colour = '#1f5e3c'; }
+  else if (margin >= 0.425) { band = 'ACCEPTABLE'; colour = '#8a6a00'; }
+  else { band = 'LOW'; colour = '#a8281b'; }
+  resultEl.style.color = colour;
+  if (subEl) { subEl.textContent = band; subEl.style.color = colour; }
+  if (sourceEl) {
+    const labels = qs.map(q => q.label).filter(Boolean);
+    if (labels.length >= 2) sourceEl.textContent = `${labels[0]} → ${labels[labels.length - 1]} · Xero`;
+  }
 }
 
 function drawCommissionCurve() {
