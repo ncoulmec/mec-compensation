@@ -889,9 +889,6 @@
   <section class="panel" id="panel-overview">
     <div id="pay-increase-banner"></div>
 
-    <!-- Base Salary Composition — projects build the base over time -->
-    <div id="base-composition-card"></div>
-
     <div class="kpi-row">
       <div class="kpi-card">
         <div class="label">Base Salary</div>
@@ -914,6 +911,15 @@
         <div class="sub" id="card-total-sub">—</div>
       </div>
     </div>
+
+    <!-- Base Salary Composition — collapsible (open on demand). Projects build the base over time. -->
+    <details id="base-composition-details" style="margin-bottom: 18px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0;">
+      <summary style="cursor: pointer; padding: 12px 18px; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">
+        <span>Base Salary Composition <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--faint); margin-left: 8px;">— how project completions have built up your base. Click to expand.</span></span>
+        <span aria-hidden="true" style="font-family: var(--mono); font-size: 14px; color: var(--faint);">▾</span>
+      </summary>
+      <div id="base-composition-card" style="padding: 0 18px 16px;"></div>
+    </details>
 
     <div class="two-col">
       <div class="card" style="margin-bottom: 0;">
@@ -1074,66 +1080,35 @@
       <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Pull last-12 months of gigs + revenue from your Zoho team record.</span>
     </div>
 
-    <div class="two-col">
-      <div class="card">
-        <h3 style="margin: 0 0 4px;">Planning <span style="font-size: 11px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em;">forecast</span></h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Forward-looking — what you're aiming for this year.</p>
-        <div class="scenario-row">
-          <label>Number of Gigs</label>
-          <input type="range" id="plan-gigs-slider" min="25" max="150" step="1" value="40">
-          <input type="text" inputmode="numeric" id="plan-gigs-input" class="value-input" value="40">
-        </div>
-        <div class="scenario-row">
-          <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
-          <input type="range" id="plan-avg-slider" min="500" max="5000" step="50" value="3750">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="plan-avg-input" class="value-input" style="padding-left: 22px;" value="3,750">
-          </div>
-        </div>
-        <div class="scenario-row">
-          <label style="font-weight: 600;">Total Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Gigs × Avg)</span></label>
-          <input type="range" id="plan-rev-slider" min="0" max="400000" step="1000" value="150000">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="plan-rev-input" class="value-input" style="padding-left: 22px;" value="150,000">
-          </div>
-        </div>
-        <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
-          <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this revenue, you earn</div>
-          <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
-            <div><div style="font-size: 10px; color: var(--muted);">COMMISSION (inc super)</div><div id="plan-comm" style="font-size: 18px; font-weight: 700; color: var(--accent);">—</div></div>
-            <div><div style="font-size: 10px; color: var(--muted);">TOTAL PACKAGE</div><div id="plan-total" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
-          </div>
+    <div class="card" style="max-width: 720px;">
+      <h3 style="margin: 0 0 4px;">Planning</h3>
+      <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Forward-looking — what you're aiming for this year.</p>
+      <div class="scenario-row">
+        <label>Number of Gigs</label>
+        <input type="range" id="plan-gigs-slider" min="25" max="150" step="1" value="40">
+        <input type="text" inputmode="numeric" id="plan-gigs-input" class="value-input" value="40">
+      </div>
+      <div class="scenario-row">
+        <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
+        <input type="range" id="plan-avg-slider" min="500" max="5000" step="50" value="3750">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="plan-avg-input" class="value-input" style="padding-left: 22px;" value="3,750">
         </div>
       </div>
-
-      <div class="card">
-        <h3 style="margin: 0 0 4px;">Actual Data <span style="font-size: 11px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em;">to date</span></h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">What you've actually delivered. Edits persist on this device.</p>
-        <div class="scenario-row">
-          <label>Gigs delivered</label>
-          <input type="range" id="actual-gigs-slider" min="0" max="150" step="1" value="0">
-          <input type="text" inputmode="numeric" id="actual-gigs-input" class="value-input" value="0">
+      <div class="scenario-row">
+        <label style="font-weight: 600;">Total Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Gigs × Avg)</span></label>
+        <input type="range" id="plan-rev-slider" min="0" max="400000" step="1000" value="150000">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="plan-rev-input" class="value-input" style="padding-left: 22px;" value="150,000">
         </div>
-        <div class="scenario-row">
-          <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
-          <input type="range" id="actual-avg-slider" min="0" max="5000" step="50" value="0">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="actual-avg-input" class="value-input" style="padding-left: 22px;" value="0">
-          </div>
-        </div>
-        <div class="scenario-row">
-          <label style="font-weight: 600;">Revenue YTD</label>
-          <input type="range" id="actual-rev-slider" min="0" max="400000" step="1000" value="0">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="actual-rev-input" class="value-input" style="padding-left: 22px;" value="0">
-          </div>
-        </div>
-        <div style="margin-top: 14px; padding: 14px; background: #f6f8fc; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--muted); font-family: var(--mono);" id="actual-summary">
-          Enter gigs delivered above to see commission earned to date.
+      </div>
+      <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
+        <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this revenue, you earn</div>
+        <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
+          <div><div style="font-size: 10px; color: var(--muted);">COMMISSION (inc super)</div><div id="plan-comm" style="font-size: 18px; font-weight: 700; color: var(--accent);">—</div></div>
+          <div><div style="font-size: 10px; color: var(--muted);">TOTAL PACKAGE</div><div id="plan-total" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
         </div>
       </div>
     </div>
@@ -1142,7 +1117,10 @@
   <!-- Projects -->
   <section class="panel" id="panel-projects">
     <div style="margin-bottom: 18px;">
-      <p style="color: var(--muted); font-size: 14px; margin: 0;"><strong>Each project is a base-salary uplift, not a one-off cash bonus.</strong> When you sign off the Definition of Done, the project amount gets added to your base salary going forward. Tick a project on the Overview tab to model your <em>future</em> base salary if it were completed today.</p>
+      <p style="color: var(--muted); font-size: 14px; margin: 0 0 12px;"><strong>Each project is a base-salary uplift, not a one-off cash bonus.</strong> When you sign off the Definition of Done, the project amount gets added to your base salary going forward. Tick a project on the Overview tab to model your <em>future</em> base salary if it were completed today.</p>
+      <div style="background: #fffaf0; border: 1px solid #f0e2c4; border-left: 4px solid #b8860b; border-radius: 8px; padding: 12px 16px; font-size: 13px; line-height: 1.55; color: var(--ink);">
+        <strong style="color: #b8860b;">A note on expectations.</strong> These three projects are a one-off, deliberate tool to lift your base salary up to the &ldquo;green&rdquo; range &mdash; a way for you to demonstrate you can successfully implement major systems and to be permanently rewarded for it. <strong>This isn&rsquo;t a perpetual mechanism.</strong> Future major projects you take on are part of the regular Systems Manager role and won&rsquo;t each automatically slap another $2,500 onto your base. Ongoing salary growth happens through the normal annual salary review process, where additional project work and overall contribution are factored in.
+      </div>
     </div>
     <div id="projects-list"></div>
     <div id="projects-empty" style="display: none; padding: 60px; text-align: center; color: var(--muted); background: #fafaf7; border: 1px dashed var(--border); border-radius: 10px;">
@@ -1245,12 +1223,11 @@
     </div>
 
     <div class="card">
-      <h3 style="margin: 0 0 12px;">The five principles (performer edition)</h3>
+      <h3 style="margin: 0 0 12px;">The four principles (performer edition)</h3>
       <ol style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0; padding-left: 22px;">
         <li style="margin-bottom: 12px;"><strong>Performance Revenue is the metric.</strong> Your variable comp is calculated on the total revenue from gigs you personally perform at, plus the gigs you book and manage as a Talent/Systems lead — across the financial year. Not GP, not bookings, not quotes. <em>Revenue you brought through the door</em> — every dollar of cash that arrives from a gig you delivered counts toward your bands.</li>
         <li style="margin-bottom: 12px;"><strong>Paid quarterly, not monthly.</strong> Performance Revenue is naturally lumpy — a single big gig can shift a quarter&rsquo;s number meaningfully. Calculating quarterly (rather than monthly) smooths the noise and lines up with how the business sees its own performance. Your commission lands in the first fortnightly pay cycle of the new quarter, after the previous quarter is closed and reconciled.</li>
         <li style="margin-bottom: 12px;"><strong>Bands climb — the harder you push, the more you earn per dollar.</strong> The first dollar of revenue above your previous tier earns at a higher rate than the last dollar of the tier you just cleared. Stretch is rewarded, not punished. <strong>There&rsquo;s no cap.</strong></li>
-        <li style="margin-bottom: 12px;"><strong>Refunds reduce future commission. They never touch your base.</strong> If a gig is refunded or cancelled after you&rsquo;ve been paid commission on it, that amount nets against your next commission cycle. Your base salary is never touched, and your paycheck never goes negative.</li>
         <li><strong>You need to be employed at quarter-end to be eligible for that quarter&rsquo;s commission.</strong> Different to the sales team, because your variable is a quarterly figure. Anything from previous fully-completed quarters is yours and lands in your final paycheck. Cash that lands after your last day stays with the company. Base salary is never touched.</li>
       </ol>
     </div>
@@ -1280,9 +1257,12 @@
       <p style="font-size: 13px; color: var(--ink); line-height: 1.6; margin: 0 0 10px;">
         On top of revenue commission, you have three projects whose completion <strong>permanently raises your base salary</strong> — Rostering System, Quoting Tool, Client Portal. Each lifts your base by its stated amount on <strong>Definition of Done sign-off</strong>, not on time spent or progress. The slider on the Projects tab is a self-tracking tool only — it doesn&rsquo;t move the trigger.
       </p>
-      <p style="font-size: 12px; color: var(--muted); margin: 0; line-height: 1.6;">
+      <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px; line-height: 1.6;">
         Why structured this way: project work is genuinely additional, and we want to <strong>recognise it permanently</strong> rather than as a one-off cash payment. Once a project is signed off, it stays in your base salary for as long as you&rsquo;re at MEC. Hayley/Nathan update Xero on the day the DOD is approved.
       </p>
+      <div style="background: #fffaf0; border: 1px solid #f0e2c4; border-left: 4px solid #b8860b; border-radius: 8px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6; color: var(--ink);">
+        <strong style="color: #b8860b;">Setting expectations.</strong> These three projects are a deliberate, one-off lever to bring your base salary up to the &ldquo;green&rdquo; range — your chance to demonstrate you can successfully implement major systems and be permanently rewarded for it. <strong>This isn&rsquo;t a perpetual mechanism.</strong> Future major projects are part of the regular Systems Manager role and won&rsquo;t each automatically add another $2,500 to your base. Some additional project work may feed into a higher base salary down the line, but only via the normal <strong>annual salary review process</strong> — not as an automatic per-project uplift. Completing project work is an expectation of the role.
+      </div>
     </div>
 
     <div class="card" style="border-left: 3px solid var(--warn);">
@@ -1302,6 +1282,8 @@
       <ul style="font-size: 13px; line-height: 1.6; color: var(--ink); padding-left: 18px; margin: 0;">
         <li><strong>Doing your job exceptionally well in non-numerical ways</strong> &mdash; client experience, hand-offs, mentoring, the way you turn up. Reflected in your annual review and discretionary bonuses, not the plan multiplier.</li>
         <li><strong>Effort in itself</strong> &mdash; we pay for what lands. Effort is necessary but not sufficient.</li>
+        <li><strong>Iterations, edits and maintenance on systems that already exist</strong> &mdash; tweaks and improvements to a system you&rsquo;ve already built and signed off, bug fixes, ongoing software/iOS-style update work that&rsquo;s required to keep things running. These are part of your normal Systems Manager role, not new project uplifts.</li>
+        <li><strong>Additional projects beyond the three major ones listed on your Projects tab.</strong> The three named projects (Rostering System, Quoting Tool, Client Portal) are the only ones that trigger a permanent base-salary uplift. Other project work that sits outside those three is part of your job description and recognised through the annual salary review process &mdash; not through additional automatic uplifts.</li>
       </ul>
     </div>
 
@@ -1425,7 +1407,7 @@ const EMPLOYEE_ID = 'michael';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v3`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v4`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1831,17 +1813,6 @@ function wireInputs() {
     const baseInc = (emp.baseSalary || 0) * (1 + sr);
     document.getElementById('plan-comm').textContent = fmtMoney(bandComm);
     document.getElementById('plan-total').textContent = fmtMoney(baseInc + bandComm);
-  });
-  wireGigPlanning('actual-', { gigs: 0, avg: 0, rev: 0 }, (totalRev) => {
-    const summary = document.getElementById('actual-summary');
-    if (totalRev > 0) {
-      const { total: bandComm } = calcBandCommission(totalRev, plan.bands);
-      const sr = data.globals.superRate || 0.12;
-      const baseInc = (emp.baseSalary || 0) * (1 + sr);
-      summary.innerHTML = `Revenue YTD <strong style="color: var(--ink);">${fmtMoney(totalRev)}</strong> · Commission earned <strong style="color: var(--accent);">${fmtMoney(bandComm)}</strong> · Total package YTD <strong style="color: var(--navy);">${fmtMoney(baseInc + bandComm)}</strong>`;
-    } else {
-      summary.textContent = 'Enter gigs delivered above to see commission earned to date.';
-    }
   });
 }
 
@@ -2457,17 +2428,11 @@ function renderBaseComposition() {
     <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; font-family: var(--mono);">${showProjected ? `if ${pendingTicked.length} project${pendingTicked.length===1?'':'s'} signed off today` : 'ex super'}</div>
   </div>`);
 
+  // Render inside the <details> wrapper on the Overview tab — no outer .card needed.
   wrap.innerHTML = `
-    <div class="card" style="margin-bottom: 18px; border-left: 3px solid var(--navy); padding: 16px 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;">
-        <div>
-          <h2 style="margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em;">Base Salary Composition</h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0; line-height: 1.4;">Each project completion permanently raises your base salary. Tick projects on the Projects tab to model what your future base would look like.</p>
-        </div>
-      </div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch;">
-        ${segments.join('')}
-      </div>
+    <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px; line-height: 1.4;">Each project completion permanently raises your base salary. Tick projects on the Projects tab to model what your future base would look like.</p>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch;">
+      ${segments.join('')}
     </div>
   `;
 }

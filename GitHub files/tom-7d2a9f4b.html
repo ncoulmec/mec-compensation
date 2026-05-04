@@ -1095,66 +1095,35 @@
       <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Pull last-12 months of gigs + revenue from your Zoho team record.</span>
     </div>
 
-    <div class="two-col">
-      <div class="card">
-        <h3 style="margin: 0 0 4px;">Planning <span style="font-size: 11px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em;">forecast</span></h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Forward-looking — what you're aiming for this year.</p>
-        <div class="scenario-row">
-          <label>Number of Gigs</label>
-          <input type="range" id="plan-gigs-slider" min="50" max="200" step="1" value="97">
-          <input type="text" inputmode="numeric" id="plan-gigs-input" class="value-input" value="97">
-        </div>
-        <div class="scenario-row">
-          <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
-          <input type="range" id="plan-avg-slider" min="500" max="5000" step="50" value="2013">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="plan-avg-input" class="value-input" style="padding-left: 22px;" value="2,013">
-          </div>
-        </div>
-        <div class="scenario-row">
-          <label style="font-weight: 600;">Total Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Gigs × Avg)</span></label>
-          <input type="range" id="plan-rev-slider" min="0" max="500000" step="1000" value="195237">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="plan-rev-input" class="value-input" style="padding-left: 22px;" value="195,237">
-          </div>
-        </div>
-        <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
-          <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this revenue, you earn</div>
-          <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
-            <div><div style="font-size: 10px; color: var(--muted);">COMMISSION (inc super)</div><div id="plan-comm" style="font-size: 18px; font-weight: 700; color: var(--accent);">—</div></div>
-            <div><div style="font-size: 10px; color: var(--muted);">TOTAL PACKAGE</div><div id="plan-total" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
-          </div>
+    <div class="card" style="max-width: 720px;">
+      <h3 style="margin: 0 0 4px;">Planning</h3>
+      <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Forward-looking — what you're aiming for this year.</p>
+      <div class="scenario-row">
+        <label>Number of Gigs</label>
+        <input type="range" id="plan-gigs-slider" min="50" max="200" step="1" value="97">
+        <input type="text" inputmode="numeric" id="plan-gigs-input" class="value-input" value="97">
+      </div>
+      <div class="scenario-row">
+        <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
+        <input type="range" id="plan-avg-slider" min="500" max="5000" step="50" value="2013">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="plan-avg-input" class="value-input" style="padding-left: 22px;" value="2,013">
         </div>
       </div>
-
-      <div class="card">
-        <h3 style="margin: 0 0 4px;">Actual Data <span style="font-size: 11px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em;">to date</span></h3>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">What you've actually delivered. Edits persist on this device.</p>
-        <div class="scenario-row">
-          <label>Gigs delivered</label>
-          <input type="range" id="actual-gigs-slider" min="0" max="200" step="1" value="0">
-          <input type="text" inputmode="numeric" id="actual-gigs-input" class="value-input" value="0">
+      <div class="scenario-row">
+        <label style="font-weight: 600;">Total Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Gigs × Avg)</span></label>
+        <input type="range" id="plan-rev-slider" min="0" max="500000" step="1000" value="195237">
+        <div style="position: relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+          <input type="text" inputmode="numeric" id="plan-rev-input" class="value-input" style="padding-left: 22px;" value="195,237">
         </div>
-        <div class="scenario-row">
-          <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
-          <input type="range" id="actual-avg-slider" min="0" max="5000" step="50" value="0">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="actual-avg-input" class="value-input" style="padding-left: 22px;" value="0">
-          </div>
-        </div>
-        <div class="scenario-row">
-          <label style="font-weight: 600;">Revenue YTD</label>
-          <input type="range" id="actual-rev-slider" min="0" max="500000" step="1000" value="0">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="actual-rev-input" class="value-input" style="padding-left: 22px;" value="0">
-          </div>
-        </div>
-        <div style="margin-top: 14px; padding: 14px; background: #f6f8fc; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--muted); font-family: var(--mono);" id="actual-summary">
-          Enter gigs delivered above to see commission earned to date.
+      </div>
+      <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
+        <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">At this revenue, you earn</div>
+        <div style="display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-family: var(--mono);">
+          <div><div style="font-size: 10px; color: var(--muted);">COMMISSION (inc super)</div><div id="plan-comm" style="font-size: 18px; font-weight: 700; color: var(--accent);">—</div></div>
+          <div><div style="font-size: 10px; color: var(--muted);">TOTAL PACKAGE</div><div id="plan-total" style="font-size: 18px; font-weight: 700; color: var(--navy);">—</div></div>
         </div>
       </div>
     </div>
@@ -1266,12 +1235,11 @@
     </div>
 
     <div class="card">
-      <h3 style="margin: 0 0 12px;">The five principles (performer edition)</h3>
+      <h3 style="margin: 0 0 12px;">The four principles (performer edition)</h3>
       <ol style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0; padding-left: 22px;">
         <li style="margin-bottom: 12px;"><strong>Performance Revenue is the metric.</strong> Your variable comp is calculated on the total revenue from gigs you personally perform at, plus the gigs you book and manage as a Talent lead — across the financial year. Not GP, not bookings, not quotes. <em>Revenue you brought through the door</em> — every dollar of cash that arrives from a gig you delivered counts toward your bands.</li>
         <li style="margin-bottom: 12px;"><strong>Paid quarterly, not monthly.</strong> Performance Revenue is naturally lumpy — a single big gig or a busy week can shift a quarter&rsquo;s number meaningfully. Calculating quarterly (rather than monthly) smooths the noise and lines up with how the business sees its own performance. Your commission lands in the first fortnightly pay cycle of the new quarter, after the previous quarter is closed and reconciled.</li>
         <li style="margin-bottom: 12px;"><strong>Bands climb — the harder you push, the more you earn per dollar.</strong> The first dollar of revenue above your previous tier earns at a higher rate than the last dollar of the tier you just cleared. Stretch is rewarded, not punished. <strong>There&rsquo;s no cap.</strong></li>
-        <li style="margin-bottom: 12px;"><strong>Refunds reduce future commission. They never touch your base.</strong> If a gig is refunded or cancelled after you&rsquo;ve been paid commission on it, that amount nets against your next commission cycle. Your base salary is never touched, and your paycheck never goes negative.</li>
         <li><strong>You need to be employed at quarter-end to be eligible for that quarter&rsquo;s commission.</strong> Different to the sales team, because your variable is a quarterly figure. Anything from previous fully-completed quarters is yours and lands in your final paycheck. Cash that lands after your last day stays with the company. Base salary is never touched.</li>
       </ol>
     </div>
@@ -1432,7 +1400,7 @@ const EMPLOYEE_ID = 'tom';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v3`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v4`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1836,17 +1804,6 @@ function wireInputs() {
     const baseInc = (emp.baseSalary || 0) * (1 + sr);
     document.getElementById('plan-comm').textContent = fmtMoney(bandComm);
     document.getElementById('plan-total').textContent = fmtMoney(baseInc + bandComm);
-  });
-  wireGigPlanning('actual-', { gigs: 0, avg: 0, rev: 0 }, (totalRev) => {
-    const summary = document.getElementById('actual-summary');
-    if (totalRev > 0) {
-      const { total: bandComm } = calcBandCommission(totalRev, plan.bands);
-      const sr = data.globals.superRate || 0.12;
-      const baseInc = (emp.baseSalary || 0) * (1 + sr);
-      summary.innerHTML = `Revenue YTD <strong style="color: var(--ink);">${fmtMoney(totalRev)}</strong> · Commission earned <strong style="color: var(--accent);">${fmtMoney(bandComm)}</strong> · Total package YTD <strong style="color: var(--navy);">${fmtMoney(baseInc + bandComm)}</strong>`;
-    } else {
-      summary.textContent = 'Enter gigs delivered above to see commission earned to date.';
-    }
   });
 }
 
