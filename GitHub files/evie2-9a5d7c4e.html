@@ -728,6 +728,7 @@
     <button class="tab-btn active" aria-current="page" data-tab="overview">Overview</button>
     <button class="tab-btn" data-tab="planning">Planning</button>
     <button class="tab-btn" data-tab="projects">Projects</button>
+    <button class="tab-btn" data-tab="pool">🤝 Team Pool</button>
     <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
     <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
     <button class="tab-btn" data-tab="faq">FAQ</button>
@@ -746,6 +747,7 @@
 
     <!-- ============ PLANNING SECTION ============ -->
     <div id="pay-increase-banner"></div>
+    <div id="team-pool-banner"></div>
     <div class="section-head">      <h2>Forecast your year</h2>
       <p class="blurb">Drag the sliders below to model different GP scenarios — numbers reset on reload.</p>
     </div>
@@ -1341,6 +1343,12 @@
       No projects currently assigned to you.
     </div>
   </section>
+  <!-- Team Pool -->
+  <section class="panel" id="panel-pool">
+    <div id="team-pool-content"></div>
+  </section>
+
+
 
   <!-- KPI -->
   <section class="panel" id="panel-kpi">
@@ -1531,7 +1539,7 @@ const EMPLOYEE_ID = 'evie2';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v6`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v7`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -4061,6 +4069,251 @@ function renderFaqTab() {
   } else {
     init();
   }
+})();
+
+
+/* ============================================================
+   TEAM POOL COMMISSION (v1)
+   Quarterly bonus shared equally across all eligible staff if
+   the team hits its seasonal GP-sold target.
+   Funded by poolRate slices on commission bands above thresholds.
+   ============================================================ */
+function teamPoolComputeFunded(totalGPSold) {
+  if (!data || !data.employees) return 0;
+  let total = 0;
+  data.employees.forEach(emp => {
+    if (emp.placeholder) return;
+    const plan = data.planTypes[emp.planType];
+    if (!plan || !plan.bands || plan.metricBasis !== 'gp') return;
+    const target = +emp.annualGPTarget || 0;
+    if (target <= 0) return;
+    for (let i = 0; i < plan.bands.length; i++) {
+      const band = plan.bands[i];
+      const next = plan.bands[i+1];
+      const lower = band.threshold;
+      const upper = next ? next.threshold : Infinity;
+      if (target <= lower) break;
+      const inBand = Math.min(target, upper) - lower;
+      total += inBand * (band.poolRate || 0);
+    }
+  });
+  return total;
+}
+function teamPoolPersonalContribution(emp, gpSold) {
+  if (!emp || !data || !data.planTypes) return 0;
+  const plan = data.planTypes[emp.planType];
+  if (!plan || !plan.bands || plan.metricBasis !== 'gp') return 0;
+  let total = 0;
+  for (let i = 0; i < plan.bands.length; i++) {
+    const band = plan.bands[i];
+    const next = plan.bands[i+1];
+    const lower = band.threshold;
+    const upper = next ? next.threshold : Infinity;
+    if (gpSold <= lower) break;
+    const inBand = Math.min(gpSold, upper) - lower;
+    total += inBand * (band.poolRate || 0);
+  }
+  return total;
+}
+function teamPoolPayoutFactor(actual, target, softFloor, rampMax) {
+  if (!target || target <= 0) return 0;
+  const progress = actual / target;
+  const floor = softFloor != null ? softFloor : 0.80;
+  const cap = rampMax != null ? rampMax : 1.0;
+  if (progress < floor) return 0;
+  if (progress >= cap) return progress; // above target = scales 1:1
+  return (progress - floor) / (cap - floor); // linear ramp 0 -> 1
+}
+function fmtMoneyTP(n) {
+  if (n == null || isNaN(n)) return '$0';
+  return '$' + Math.round(+n).toLocaleString('en-AU');
+}
+function renderTeamPool() {
+  if (!data || !data.globals || !data.globals.teamPool || !data.globals.teamPool.enabled) {
+    const banner = document.getElementById('team-pool-banner');
+    if (banner) banner.style.display = 'none';
+    return;
+  }
+  const tp = data.globals.teamPool;
+  const cur = tp.fiscalQuarters.find(q => q.id === tp.currentQuarterId) || tp.fiscalQuarters[0];
+  const annualPool = teamPoolComputeFunded(tp.annualGPTarget);
+  const perPersonAnnual = annualPool / (tp.splitCount || 8);
+  const perPersonQuarter = perPersonAnnual / 4;
+  const curActual = +cur.actualGPSold || 0;
+  const curTarget = +cur.target || 0;
+  const curProgress = curTarget > 0 ? Math.min(curActual / curTarget, 1.5) : 0;
+  const curPayoutFactor = teamPoolPayoutFactor(curActual, curTarget, tp.softFloor, tp.rampMax);
+  const curPoolFunded = perPersonQuarter * (tp.splitCount || 8);
+  const curPerPersonProj = curPoolFunded * curPayoutFactor / (tp.splitCount || 8);
+
+  /* Banner widget on Overview tab */
+  const banner = document.getElementById('team-pool-banner');
+  if (banner) {
+    const progressPct = Math.round(curProgress * 100);
+    const fillPct = Math.min(100, progressPct);
+    const statusText = curProgress < (tp.softFloor || 0.80)
+      ? `Below soft floor (${Math.round((tp.softFloor||0.8)*100)}%) — no pool yet`
+      : (curProgress >= 1.0 ? `Hit target! Pool unlocked.` : `In ramp zone — every $ above ${Math.round((tp.softFloor||0.8)*100)}% adds to your share`);
+    const statusColour = curProgress < (tp.softFloor || 0.80) ? 'var(--muted)' : (curProgress >= 1.0 ? '#0a7a3a' : '#b8860b');
+    banner.innerHTML = `
+      <div style="background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%); border: 1px solid #f0e2c4; border-left: 4px solid #b8860b; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 240px;">
+            <div style="font-size: 11px; color: #b8860b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🤝 Team Pool · ${cur.label}</div>
+            <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin: 4px 0 2px;">${fmtMoneyTP(curActual)} <span style="color: var(--muted); font-size: 13px; font-weight: 500;">of ${fmtMoneyTP(curTarget)} target</span></div>
+            <div style="height: 14px; background: #f0e2c4; border-radius: 999px; overflow: hidden; margin: 8px 0 4px; position: relative;">
+              <div style="height: 100%; width: ${fillPct}%; background: linear-gradient(90deg, #b8860b, #d4a548); border-radius: 999px; transition: width 0.4s;"></div>
+              <div style="position: absolute; top: 0; left: ${Math.round((tp.softFloor||0.8)*100)}%; height: 100%; width: 1px; background: rgba(0,0,0,0.3);"></div>
+            </div>
+            <div style="font-size: 11px; color: ${statusColour}; font-family: var(--mono);">${progressPct}% to target · ${statusText}</div>
+          </div>
+          <div style="text-align: right; min-width: 150px;">
+            <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;">Your share if team hits target</div>
+            <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #b8860b;">${fmtMoneyTP(perPersonQuarter)}</div>
+            <div style="font-size: 10px; color: var(--muted); font-family: var(--mono);">equal split ÷ ${tp.splitCount||8}</div>
+          </div>
+        </div>
+        <div style="margin-top: 8px; font-size: 11px; color: var(--muted);">
+          <a href="#" onclick="document.querySelector('[data-tab=&quot;pool&quot;]').click(); return false;" style="color: #b8860b; text-decoration: underline; font-weight: 600;">Open Team Pool tab →</a>
+        </div>
+      </div>
+    `;
+  }
+
+  /* Full panel content */
+  const panel = document.getElementById('team-pool-content');
+  if (panel) {
+    const empContribRows = data.employees.filter(e => !e.placeholder).map(e => {
+      const plan = data.planTypes[e.planType];
+      if (!plan || plan.metricBasis !== 'gp') return null;
+      const target = +e.annualGPTarget || 0;
+      if (target <= 0) return null;
+      const annualContrib = teamPoolPersonalContribution(e, target);
+      return { name: e.name, role: e.role || '', target, annualContrib };
+    }).filter(Boolean);
+    const totalContrib = empContribRows.reduce((s, r) => s + r.annualContrib, 0);
+    const contribTable = empContribRows.map(r => {
+      const pct = totalContrib > 0 ? (r.annualContrib / totalContrib * 100).toFixed(1) : '0.0';
+      return `<tr>
+        <td style="padding: 6px 8px;">${r.name} <span style="font-size: 11px; color: var(--muted);">${r.role}</span></td>
+        <td style="text-align: right; padding: 6px 8px; font-family: var(--mono); color: var(--muted);">${fmtMoneyTP(r.target)}</td>
+        <td style="text-align: right; padding: 6px 8px; font-family: var(--mono); color: #b8860b; font-weight: 600;">${fmtMoneyTP(r.annualContrib)}</td>
+        <td style="text-align: right; padding: 6px 8px; font-family: var(--mono); color: var(--muted);">${pct}%</td>
+      </tr>`;
+    }).join('');
+    const quarterRows = (tp.fiscalQuarters || []).map(q => {
+      const status = q.status === 'current' ? '<span style="background:#fff8e1;color:#b8860b;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;">Current</span>'
+                   : q.status === 'closed' ? '<span style="background:#eaf3ee;color:#0a7a3a;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;">Closed</span>'
+                   : '<span style="background:#f5f3ee;color:var(--muted);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;">Upcoming</span>';
+      return `<tr>
+        <td style="padding: 6px 8px;">${q.label}</td>
+        <td style="text-align: right; padding: 6px 8px; font-family: var(--mono);">${fmtMoneyTP(q.target)}</td>
+        <td style="text-align: right; padding: 6px 8px; font-family: var(--mono); color: var(--muted);">${q.factor.toFixed(3)}×</td>
+        <td style="text-align: right; padding: 6px 8px; font-family: var(--mono);">${q.actualGPSold > 0 ? fmtMoneyTP(q.actualGPSold) : '—'}</td>
+        <td style="padding: 6px 8px;">${status}</td>
+      </tr>`;
+    }).join('');
+    panel.innerHTML = `
+      <div class="card" style="background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%); border-left: 4px solid #b8860b;">
+        <h2 style="margin: 0 0 6px;">🤝 Team Pool Commission</h2>
+        <p style="font-size: 13px; color: var(--muted); margin: 0;">Quarterly bonus shared equally across all 8 MEC staff if we hit the seasonal GP-sold target. Funded by a slice (poolRate) of upper-band commissions across all sales/hybrid roles. Performers and GM share the upside, reflecting that great events are a team sport.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top: 0;">${cur.label}</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+          <div style="background: #fafaf7; padding: 14px 16px; border-radius: 8px;">
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;">Quarterly Target</div>
+            <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--navy); margin-top: 4px;">${fmtMoneyTP(curTarget)}</div>
+            <div style="font-size: 10px; color: var(--faint); font-family: var(--mono); margin-top: 2px;">Seasonal factor ${cur.factor.toFixed(3)}× of average</div>
+          </div>
+          <div style="background: #fafaf7; padding: 14px 16px; border-radius: 8px;">
+            <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;">Actual GP Sold (QTD)</div>
+            <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoneyTP(curActual)}</div>
+            <div style="font-size: 10px; color: var(--faint); font-family: var(--mono); margin-top: 2px;">${Math.round(curProgress*100)}% of target</div>
+          </div>
+          <div style="background: #fff8e1; padding: 14px 16px; border-radius: 8px; border: 1px solid #f0e2c4;">
+            <div style="font-size: 11px; color: #b8860b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Your share at target</div>
+            <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #b8860b; margin-top: 4px;">${fmtMoneyTP(perPersonQuarter)}</div>
+            <div style="font-size: 10px; color: var(--faint); font-family: var(--mono); margin-top: 2px;">equal split ÷ ${tp.splitCount||8} staff</div>
+          </div>
+        </div>
+        <div style="margin-top: 8px; padding: 10px 12px; background: #fff; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--ink);">
+          <strong>Soft cliff:</strong> below ${Math.round((tp.softFloor||0.8)*100)}% of target → no pool that quarter (no carry-forward). Between ${Math.round((tp.softFloor||0.8)*100)}% and 100% → linear ramp. Above 100% → pool grows proportionally (no cap).
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 8px;">Per-rep contribution at 2026 targets</h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Transparent breakdown of who funds the pool — based on each rep's 2026 GP-sold target. Performers/GM share the upside without contributing GP (their commission tracks a different metric).</p>
+        <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+          <thead>
+            <tr style="background: var(--navy); color: #fff;">
+              <th style="text-align: left; padding: 8px;">Rep</th>
+              <th style="text-align: right; padding: 8px;">2026 GP target</th>
+              <th style="text-align: right; padding: 8px;">Annual pool contribution</th>
+              <th style="text-align: right; padding: 8px;">Share of pool</th>
+            </tr>
+          </thead>
+          <tbody>${contribTable}</tbody>
+          <tfoot>
+            <tr style="background: #fafaf7; font-weight: 700;">
+              <td style="padding: 8px;">Annual pool funded at target</td>
+              <td style="text-align: right; padding: 8px;"></td>
+              <td style="text-align: right; padding: 8px; font-family: var(--mono); color: #b8860b;">${fmtMoneyTP(annualPool)}</td>
+              <td style="text-align: right; padding: 8px; font-family: var(--mono);">100%</td>
+            </tr>
+            <tr style="background: #fff8e1; font-weight: 700;">
+              <td style="padding: 8px;">Per-person annual share (${tp.splitCount||8}-way equal)</td>
+              <td style="text-align: right; padding: 8px;"></td>
+              <td style="text-align: right; padding: 8px; font-family: var(--mono); color: #b8860b;">${fmtMoneyTP(perPersonAnnual)}</td>
+              <td style="text-align: right; padding: 8px; font-family: var(--mono); color: var(--muted);">${fmtMoneyTP(perPersonQuarter)}/qtr</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3 style="margin: 0 0 8px;">Quarterly schedule (FY27)</h3>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Targets adjusted for booking-side seasonality from 8 quarters of Zoho data. Q1 (Jul–Sep) is the busiest sales quarter; Q4 (Apr–Jun) is the structural lull.</p>
+        <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+          <thead>
+            <tr style="background: var(--navy); color: #fff;">
+              <th style="text-align: left; padding: 8px;">Quarter</th>
+              <th style="text-align: right; padding: 8px;">Target</th>
+              <th style="text-align: right; padding: 8px;">Seasonal factor</th>
+              <th style="text-align: right; padding: 8px;">Actual GP Sold</th>
+              <th style="padding: 8px;">Status</th>
+            </tr>
+          </thead>
+          <tbody>${quarterRows}</tbody>
+        </table>
+      </div>
+
+      <div class="card" style="background: var(--accent-bg); border-left: 3px solid var(--accent);">
+        <h3 style="margin: 0 0 6px;">Why the Team Pool exists</h3>
+        <p style="font-size: 13px; margin: 0 0 6px;">Sales is the visible engine, but every great event needs the whole team — talent, production, ops, GM. Your individual band rates reward your sale; this pool rewards us hitting our shared quarterly number. Everyone shares equally because everyone contributed.</p>
+        <p style="font-size: 12px; color: var(--muted); margin: 0;">If the team misses the soft floor any quarter, the pool that funded it doesn't roll forward — it's a fresh shot every quarter. That keeps the cadence honest.</p>
+      </div>
+    `;
+  }
+}
+
+
+// Hook: re-render team pool whenever data finishes loading
+(function(){
+  if (typeof window === 'undefined') return;
+  function tryRender() {
+    if (typeof data !== 'undefined' && data && data.globals) {
+      try { renderTeamPool(); } catch(e) { console.warn('teamPool render error:', e); }
+      return true;
+    }
+    return false;
+  }
+  // First attempt after a tick
+  setTimeout(function repeat(){
+    if (!tryRender()) setTimeout(repeat, 200);
+  }, 0);
 })();
 
 </script>
