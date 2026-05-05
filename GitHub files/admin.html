@@ -285,6 +285,7 @@
     <div class="admin-tabs">
       <button class="admin-tab-btn active" aria-current="page" data-admin-tab="unified">Monthly Payroll <span style="font-size:9px; color: var(--accent); margin-left: 6px;">●NEW</span></button>
       <button class="admin-tab-btn" data-admin-tab="byemployee">By Employee (legacy detail)</button>
+      <button class="admin-tab-btn" data-admin-tab="pool">🤝 Team Pool <span style="font-size:9px; color: #b8860b; margin-left: 6px;">●NEW</span></button>
     </div>
 
     <!-- ========== UNIFIED MONTHLY PAYROLL VIEW (NEW) ========== -->
@@ -367,6 +368,15 @@
           </table></div>
         </div>
         <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Highlighted green columns are calculated automatically from the employee's plan. Clear a row to unlock that month on the employee dashboard.</p>
+      </div>
+    </div>
+
+    <!-- ========== TEAM POOL ADMIN ========== -->
+    <div class="admin-panel" id="admin-panel-pool">
+      <div class="card" style="margin-bottom: 14px;">
+        <h2>🤝 Team Pool — Quarterly Actuals</h2>
+        <p class="blurb">Enter each quarter's team total GP-sold (from Zoho's "Quarterly GP Sold · Booking Closed Date" report) plus the per-rep splits. The dashboard auto-computes the pool funded, ramp factor (0 below 80%, 1.0 at 100%, &gt;1 above), and per-person share. Click <strong>Close out</strong> to lock the quarter — locked figures appear on every employee's Team Pool tab.</p>
+        <div id="pool-admin-body"></div>
       </div>
     </div>
 
@@ -567,7 +577,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v6';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v7';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -679,6 +689,7 @@ async function load() {
     wireAdminTabs();
     wireUmTooltips();
     renderGhStatus();
+    renderPoolAdmin();
   } catch (err) {
     console.error('Admin dashboard load failed:', err);
     $('#loading').style.display = 'none';
@@ -1560,6 +1571,254 @@ async function saveToGitHub() {
   }
 }
 $('#save-gh-btn').addEventListener('click', saveToGitHub);
+
+/* ============================================================
+   TEAM POOL ADMIN — quarterly actuals entry
+   ============================================================ */
+function poolWalkBands(emp, gpSold) {
+  if (!emp || !gpSold) return 0;
+  const plan = data.planTypes[emp.planType];
+  if (!plan || !plan.bands) return 0;
+  let total = 0;
+  for (let i = 0; i < plan.bands.length; i++) {
+    const band = plan.bands[i];
+    const next = plan.bands[i+1];
+    const lower = band.threshold;
+    const upper = next ? next.threshold : Infinity;
+    if (gpSold <= lower) break;
+    const inBand = Math.min(gpSold, upper) - lower;
+    total += inBand * (band.poolRate || 0);
+  }
+  return total;
+}
+
+function poolWalkBandsQuarterly(emp, quarterlyGpSold) {
+  // Apply quarterly-pro-rated thresholds: $300k annual = $75k quarterly threshold etc.
+  if (!emp || !quarterlyGpSold) return 0;
+  const plan = data.planTypes[emp.planType];
+  if (!plan || !plan.bands) return 0;
+  let total = 0;
+  for (let i = 0; i < plan.bands.length; i++) {
+    const band = plan.bands[i];
+    const next = plan.bands[i+1];
+    const lower = band.threshold / 4;     // quarterly threshold
+    const upper = next ? next.threshold / 4 : Infinity;
+    if (quarterlyGpSold <= lower) break;
+    const inBand = Math.min(quarterlyGpSold, upper) - lower;
+    total += inBand * (band.poolRate || 0);
+  }
+  return total;
+}
+
+function poolPayoutFactor(actual, target, softFloor) {
+  if (!target || target <= 0) return 0;
+  const progress = actual / target;
+  const floor = softFloor != null ? softFloor : 0.80;
+  if (progress < floor) return 0;
+  if (progress >= 1.0) return progress;     // above target — scales 1:1
+  return (progress - floor) / (1.0 - floor); // linear ramp 0 → 1
+}
+
+function fmtPoolMoney(n) {
+  if (n == null || isNaN(n)) return '$0';
+  return '$' + Math.round(+n).toLocaleString('en-AU');
+}
+
+function renderPoolAdmin() {
+  const wrap = document.getElementById('pool-admin-body');
+  if (!wrap) return;
+  if (!data || !data.globals || !data.globals.teamPool) {
+    wrap.innerHTML = '<p style="color: var(--muted);">Team Pool config not found in data.</p>';
+    return;
+  }
+  const tp = data.globals.teamPool;
+  const splitCount = tp.splitCount || 8;
+  const softFloor = tp.softFloor || 0.80;
+
+  // Sales/hybrid reps that contribute to pool (have GP-based plan)
+  const contributingReps = data.employees.filter(e =>
+    !e.placeholder && data.planTypes[e.planType] &&
+    data.planTypes[e.planType].metricBasis === 'gp'
+  );
+
+  let html = '<div style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">Soft floor <strong style="color: var(--ink);">' + Math.round(softFloor*100) + '%</strong> · Split <strong style="color: var(--ink);">' + splitCount + '-way equal</strong> · Quarterly thresholds (annual ÷ 4) used for per-quarter pool funding</div>';
+
+  (tp.fiscalQuarters || []).forEach((q, qi) => {
+    const isCurrent = q.id === tp.currentQuarterId;
+    const isClosed = q.status === 'closed';
+    const isUpcoming = q.status === 'upcoming';
+    const statusBadge = isClosed
+      ? '<span style="background:#eaf3ee;color:#0a7a3a;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;">Closed · Locked</span>'
+      : isCurrent
+        ? '<span style="background:#fff8e1;color:#b8860b;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;">Current</span>'
+        : '<span style="background:#f5f3ee;color:var(--muted);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;">Upcoming</span>';
+
+    const perRep = q.perRepGPSold || {};
+    const actualTotal = +q.actualGPSold || 0;
+    const perRepTotal = contributingReps.reduce((s, e) => s + (+perRep[e.id] || 0), 0);
+
+    // Compute live: pool funded via quarterly thresholds
+    const poolFunded = contributingReps.reduce((s, e) => s + poolWalkBandsQuarterly(e, +perRep[e.id] || 0), 0);
+    const payoutFactor = poolPayoutFactor(actualTotal, q.target, softFloor);
+    const perPersonShare = (poolFunded * payoutFactor) / splitCount;
+
+    const progress = q.target > 0 ? actualTotal / q.target : 0;
+    const progressPct = Math.round(progress * 100);
+    const fillPct = Math.min(100, progressPct);
+    const fillColour = progress >= 1.0 ? '#0a7a3a' : (progress >= softFloor ? '#b8860b' : '#a8281b');
+
+    const repInputRows = contributingReps.map(e => {
+      const v = +perRep[e.id] || 0;
+      const dataPath = `globals.teamPool.fiscalQuarters.${qi}.perRepGPSold.${e.id}`;
+      const contrib = poolWalkBandsQuarterly(e, v);
+      const lockedAttr = isClosed ? ' disabled' : '';
+      return `<tr>
+        <td style="padding: 6px 8px;">${e.name} <span style="font-size: 11px; color: var(--muted);">${e.role || ''}</span></td>
+        <td style="padding: 6px 8px;"><input type="text" inputmode="numeric" class="pool-rep-input" data-path="${dataPath}" data-qid="${q.id}" value="${v.toLocaleString('en-AU')}" style="width: 110px; padding: 6px 10px; text-align: right; font-family: var(--mono); border: 1px solid var(--border); border-radius: 6px; ${isClosed ? 'background: #f5f3ee; color: var(--muted);' : ''}" ${lockedAttr}></td>
+        <td style="padding: 6px 8px; text-align: right; font-family: var(--mono); color: ${contrib > 0 ? '#b8860b' : 'var(--muted)'};">${fmtPoolMoney(contrib)}</td>
+      </tr>`;
+    }).join('');
+
+    const closeBtnHtml = isClosed
+      ? `<button class="btn small" onclick="reopenPoolQuarter('${q.id}')" style="background: #ecebe5; color: var(--muted); border: 1px solid var(--border);">↺ Re-open quarter</button>`
+      : `<button class="btn small primary" onclick="closeOutPoolQuarter('${q.id}')" style="background: #b8860b; color: #fff;">🔒 Close out quarter</button>`;
+
+    const perRepMismatch = Math.abs(perRepTotal - actualTotal) > 1;
+    const mismatchWarn = perRepMismatch && perRepTotal > 0
+      ? `<div style="margin-top: 8px; padding: 8px 10px; background: var(--warn-bg); border: 1px solid #f0e2c4; border-radius: 6px; font-size: 11px; color: var(--warn);">⚠ Per-rep total (${fmtPoolMoney(perRepTotal)}) doesn't match team total (${fmtPoolMoney(actualTotal)}). Difference: ${fmtPoolMoney(actualTotal - perRepTotal)}</div>`
+      : '';
+
+    html += `
+      <div class="card" style="margin-bottom: 18px; border-left: 3px solid ${isCurrent ? '#b8860b' : (isClosed ? '#0a7a3a' : 'var(--border)')}; ${isUpcoming ? 'opacity: 0.7;' : ''}">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 14px;">
+          <div>
+            <h3 style="margin: 0 0 4px;">${q.label} ${statusBadge}</h3>
+            <div style="font-size: 12px; color: var(--muted); font-family: var(--mono);">Target: ${fmtPoolMoney(q.target)} · Seasonal factor ${q.factor.toFixed(3)}×</div>
+          </div>
+          <div>${closeBtnHtml}</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 18px;">
+          <!-- Left: per-rep input table -->
+          <div>
+            <h4 style="margin: 0 0 8px; font-size: 13px; color: var(--navy);">Per-rep quarterly GP-Sold (from Zoho)</h4>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #fafaf7; border-bottom: 1px solid var(--border);">
+                  <th style="text-align: left; padding: 6px 8px; font-weight: 600; font-size: 11px; color: var(--muted);">Rep</th>
+                  <th style="text-align: right; padding: 6px 8px; font-weight: 600; font-size: 11px; color: var(--muted);">Quarterly GP Sold</th>
+                  <th style="text-align: right; padding: 6px 8px; font-weight: 600; font-size: 11px; color: var(--muted);">Funds pool</th>
+                </tr>
+              </thead>
+              <tbody>${repInputRows}</tbody>
+              <tfoot>
+                <tr style="background: var(--navy); color: #fff; font-weight: 600;">
+                  <td style="padding: 8px;">Total per-rep entered</td>
+                  <td style="text-align: right; padding: 8px; font-family: var(--mono);">${fmtPoolMoney(perRepTotal)}</td>
+                  <td style="text-align: right; padding: 8px; font-family: var(--mono);">${fmtPoolMoney(poolFunded)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Right: team total + computed payout -->
+          <div>
+            <h4 style="margin: 0 0 8px; font-size: 13px; color: var(--navy);">Team total &amp; payout</h4>
+            <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px;">
+              <label style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Team total quarterly GP sold</label>
+              <input type="text" inputmode="numeric" class="pool-team-total-input" data-path="globals.teamPool.fiscalQuarters.${qi}.actualGPSold" data-qid="${q.id}" value="${actualTotal.toLocaleString('en-AU')}" style="width: 100%; box-sizing: border-box; margin-top: 6px; padding: 8px 12px; text-align: right; font-family: var(--mono); font-size: 16px; font-weight: 700; border: 1px solid var(--border); border-radius: 6px; ${isClosed ? 'background: #f5f3ee; color: var(--muted);' : ''}" ${isClosed ? 'disabled' : ''}>
+              <div style="margin-top: 8px; height: 8px; background: #f0e2c4; border-radius: 999px; overflow: hidden; position: relative;">
+                <div style="height: 100%; width: ${fillPct}%; background: ${fillColour}; border-radius: 999px;"></div>
+                <div style="position: absolute; top: 0; left: ${Math.round(softFloor*100)}%; height: 100%; width: 1px; background: rgba(0,0,0,0.5);"></div>
+              </div>
+              <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 4px;">${progressPct}% of target · ${progress >= 1.0 ? 'TARGET HIT ✓' : (progress >= softFloor ? 'In ramp zone' : 'Below soft floor')}</div>
+            </div>
+
+            <div style="background: #fff; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px;"><span style="color: var(--muted);">Pool funded</span><span style="font-family: var(--mono); font-weight: 600;">${fmtPoolMoney(poolFunded)}</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px;"><span style="color: var(--muted);">Payout factor</span><span style="font-family: var(--mono); font-weight: 600;">${(payoutFactor*100).toFixed(1)}%</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px;"><span style="color: var(--muted);">× Pool released</span><span style="font-family: var(--mono); font-weight: 600;">${fmtPoolMoney(poolFunded * payoutFactor)}</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-size: 14px; font-weight: 700; border-top: 1px solid var(--border); margin-top: 4px; color: #b8860b;"><span>Per-person share (÷ ${splitCount})</span><span style="font-family: var(--mono);">${fmtPoolMoney(perPersonShare)}</span></div>
+            </div>
+            ${mismatchWarn}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  wrap.innerHTML = html;
+
+  // Wire input handlers — write back to data + re-render
+  wrap.querySelectorAll('.pool-rep-input, .pool-team-total-input').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const path = e.target.dataset.path;
+      if (!path) return;
+      const v = parseFloat(e.target.value.replace(/[^\d.-]/g, '')) || 0;
+      // Set value at path
+      const parts = path.split('.');
+      let obj = data;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const p = parts[i];
+        const idx = /^\d+$/.test(p) ? parseInt(p) : null;
+        if (idx != null) {
+          if (!Array.isArray(obj)) return;
+          if (!obj[idx]) obj[idx] = {};
+          obj = obj[idx];
+        } else {
+          if (obj[p] == null) obj[p] = {};
+          obj = obj[p];
+        }
+      }
+      const lastKey = parts[parts.length - 1];
+      obj[lastKey] = v;
+      setDirty();
+    });
+    input.addEventListener('change', () => {
+      // Re-render to update computed columns
+      renderPoolAdmin();
+    });
+  });
+}
+
+window.closeOutPoolQuarter = function(qid) {
+  if (!confirm('Close out this quarter? Per-rep figures will lock and the per-person share will appear on every employee\'s Team Pool tab as the locked-in payout.')) return;
+  const tp = data.globals.teamPool;
+  const q = tp.fiscalQuarters.find(x => x.id === qid);
+  if (!q) return;
+
+  // Compute final values from current inputs
+  const splitCount = tp.splitCount || 8;
+  const softFloor = tp.softFloor || 0.80;
+  const contributingReps = data.employees.filter(e =>
+    !e.placeholder && data.planTypes[e.planType] && data.planTypes[e.planType].metricBasis === 'gp'
+  );
+  const perRep = q.perRepGPSold || {};
+  const poolFunded = contributingReps.reduce((s, e) => s + poolWalkBandsQuarterly(e, +perRep[e.id] || 0), 0);
+  const payoutFactor = poolPayoutFactor(+q.actualGPSold || 0, q.target, softFloor);
+  const perPersonShare = (poolFunded * payoutFactor) / splitCount;
+
+  q.poolFunded = Math.round(poolFunded);
+  q.payoutFactor = +payoutFactor.toFixed(4);
+  q.perPersonShare = Math.round(perPersonShare);
+  q.status = 'closed';
+  q.closedAt = new Date().toISOString().slice(0, 10);
+
+  setDirty();
+  renderPoolAdmin();
+  alert(`Q ${qid} closed. Per-person share: $${q.perPersonShare.toLocaleString('en-AU')}. Don't forget to "Save to GitHub" to publish.`);
+};
+
+window.reopenPoolQuarter = function(qid) {
+  if (!confirm('Re-open this closed quarter for editing? The locked payout will be unlocked.')) return;
+  const tp = data.globals.teamPool;
+  const q = tp.fiscalQuarters.find(x => x.id === qid);
+  if (!q) return;
+  q.status = q.id === tp.currentQuarterId ? 'current' : 'upcoming';
+  delete q.closedAt;
+  setDirty();
+  renderPoolAdmin();
+};
 
 load();
 </script>

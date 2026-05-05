@@ -1539,7 +1539,7 @@ const EMPLOYEE_ID = 'evie';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v7`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v8`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -4205,11 +4205,26 @@ function renderTeamPool() {
       const status = q.status === 'current' ? '<span style="background:#fff8e1;color:#b8860b;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;">Current</span>'
                    : q.status === 'closed' ? '<span style="background:#eaf3ee;color:#0a7a3a;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;">Closed</span>'
                    : '<span style="background:#f5f3ee;color:var(--muted);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;">Upcoming</span>';
+      // Per-person payout: locked if closed, live ramp if current, dash if upcoming
+      let payoutCell = '<span style="color: var(--faint);">—</span>';
+      if (q.status === 'closed') {
+        payoutCell = q.perPersonShare > 0
+          ? `<strong style="color: #0a7a3a;">${fmtMoneyTP(q.perPersonShare)}</strong> <span style="font-size: 10px; color: var(--muted);">paid ✓</span>`
+          : `<span style="color: var(--danger); font-weight: 600;">$0 — missed</span>`;
+      } else if (q.status === 'current') {
+        const liveActual = +q.actualGPSold || 0;
+        const liveProgress = q.target > 0 ? liveActual / q.target : 0;
+        const liveFactor = teamPoolPayoutFactor(liveActual, q.target, tp.softFloor, tp.rampMax);
+        const livePool = perPersonAnnual / 4 * (tp.splitCount || 8);
+        const liveShare = (livePool * liveFactor) / (tp.splitCount || 8);
+        payoutCell = `<span style="color: #b8860b; font-weight: 600;">${fmtMoneyTP(liveShare)}</span> <span style="font-size: 10px; color: var(--muted);">at ${Math.round(liveProgress*100)}%</span>`;
+      }
       return `<tr>
         <td style="padding: 6px 8px;">${q.label}</td>
         <td style="text-align: right; padding: 6px 8px; font-family: var(--mono);">${fmtMoneyTP(q.target)}</td>
         <td style="text-align: right; padding: 6px 8px; font-family: var(--mono); color: var(--muted);">${q.factor.toFixed(3)}×</td>
         <td style="text-align: right; padding: 6px 8px; font-family: var(--mono);">${q.actualGPSold > 0 ? fmtMoneyTP(q.actualGPSold) : '—'}</td>
+        <td style="text-align: right; padding: 6px 8px; font-family: var(--mono);">${payoutCell}</td>
         <td style="padding: 6px 8px;">${status}</td>
       </tr>`;
     }).join('');
@@ -4283,6 +4298,7 @@ function renderTeamPool() {
               <th style="text-align: right; padding: 8px;">Target</th>
               <th style="text-align: right; padding: 8px;">Seasonal factor</th>
               <th style="text-align: right; padding: 8px;">Actual GP Sold</th>
+              <th style="text-align: right; padding: 8px;">Per-person payout</th>
               <th style="padding: 8px;">Status</th>
             </tr>
           </thead>
