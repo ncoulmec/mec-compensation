@@ -656,7 +656,7 @@
     <div>
       <button class="pin-gate-submit" id="pin-gate-submit">Unlock</button>
     </div>
-    <button class="pin-gate-master-link" id="pin-gate-master-toggle">Forgot PIN? Use master password</button>
+    <button class="pin-gate-master-link" id="pin-gate-master-toggle">Use master password</button>
     <div class="pin-gate-error" id="pin-gate-error"></div>
     <div class="pin-gate-loading" id="pin-gate-loading"></div>
   </div>
@@ -1531,7 +1531,7 @@ const EMPLOYEE_ID = 'nic';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v3`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v6`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1651,7 +1651,7 @@ async function unlockDashboard() {
       usingMaster = !usingMaster;
       masterRow.classList.toggle('shown', usingMaster);
       overlay.querySelector('.pin-gate-pins').style.display = usingMaster ? 'none' : 'flex';
-      toggle.textContent = usingMaster ? 'Use PIN instead' : 'Forgot PIN? Use master password';
+      toggle.textContent = usingMaster ? 'Use PIN instead' : 'Use master password';
       if (usingMaster) masterInput.focus(); else pins[0].focus();
       errorEl.textContent = '';
     });
@@ -3142,9 +3142,9 @@ function update() {
 // === FLOATER (sticky bottom-right) — collapsed=2 sliders, expanded=full funnel ===
 // Snap chip presets per role (Last 365 / Target / Stretch)
 const SNAP_CHIPS = {
-  daniel: [{ label: '↺ Last 365', gp: 334400 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 500000 }],
-  nic:    [{ label: '↺ Last 365', gp: 340100 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 500000 }],
-  dane:   [{ label: '↺ Last 365', gp: 393300 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 500000 }],
+  daniel: [{ label: '↺ Last 365', gp: 334400 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 600000 }],
+  nic:    [{ label: '↺ Last 365', gp: 340100 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 600000 }],
+  dane:   [{ label: '↺ Last 365', gp: 393300 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 600000 }],
   evie:   [{ label: '↺ Last 365', gp: 187900 }, { label: '→ Target', gp: 250000, target: true }, { label: '↑ Stretch', gp: 325000 }],
   evie2:  [{ label: '↺ Last 365', gp: 94000  }, { label: '→ Target', gp: 150000, target: true }, { label: '↑ Stretch', gp: 200000 }]
 };

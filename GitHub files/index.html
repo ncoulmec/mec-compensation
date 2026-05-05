@@ -76,6 +76,54 @@
     text-transform: uppercase;
   }
 
+  /* Sticky pinned header — keeps title + tabs visible on scroll */
+  .pinned-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--navy);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .pinned-compact {
+    background: var(--navy);
+    color: #fff;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.18s ease, opacity 0.18s ease, padding-top 0.18s ease, padding-bottom 0.18s ease;
+  }
+  .pinned-compact.visible {
+    max-height: 60px;
+    opacity: 1;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .pinned-compact .pc-name {
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pinned-compact .pc-badge {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border-radius: 999px;
+  }
+
   /* Tabs */
   nav.tabs {
     background: #fff;
@@ -808,15 +856,20 @@
   </div>
 </header>
 
-<nav class="tabs">
-  <div class="tabs-inner" id="tab-bar">
-    <button class="tab-btn active" aria-current="page" data-tab="employees">Employees</button>
-    <button class="tab-btn" data-tab="plans">Plan Types</button>
-    <button class="tab-btn" data-tab="pl">Company P&amp;L</button>
-    <button class="tab-btn" data-tab="planning">Financial Planning</button>
-    <button class="tab-btn" data-tab="globals">Global Settings</button>
+<div class="pinned-header">
+  <div class="pinned-compact">
+    <span class="pc-name">MEC Group Compensation <span class="pc-badge">Master</span></span>
   </div>
-</nav>
+  <nav class="tabs">
+    <div class="tabs-inner" id="tab-bar">
+      <button class="tab-btn active" aria-current="page" data-tab="employees">Employees</button>
+      <button class="tab-btn" data-tab="plans">Plan Types</button>
+      <button class="tab-btn" data-tab="pl">Company P&amp;L</button>
+      <button class="tab-btn" data-tab="planning">Financial Planning</button>
+      <button class="tab-btn" data-tab="globals">Global Settings</button>
+    </div>
+  </nav>
+</div>
 
 <main>
   <div id="error-slot"></div>
@@ -985,6 +1038,18 @@
           <div class="at-sub">Tweak the levers. Quotes &amp; leads needed are computed from your conversion assumptions.</div>
           <div id="at-target-body"></div>
         </div>
+      </div>
+
+      <!-- Quarterly + Monthly breakdown with seasonality -->
+      <div class="card" style="margin-top: 0; margin-bottom: 18px; border-left: 3px solid var(--accent);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
+          <div>
+            <h3 style="margin-top: 0;">2026 Pace — Quarterly &amp; Monthly Targets</h3>
+            <p style="font-size: 12px; color: var(--muted); margin: 0 0 6px;">Annual figures broken down by Australian fiscal quarter (Apr–Mar) and by month, weighted by event-business seasonality. <strong>Hot tip:</strong> Q3 (Oct–Dec) carries ~33% of the year on its own thanks to corporate Christmas season.</p>
+          </div>
+          <div style="font-size: 11px; color: var(--faint); font-family: var(--mono);">All figures derive from the 2026 Target sliders above</div>
+        </div>
+        <div id="at-pace-body"></div>
       </div>
 
       <!-- Per-employee 2026 allocation -->
@@ -1374,7 +1439,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v4';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v5';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -3134,17 +3199,17 @@ function renderAnnualTargets() {
   const actualsBody = $('#at-actuals-body');
   if (actualsBody) {
     actualsBody.innerHTML = `
-      <div class="at-row"><span class="at-label">Leads handled</span><span class="at-val">${fmtInt(a.leadsHandled)}</span></div>
-      <div class="at-row"><span class="at-label">Bookings created (from leads)</span><span class="at-val">${fmtInt(a.bookingsCreatedFromLeads)}</span></div>
-      <div class="at-row"><span class="at-label">Total quotes sent</span><span class="at-val">${fmtInt(a.totalQuotesSent)}</span></div>
-      <div class="at-row"><span class="at-label">Bookings won (from leads)</span><span class="at-val">${fmtInt(a.bookingsWonFromLeads)}</span></div>
-      <div class="at-row"><span class="at-label">Total bookings won</span><span class="at-val">${fmtInt(a.bookingsWonTotal)}</span></div>
-      <div class="at-row"><span class="at-label">Lead → Booking created</span><span class="at-val">${fmtPct(a.leadToBookingConv)}</span></div>
-      <div class="at-row"><span class="at-label">Booking → Won (from leads)</span><span class="at-val">${fmtPct(a.bookingToWonConv)}</span></div>
-      <div class="at-row"><span class="at-label">Lead → Won (true web-form conv)</span><span class="at-val">${fmtPct(a.leadToWonConv)}</span></div>
-      <div class="at-row"><span class="at-label">Total events</span><span class="at-val">${fmtInt(a.events)}</span></div>
-      <div class="at-row"><span class="at-label">Avg GP per event</span><span class="at-val">$${fmtInt(a.avgGPPerEvent)}</span></div>
-      <div class="at-row"><span class="at-label">Total entertainers booked</span><span class="at-val">${fmtInt(a.totalEntertainers)} <span style="font-size:10px; color: var(--faint);">(${(a.entertainersPerEvent || 0).toFixed(2)} per event)</span></span></div>
+      <div class="at-row"><span class="at-label">Leads Handled</span><span class="at-val">${fmtInt(a.leadsHandled)}</span></div>
+      <div class="at-row"><span class="at-label">Bookings Created (from Leads)</span><span class="at-val">${fmtInt(a.bookingsCreatedFromLeads)}</span></div>
+      <div class="at-row"><span class="at-label">Total Quotes Sent</span><span class="at-val">${fmtInt(a.totalQuotesSent)}</span></div>
+      <div class="at-row"><span class="at-label">Bookings Won (from Leads)</span><span class="at-val">${fmtInt(a.bookingsWonFromLeads)}</span></div>
+      <div class="at-row"><span class="at-label">Total Bookings Won</span><span class="at-val">${fmtInt(a.bookingsWonTotal)}</span></div>
+      <div class="at-row"><span class="at-label">Lead → Booking Created <span style="font-size:10px; color: var(--faint); font-family: var(--mono);">= ${fmtInt(a.bookingsCreatedFromLeads)} / ${fmtInt(a.leadsHandled)}</span></span><span class="at-val">${fmtPct(a.leadToBookingConv)}</span></div>
+      <div class="at-row"><span class="at-label">Booking → Won (from Leads) <span style="font-size:10px; color: var(--faint); font-family: var(--mono);">= ${fmtInt(a.bookingsWonFromLeads)} / ${fmtInt(a.bookingsCreatedFromLeads)}</span></span><span class="at-val">${fmtPct(a.bookingToWonConv)}</span></div>
+      <div class="at-row"><span class="at-label">Lead → Won (True Web-Form Conv) <span style="font-size:10px; color: var(--faint); font-family: var(--mono);">= ${fmtInt(a.bookingsWonFromLeads)} / ${fmtInt(a.leadsHandled)}</span></span><span class="at-val">${fmtPct(a.leadToWonConv)}</span></div>
+      <div class="at-row"><span class="at-label">Total Events</span><span class="at-val">${fmtInt(a.events)}</span></div>
+      <div class="at-row"><span class="at-label">Avg GP per Event</span><span class="at-val">$${(+a.avgGPPerEvent || 0).toFixed(2)}</span></div>
+      <div class="at-row"><span class="at-label">Total Entertainers Booked</span><span class="at-val">${fmtInt(a.totalEntertainers)} <span style="font-size:10px; color: var(--faint);">(${(a.entertainersPerEvent || 0).toFixed(2)} per Event)</span></span></div>
       <div class="at-row" style="border-top: 2px solid var(--border); margin-top: 4px; padding-top: 8px;">
         <span class="at-label" style="font-weight: 600; color: var(--ink);">Total Gig Profit 2025</span>
         <span class="at-val" style="font-size: 16px; color: var(--navy);">${fmtMoney(a.totalGP)}</span>
@@ -3237,6 +3302,141 @@ function recomputeAnnualTargets() {
   if ($('#at-quotes-needed')) $('#at-quotes-needed').textContent = fmtInt(quotesNeeded);
   if ($('#at-leads-needed')) $('#at-leads-needed').textContent = fmtInt(leadsNeeded);
   if ($('#at-true-conv')) $('#at-true-conv').textContent = fmtPct(trueConv);
+
+  renderPaceTable(gp, events, quotesNeeded, leadsNeeded);
+}
+
+// 2026 Pace table — annual numbers broken down by quarter (FY Apr-Mar) and by month with seasonality.
+// Seasonality factors are normalised so they sum to 12 — Australian event business pattern.
+function renderPaceTable(annualGP, annualEvents, annualQuotes, annualLeads) {
+  const wrap = $('#at-pace-body');
+  if (!wrap) return;
+  // Monthly seasonality (calendar order Jan..Dec). Sum = 12.0
+  // Pattern: post-Christmas slow, mid-year winter dip, spring pickup, Christmas peak.
+  const MONTH_SEASON = {
+    Jan: 0.70, Feb: 0.80, Mar: 0.90,
+    Apr: 1.00, May: 0.90, Jun: 0.85,
+    Jul: 0.90, Aug: 1.00, Sep: 1.00,
+    Oct: 1.15, Nov: 1.40, Dec: 1.40
+  };
+  // Australian fiscal year — Apr through Mar
+  const FY_MONTHS = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+  // Group into FY quarters
+  const FY_QUARTERS = [
+    { label: 'Q1 (Apr–Jun)', months: ['Apr','May','Jun'] },
+    { label: 'Q2 (Jul–Sep)', months: ['Jul','Aug','Sep'] },
+    { label: 'Q3 (Oct–Dec)', months: ['Oct','Nov','Dec'] },
+    { label: 'Q4 (Jan–Mar)', months: ['Jan','Feb','Mar'] }
+  ];
+
+  // Compute share for each quarter (% of year)
+  const quarterRows = FY_QUARTERS.map(q => {
+    const qFactor = q.months.reduce((s, m) => s + MONTH_SEASON[m], 0);
+    const share = qFactor / 12;
+    const isPeak = q.months.includes('Nov') || q.months.includes('Dec');
+    return {
+      label: q.label,
+      share,
+      pct: (share * 100).toFixed(1) + '%',
+      gp: annualGP * share,
+      events: Math.round(annualEvents * share),
+      quotes: Math.round(annualQuotes * share),
+      leads: Math.round(annualLeads * share),
+      isPeak
+    };
+  });
+
+  const monthRows = FY_MONTHS.map(m => {
+    const f = MONTH_SEASON[m];
+    const share = f / 12;
+    const isPeak = (m === 'Nov' || m === 'Dec');
+    const isLow = (f < 0.85);
+    return {
+      label: m,
+      factor: f.toFixed(2) + '×',
+      share,
+      pct: (share * 100).toFixed(1) + '%',
+      gp: annualGP * share,
+      events: Math.round(annualEvents * share),
+      quotes: Math.round(annualQuotes * share),
+      leads: Math.round(annualLeads * share),
+      isPeak,
+      isLow
+    };
+  });
+
+  const fmtRowBg = (r) => r.isPeak ? 'background: #fff8e1;' : (r.isLow ? 'background: #fafaf7;' : '');
+
+  const quarterHTML = `
+    <h4 style="margin: 14px 0 8px; font-size: 13px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em;">Quarterly Breakdown</h4>
+    <div style="overflow-x: auto;">
+      <table style="font-size: 13px; width: 100%;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Quarter</th>
+            <th style="text-align:right;">Share</th>
+            <th style="text-align:right;">GP Target</th>
+            <th style="text-align:right;">Events</th>
+            <th style="text-align:right;">Quotes</th>
+            <th style="text-align:right;">Leads</th>
+          </tr>
+        </thead>
+        <tbody>${quarterRows.map(r => `
+          <tr style="${fmtRowBg(r)}">
+            <td><strong>${r.label}</strong>${r.isPeak ? ' <span style="font-size: 9px; padding: 1px 6px; background: #f0e2c4; color: #b8860b; border-radius: 999px; margin-left: 4px; text-transform: uppercase; font-weight: 700;">Peak</span>' : ''}</td>
+            <td style="text-align:right; font-family: var(--mono); color: var(--muted);">${r.pct}</td>
+            <td style="text-align:right; font-family: var(--mono); font-weight: 600;">${fmtMoney(r.gp)}</td>
+            <td style="text-align:right; font-family: var(--mono);">${fmtInt(r.events)}</td>
+            <td style="text-align:right; font-family: var(--mono);">${fmtInt(r.quotes)}</td>
+            <td style="text-align:right; font-family: var(--mono);">${fmtInt(r.leads)}</td>
+          </tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="background: var(--navy); color: #fff;">
+            <td style="padding: 10px;"><strong>Annual total</strong></td>
+            <td style="text-align:right; font-family: var(--mono); padding: 10px;">100.0%</td>
+            <td style="text-align:right; font-family: var(--mono); padding: 10px; font-weight: 700;">${fmtMoney(annualGP)}</td>
+            <td style="text-align:right; font-family: var(--mono); padding: 10px; font-weight: 700;">${fmtInt(annualEvents)}</td>
+            <td style="text-align:right; font-family: var(--mono); padding: 10px; font-weight: 700;">${fmtInt(annualQuotes)}</td>
+            <td style="text-align:right; font-family: var(--mono); padding: 10px; font-weight: 700;">${fmtInt(annualLeads)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
+
+  const monthHTML = `
+    <details style="margin-top: 16px;">
+      <summary style="cursor: pointer; font-size: 13px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; padding: 8px 0; user-select: none;">Monthly Breakdown · with Seasonality ▾</summary>
+      <p style="font-size: 11px; color: var(--muted); margin: 4px 0 10px; font-family: var(--mono);">Seasonality factor = relative weight (1.00× = average month). Nov/Dec carry corporate Christmas; Jan/Feb soft post-holidays; May–Jul winter dip.</p>
+      <div style="overflow-x: auto;">
+        <table style="font-size: 12px; width: 100%;">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Month</th>
+              <th style="text-align:right;">Seasonality</th>
+              <th style="text-align:right;">Share</th>
+              <th style="text-align:right;">GP Target</th>
+              <th style="text-align:right;">Events</th>
+              <th style="text-align:right;">Quotes</th>
+              <th style="text-align:right;">Leads</th>
+            </tr>
+          </thead>
+          <tbody>${monthRows.map(r => `
+            <tr style="${fmtRowBg(r)}">
+              <td><strong>${r.label}</strong>${r.isPeak ? ' <span style="font-size: 9px; padding: 1px 6px; background: #f0e2c4; color: #b8860b; border-radius: 999px; margin-left: 4px; text-transform: uppercase; font-weight: 700;">Peak</span>' : (r.isLow ? ' <span style="font-size: 9px; padding: 1px 6px; background: #ecebe5; color: var(--muted); border-radius: 999px; margin-left: 4px; text-transform: uppercase;">Low</span>' : '')}</td>
+              <td style="text-align:right; font-family: var(--mono); color: var(--muted);">${r.factor}</td>
+              <td style="text-align:right; font-family: var(--mono); color: var(--muted);">${r.pct}</td>
+              <td style="text-align:right; font-family: var(--mono);">${fmtMoney(r.gp)}</td>
+              <td style="text-align:right; font-family: var(--mono);">${fmtInt(r.events)}</td>
+              <td style="text-align:right; font-family: var(--mono);">${fmtInt(r.quotes)}</td>
+              <td style="text-align:right; font-family: var(--mono);">${fmtInt(r.leads)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </details>`;
+
+  wrap.innerHTML = quarterHTML + monthHTML;
 }
 
 // Per-employee 2026 allocation. Editing a row writes employee.annualGPTarget directly,
@@ -3582,32 +3782,45 @@ function renderFinancialPlanning() {
     const gmXero = ltm.gp / ltm.revenue;
     const cmRatio = ltm.cm / ltm.revenue;
     const nmRatio = ltm.np / ltm.revenue;
-    // Zoho GM: total Zoho GP sold (last 365) divided by Xero LTM Revenue (a sanity-check ratio)
+    // Zoho GM (sold basis): total Zoho GP sold (last 365) divided by Xero LTM Revenue
     const zohoGP = fpTotalLast365();
     const gmZero = zohoGP > 0 ? zohoGP / ltm.revenue : null;
+    // Zoho GM (event/cash basis): GP from events that actually happened (Zoho Event GP) ÷ Xero LTM Revenue
+    const zohoEventGP = +(data.globals?.actualsHistorical2025?.totalGP) || 0;
+    const gmZohoEvent = (zohoEventGP > 0 && ltm.revenue > 0) ? zohoEventGP / ltm.revenue : null;
     $('#fp-margins-body').innerHTML = `
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px;">
         <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;">
           <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Revenue (LTM Xero)</div>
           <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(ltm.revenue)}</div>
           <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Sum of last 4 complete quarters</div>
         </div>
         <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;">
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Last 365 GP Sold (Zoho)</div>
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Last 365 Days GP Sold (Zoho)</div>
           <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(zohoGP)}</div>
-          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Sum of team Last 365 GP from grid above</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Sum of team Last 365 GP from grid above — bookings sold</div>
+        </div>
+        <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;">
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Last 365 Days Event GP (Zoho) <span style="color: var(--accent); font-weight: 700;">· Cash Basis</span></div>
+          <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(zohoEventGP)}</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">2025 actuals — GP from events that actually happened</div>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
         <div style="background: #f5faf7; padding: 12px 14px; border-radius: 8px; border: 1px solid #c3e4d0;">
           <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Gross Margin (Xero)</div>
           <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${(gmXero * 100).toFixed(1)}%</div>
           <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">(Revenue − CoGS) ÷ Revenue<br>${fmtMoney(ltm.gp)} ÷ ${fmtMoney(ltm.revenue)}</div>
         </div>
         <div style="background: #ecebe5; padding: 12px 14px; border-radius: 8px; border: 1px solid #d3d1c7;">
-          <div style="font-size: 11px; color: var(--warn); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Gross Margin (Zoho)</div>
+          <div style="font-size: 11px; color: var(--warn); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Gross Margin (Zoho · GP Sold)</div>
           <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${gmZero != null ? (gmZero * 100).toFixed(1) + '%' : '—'}</div>
-          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Zoho GP ÷ Xero Revenue<br>${gmZero != null ? fmtMoney(zohoGP) + ' ÷ ' + fmtMoney(ltm.revenue) : ''}</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Zoho GP Sold ÷ Xero Revenue<br>${gmZero != null ? fmtMoney(zohoGP) + ' ÷ ' + fmtMoney(ltm.revenue) : ''}</div>
+        </div>
+        <div style="background: #ecebe5; padding: 12px 14px; border-radius: 8px; border: 1px solid #d3d1c7;">
+          <div style="font-size: 11px; color: var(--warn); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Gross Margin (Zoho · Event GP) <span style="color: var(--accent);">Cash</span></div>
+          <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 4px;">${gmZohoEvent != null ? (gmZohoEvent * 100).toFixed(1) + '%' : '—'}</div>
+          <div style="font-size:11px; color: var(--faint); font-family: var(--mono); margin-top: 4px;">Zoho Event GP ÷ Xero Revenue<br>${gmZohoEvent != null ? fmtMoney(zohoEventGP) + ' ÷ ' + fmtMoney(ltm.revenue) : ''}</div>
         </div>
         <div style="background: #fafaf7; padding: 12px 14px; border-radius: 8px;">
           <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Contribution Margin</div>
@@ -3897,10 +4110,36 @@ function renderCostStack(ltm, totalOnTrack) {
 
   const totalColour = totalCostIncrease > 0 ? '#ffb6b6' : '#b6f5c8';
 
+  // Context block — show the inputs feeding the calculation so reviewer can sanity-check Hayley's row.
+  const teamGP = totalOnTrack || 0;
+  const last365TotalZoho = fpTotalLast365();
+  const revRatio = (ltm && last365TotalZoho > 0) ? (ltm.revenue / last365TotalZoho) : 0;
+  const cmRatio = (ltm && ltm.revenue > 0) ? (ltm.cm / ltm.revenue) : 0;
+  const npRatio = (ltm && ltm.revenue > 0) ? (ltm.np / ltm.revenue) : 0;
+  const projRevenueAtTarget = teamGP * revRatio;
+  const projCMAtTarget = projRevenueAtTarget * cmRatio;
+  const projNPAtTarget = projRevenueAtTarget * npRatio;
+  const contextBlock = `
+    <div style="background: #eef4fa; border: 1px solid #cdd9e8; border-left: 3px solid var(--navy); border-radius: 8px; padding: 14px 16px; margin: 0 0 14px; font-family: var(--mono); font-size: 12px;">
+      <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 8px;">Figures feeding the table below — at Team Target ${fmtMoney(teamGP)}</div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 24px; color: var(--ink);">
+        <div>📊 GP Sold (Zoho · Team Target):&nbsp;<strong>${fmtMoney(teamGP)}</strong></div>
+        <div>📈 GP Sold last 365 (Zoho actuals):&nbsp;<strong>${fmtMoney(last365TotalZoho)}</strong></div>
+        <div>💰 Implied Xero Revenue at Target:&nbsp;<strong>${fmtMoney(projRevenueAtTarget)}</strong> <span style="color: var(--faint);">(× ${revRatio.toFixed(2)} rev:GP ratio)</span></div>
+        <div>📊 Xero Revenue (LTM actuals):&nbsp;<strong>${fmtMoney(ltm ? ltm.revenue : 0)}</strong></div>
+        <div>🎯 Implied Xero CM at Target:&nbsp;<strong>${fmtMoney(projCMAtTarget)}</strong> <span style="color: var(--faint);">(${(cmRatio*100).toFixed(1)}% of rev)</span></div>
+        <div>📊 Xero CM (LTM actuals):&nbsp;<strong>${fmtMoney(ltm ? ltm.cm : 0)}</strong></div>
+        <div>🏆 Implied Xero NP at Target:&nbsp;<strong>${fmtMoney(projNPAtTarget)}</strong> <span style="color: var(--faint);">(${(npRatio*100).toFixed(1)}% of rev)</span></div>
+        <div>📊 Xero NP (LTM actuals):&nbsp;<strong>${fmtMoney(ltm ? ltm.np : 0)}</strong></div>
+      </div>
+      <div style="margin-top: 8px; font-size: 11px; color: var(--muted); font-family: inherit;">Hayley's "New comm" = GM bands applied to the implied CM + a step-bonus on implied NP. Inputs above are the substrate.</div>
+    </div>`;
+
   return `
     <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px;">
       The total cost-to-MEC of every team member's pay increase compounds: base salary lifts + super on those lifts + the new commission plan vs the old 3.5%-flat plan. Every dollar here flows through the P&amp;L every year going forward — so this is the true investment behind the new structure.
     </p>
+    ${contextBlock}
     <table style="font-size: 13px;">
       <thead>
         <tr>
@@ -4058,6 +4297,33 @@ function applyDirectorLock() {
 }
 
 load();
+
+// Wire the compact pinned bar — only appears once the big banner scrolls out.
+(function wireCompactBar() {
+  if (window._compactBarWired) return;
+  window._compactBarWired = true;
+  function init() {
+    const topBanner = document.querySelector('header.top');
+    const compact = document.querySelector('.pinned-compact');
+    if (!topBanner || !compact || !window.IntersectionObserver) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        // Show compact when the big banner is mostly off-screen
+        if (entry.intersectionRatio > 0.15) {
+          compact.classList.remove('visible');
+        } else {
+          compact.classList.add('visible');
+        }
+      });
+    }, { threshold: [0, 0.05, 0.15, 0.5, 1] });
+    observer.observe(topBanner);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
 </script>
 
 </body>

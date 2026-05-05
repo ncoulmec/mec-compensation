@@ -797,7 +797,7 @@
     <div>
       <button class="pin-gate-submit" id="pin-gate-submit">Unlock</button>
     </div>
-    <button class="pin-gate-master-link" id="pin-gate-master-toggle">Forgot PIN? Use master password</button>
+    <button class="pin-gate-master-link" id="pin-gate-master-toggle">Use master password</button>
     <div class="pin-gate-error" id="pin-gate-error"></div>
     <div class="pin-gate-loading" id="pin-gate-loading"></div>
   </div>
@@ -911,15 +911,6 @@
         <div class="sub" id="card-total-sub">—</div>
       </div>
     </div>
-
-    <!-- Base Salary Composition — collapsible (open on demand). Projects build the base over time. -->
-    <details id="base-composition-details" style="margin-bottom: 18px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0;">
-      <summary style="cursor: pointer; padding: 12px 18px; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">
-        <span>Base Salary Composition <span style="text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--faint); margin-left: 8px;">— how project completions have built up your base. Click to expand.</span></span>
-        <span aria-hidden="true" style="font-family: var(--mono); font-size: 14px; color: var(--faint);">▾</span>
-      </summary>
-      <div id="base-composition-card" style="padding: 0 18px 16px;"></div>
-    </details>
 
     <div class="two-col">
       <div class="card" style="margin-bottom: 0;">
@@ -1091,17 +1082,23 @@
       <div class="scenario-row">
         <label>Avg Revenue per Gig <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(ex GST)</span></label>
         <input type="range" id="plan-avg-slider" min="500" max="5000" step="50" value="3750">
-        <div style="position: relative;">
-          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-          <input type="text" inputmode="numeric" id="plan-avg-input" class="value-input" style="padding-left: 22px;" value="3,750">
+        <div>
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+            <input type="text" inputmode="numeric" id="plan-avg-input" class="value-input" style="padding-left: 22px;" value="3,750">
+          </div>
+          <div id="plan-avg-gst" style="margin-top: 4px; font-size: 11px; color: var(--faint); font-family: var(--mono); text-align: right;">inc GST: —</div>
         </div>
       </div>
       <div class="scenario-row">
         <label style="font-weight: 600;">Total Revenue <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Gigs × Avg)</span></label>
         <input type="range" id="plan-rev-slider" min="0" max="400000" step="1000" value="150000">
-        <div style="position: relative;">
-          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-          <input type="text" inputmode="numeric" id="plan-rev-input" class="value-input" style="padding-left: 22px;" value="150,000">
+        <div>
+          <div style="position: relative;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
+            <input type="text" inputmode="numeric" id="plan-rev-input" class="value-input" style="padding-left: 22px;" value="150,000">
+          </div>
+          <div id="plan-rev-gst" style="margin-top: 4px; font-size: 11px; color: var(--faint); font-family: var(--mono); text-align: right;">inc GST: —</div>
         </div>
       </div>
       <div style="margin-top: 14px; padding: 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 8px;">
@@ -1407,7 +1404,7 @@ const EMPLOYEE_ID = 'michael';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v4`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v6`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1527,7 +1524,7 @@ async function unlockDashboard() {
       usingMaster = !usingMaster;
       masterRow.classList.toggle('shown', usingMaster);
       overlay.querySelector('.pin-gate-pins').style.display = usingMaster ? 'none' : 'flex';
-      toggle.textContent = usingMaster ? 'Use PIN instead' : 'Forgot PIN? Use master password';
+      toggle.textContent = usingMaster ? 'Use PIN instead' : 'Use master password';
       if (usingMaster) masterInput.focus(); else pins[0].focus();
       errorEl.textContent = '';
     });
@@ -1829,11 +1826,17 @@ function wireGigPlanning(prefix, defaults, onChange) {
   if (!gSlider) return;
 
   let state = { gigs: defaults.gigs, avg: defaults.avg, rev: defaults.rev };
+  // GST hint targets (optional — not all sections have these)
+  const aGst = document.getElementById(prefix + 'avg-gst');
+  const rGst = document.getElementById(prefix + 'rev-gst');
+  const GST = 1.10;
 
   const renderAll = () => {
     gSlider.value = state.gigs; gInput.value = fmtNum(state.gigs);
     aSlider.value = state.avg; aInput.value = fmtNum(state.avg);
     rSlider.value = Math.min(state.rev, +rSlider.max); rInput.value = fmtNum(state.rev);
+    if (aGst) aGst.textContent = 'inc GST: $' + fmtNum(Math.round(state.avg * GST));
+    if (rGst) rGst.textContent = 'inc GST: $' + fmtNum(Math.round(state.rev * GST));
     onChange(state.rev);
   };
 
