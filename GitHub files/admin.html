@@ -577,7 +577,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v8';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v9';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -1619,6 +1619,22 @@ function poolPayoutFactor(actual, target, softFloor) {
   return (progress - floor) / (1.0 - floor); // linear ramp 0 → 1
 }
 
+function poolCompanyContribution(progress, tiers) {
+  if (!tiers || !tiers.length) return 0;
+  if (progress < tiers[0].progress) return 0;
+  if (progress >= tiers[tiers.length - 1].progress) return tiers[tiers.length - 1].amount;
+  for (let i = 0; i < tiers.length - 1; i++) {
+    const a = tiers[i], b = tiers[i + 1];
+    if (progress >= a.progress && progress <= b.progress) {
+      const span = b.progress - a.progress;
+      if (span === 0) return a.amount;
+      const f = (progress - a.progress) / span;
+      return a.amount + f * (b.amount - a.amount);
+    }
+  }
+  return 0;
+}
+
 function fmtPoolMoney(n) {
   if (n == null || isNaN(n)) return '$0';
   return '$' + Math.round(+n).toLocaleString('en-AU');
@@ -1657,12 +1673,15 @@ function renderPoolAdmin() {
     const actualTotal = +q.actualGPSold || 0;
     const perRepTotal = contributingReps.reduce((s, e) => s + (+perRep[e.id] || 0), 0);
 
-    // Compute live: pool funded via quarterly thresholds
-    const poolFunded = contributingReps.reduce((s, e) => s + poolWalkBandsQuarterly(e, +perRep[e.id] || 0), 0);
-    const payoutFactor = poolPayoutFactor(actualTotal, q.target, softFloor);
-    const perPersonShare = (poolFunded * payoutFactor) / splitCount;
-
+    // Compute live: rep band slice + company contribution
+    const repSlice = contributingReps.reduce((s, e) => s + poolWalkBandsQuarterly(e, +perRep[e.id] || 0), 0);
     const progress = q.target > 0 ? actualTotal / q.target : 0;
+    const companyContrib = poolCompanyContribution(progress, tp.companyContributionTiers || []);
+    const payoutFactor = poolPayoutFactor(actualTotal, q.target, softFloor);
+    // Rep slice scales with rep performance (already actuals-driven). Company contrib already encodes the ramp.
+    const poolFunded = repSlice + companyContrib;
+    const perPersonShare = poolFunded / splitCount;
+
     const progressPct = Math.round(progress * 100);
     const fillPct = Math.min(100, progressPct);
     const fillColour = progress >= 1.0 ? '#0a7a3a' : (progress >= softFloor ? '#b8860b' : '#a8281b');
@@ -1735,9 +1754,9 @@ function renderPoolAdmin() {
             </div>
 
             <div style="background: #fff; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border);">
-              <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px;"><span style="color: var(--muted);">Pool funded</span><span style="font-family: var(--mono); font-weight: 600;">${fmtPoolMoney(poolFunded)}</span></div>
-              <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px;"><span style="color: var(--muted);">Payout factor</span><span style="font-family: var(--mono); font-weight: 600;">${(payoutFactor*100).toFixed(1)}%</span></div>
-              <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px;"><span style="color: var(--muted);">× Pool released</span><span style="font-family: var(--mono); font-weight: 600;">${fmtPoolMoney(poolFunded * payoutFactor)}</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px;"><span style="color: var(--muted);">Rep band slice</span><span style="font-family: var(--mono); font-weight: 600;">${fmtPoolMoney(repSlice)}</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px;"><span style="color: var(--muted);">+ Company contribution <span style="font-size: 10px; color: var(--faint);">(at ${progressPct}% of target)</span></span><span style="font-family: var(--mono); font-weight: 600;">${fmtPoolMoney(companyContrib)}</span></div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-size: 13px; border-top: 1px solid var(--border); margin-top: 4px;"><span style="color: var(--ink); font-weight: 600;">Total pool released</span><span style="font-family: var(--mono); font-weight: 700;">${fmtPoolMoney(poolFunded)}</span></div>
               <div style="display: flex; justify-content: space-between; padding: 8px 0 4px; font-size: 14px; font-weight: 700; border-top: 1px solid var(--border); margin-top: 4px; color: #b8860b;"><span>Per-person share (÷ ${splitCount})</span><span style="font-family: var(--mono);">${fmtPoolMoney(perPersonShare)}</span></div>
             </div>
             ${mismatchWarn}
@@ -1794,10 +1813,16 @@ window.closeOutPoolQuarter = function(qid) {
     !e.placeholder && data.planTypes[e.planType] && data.planTypes[e.planType].metricBasis === 'gp'
   );
   const perRep = q.perRepGPSold || {};
-  const poolFunded = contributingReps.reduce((s, e) => s + poolWalkBandsQuarterly(e, +perRep[e.id] || 0), 0);
-  const payoutFactor = poolPayoutFactor(+q.actualGPSold || 0, q.target, softFloor);
-  const perPersonShare = (poolFunded * payoutFactor) / splitCount;
+  const repSlice = contributingReps.reduce((s, e) => s + poolWalkBandsQuarterly(e, +perRep[e.id] || 0), 0);
+  const actualTotal = +q.actualGPSold || 0;
+  const progress = q.target > 0 ? actualTotal / q.target : 0;
+  const companyContrib = poolCompanyContribution(progress, tp.companyContributionTiers || []);
+  const payoutFactor = poolPayoutFactor(actualTotal, q.target, softFloor);
+  const poolFunded = repSlice + companyContrib;
+  const perPersonShare = poolFunded / splitCount;
 
+  q.repSlice = Math.round(repSlice);
+  q.companyContribution = Math.round(companyContrib);
   q.poolFunded = Math.round(poolFunded);
   q.payoutFactor = +payoutFactor.toFixed(4);
   q.perPersonShare = Math.round(perPersonShare);
