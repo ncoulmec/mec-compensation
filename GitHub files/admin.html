@@ -373,9 +373,15 @@
 
     <!-- ========== TEAM POOL ADMIN ========== -->
     <div class="admin-panel" id="admin-panel-pool">
+      <div class="card" style="margin-bottom: 14px; padding: 16px 20px; background: linear-gradient(135deg, #fff8e1 0%, #fff2c5 100%); border: 2px solid #d3d1c7;">
+        <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">⚠ Beta — Team Pool not yet active</div>
+        <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.55;">
+          The pool is shown to the team as a <strong>preview only</strong> (similar to how KPIs are visible but inactive). The "Close out quarter" button is intentionally disabled until we confirm the launch quarter. You can still inspect the math here and pre-fill quarterly actuals once we go live, but nothing publishes to the team's Team Pool tab as a paid bonus until activation.
+        </div>
+      </div>
       <div class="card" style="margin-bottom: 14px;">
-        <h2>🤝 Team Pool — Quarterly Actuals</h2>
-        <p class="blurb">Enter each quarter's team total GP-sold (from Zoho's "Quarterly GP Sold · Booking Closed Date" report) plus the per-rep splits. The dashboard auto-computes the pool funded, ramp factor (0 below 80%, 1.0 at 100%, &gt;1 above), and per-person share. Click <strong>Close out</strong> to lock the quarter — locked figures appear on every employee's Team Pool tab.</p>
+        <h2>🤝 Team Pool — Quarterly Actuals (Preview)</h2>
+        <p class="blurb">When activated, payroll will enter each quarter's team total GP-sold (from Zoho's "Quarterly GP Sold · Booking Closed Date" report) plus per-rep splits here. The dashboard auto-computes the pool funded (rep slice + company contribution), ramp factor, and per-person share. <strong>Close-out is disabled in beta.</strong></p>
         <div id="pool-admin-body"></div>
       </div>
     </div>
@@ -577,7 +583,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v9';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v10';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -1698,9 +1704,12 @@ function renderPoolAdmin() {
       </tr>`;
     }).join('');
 
-    const closeBtnHtml = isClosed
-      ? `<button class="btn small" onclick="reopenPoolQuarter('${q.id}')" style="background: #ecebe5; color: var(--muted); border: 1px solid var(--border);">↺ Re-open quarter</button>`
-      : `<button class="btn small primary" onclick="closeOutPoolQuarter('${q.id}')" style="background: #b8860b; color: #fff;">🔒 Close out quarter</button>`;
+    const isBeta = tp.beta === true;
+    const closeBtnHtml = isBeta
+      ? `<button class="btn small" disabled title="Team Pool is in Beta — close-out disabled until activation" style="background: #f5f3ee; color: var(--muted); border: 1px dashed var(--border); cursor: not-allowed;">🔒 Close out quarter (Beta)</button>`
+      : isClosed
+        ? `<button class="btn small" onclick="reopenPoolQuarter('${q.id}')" style="background: #ecebe5; color: var(--muted); border: 1px solid var(--border);">↺ Re-open quarter</button>`
+        : `<button class="btn small primary" onclick="closeOutPoolQuarter('${q.id}')" style="background: #b8860b; color: #fff;">🔒 Close out quarter</button>`;
 
     const perRepMismatch = Math.abs(perRepTotal - actualTotal) > 1;
     const mismatchWarn = perRepMismatch && perRepTotal > 0
