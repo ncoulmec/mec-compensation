@@ -1513,7 +1513,7 @@ const EMPLOYEE_ID = 'evie';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v13`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v14`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -4139,14 +4139,13 @@ function renderTeamPool() {
   const curTarget = +cur.target || 0;
   const curProgress = curTarget > 0 ? curActual / curTarget : 0;
 
-  const targetRepSlice = teamPoolComputeRepSliceAtTarget();
+  // Pool is purely company-funded (no rep slice). Same number for every employee.
   const targetCompanyContrib = teamPoolCompanyContribution(1.0, tiers);
-  const targetPool = targetRepSlice + targetCompanyContrib;
+  const targetPool = targetCompanyContrib;
   const targetPerPersonShare = targetPool / splitCount;
 
-  const stretchRepSlice = targetRepSlice * 1.15;
   const stretchCompanyContrib = teamPoolCompanyContribution(1.15, tiers);
-  const stretchPool = stretchRepSlice + stretchCompanyContrib;
+  const stretchPool = stretchCompanyContrib;
   const stretchPerPersonShare = stretchPool / splitCount;
 
   // Annual sums for the history footer
@@ -4196,7 +4195,7 @@ function renderTeamPool() {
     + betaBanner
     + '<div class="card" style="border-left: 4px solid #b8860b; background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); ' + shareValueOpacity + '">'
     +   '<h2 style="margin: 0 0 6px;">🤝 Team Pool — ' + cur.label + (isBeta ? ' <span style="font-size: 11px; padding: 2px 8px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 999px; margin-left: 6px; vertical-align: middle; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Beta</span>' : '') + '</h2>'
-    +   '<p style="font-size: 13px; color: var(--muted); margin: 0 0 18px;">Quarterly bonus split equally across all 8 staff if the team hits its seasonal GP-sold target. <strong>Funded by the company</strong>, with a small slice from upper-band commissions on top. ' + (isBeta ? 'Numbers below are <strong>indicative</strong>.' : '') + '</p>'
+    +   '<p style="font-size: 13px; color: var(--muted); margin: 0 0 18px;">Quarterly bonus split equally across all 8 staff if the team hits its seasonal GP-sold target. <strong>Funded by the company.</strong> ' + (isBeta ? 'Numbers below are <strong>indicative</strong>.' : '') + '</p>'
     +   '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 8px;">'
     +     '<div style="background: #fff; padding: 16px 18px; border-radius: 8px; border: 1px solid var(--border);">'
     +       '<div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;">' + (isBeta ? 'Indicative quarterly target' : 'Quarterly Target') + '</div>'
