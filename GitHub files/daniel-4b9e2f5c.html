@@ -1539,7 +1539,7 @@ const EMPLOYEE_ID = 'daniel';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v8`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v9`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -4258,6 +4258,8 @@ function renderTeamPool() {
         </div>
       </div>
 
+      <div id="team-pool-scenario"></div>
+
       <div class="card">
         <h3 style="margin: 0 0 8px;">Per-rep contribution at 2026 targets</h3>
         <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px;">Transparent breakdown of who funds the pool — based on each rep's 2026 GP-sold target. Performers/GM share the upside without contributing GP (their commission tracks a different metric).</p>
@@ -4313,8 +4315,158 @@ function renderTeamPool() {
       </div>
     `;
   }
+  if (typeof renderTeamPoolScenario === "function") renderTeamPoolScenario();
 }
 
+
+
+function renderTeamPoolScenario() {
+  const wrap = document.getElementById('team-pool-scenario');
+  if (!wrap || !data || !data.globals || !data.globals.teamPool) return;
+  const tp = data.globals.teamPool;
+  const splitCount = tp.splitCount || 8;
+  // Initialise scenario state on first render — defaults to each rep's annualGPTarget
+  if (!window._tpScenario) {
+    window._tpScenario = { repGPs: {}, teamPerf: 1.0 };
+    data.employees.forEach(e => {
+      if (e.placeholder) return;
+      const plan = data.planTypes[e.planType];
+      if (!plan || plan.metricBasis !== 'gp') return;
+      window._tpScenario.repGPs[e.id] = +e.annualGPTarget || 0;
+    });
+  }
+  const contributingReps = data.employees.filter(e =>
+    !e.placeholder && data.planTypes[e.planType] && data.planTypes[e.planType].metricBasis === 'gp'
+  );
+  const sliderRows = contributingReps.map(e => {
+    const plan = data.planTypes[e.planType];
+    const max = plan.maxMetricValue || 700000;
+    const v = window._tpScenario.repGPs[e.id] || 0;
+    const target = +e.annualGPTarget || 0;
+    return '<div style="display: grid; grid-template-columns: 140px 1fr 110px; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--border);">' +
+      '<div style="font-size: 12px;"><strong>' + e.name + '</strong><div style="font-size: 10px; color: var(--muted); font-family: var(--mono);">target ' + fmtMoneyTP(target) + '</div></div>' +
+      '<input type="range" class="tp-rep-slider" data-empid="' + e.id + '" min="0" max="' + max + '" step="5000" value="' + v + '" style="width: 100%; accent-color: #b8860b;">' +
+      '<input type="text" inputmode="numeric" class="tp-rep-input" data-empid="' + e.id + '" value="' + v.toLocaleString('en-AU') + '" style="text-align: right; font-family: var(--mono); padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; width: 100px; box-sizing: border-box;">' +
+      '</div>';
+  }).join('');
+  wrap.innerHTML = '' +
+    '<div class="card" style="border-left: 3px solid #b8860b; background: #fffaf2;">' +
+      '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">' +
+        '<div>' +
+          '<h3 style="margin: 0 0 4px;">🎯 Model the team\'s year — what\'s your share?</h3>' +
+          '<p style="font-size: 12px; color: var(--muted); margin: 0;">Drag the sliders to model different scenarios. Adjust the "team hits target" slider to model under/over performance. Your share updates live.</p>' +
+        '</div>' +
+        '<div style="display: flex; gap: 4px; flex-wrap: wrap;">' +
+          '<button class="tp-preset" data-preset="targets" style="font-size: 11px; padding: 4px 10px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8; border-radius: 999px; cursor: pointer;">↺ Reset to targets</button>' +
+          '<button class="tp-preset" data-preset="stretch" style="font-size: 11px; padding: 4px 10px; background: #f5faf7; color: #2e7d54; border: 1px solid #c3e4d0; border-radius: 999px; cursor: pointer;">↑ +10% stretch</button>' +
+          '<button class="tp-preset" data-preset="bear" style="font-size: 11px; padding: 4px 10px; background: #fdf2f2; color: #a8281b; border: 1px solid #f2d5d5; border-radius: 999px; cursor: pointer;">↓ −15% bear</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top: 14px;">' +
+        '<h4 style="margin: 0 0 6px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;">Each rep\'s annual GP sold</h4>' +
+        sliderRows +
+      '</div>' +
+      '<div style="margin-top: 14px;">' +
+        '<h4 style="margin: 0 0 6px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;">Team hits seasonal target each quarter at…</h4>' +
+        '<div style="display: grid; grid-template-columns: 140px 1fr 110px; align-items: center; gap: 12px; padding: 6px 0;">' +
+          '<div style="font-size: 12px;">% of target</div>' +
+          '<input type="range" id="tp-perf-slider" min="60" max="150" step="5" value="' + Math.round((window._tpScenario.teamPerf || 1) * 100) + '" style="width: 100%; accent-color: #b8860b;">' +
+          '<div id="tp-perf-display" style="text-align: right; font-family: var(--mono); font-weight: 700; padding: 5px 8px;">' + Math.round((window._tpScenario.teamPerf || 1) * 100) + '%</div>' +
+        '</div>' +
+        '<div style="font-size: 10px; color: var(--faint); font-family: var(--mono); padding-left: 152px;">Below 80% → $0 pool · 80–100% → ramped · 100%+ → full pool, scales 1:1 above</div>' +
+      '</div>' +
+      '<div style="margin-top: 16px; padding: 14px 16px; background: #fff8e1; border: 1px solid #f0e2c4; border-radius: 8px;">' +
+        '<h4 style="margin: 0 0 8px; font-size: 11px; color: #b8860b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">At this scenario</h4>' +
+        '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">' +
+          '<div><div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Team total GP</div><div style="font-family: var(--mono); font-size: 16px; font-weight: 700;" id="tp-sc-team">$0</div></div>' +
+          '<div><div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Annual pool funded</div><div style="font-family: var(--mono); font-size: 16px; font-weight: 700;" id="tp-sc-pool">$0</div></div>' +
+          '<div><div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Payout factor</div><div style="font-family: var(--mono); font-size: 16px; font-weight: 700;" id="tp-sc-factor">0%</div></div>' +
+          '<div style="background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #f0e2c4;"><div style="font-size: 10px; color: #b8860b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Your share / quarter</div><div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: #b8860b;" id="tp-sc-pq">$0</div></div>' +
+          '<div style="background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #f0e2c4;"><div style="font-size: 10px; color: #b8860b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Your share / year</div><div style="font-family: var(--mono); font-size: 18px; font-weight: 700; color: #b8860b;" id="tp-sc-py">$0</div></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  // Wire input handlers — update only readout, not full re-render (preserves slider focus while dragging)
+  wrap.querySelectorAll('.tp-rep-slider').forEach(s => {
+    s.addEventListener('input', () => {
+      const id = s.dataset.empid;
+      const v = +s.value || 0;
+      window._tpScenario.repGPs[id] = v;
+      const text = wrap.querySelector('.tp-rep-input[data-empid="' + id + '"]');
+      if (text) text.value = v.toLocaleString('en-AU');
+      teamPoolUpdateReadout();
+    });
+  });
+  wrap.querySelectorAll('.tp-rep-input').forEach(t => {
+    t.addEventListener('input', () => {
+      const id = t.dataset.empid;
+      const v = parseFloat(t.value.replace(/[^\d.-]/g, '')) || 0;
+      window._tpScenario.repGPs[id] = v;
+      const slider = wrap.querySelector('.tp-rep-slider[data-empid="' + id + '"]');
+      if (slider) slider.value = Math.min(v, +slider.max);
+      teamPoolUpdateReadout();
+    });
+  });
+  const perfSlider = wrap.querySelector('#tp-perf-slider');
+  if (perfSlider) {
+    perfSlider.addEventListener('input', () => {
+      window._tpScenario.teamPerf = +perfSlider.value / 100;
+      const disp = wrap.querySelector('#tp-perf-display');
+      if (disp) disp.textContent = perfSlider.value + '%';
+      teamPoolUpdateReadout();
+    });
+  }
+  wrap.querySelectorAll('.tp-preset').forEach(b => {
+    b.addEventListener('click', () => {
+      const preset = b.dataset.preset;
+      data.employees.forEach(e => {
+        if (e.placeholder) return;
+        const plan = data.planTypes[e.planType];
+        if (!plan || plan.metricBasis !== 'gp') return;
+        const target = +e.annualGPTarget || 0;
+        if (preset === 'targets') window._tpScenario.repGPs[e.id] = target;
+        else if (preset === 'stretch') window._tpScenario.repGPs[e.id] = Math.round(target * 1.10);
+        else if (preset === 'bear') window._tpScenario.repGPs[e.id] = Math.round(target * 0.85);
+      });
+      window._tpScenario.teamPerf = 1.0;
+      renderTeamPoolScenario(); // full re-render so all sliders update positions
+    });
+  });
+  teamPoolUpdateReadout();
+}
+function teamPoolUpdateReadout() {
+  if (!window._tpScenario || !data || !data.globals || !data.globals.teamPool) return;
+  const tp = data.globals.teamPool;
+  const splitCount = tp.splitCount || 8;
+  const softFloor = tp.softFloor || 0.80;
+  let annualPool = 0, teamTotal = 0;
+  Object.entries(window._tpScenario.repGPs).forEach(([empId, gp]) => {
+    teamTotal += +gp || 0;
+    const emp = data.employees.find(e => e.id === empId);
+    if (!emp) return;
+    const plan = data.planTypes[emp.planType];
+    if (!plan || !plan.bands) return;
+    for (let i = 0; i < plan.bands.length; i++) {
+      const band = plan.bands[i];
+      const next = plan.bands[i+1];
+      const lower = band.threshold;
+      const upper = next ? next.threshold : Infinity;
+      if (gp <= lower) break;
+      const inBand = Math.min(gp, upper) - lower;
+      annualPool += inBand * (band.poolRate || 0);
+    }
+  });
+  const teamPerf = window._tpScenario.teamPerf || 1.0;
+  const factor = teamPoolPayoutFactor(teamPerf, 1.0, softFloor);
+  const perPersonAnnual = annualPool * factor / splitCount;
+  const perPersonQuarter = perPersonAnnual / 4;
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setText('tp-sc-team', fmtMoneyTP(teamTotal));
+  setText('tp-sc-pool', fmtMoneyTP(annualPool));
+  setText('tp-sc-factor', (factor * 100).toFixed(0) + '%');
+  setText('tp-sc-pq', fmtMoneyTP(perPersonQuarter));
+  setText('tp-sc-py', fmtMoneyTP(perPersonAnnual));
+}
 
 // Hook: re-render team pool whenever data finishes loading
 (function(){
