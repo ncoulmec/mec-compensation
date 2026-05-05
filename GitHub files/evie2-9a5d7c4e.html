@@ -1326,6 +1326,29 @@
         <div class="super-line total"><span>Variable comp after KPI</span><span id="kpi-after">—</span></div>
       </div>
     </div>
+    <div class="card" style="border-left: 3px solid #b8860b; background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); margin-bottom: 22px;">
+      <h3 style="margin: 0 0 6px;">📊 Sales Activity Tracking <span style="font-size: 10px; padding: 1px 6px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></h3>
+      <p style="font-size: 12px; color: var(--muted); margin: 0 0 16px;">Track sales activity — leading indicators that drive conversion. These aren't part of your commission yet but may factor into KPI scoring once we go live. Values save on this device only.</p>
+
+      <div class="scenario-row">
+        <label>Number of Quotes Sent <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(annual)</span></label>
+        <input type="range" id="kpi-quotes-slider" min="0" max="2000" step="10" value="0">
+        <input type="text" inputmode="numeric" id="kpi-quotes-input" class="value-input" value="0">
+      </div>
+
+      <div class="scenario-row">
+        <label>Number of Calls Made <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(annual)</span></label>
+        <input type="range" id="kpi-calls-slider" min="0" max="3000" step="10" value="0">
+        <input type="text" inputmode="numeric" id="kpi-calls-input" class="value-input" value="0">
+      </div>
+
+      <div class="scenario-row" style="border-bottom: none;">
+        <label>Number of Wines Sent <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(bottles to clients, annual)</span></label>
+        <input type="range" id="kpi-wines-slider" min="0" max="200" step="1" value="0">
+        <input type="text" inputmode="numeric" id="kpi-wines-input" class="value-input" value="0">
+      </div>
+    </div>
+
 
     <div id="kpi-scorecard" style="margin-top: 22px;"></div>
   </section>
@@ -1490,7 +1513,7 @@ const EMPLOYEE_ID = 'evie2';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v12`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v13`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -4228,6 +4251,41 @@ function renderTeamPool() {
   setTimeout(function repeat(){
     if (!tryRender()) setTimeout(repeat, 200);
   }, 0);
+})();
+
+
+// === Sales Activity KPI sliders (Beta — local-only, persisted to localStorage) ===
+(function initKpiActivitySliders() {
+  function wirePair(key, sliderId, inputId) {
+    const slider = document.getElementById(sliderId);
+    const input  = document.getElementById(inputId);
+    if (!slider || !input) return;
+    const empId = (typeof EMPLOYEE_ID !== 'undefined') ? EMPLOYEE_ID : 'anon';
+    const storeKey = 'kpi-activity-' + empId + '-' + key;
+    const stored = localStorage.getItem(storeKey);
+    if (stored != null && !isNaN(+stored)) {
+      slider.value = Math.min(+stored, +slider.max);
+      input.value = (+stored).toLocaleString('en-AU');
+    }
+    const sync = (rawVal) => {
+      const v = Math.max(0, parseInt(String(rawVal).replace(/[^\d]/g, '')) || 0);
+      slider.value = Math.min(v, +slider.max);
+      input.value = v.toLocaleString('en-AU');
+      try { localStorage.setItem(storeKey, String(v)); } catch(e) {}
+    };
+    slider.addEventListener('input', () => sync(slider.value));
+    input.addEventListener('input', () => sync(input.value));
+  }
+  function init() {
+    wirePair('quotes', 'kpi-quotes-slider', 'kpi-quotes-input');
+    wirePair('calls',  'kpi-calls-slider',  'kpi-calls-input');
+    wirePair('wines',  'kpi-wines-slider',  'kpi-wines-input');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 0);
+  }
 })();
 
 </script>
