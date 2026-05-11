@@ -1513,7 +1513,7 @@ const EMPLOYEE_ID = 'evie2';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v21`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v23`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1742,6 +1742,10 @@ document.getElementById('panel-overview').classList.add('active');
     if (!modal.classList.contains('open')) return;
     if (modal.contains(e.target)) return;
     if (toggle && toggle.contains(e.target)) return;
+    // Also check the compact pinned bar's Key Terms button — without this, clicking it
+    // would open the modal then immediately close it via this outside-click handler.
+    const compactToggle = document.querySelector('.pc-key-terms');
+    if (compactToggle && compactToggle.contains(e.target)) return;
     close();
   });
 })();
@@ -2136,7 +2140,18 @@ function getProductionGate() {
   const empMin = +emp.minProductionGP || 0;
   const floor = planFloor || empMin;
   const full = planFull || floor; // if not configured, ramp collapses to a cliff at the floor
-  const hasGate = floor > 0;
+  const hasGateConfig = floor > 0;
+  // Grace period override — production gate flagged but not enforced until activatesOn date
+  const grace = emp.productionGateGracePeriod;
+  if (grace && grace.active && hasGateConfig) {
+    const activatesOn = grace.activatesOn ? new Date(grace.activatesOn) : null;
+    const now = new Date();
+    const inGrace = activatesOn && now < activatesOn;
+    if (inGrace) {
+      return { floor, full, hasGate: false, isRamp: false, inGracePeriod: true, gracePeriodEnd: grace.activatesOn, gracePeriodReason: grace.reason };
+    }
+  }
+  const hasGate = hasGateConfig;
   const isRamp = hasGate && full > floor;
   return { floor, full, hasGate, isRamp };
 }
@@ -2388,7 +2403,10 @@ function computeMonthlyRows() {
   const gateConfig = getProductionGate();
   let prodGateFactor = 1;
   let prodGateInfo = null;
-  if (gateConfig.hasGate) {
+  if (gateConfig.inGracePeriod) {
+    // Grace period — gate exists in spec but isn't enforced yet. Surface for visibility.
+    prodGateInfo = { gracePeriod: true, gracePeriodEnd: gateConfig.gracePeriodEnd, gracePeriodReason: gateConfig.gracePeriodReason, floor: gateConfig.floor, full: gateConfig.full };
+  } else if (gateConfig.hasGate) {
     let ytdEvent = 0, monthsWithData = 0;
     actualsMonths.forEach((m, i) => {
       const ap = actualPayouts[i];
@@ -2787,11 +2805,16 @@ function update() {
     }
   }
 
-  // Planning gate banner — three states: under floor (pause), in ramp (partial), full
+  // Planning gate banner — grace period / under floor / in ramp / full
   const planningBanner = document.getElementById('planning-gate-banner');
   if (planningBanner) {
     const g = r.planningGate;
-    if (g && g.hasGate) {
+    if (g && g.inGracePeriod) {
+      const endDate = new Date(g.gracePeriodEnd);
+      const endStr = endDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      const daysLeft = Math.max(0, Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24)));
+      planningBanner.innerHTML = `<div class="banner info" style="margin-bottom: 22px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8;"><span class="dot"></span><span><strong>Production gate flagged — not yet enforced</strong> · 12-month grace period ends <strong>${endStr}</strong> (~${daysLeft} days remaining). After that, sales commission scales by your annualised Event GP: 0% below ${fmtMoney(g.floor)} → 100% at ${fmtMoney(g.full)}. Until then, your GP sales commission flows in full regardless of production levels.</span></div>`;
+    } else if (g && g.hasGate) {
       const factor = r.planningFactor;
       const factorPct = (factor * 100).toFixed(0);
       if (factor >= 1) {
@@ -2810,10 +2833,16 @@ function update() {
   // ===== ACTUAL =====
   const { rows: mRows, totals: mTot, quarters: qSummary, annualSummary, prodGateInfo } = computeMonthlyRows();
 
-  // Production gate banner — three states (under floor / ramping / full)
+  // Production gate banner — grace period / under floor / ramping / full
   const gateBanner = document.getElementById('prod-gate-banner');
   if (gateBanner) {
-    if (prodGateInfo) {
+    if (prodGateInfo && prodGateInfo.gracePeriod) {
+      const { gracePeriodEnd, floor, full } = prodGateInfo;
+      const endDate = new Date(gracePeriodEnd);
+      const endStr = endDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      const daysLeft = Math.max(0, Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24)));
+      gateBanner.innerHTML = `<div class="banner info" style="margin-bottom: 14px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8;"><span class="dot"></span><span><strong>Production gate flagged — not yet enforced</strong> · You're in a 12-month grace period (ends <strong>${endStr}</strong>, ~${daysLeft} days remaining). After this date, sales commission will scale by your annualised Event GP: 0% below ${fmtMoney(floor)} → 100% at ${fmtMoney(full)}. <strong>Until then, your GP sales commission flows in full</strong> regardless of production levels. Flagged here now so there are no surprises later.</span></div>`;
+    } else if (prodGateInfo) {
       const { ytdEvent, monthsWithData, annualizedEvent, floor, full, factor, passed } = prodGateInfo;
       const factorPct = (factor * 100).toFixed(0);
       if (monthsWithData === 0) {

@@ -1513,7 +1513,7 @@ const EMPLOYEE_ID = 'nic';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v21`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v23`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1742,6 +1742,10 @@ document.getElementById('panel-overview').classList.add('active');
     if (!modal.classList.contains('open')) return;
     if (modal.contains(e.target)) return;
     if (toggle && toggle.contains(e.target)) return;
+    // Also check the compact pinned bar's Key Terms button — without this, clicking it
+    // would open the modal then immediately close it via this outside-click handler.
+    const compactToggle = document.querySelector('.pc-key-terms');
+    if (compactToggle && compactToggle.contains(e.target)) return;
     close();
   });
 })();
@@ -2136,7 +2140,18 @@ function getProductionGate() {
   const empMin = +emp.minProductionGP || 0;
   const floor = planFloor || empMin;
   const full = planFull || floor; // if not configured, ramp collapses to a cliff at the floor
-  const hasGate = floor > 0;
+  const hasGateConfig = floor > 0;
+  // Grace period override — production gate flagged but not enforced until activatesOn date
+  const grace = emp.productionGateGracePeriod;
+  if (grace && grace.active && hasGateConfig) {
+    const activatesOn = grace.activatesOn ? new Date(grace.activatesOn) : null;
+    const now = new Date();
+    const inGrace = activatesOn && now < activatesOn;
+    if (inGrace) {
+      return { floor, full, hasGate: false, isRamp: false, inGracePeriod: true, gracePeriodEnd: grace.activatesOn, gracePeriodReason: grace.reason };
+    }
+  }
+  const hasGate = hasGateConfig;
   const isRamp = hasGate && full > floor;
   return { floor, full, hasGate, isRamp };
 }

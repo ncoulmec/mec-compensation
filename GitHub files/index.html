@@ -853,7 +853,10 @@
       <h1>MEC Group Compensation</h1>
       <p class="sub" id="sub-line">Master Dashboard · loading…</p>
     </div>
-    <div style="display: flex; align-items: center; gap: 10px;"><span class="admin-badge">Admin</span></div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <a href="admin.html" target="_blank" rel="noopener" style="text-decoration: none; padding: 8px 16px; background: #fff; color: var(--navy); border: 1px solid #cdd9e8; border-radius: 8px; font-size: 13px; font-weight: 600; white-space: nowrap;">📋 Admin Payroll ↗</a>
+      <span class="admin-badge">Admin</span>
+    </div>
   </div>
 </header>
 
@@ -1440,7 +1443,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v20';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v22';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -1836,10 +1839,7 @@ function renderEmployees() {
       <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
       <td>${e.placeholder ? '<span class="pill warn">placeholder</span>' : '<span class="pill">active</span>'}</td>
       <td>
-        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <a href="${e.dashboardFile}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 10px; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open ${e.name}'s dashboard in a new tab">Dashboard ↗</a>
-          <a href="admin.html#${e.id}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 10px; background: #fff; color: var(--navy); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open admin page (jumps to ${e.name}'s payroll entry)">Admin ↗</a>
-        </div>
+        <a href="${e.dashboardFile}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 10px; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open ${e.name}'s dashboard in a new tab">Dashboard ↗</a>
       </td>
     `;
     tbody.appendChild(tr);

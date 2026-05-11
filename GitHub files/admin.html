@@ -303,7 +303,10 @@
         <!-- ===== Sales grid (monthly) ===== -->
         <div class="um-grid-heading">
           <span>Sales Team · Monthly Cycle</span>
-          <span class="right" id="um-sales-window-label">—</span>
+          <span class="right" style="display: flex; gap: 10px; align-items: center;">
+            <a href="https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000097394002" target="_blank" rel="noopener" style="text-decoration: none; background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap;">📊 Get real data from Zoho ↗</a>
+            <span id="um-sales-window-label">—</span>
+          </span>
         </div>
         <div style="overflow-x: auto;">
           <div class="table-wrap"><table class="unified-payroll" id="unified-sales-table">
@@ -583,7 +586,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v20';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v22';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
