@@ -284,6 +284,7 @@
 
     <div class="admin-tabs">
       <button class="admin-tab-btn active" aria-current="page" data-admin-tab="unified">Monthly Payroll <span style="font-size:9px; color: var(--accent); margin-left: 6px;">●NEW</span></button>
+      <button class="admin-tab-btn" data-admin-tab="fortnightly">📅 Fortnightly Payroll <span style="font-size:9px; color: #b8860b; margin-left: 6px;">●BETA</span></button>
       <button class="admin-tab-btn" data-admin-tab="byemployee">By Employee (legacy detail)</button>
       <button class="admin-tab-btn" data-admin-tab="pool">🤝 Team Pool <span style="font-size:9px; color: #b8860b; margin-left: 6px;">●NEW</span></button>
     </div>
@@ -335,6 +336,47 @@
         </div>
 
         <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Tip: any value you enter locks the matching month on that employee's dashboard. Clear a cell on the legacy "By Employee" view to unlock it.</p>
+      </div>
+    </div>
+
+    <!-- ========== FORTNIGHTLY PAYROLL VIEW (BETA) ========== -->
+    <div class="admin-panel" id="admin-panel-fortnightly">
+      <div class="card" style="margin-bottom: 14px; padding: 16px 20px; background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
+        <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">📅 Beta — Fortnightly cycle preview</div>
+        <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.55;">
+          Same Option B logic as the demo dashboard's Fortnightly Payout section, rotated for admin entry. <strong>Fortnights as rows, reps as columns.</strong> Each cell = GP received for that fortnight. Pay is computed live using cumulative band math — no separate True-Up needed except on band crossings (gold highlights). First pay date: <strong>Mon 15 Jun 2026</strong>. Run alongside the existing Monthly Payroll tab while we evaluate.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+          <h2 style="margin: 0;">Fortnightly Payroll · Single-Screen Entry</h2>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" id="fnp-collapse-all" style="font-size: 11px; padding: 4px 10px; border: 1px solid #d3d1c7; background: #fff; color: var(--ink); border-radius: 4px; cursor: pointer;">Collapse all months</button>
+            <button type="button" id="fnp-expand-all" style="font-size: 11px; padding: 4px 10px; border: 1px solid #d3d1c7; background: #fff; color: var(--ink); border-radius: 4px; cursor: pointer;">Expand all months</button>
+          </div>
+        </div>
+
+        <div id="fnp-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 14px;"></div>
+
+        <div style="overflow-x: auto; max-height: 78vh; overflow-y: auto; border: 1px solid #ecebe5; border-radius: 6px;">
+          <table class="payroll" id="fnp-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+            <thead id="fnp-thead" style="position: sticky; top: 0; z-index: 5; background: #fafaf7;"></thead>
+            <tbody id="fnp-tbody"></tbody>
+            <tfoot id="fnp-tfoot"></tfoot>
+          </table>
+        </div>
+
+        <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Click any month header row to expand its fortnights · Months containing a band crossing are highlighted gold · Hover any cell for context · Tab/Enter inside an input jumps to the next fortnight (across reps within a fortnight first).</p>
+      </div>
+
+      <!-- ============================================================
+           YEAR-END AUDIT — Cross-check each rep's annual sum vs company GP
+           ============================================================ -->
+      <div class="card" style="margin-bottom: 14px;">
+        <h2>Year-End Audit · All Sales Reps</h2>
+        <p class="blurb">For each rep, paste their full-year GP received total from the source of truth (Zoho Payments report) and we'll verify it matches the sum of their 26 fortnight entries above.</p>
+        <div id="fnp-audit-body" style="overflow-x: auto;"></div>
       </div>
     </div>
 
@@ -586,7 +628,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v23';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v24';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -729,6 +771,10 @@ function signOut() {
       document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
       const target = document.getElementById('admin-panel-' + btn.dataset.adminTab);
       if (target) target.classList.add('active');
+      // Lazy-render the fortnightly admin grid on first open
+      if (btn.dataset.adminTab === 'fortnightly' && typeof renderFortnightlyAdmin === 'function') {
+        renderFortnightlyAdmin();
+      }
     });
   });
 }
@@ -1854,6 +1900,384 @@ window.reopenPoolQuarter = function(qid) {
   setDirty();
   renderPoolAdmin();
 };
+
+// ============================================================
+// FORTNIGHTLY PAYROLL ADMIN GRID (BETA)
+// Rotated layout: fortnights as rows, sales reps as columns.
+// Self-contained — uses sample (in-memory) state, does not persist
+// to data.json yet. Mirrors the demo dashboard's Option B logic.
+// ============================================================
+let _fnpInitialised = false;
+function renderFortnightlyAdmin() {
+  if (_fnpInitialised) return;
+  _fnpInitialised = true;
+
+  // Sales reps included in the grid. Pull from employees, filtered to sales plans.
+  const SALES_PLAN_IDS = ['gp_bands', 'gp_bands_senior', 'hybrid_gp'];
+  const reps = (data.employees || []).filter(e => SALES_PLAN_IDS.includes(e.planType) && !e.placeholder).map(e => ({
+    id: e.id,
+    name: e.name.split(' ')[0],
+    fullName: e.name,
+    planType: e.planType
+  }));
+  if (reps.length === 0) { document.getElementById('fnp-tbody').innerHTML = '<tr><td>No sales reps found.</td></tr>'; return; }
+
+  // Bands — match sales-rep plan (gp_bands)
+  const BANDS = [
+    [0, 0.04], [100000, 0.04], [200000, 0.04],
+    [300000, 0.09], [400000, 0.12], [450000, 0.13],
+    [500000, 0.14], [550000, 0.16]
+  ];
+  function cumBandComm(ytd) {
+    if (ytd <= 0) return 0;
+    let total = 0;
+    for (let i = 0; i < BANDS.length; i++) {
+      const [start, rate] = BANDS[i];
+      const end = (i + 1 < BANDS.length) ? BANDS[i + 1][0] : Infinity;
+      if (ytd <= start) break;
+      const top = Math.min(ytd, end);
+      total += (top - start) * rate;
+      if (ytd <= end) break;
+    }
+    return total;
+  }
+  function marginalRate(ytd) {
+    let rate = BANDS[0][1];
+    for (let i = 0; i < BANDS.length; i++) {
+      if (ytd > BANDS[i][0]) rate = BANDS[i][1];
+    }
+    return rate;
+  }
+
+  // Same fortnight schedule as the demo dashboard
+  const FORTNIGHTS = [
+    { period: '1 Jun – 14 Jun 2026',  paid: '15 Jun 2026', month: 'Jun 2026' },
+    { period: '15 Jun – 28 Jun 2026', paid: '29 Jun 2026', month: 'Jun 2026' },
+    { period: '29 Jun – 12 Jul 2026', paid: '13 Jul 2026', month: 'Jul 2026' },
+    { period: '13 Jul – 26 Jul 2026', paid: '27 Jul 2026', month: 'Jul 2026' },
+    { period: '27 Jul – 9 Aug 2026',  paid: '10 Aug 2026', month: 'Aug 2026' },
+    { period: '10 Aug – 23 Aug 2026', paid: '24 Aug 2026', month: 'Aug 2026' },
+    { period: '24 Aug – 6 Sep 2026',  paid: '7 Sep 2026',  month: 'Sep 2026' },
+    { period: '7 Sep – 20 Sep 2026',  paid: '21 Sep 2026', month: 'Sep 2026' },
+    { period: '21 Sep – 4 Oct 2026',  paid: '5 Oct 2026',  month: 'Oct 2026' },
+    { period: '5 Oct – 18 Oct 2026',  paid: '19 Oct 2026', month: 'Oct 2026' },
+    { period: '19 Oct – 1 Nov 2026',  paid: '2 Nov 2026',  month: 'Nov 2026' },
+    { period: '2 Nov – 15 Nov 2026',  paid: '16 Nov 2026', month: 'Nov 2026' },
+    { period: '16 Nov – 29 Nov 2026', paid: '30 Nov 2026', month: 'Nov 2026' },
+    { period: '30 Nov – 13 Dec 2026', paid: '14 Dec 2026', month: 'Dec 2026' },
+    { period: '14 Dec – 27 Dec 2026', paid: '28 Dec 2026', month: 'Dec 2026' },
+    { period: '28 Dec – 10 Jan 2027', paid: '11 Jan 2027', month: 'Jan 2027' },
+    { period: '11 Jan – 24 Jan 2027', paid: '25 Jan 2027', month: 'Jan 2027' },
+    { period: '25 Jan – 7 Feb 2027',  paid: '8 Feb 2027',  month: 'Feb 2027' },
+    { period: '8 Feb – 21 Feb 2027',  paid: '22 Feb 2027', month: 'Feb 2027' },
+    { period: '22 Feb – 7 Mar 2027',  paid: '8 Mar 2027',  month: 'Mar 2027' },
+    { period: '8 Mar – 21 Mar 2027',  paid: '22 Mar 2027', month: 'Mar 2027' },
+    { period: '22 Mar – 4 Apr 2027',  paid: '5 Apr 2027',  month: 'Apr 2027' },
+    { period: '5 Apr – 18 Apr 2027',  paid: '19 Apr 2027', month: 'Apr 2027' },
+    { period: '19 Apr – 2 May 2027',  paid: '3 May 2027',  month: 'May 2027' },
+    { period: '3 May – 16 May 2027',  paid: '17 May 2027', month: 'May 2027' },
+    { period: '17 May – 30 May 2027', paid: '31 May 2027', month: 'May 2027' }
+  ];
+
+  // Per-rep × per-fortnight GP. All start blank.
+  // gpMatrix[repId] = number[26]
+  const gpMatrix = {};
+  const auditActuals = {};
+  reps.forEach(r => { gpMatrix[r.id] = new Array(FORTNIGHTS.length).fill(0); auditActuals[r.id] = ''; });
+
+  // Group fortnights by month
+  const monthGroups = [];
+  FORTNIGHTS.forEach((fn, i) => {
+    const last = monthGroups[monthGroups.length - 1];
+    if (last && last.month === fn.month) last.idxs.push(i);
+    else monthGroups.push({ month: fn.month, idxs: [i] });
+  });
+
+  // Expanded state — start collapsed (months hidden)
+  const expanded = new Set();
+
+  const _fmt = (n) => '$' + Math.round(n).toLocaleString();
+  const _fmtSigned = (n) => (n >= 0 ? '+' : '−') + _fmt(Math.abs(n));
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  // Compute per-fortnight rows for one rep
+  function computeRepRows(repId) {
+    const gp = gpMatrix[repId];
+    let ytd = 0, cumPay = 0;
+    const rows = [];
+    for (let i = 0; i < FORTNIGHTS.length; i++) {
+      const g = gp[i] || 0;
+      const prevYtd = ytd;
+      ytd = prevYtd + g;
+      const properPay = cumBandComm(ytd) - cumBandComm(prevYtd);
+      const endRate = marginalRate(ytd);
+      const startRate = marginalRate(prevYtd);
+      const naivePay = g * endRate;
+      const tuAdj = properPay - naivePay;
+      cumPay += properPay;
+      rows.push({ idx: i, gp: g, ytd, prevYtd, properPay, naivePay, tuAdj, endRate, startRate, cumPay, crossed: Math.abs(tuAdj) > 0.5 });
+    }
+    return rows;
+  }
+
+  function getRepTotals(repId) {
+    const rows = computeRepRows(repId);
+    const last = rows[rows.length - 1];
+    const crossings = rows.filter(r => r.crossed).length;
+    return { rows, totalGP: last.ytd, totalPay: last.cumPay, crossings };
+  }
+
+  // ----- Render header -----
+  function renderHeader() {
+    const thead = document.getElementById('fnp-thead');
+    let h = `<tr style="background: #fafaf7;">
+      <th style="text-align: left; padding: 8px 10px; border-bottom: 2px solid #d3d1c7; min-width: 230px; position: sticky; left: 0; z-index: 6; background: #fafaf7;">Fortnight (paid date)</th>`;
+    reps.forEach(r => {
+      h += `<th style="text-align: right; padding: 8px 10px; border-bottom: 2px solid #d3d1c7; min-width: 130px; white-space: nowrap;">
+        ${esc(r.name)}
+        <div style="font-size: 9px; color: var(--faint); font-weight: 400; text-transform: none; letter-spacing: 0;">${esc(r.planType)}</div>
+      </th>`;
+    });
+    h += `<th style="text-align: right; padding: 8px 10px; border-bottom: 2px solid #d3d1c7; min-width: 110px; background: #fefcf7;">Row Total</th></tr>`;
+    thead.innerHTML = h;
+  }
+
+  // ----- Render totals strip (per-rep aggregate cards) -----
+  function renderTotals() {
+    const wrap = document.getElementById('fnp-totals');
+    let h = '';
+    let grandGP = 0, grandPay = 0, grandCross = 0;
+    reps.forEach(r => {
+      const t = getRepTotals(r.id);
+      grandGP += t.totalGP; grandPay += t.totalPay; grandCross += t.crossings;
+      const eff = t.totalGP > 0 ? (t.totalPay / t.totalGP) * 100 : 0;
+      h += `<div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">${esc(r.name)}</div>
+        <div style="font-size: 16px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 4px;">${_fmt(t.totalGP)} <span style="font-size: 10px; color: var(--faint); font-weight: 400;">GP</span></div>
+        <div style="font-size: 13px; font-family: var(--mono); color: var(--muted); margin-top: 2px;">${_fmt(t.totalPay)} <span style="font-size: 10px; color: var(--faint);">pay (${eff.toFixed(1)}%)</span></div>
+        ${t.crossings > 0 ? `<div style="font-size: 10px; color: #b8860b; margin-top: 4px;">⚡ ${t.crossings} crossing${t.crossings > 1 ? 's' : ''}</div>` : ''}
+      </div>`;
+    });
+    h += `<div style="background: linear-gradient(135deg, #fff8e1 0%, #fff 100%); border: 1px solid #d4b85a; border-radius: 6px; padding: 10px;">
+      <div style="font-size: 10px; color: #6a4a00; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">TEAM TOTAL</div>
+      <div style="font-size: 16px; font-family: var(--mono); font-weight: 700; color: #6a4a00; margin-top: 4px;">${_fmt(grandGP)} <span style="font-size: 10px; color: #8a6a00; font-weight: 400;">GP</span></div>
+      <div style="font-size: 13px; font-family: var(--mono); color: #6a4a00; margin-top: 2px;">${_fmt(grandPay)} <span style="font-size: 10px; color: #8a6a00;">pay</span></div>
+    </div>`;
+    wrap.innerHTML = h;
+  }
+
+  // ----- Render body (one row per fortnight + collapsible month headers) -----
+  function renderBody() {
+    const tbody = document.getElementById('fnp-tbody');
+    // Pre-compute rows for each rep once per render
+    const repRows = {};
+    reps.forEach(r => { repRows[r.id] = computeRepRows(r.id); });
+
+    let h = '';
+    monthGroups.forEach((mg, mi) => {
+      const isOpen = expanded.has(mi);
+      // Month aggregates for each rep
+      const monthGpByRep = {}; const monthPayByRep = {}; const monthTuByRep = {};
+      let hasCrossing = false;
+      reps.forEach(r => {
+        let g = 0, p = 0, t = 0;
+        mg.idxs.forEach(fi => {
+          const row = repRows[r.id][fi];
+          g += row.gp; p += row.properPay; t += row.tuAdj;
+          if (row.crossed) hasCrossing = true;
+        });
+        monthGpByRep[r.id] = g; monthPayByRep[r.id] = p; monthTuByRep[r.id] = t;
+      });
+      const groupBg = hasCrossing ? 'background: #fffbeb;' : 'background: #fafaf7;';
+
+      let monthRowGP = 0;
+      reps.forEach(r => { monthRowGP += monthGpByRep[r.id]; });
+
+      h += `<tr class="fnp-month-row" data-mi="${mi}" style="cursor: pointer; font-weight: 600; ${groupBg}">
+        <td style="padding: 8px 10px; position: sticky; left: 0; ${groupBg} z-index: 2; border-bottom: 1px solid #ecebe5;">
+          <span class="fnp-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span>
+          ${esc(mg.month)} · ${mg.idxs.length} fortnight${mg.idxs.length === 1 ? '' : 's'}
+          ${hasCrossing ? '<span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 6px;">CROSSING</span>' : ''}
+        </td>`;
+      reps.forEach(r => {
+        const gp = monthGpByRep[r.id];
+        const pay = monthPayByRep[r.id];
+        h += `<td style="text-align: right; padding: 8px 10px; border-bottom: 1px solid #ecebe5; font-family: var(--mono); font-size: 12px;">
+          ${gp > 0 ? _fmt(gp) : '<span style="color: var(--faint);">—</span>'}
+          <div style="font-size: 10px; color: var(--muted); margin-top: 2px;">${pay > 0 ? _fmt(pay) + ' pay' : ''}</div>
+        </td>`;
+      });
+      h += `<td style="text-align: right; padding: 8px 10px; border-bottom: 1px solid #ecebe5; font-family: var(--mono); font-size: 12px; font-weight: 700; background: #fefcf7;">${monthRowGP > 0 ? _fmt(monthRowGP) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td></tr>`;
+
+      // Detail rows for this month
+      mg.idxs.forEach(fi => {
+        const fn = FORTNIGHTS[fi];
+        let rowTotal = 0;
+        const rowCells = reps.map(r => {
+          const row = repRows[r.id][fi];
+          rowTotal += row.gp;
+          const tuColor = row.crossed ? '#b8860b' : 'var(--muted)';
+          const tuStr = row.crossed ? _fmtSigned(row.tuAdj) : '';
+          const incSuper = row.properPay;
+          const exSuper = incSuper / 1.12;
+          const tip = row.properPay > 0
+            ? `${esc(r.fullName)} · ${esc(fn.paid)}\nGP: ${_fmt(row.gp)} · YTD: ${_fmt(row.ytd)}\nBand: ${(row.endRate*100).toFixed(0)}%\nPay ex super: ${_fmt(exSuper)}\nSuper (12%): ${_fmt(incSuper - exSuper)}\nPay (inc super): ${_fmt(incSuper)}` + (row.crossed ? `\n⚡ Band crossing · TU ${_fmtSigned(row.tuAdj)}` : '')
+            : `${esc(r.fullName)} · ${esc(fn.paid)}\nNo GP entered yet.`;
+          const cellBg = row.crossed ? 'background: #fffbeb;' : '';
+          return `<td class="fnp-cell" data-rep="${esc(r.id)}" data-idx="${fi}" data-tip="${esc(tip)}" style="padding: 5px 6px; border-bottom: 1px solid #f4f3ed; vertical-align: top; ${cellBg}">
+            <input type="text" class="fnp-input" data-rep="${esc(r.id)}" data-idx="${fi}" value="${row.gp ? row.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" style="width: 100%; max-width: 110px; padding: 4px 6px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink); box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);">
+            <div style="font-size: 10px; color: ${row.properPay > 0 ? 'var(--muted)' : 'var(--faint)'}; margin-top: 3px; font-family: var(--mono); display: flex; justify-content: space-between; gap: 4px;">
+              <span>${row.properPay > 0 ? _fmt(row.properPay) : '—'}</span>
+              <span style="color: ${tuColor};">${tuStr}</span>
+            </div>
+          </td>`;
+        }).join('');
+
+        h += `<tr class="fnp-detail-row fnp-detail-${mi}" style="display: ${isOpen ? '' : 'none'}; ${(repRows[reps[0].id][fi].crossed ? '' : '')}">
+          <td style="padding: 5px 10px; padding-left: 26px; font-size: 11px; color: var(--muted); position: sticky; left: 0; background: #fff; z-index: 2; border-bottom: 1px solid #f4f3ed;">
+            <div style="font-family: var(--mono); font-weight: 600; color: var(--ink);">${esc(fn.paid)}</div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--faint);">${esc(fn.period)}</div>
+          </td>
+          ${rowCells}
+          <td style="text-align: right; padding: 5px 10px; border-bottom: 1px solid #f4f3ed; font-family: var(--mono); font-size: 12px; font-weight: 600; background: #fefcf7;">${rowTotal > 0 ? _fmt(rowTotal) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+        </tr>`;
+      });
+    });
+    tbody.innerHTML = h;
+
+    // Footer — year totals row per rep
+    const tfoot = document.getElementById('fnp-tfoot');
+    let footHtml = `<tr style="font-weight: 700; background: #fefcf7; border-top: 2px solid #d3d1c7;">
+      <td style="padding: 10px; position: sticky; left: 0; background: #fefcf7; z-index: 2; border-top: 2px solid #d3d1c7;">Year Total</td>`;
+    let grandTotal = 0;
+    reps.forEach(r => {
+      const t = getRepTotals(r.id);
+      grandTotal += t.totalGP;
+      const eff = t.totalGP > 0 ? (t.totalPay / t.totalGP) * 100 : 0;
+      footHtml += `<td style="text-align: right; padding: 10px; font-family: var(--mono); font-size: 13px; border-top: 2px solid #d3d1c7;">
+        ${_fmt(t.totalGP)}
+        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 3px;">${_fmt(t.totalPay)} (${eff.toFixed(1)}%)</div>
+      </td>`;
+    });
+    footHtml += `<td style="text-align: right; padding: 10px; font-family: var(--mono); font-size: 14px; background: #fff8e1; color: #6a4a00; border-top: 2px solid #d4b85a;">${_fmt(grandTotal)}</td></tr>`;
+    tfoot.innerHTML = footHtml;
+
+    wireInteractions();
+  }
+
+  // ----- Wire row click + input change + tab navigation -----
+  function wireInteractions() {
+    const tbody = document.getElementById('fnp-tbody');
+    tbody.querySelectorAll('.fnp-month-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('input')) return;
+        const mi = parseInt(row.getAttribute('data-mi'), 10);
+        if (expanded.has(mi)) expanded.delete(mi); else expanded.add(mi);
+        renderBody();
+      });
+    });
+    // Inputs
+    const allInputs = Array.from(tbody.querySelectorAll('.fnp-input'));
+    allInputs.forEach(inp => {
+      inp.addEventListener('focus', (e) => e.target.select());
+      const commit = () => {
+        const rep = inp.getAttribute('data-rep');
+        const idx = parseInt(inp.getAttribute('data-idx'), 10);
+        const raw = inp.value.replace(/[^0-9.\-]/g, '');
+        const n = parseFloat(raw);
+        gpMatrix[rep][idx] = isFinite(n) ? n : 0;
+      };
+      inp.addEventListener('blur', () => { commit(); renderTotals(); renderBody(); renderAudit(); });
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commit();
+          // Move to next rep in same fortnight, then next fortnight
+          const curRep = inp.getAttribute('data-rep');
+          const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
+          const repIdx = reps.findIndex(r => r.id === curRep);
+          if (repIdx < reps.length - 1) {
+            renderTotals(); renderBody(); renderAudit();
+            const nextInp = document.querySelector(`.fnp-input[data-rep="${reps[repIdx + 1].id}"][data-idx="${curIdx}"]`);
+            if (nextInp) { nextInp.focus(); nextInp.select && nextInp.select(); }
+          } else if (curIdx < FORTNIGHTS.length - 1) {
+            // Move to first rep of next fortnight
+            const nextIdx = curIdx + 1;
+            // Ensure next month is expanded
+            const nextMonthMi = monthGroups.findIndex(g => g.idxs.includes(nextIdx));
+            if (nextMonthMi >= 0) expanded.add(nextMonthMi);
+            renderTotals(); renderBody(); renderAudit();
+            const nextInp = document.querySelector(`.fnp-input[data-rep="${reps[0].id}"][data-idx="${nextIdx}"]`);
+            if (nextInp) { nextInp.focus(); nextInp.select && nextInp.select(); }
+          } else {
+            renderTotals(); renderBody(); renderAudit();
+            inp.blur();
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          inp.blur();
+        }
+      });
+    });
+  }
+
+  // ----- Year-End Audit per rep -----
+  function renderAudit() {
+    const body = document.getElementById('fnp-audit-body');
+    let h = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #fafaf7; border-bottom: 1px solid #d3d1c7;">';
+    h += '<th style="text-align: left; padding: 8px 10px; font-size: 11px;">Rep</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Sum of fortnights</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Full-year GP (Zoho)</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Variance</th>';
+    h += '<th style="text-align: center; padding: 8px 10px; font-size: 11px;">Verdict</th>';
+    h += '</tr></thead><tbody>';
+    reps.forEach(r => {
+      const t = getRepTotals(r.id);
+      const actualRaw = (auditActuals[r.id] || '').replace(/[^0-9.\-]/g, '');
+      const actual = parseFloat(actualRaw);
+      let variance = '—', verdict = '<span style="color: var(--faint);">—</span>';
+      let varColor = 'var(--ink)';
+      if (isFinite(actual) && actualRaw !== '') {
+        const diff = actual - t.totalGP;
+        const absDiff = Math.abs(diff);
+        const sign = diff >= 0 ? '+' : '−';
+        variance = absDiff < 0.5 ? '$0' : sign + _fmt(absDiff);
+        if (absDiff <= 1) { verdict = '<span style="color: #1e6624; font-weight: 700;">✓ Reconciled</span>'; varColor = '#1e6624'; }
+        else if (absDiff <= 1000) { verdict = '<span style="color: #6a4a00; font-weight: 700;">⚠ Minor variance</span>'; varColor = '#6a4a00'; }
+        else { verdict = '<span style="color: #7a1f1f; font-weight: 700;">✗ Mismatch</span>'; varColor = '#7a1f1f'; }
+      }
+      h += `<tr style="border-bottom: 1px solid #f4f3ed;">
+        <td style="padding: 8px 10px; font-weight: 600;">${esc(r.fullName)}</td>
+        <td style="text-align: right; padding: 8px 10px; font-family: var(--mono);">${t.totalGP > 0 ? _fmt(t.totalGP) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td style="text-align: right; padding: 8px 10px;"><input type="text" class="fnp-audit-input" data-rep="${esc(r.id)}" value="${esc(auditActuals[r.id])}" placeholder="e.g. 445,000" inputmode="decimal" style="width: 130px; padding: 5px 8px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px;"></td>
+        <td style="text-align: right; padding: 8px 10px; font-family: var(--mono); color: ${varColor};">${variance}</td>
+        <td style="text-align: center; padding: 8px 10px; font-size: 12px;">${verdict}</td>
+      </tr>`;
+    });
+    h += '</tbody></table>';
+    body.innerHTML = h;
+    // Wire audit inputs
+    body.querySelectorAll('.fnp-audit-input').forEach(inp => {
+      inp.addEventListener('input', () => { auditActuals[inp.getAttribute('data-rep')] = inp.value; renderAudit(); });
+    });
+  }
+
+  // ----- Expand/collapse all buttons -----
+  document.getElementById('fnp-expand-all').addEventListener('click', () => {
+    monthGroups.forEach((g, i) => expanded.add(i));
+    renderBody();
+  });
+  document.getElementById('fnp-collapse-all').addEventListener('click', () => {
+    expanded.clear();
+    renderBody();
+  });
+
+  // Initial render
+  renderHeader();
+  renderTotals();
+  renderBody();
+  renderAudit();
+}
 
 load();
 </script>
