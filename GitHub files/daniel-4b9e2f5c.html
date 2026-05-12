@@ -698,9 +698,6 @@
     <dt>Realistic Range</dt>
     <dd>The green zone on your Annual GP Sold slider — the window where most of your year is likely to land. The slider moves slowly through this zone so you can dial in the exact figure easily.</dd>
 
-    <dt>Production Gate <span style="color: var(--faint); font-weight: 400;">(Evie only)</span></dt>
-    <dd>Minimum annual Event GP Produced ($400k for Evie's role) required for Sales-side commission to flow. If you fall below the gate, only Production Commission (1% of Event GP) is paid.</dd>
-
     <dt>Quarterly True-Up</dt>
     <dd>Your monthly commission is paid on monthly GP — but the real entitlement is your quarterly figure. At quarter-end, we reconcile: if you've been overpaid, the difference becomes a balance that reduces future commissions (never base salary). If underpaid, your month-3 cheque tops up.</dd><dt>Margin Calculator</dt>
     <dd>Sanity-checks your realised margin (GP ÷ Revenue ex-GST) on bookings. Currently informational only — Margin Multipliers will reward higher-margin work in a future pass.</dd>
@@ -1513,7 +1510,7 @@ const EMPLOYEE_ID = 'daniel';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v23`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v24`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
