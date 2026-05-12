@@ -1319,7 +1319,7 @@
               <th class="num">YTD GP</th>
               <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the fortnight in.">?</span></th>
               <th class="num">Pay This FN <small>(inc. super)</small></th>
-              <th class="num">TU Adj <span class="fn-tip" data-tip="<strong>True-Up Adjustment</strong> — the difference between the proper cumulative-band math and the naive 'GP × current rate' estimate. Most fortnights = <code>$0</code>. Non-zero only when YTD straddles a band threshold during the fortnight. Hover any TU value (even on collapsed months) for the full breakdown.">?</span></th>
+              <th class="num">TU Adj <span class="fn-tip" data-tip="<strong>True-Up Adjustment</strong> — corrects pay when a single fortnight straddles a band threshold mid-fortnight.<br><br><strong>Important:</strong> The sales rep plan is flat 4% on the first $300k of YTD GP — so TU won't trigger until your YTD crosses $300k. That's when bands start increasing (9% at $300k, 12% at $400k, 13% at $450k, 14% at $500k, 16% at $550k+). After that, expect 3–5 TU fires per year as you cross each new threshold. Most fortnights = <code>$0</code>.<br><br>Hover any TU value (even on collapsed months) for the full breakdown.">?</span></th>
               <th class="num">Cumulative</th>
             </tr>
           </thead>
@@ -1395,7 +1395,7 @@
                 <th>Month</th>
                 <th class="num">GP Sold <span class="fn-tip" data-tip="<strong>Editable</strong> — paste from Zoho's GP Sold (booking-confirmed) report for each calendar month.">?</span></th>
                 <th class="num">YTD GP</th>
-                <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the month in.">?</span></th>
+                <th class="num">Band Rate <span class="fn-tip" data-tip="<strong>Two values:</strong><br>• The marginal rate the <strong>last dollar of YTD GP</strong> earned at — what band the rep ended this month in.<br>• Green pill = the band this month <em>alone</em> would land in if every month was like it (this month × 12). The pill is what really shows how the month performed; the YTD band only ratchets up cumulatively.">?</span></th>
                 <th class="num">Commission This Month <small>(inc. super)</small></th>
                 <th class="num">Cumulative</th>
               </tr>
@@ -1566,7 +1566,7 @@ const EMPLOYEE_ID = 'nic';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v26`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v29`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -3962,6 +3962,12 @@ function renderBreakdown(r) {
       .fn-pace-pill { display: inline-block; padding: 0 5px; border-radius: 3px; font-size: 10px; font-family: var(--mono); font-weight: 600; margin-left: 4px; vertical-align: middle; cursor: help; background: rgba(72, 161, 77, 0.12); color: #1e6624; border: 1px solid rgba(72, 161, 77, 0.3); }
       .fn-pace-pill.same { background: #f4f3ed; color: var(--muted); border-color: #d3d1c7; }
       .fn-pace-pill.lower { background: rgba(192, 74, 74, 0.1); color: #7a1f1f; border-color: rgba(192, 74, 74, 0.3); }
+      /* YTD-cumulative band — small grey pill, sits next to the prominent pace rate */
+      .fn-ytd-pill { display: inline-block; padding: 0 5px; border-radius: 3px; font-size: 10px; font-family: var(--mono); font-weight: 500; margin-left: 4px; vertical-align: middle; cursor: help; background: #f4f3ed; color: var(--muted); border: 1px solid #d3d1c7; }
+      /* Pace rate displayed as the MAIN band number — bold, green if elevated */
+      .fn-pace-main { font-family: var(--mono); font-size: 14px; font-weight: 700; color: #1e6624; }
+      .fn-pace-main.same { color: var(--ink); font-weight: 600; }
+      .fn-pace-main.lower { color: #7a1f1f; }
       .fn-pay-cell { cursor: help; border-bottom: 1px dotted transparent; transition: border-color 0.12s; }
       .fn-pay-cell:hover { border-bottom-color: var(--faint); }
     `;
@@ -4138,6 +4144,40 @@ function renderBreakdown(r) {
     return `<span class="fn-pace-pill ${cls}" data-tip='${esc(tip)}'>${arrow} ${pacePct}</span>`;
   }
 
+  // ---------- New band-cell renderer (PACE = main, YTD = small pill) ----------
+  // r needs: gp, ytd, idx, endRate (YTD-cumulative marginal rate)
+  function bandCellHtml(r) {
+    const ytdPct = (r.endRate * 100).toFixed(0) + '%';
+    const ytdTip = `<div style="font-weight: 700; margin-bottom: 4px;">YTD-cumulative band</div><div>The band the <strong>last dollar of YTD GP</strong> earned at. This is the rate dollars are actually being paid at right now. Only ratchets up when cumulative GP crosses a band threshold (e.g. $300k → 9%).</div>`;
+    if (r.gp <= 0 || r.ytd <= 0) {
+      // No GP this period — show YTD as the main number, no pill
+      return `<span class="fn-pace-main same" data-tip='${esc(ytdTip)}'>${ytdPct}</span>`;
+    }
+    const annualised = pace(r.ytd, r.idx);
+    const paceRate = marginalRate(annualised);
+    const pacePct = (paceRate * 100).toFixed(0) + '%';
+    const cls = paceRate > r.endRate ? '' : (paceRate === r.endRate ? 'same' : 'lower');
+    const paceTip = bandRateTipHtml(r);
+    // Pace = main; YTD = small pill (only if different from pace)
+    const ytdPillHtml = (paceRate === r.endRate)
+      ? ''
+      : `<span class="fn-ytd-pill" data-tip='${esc(ytdTip)}'>YTD ${ytdPct}</span>`;
+    return `<span class="fn-pace-main ${cls}" data-tip='${esc(paceTip)}'>${pacePct}</span>${ytdPillHtml}`;
+  }
+
+  // ---------- Plan-aware helper: where does the first incremental band kick in? ----------
+  // Returns the threshold where the base rate first steps up. For sales reps with the
+  // flat-4% plan that's $300k (where 4% → 9%). For Evie's hybrid_gp it's $150k (4% → 5%).
+  function firstIncrementalBand() {
+    const baseRate = BANDS[0][1];
+    for (let i = 1; i < BANDS.length; i++) {
+      if (BANDS[i][1] > baseRate) {
+        return { threshold: BANDS[i][0], rate: BANDS[i][1], baseRate };
+      }
+    }
+    return null;
+  }
+
   // ---------- TU tooltip — REWORDED for clarity ----------
   function tuTipHtml(r) {
     const endPct = (r.endRate*100).toFixed(0) + '%';
@@ -4146,8 +4186,21 @@ function renderBreakdown(r) {
     const proper = _fmt(r.properPay);
     const adj = _fmtSigned(r.tuAdj);
     if (Math.abs(r.tuAdj) <= 0.5) {
+      // No band crossing — explain WHY by context (plan-aware)
+      const fib = firstIncrementalBand();
+      let context = '';
+      if (fib && r.ytd < fib.threshold) {
+        // Still in the flat base band
+        const toFirstBand = fib.threshold - r.ytd;
+        const basePct = (fib.baseRate * 100).toFixed(0) + '%';
+        const firstStepPct = (fib.rate * 100).toFixed(0) + '%';
+        context = `<hr><div style="font-size: 11px; color: #aaa;">Your plan pays <strong>flat ${basePct}</strong> on the first <code>${_fmt(fib.threshold)}</code> of YTD GP. The TU column doesn't activate until you cross <code>${_fmt(fib.threshold)}</code> — that's when bands start increasing (first step: <code>${firstStepPct}</code>). You need another <code>${_fmt(toFirstBand)}</code> of YTD GP to get there. After that, expect 3–5 TU fires per year as you cross each new band threshold.</div>`;
+      } else {
+        context = `<hr><div style="font-size: 11px; color: #aaa;">A TU only fires when a single fortnight straddles a band threshold (e.g. crossing $400k mid-fortnight). Fortnights that stay within a single band always pay cleanly at <code>GP × rate</code>.</div>`;
+      }
       return `<div style="font-weight: 700; margin-bottom: 4px;">No adjustment needed</div>
-        <div>This fortnight stayed entirely within one band (<code>${endPct}</code>), so a simple <code>GP × rate</code> already gives the right pay.</div>`;
+        <div>This fortnight stayed entirely within one band (<code>${endPct}</code>), so a simple <code>GP × rate</code> already gives the right pay.</div>
+        ${context}`;
     }
     // Find which threshold was crossed and how much GP fell each side
     let crossedAt = 0;
@@ -4305,8 +4358,8 @@ function renderBreakdown(r) {
       const mTip = monthTipHtml(group);
       const lastR = group.rows[group.rows.length - 1];
 
-      // Build pace pill for the month row using the last fortnight's pace
-      const monthPaceHtml = pacePillHtml(lastR);
+      // Band cell for the month row — pace = main, YTD = small pill (uses last fortnight in the month)
+      const monthBandCellHtml = bandCellHtml(lastR);
 
       // Month TU pill — hoverable even when group collapsed
       const groupTuPill = Math.abs(groupTU) < 0.5
@@ -4320,7 +4373,7 @@ function renderBreakdown(r) {
           <td><span class="fn-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span> ${group.month}${hasCrossing ? ' <span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 4px;">CROSSING</span>' : ''}</td>
           <td class="num">${groupGP > 0 ? _fmt(groupGP) : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num" style="color: var(--muted);">${_fmt(lastYtd)}</td>
-          <td class="num" style="color: var(--muted);">${(lastRate*100).toFixed(0)}%${monthPaceHtml}</td>
+          <td class="num">${monthBandCellHtml}</td>
           <td class="num">${groupPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(monthPayTip)}'>${_fmt(groupPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num">${groupTuPill}</td>
           <td class="num" style="color: var(--muted);">${_fmt(lastCum)}</td>
@@ -4335,7 +4388,7 @@ function renderBreakdown(r) {
           : `<span class="fn-tu-pill live" data-tip='${esc(tuTipHtml(r))}'>${tuText}</span>`;
         const rowBg = r.crossed ? 'background: #fffbeb;' : '';
         const displayStyle = isOpen ? '' : 'display: none;';
-        const rPaceHtml = pacePillHtml(r);
+        const rBandCellHtml = bandCellHtml(r);
         const rPayTip = payCellTipHtml(r);
         html += `
           <tr class="fn-detail-row fn-detail-${gi}" style="${displayStyle} ${rowBg}">
@@ -4344,7 +4397,7 @@ function renderBreakdown(r) {
             </td>
             <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
             <td class="num" style="color: var(--muted);">${_fmt(r.ytd)}</td>
-            <td class="num" style="color: var(--muted);" data-tip='${esc(bandRateTipHtml(r))}'>${(r.endRate*100).toFixed(0)}%${rPaceHtml}</td>
+            <td class="num">${rBandCellHtml}</td>
             <td class="num">${r.properPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(rPayTip)}'>${_fmt(r.properPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
             <td class="num">${tuPill}</td>
             <td class="num" style="color: var(--muted);">${_fmt(r.cumPay)}</td>
@@ -4354,17 +4407,23 @@ function renderBreakdown(r) {
     });
     tbody.innerHTML = html;
 
-    // Footer
+    // Footer — band cell: end-of-year band as main, effective rate as small pill
     const totalTu = rows.reduce((s, r) => s + r.tuAdj, 0);
-    const finalR = rows[rows.length - 1];
-    const finalPaceHtml = pacePillHtml(finalR);
     const totalPayTip = payAggTipHtml('Total FY27 pay', totalPay);
+    const endBand = totalGP > 0 ? marginalRate(totalGP) : 0;
+    const endBandPct = (endBand * 100).toFixed(0) + '%';
+    const effRatePct = (avgRate * 100).toFixed(1) + '%';
+    const yearEndTip = `<div style="font-weight: 700; margin-bottom: 4px;">Year-end band</div><div>The band the <strong>last dollar of the year</strong> earned at. The single highest band the rep tapped into across the full year.</div>`;
+    const yearEffTip = `<div style="font-weight: 700; margin-bottom: 4px;">Effective rate (blended)</div><div>Total pay ÷ total GP — the blended average rate across every band touched this year.</div>`;
+    const bandFooterHtml = totalGP > 0
+      ? `<span class="fn-pace-main" data-tip='${esc(yearEndTip)}'>${endBandPct}</span><span class="fn-ytd-pill" data-tip='${esc(yearEffTip)}'>Eff ${effRatePct}</span>`
+      : `<span style="color: var(--faint);">—</span>`;
     tfoot.innerHTML = `
       <tr style="font-weight: 700; border-top: 2px solid #d3d1c7; background: #fefcf7;">
         <td>Total FY27</td>
         <td class="num">${totalGP > 0 ? _fmt(totalGP) : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num" style="color: var(--muted);">—</td>
-        <td class="num" style="color: var(--muted);">${(avgRate*100).toFixed(1)}%${finalPaceHtml}</td>
+        <td class="num">${bandFooterHtml}</td>
         <td class="num">${totalPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalPayTip)}'>${_fmt(totalPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num">${Math.abs(totalTu) < 0.5 ? '<span class="fn-tu-pill dim">—</span>' : '<span class="fn-tu-pill live">' + _fmtSigned(totalTu) + '</span>'}</td>
         <td class="num">${_fmt(totalPay)}</td>
@@ -4590,15 +4649,45 @@ function renderBreakdown(r) {
       </div>
     `;
 
+    // Band cell for trailing rows — pace = main, YTD = small pill (mirrors forward view).
+    // "Pace" here = thisMonth × 12 → marginal rate at that annualised level.
+    function trailingBandCellHtml(r) {
+      const ytdPct = (r.endRate * 100).toFixed(0) + '%';
+      const ytdTip = `<div style="font-weight: 700; margin-bottom: 4px;">YTD-cumulative band</div><div>The band the <strong>last dollar of YTD GP</strong> earned at after this month closed. Only ratchets up when cumulative GP crosses a band threshold.</div>`;
+      if (r.gp <= 0) {
+        return `<span class="fn-pace-main same" data-tip='${esc(ytdTip)}'>${ytdPct}</span>`;
+      }
+      const annualisedMonth = r.gp * 12;
+      const paceRate = marginalRate(annualisedMonth);
+      const pacePct = (paceRate * 100).toFixed(0) + '%';
+      const cls = paceRate > r.endRate ? '' : (paceRate === r.endRate ? 'same' : 'lower');
+      const paceComm = cumBandComm(annualisedMonth);
+      const paceEff = annualisedMonth > 0 ? paceComm / annualisedMonth : 0;
+      const paceTip = `<div style="font-weight: 700; margin-bottom: 4px;">${esc(r.label)} band — based on this month's sales</div>
+        <div>This month: <code>${_fmt(r.gp)}</code></div>
+        <div>YTD-cumulative band: <code>${ytdPct}</code></div>
+        <hr>
+        <div><strong>If every month was like this one:</strong></div>
+        <div>Annualised GP = <code>${_fmt(annualisedMonth)}</code> <span style="color: #aaa;">(this month × 12)</span></div>
+        <div>You'd finish the year in the <code>${pacePct}</code> band.</div>
+        <div>Projected year commission: <code>${_fmt(paceComm)}</code> <span style="color: #aaa;">(${(paceEff*100).toFixed(1)}% effective)</span></div>
+        <div style="margin-top: 6px; color: #aaa; font-size: 11px;">The big number is <strong>this month's band</strong> — what rate this fortnight's sales would land in if sustained. The small YTD pill is what cumulative GP has actually paid out at so far.</div>`;
+      const ytdPillHtml = (paceRate === r.endRate)
+        ? ''
+        : `<span class="fn-ytd-pill" data-tip='${esc(ytdTip)}'>YTD ${ytdPct}</span>`;
+      return `<span class="fn-pace-main ${cls}" data-tip='${esc(paceTip)}'>${pacePct}</span>${ytdPillHtml}`;
+    }
+
     let html = '';
     rows.forEach(r => {
       const payTip = payCellTipHtml({ properPay: r.properPay });
+      const bandHtml = trailingBandCellHtml(r);
       html += `
         <tr>
           <td style="font-family: var(--mono); font-size: 12px;">${esc(r.label)}</td>
           <td class="num"><input type="text" class="trailing-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
           <td class="num" style="color: var(--muted);">${_fmt(r.ytd)}</td>
-          <td class="num" style="color: var(--muted);">${(r.endRate*100).toFixed(0)}%</td>
+          <td class="num">${bandHtml}</td>
           <td class="num">${r.properPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(payTip)}'>${_fmt(r.properPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num" style="color: var(--muted);">${_fmt(r.cumPay)}</td>
         </tr>
@@ -4606,12 +4695,21 @@ function renderBreakdown(r) {
     });
     tBody.innerHTML = html;
 
+    // Footer: end-of-year band as main, effective rate as small pill (consistent with forward view)
+    const trailingEndBand = totalGP > 0 ? marginalRate(totalGP) : 0;
+    const trailingEndBandPct = (trailingEndBand * 100).toFixed(0) + '%';
+    const trailingEffPct = (avgRate * 100).toFixed(1) + '%';
+    const trailingYearEndTip = `<div style="font-weight: 700; margin-bottom: 4px;">Year-end band</div><div>The band the <strong>last dollar of the year</strong> earned at — the highest band tapped into across the trailing 12 months.</div>`;
+    const trailingEffTip = `<div style="font-weight: 700; margin-bottom: 4px;">Effective rate (blended)</div><div>Total pay ÷ total GP across all 12 months. Always sits between the lowest and highest bands you touched.</div>`;
+    const trailingBandFooterHtml = totalGP > 0
+      ? `<span class="fn-pace-main" data-tip='${esc(trailingYearEndTip)}'>${trailingEndBandPct}</span><span class="fn-ytd-pill" data-tip='${esc(trailingEffTip)}'>Eff ${trailingEffPct}</span>`
+      : `<span style="color: var(--faint);">—</span>`;
     tFoot.innerHTML = `
       <tr style="font-weight: 700; border-top: 2px solid #d3d1c7; background: #f0f7f3;">
         <td>Total trailing 12mo</td>
         <td class="num">${totalGP > 0 ? _fmt(totalGP) : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num" style="color: var(--muted);">—</td>
-        <td class="num" style="color: var(--muted);">${(avgRate*100).toFixed(1)}%</td>
+        <td class="num">${trailingBandFooterHtml}</td>
         <td class="num">${totalPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(wouldveEarnedTip)}'>${_fmt(totalPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num">${_fmt(totalPay)}</td>
       </tr>
