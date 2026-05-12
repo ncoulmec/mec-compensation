@@ -6,6 +6,7 @@
 <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="pragma" content="no-cache">
 <meta http-equiv="expires" content="0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <title>MEC Group · Payroll Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -417,9 +418,9 @@
           <div class="recon-upload-zone" id="xr-xero-zone">
             <div class="zone-icon">📊</div>
             <div class="zone-label">Drop Xero CSV here or click to browse</div>
-            <div class="zone-sub">Account Transactions export · .csv file</div>
+            <div class="zone-sub">Account Transactions export · .xlsx or .csv</div>
           </div>
-          <input type="file" id="xr-xero-input" accept=".csv" style="display:none;">
+          <input type="file" id="xr-xero-input" accept=".csv,.xlsx,.xls" style="display:none;">
         </div>
 
         <div class="card">
@@ -430,9 +431,9 @@
           <div class="recon-upload-zone" id="xr-zoho-zone">
             <div class="zone-icon">🗂️</div>
             <div class="zone-label">Drop Zoho Payments CSV here or click to browse</div>
-            <div class="zone-sub">Export from Zoho CRM Payments module · .csv file</div>
+            <div class="zone-sub">Export from Zoho CRM Payments module · .xlsx or .csv</div>
           </div>
-          <input type="file" id="xr-zoho-input" accept=".csv" style="display:none;">
+          <input type="file" id="xr-zoho-input" accept=".csv,.xlsx,.xls" style="display:none;">
         </div>
 
       </div>
@@ -2586,30 +2587,65 @@ function renderFortnightlyAdmin() {
   }
 
   // ---- File handler ----
-  function handleFile(file, type) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const rawRows = parseCSV(e.target.result);
-        if (type === 'xero') {
-          xeroResult = processXero(rawRows);
-          const zone = document.getElementById('xr-xero-zone');
-          zone.classList.add('loaded');
-          zone.querySelector('.zone-label').textContent = '✓ ' + file.name;
-          zone.querySelector('.zone-sub').textContent = xeroResult.included.length + ' invoice payments found · ' + xeroResult.excluded.length + ' excluded';
-        } else {
-          zohoMap = processZoho(rawRows);
-          const zone = document.getElementById('xr-zoho-zone');
-          zone.classList.add('loaded');
-          zone.querySelector('.zone-label').textContent = '✓ ' + file.name;
-          zone.querySelector('.zone-sub').textContent = zohoMap.size + ' Zoho payment records loaded';
-        }
-        render();
-      } catch (err) {
-        alert('Error reading CSV: ' + err.message);
+  function isExcel(file) {
+    return /\.(xlsx|xls)$/i.test(file.name) ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel';
+  }
+
+  function processFile(rawRows, type) {
+    try {
+      const fileName = rawRows._fileName || 'file';
+      if (type === 'xero') {
+        xeroResult = processXero(rawRows);
+        const zone = document.getElementById('xr-xero-zone');
+        zone.classList.add('loaded');
+        zone.querySelector('.zone-label').textContent = '✓ ' + fileName;
+        zone.querySelector('.zone-sub').textContent = xeroResult.included.length + ' invoice payments found · ' + xeroResult.excluded.length + ' excluded';
+      } else {
+        zohoMap = processZoho(rawRows);
+        const zone = document.getElementById('xr-zoho-zone');
+        zone.classList.add('loaded');
+        zone.querySelector('.zone-label').textContent = '✓ ' + fileName;
+        zone.querySelector('.zone-sub').textContent = zohoMap.size + ' Zoho payment records loaded';
       }
-    };
-    reader.readAsText(file);
+      render();
+    } catch (err) {
+      alert('Error reading file: ' + err.message);
+    }
+  }
+
+  function handleFile(file, type) {
+    // Store the original file name so processFile can reference it
+    if (isExcel(file)) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          // Convert to array-of-arrays (same shape as parseCSV output)
+          const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+          // Attach the original file name so processFile can use it
+          rawRows._fileName = file.name;
+          processFile(rawRows, type);
+        } catch (err) {
+          alert('Error reading Excel file: ' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const rawRows = parseCSV(e.target.result);
+          rawRows._fileName = file.name;
+          processFile(rawRows, type);
+        } catch (err) {
+          alert('Error reading CSV: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
   }
 
   // ---- Wire up drag-drop / click for a zone ----
@@ -2624,8 +2660,8 @@ function renderFortnightlyAdmin() {
     zone.addEventListener('drop', e => {
       e.preventDefault(); zone.classList.remove('drag-over');
       const f = e.dataTransfer.files[0];
-      if (f && (f.name.endsWith('.csv') || f.type === 'text/csv')) handleFile(f, type);
-      else alert('Please drop a .csv file.');
+      if (f && (f.name.endsWith('.csv') || f.name.endsWith('.xlsx') || f.name.endsWith('.xls') || f.type === 'text/csv' || f.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || f.type === 'application/vnd.ms-excel')) handleFile(f, type);
+      else alert('Please drop a .csv, .xlsx, or .xls file.');
     });
   }
 

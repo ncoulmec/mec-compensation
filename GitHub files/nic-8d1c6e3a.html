@@ -919,34 +919,9 @@
 
     <div class="section-gap"></div>
 
-    <!-- ============ ACTUAL SECTION ============ -->
-    <div class="section-head">      <h2>What you've earned</h2>
-      <p class="blurb">Enter your actual monthly GP Received and Event GP Produced below. Commissions are calculated month-by-month off these real numbers, with quarterly true-ups keeping your payouts fair over time. Edits persist on this device.</p>
-    </div>
+    <!-- "What you've earned" YTD section removed in fortnightly migration —
+         live actual data now lives in the Payouts & Super tab. -->
     <div id="prod-gate-banner"></div>
-
-    <div class="yt-row">
-      <div class="kpi-card inverted">
-        <div class="label">YTD Commission Paid</div>
-        <div class="value" id="ytd-cash">—</div>
-        <div class="sub" id="ytd-cash-sub">Nothing paid yet — enter monthly GP below</div>
-      </div>
-      <div class="kpi-card" style="border-left: 3px solid var(--accent); background: var(--accent-bg);">
-        <div class="label">Projected Annual Commission</div>
-        <div class="value" id="ytd-projection" style="color: var(--accent);">—</div>
-        <div class="sub" id="ytd-projection-sub">Enter a month or two to see your year-end projection</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">YTD GP Received</div>
-        <div class="value" id="ytd-gp">—</div>
-        <div class="sub" id="ytd-gp-sub">Sum of months entered</div>
-      </div>
-      <div class="kpi-card">
-        <div class="label">True-Up Balance Fwd <span class="tooltip-trigger" data-tip="If you've been paid more commission than the quarterly/annual calculation says you've earned, the excess becomes a running balance that reduces future commissions — never from base salary. See 'What is True-Up?' below the Quarterly True-Up Summary for the full explanation.">?</span></div>
-        <div class="value" id="trueup-delta">—</div>
-        <div class="sub" id="trueup-delta-sub">Amount owed into future months</div>
-      </div>
-    </div>
 
     <!-- Monthly Scenario — sandbox slider for one month -->
     <div class="card">
@@ -1387,36 +1362,50 @@
 
     <!-- ============================================================
          TRAILING 12 MONTHS — "What you would've earned"
+         Collapsible: stat tiles always visible, table folds away.
+         Pre-populated per-employee with real GP Sold figures (Jun 2025 – May 2026).
          ============================================================ -->
     <div class="card" style="background: linear-gradient(135deg, #f0f7f3 0%, #fff 100%); border-left: 4px solid #48a14d;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
         <div>
           <h2 style="margin: 0 0 4px;">Last 12 Months <span style="font-size: 10px; padding: 1px 6px; background: #e7f6ea; color: #1e6624; border: 1px solid #c3e4d0; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">What you would've earned</span></h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0;">If the new fortnightly plan had been live the last 12 months, this is what your variable comp would've been. Enter your historical <strong>GP Sold</strong> (booking-confirmed date — from Zoho's Bookings → GP Sold report) below.</p>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">If the new fortnightly plan had been live the last 12 months, this is what your variable comp would've been. Pre-populated with your actual <strong>GP Sold</strong> from Zoho — paste fresher figures if needed.</p>
         </div>
-        <span style="font-size: 11px; color: #1e6624; font-family: var(--mono); font-weight: 600;">May 2025 – Apr 2026</span>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <a href="https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000097394002" target="_blank" rel="noopener" style="text-decoration: none; background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap;">📊 Get my actual Zoho data ↗</a>
+          <span style="font-size: 11px; color: #1e6624; font-family: var(--mono); font-weight: 600;">Jun 2025 – May 2026</span>
+        </div>
       </div>
 
+      <!-- Disclaimer: GP Sold vs GP Received -->
+      <div style="margin: 12px 0; padding: 10px 12px; background: #fff8e1; border: 1px solid #d4b85a; border-left: 3px solid #d4b85a; border-radius: 4px; font-size: 11px; color: #6a4a00; line-height: 1.45;">
+        <strong>⚠ Heads up:</strong> This is based on <strong>GP Sold</strong> (booking-confirmed date), not GP Received (cash). Under the new plan you're paid on cash received, so individual months will differ — but across a full year the totals should reconcile to within timing differences (deposits straddling month-end, refunds, etc.).
+      </div>
+
+      <!-- Stat tiles — ALWAYS VISIBLE -->
       <div id="trailing-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
 
-      <div style="overflow-x: auto;">
-        <table class="monthly" id="trailing-table" style="width: 100%;">
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th class="num">GP Sold <span class="fn-tip" data-tip="<strong>Editable</strong> — paste from Zoho's GP Sold (booking-confirmed) report for each calendar month.">?</span></th>
-              <th class="num">YTD GP</th>
-              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the month in.">?</span></th>
-              <th class="num">Commission This Month <small>(inc. super)</small></th>
-              <th class="num">Cumulative</th>
-            </tr>
-          </thead>
-          <tbody id="trailing-body"></tbody>
-          <tfoot id="trailing-foot"></tfoot>
-        </table>
-      </div>
-
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Same cumulative band math as the forward view · Use this to validate the new plan against your actual year and bridge the transition period.</p>
+      <!-- Collapsible monthly breakdown -->
+      <details id="trailing-details" style="margin-top: 8px;">
+        <summary style="cursor: pointer; font-weight: 600; color: var(--muted); padding: 6px 0; font-size: 12px;">▸ Show monthly breakdown</summary>
+        <div style="overflow-x: auto; margin-top: 10px;">
+          <table class="monthly" id="trailing-table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">GP Sold <span class="fn-tip" data-tip="<strong>Editable</strong> — paste from Zoho's GP Sold (booking-confirmed) report for each calendar month.">?</span></th>
+                <th class="num">YTD GP</th>
+                <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the month in.">?</span></th>
+                <th class="num">Commission This Month <small>(inc. super)</small></th>
+                <th class="num">Cumulative</th>
+              </tr>
+            </thead>
+            <tbody id="trailing-body"></tbody>
+            <tfoot id="trailing-foot"></tfoot>
+          </table>
+        </div>
+        <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Same cumulative band math as the forward view · Use this to validate the new plan against your actual year and bridge the transition period.</p>
+      </details>
     </div>
 
     <!-- ============================================================
@@ -1577,7 +1566,7 @@ const EMPLOYEE_ID = 'nic';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v25`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v26`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -3059,46 +3048,57 @@ function update() {
   // Months with data = any month where GP or Event GP is non-zero (employee or admin entered)
   const monthsWithData = mRows.filter(row => row.gpReceived > 0 || row.eventGP > 0).length;
 
-  // YTD summary cards — prominent: YTD Commission Paid + Projection
-  document.getElementById('ytd-cash').textContent = fmtMoney(mTot.monTotalInc);
-  document.getElementById('ytd-cash-sub').textContent = monthsWithData > 0
-    ? `${monthsWithData}/12 months · ${fmtMoney(mTot.gpCommInc)} GP + ${fmtMoney(mTot.prodCommInc)} production`
-    : 'Nothing paid yet — enter monthly GP below';
+  // YTD summary cards — GUARDED. These cards were removed in the fortnightly migration.
+  // Each block now no-ops if its target element is missing.
+  const ytdCashEl = document.getElementById('ytd-cash');
+  if (ytdCashEl) {
+    ytdCashEl.textContent = fmtMoney(mTot.monTotalInc);
+    document.getElementById('ytd-cash-sub').textContent = monthsWithData > 0
+      ? `${monthsWithData}/12 months · ${fmtMoney(mTot.gpCommInc)} GP + ${fmtMoney(mTot.prodCommInc)} production`
+      : 'Nothing paid yet — enter monthly GP below';
+  }
 
   // Projection: annualise YTD based on months with data, re-run through bands + production
   const projEl = document.getElementById('ytd-projection');
   const projSubEl = document.getElementById('ytd-projection-sub');
-  if (monthsWithData > 0) {
-    const annGPProj = (mTot.gpReceived / monthsWithData) * 12;
-    const annEvProj = (mTot.eventGP / monthsWithData) * 12;
-    const { total: annGrossComm } = calcBandCommission(annGPProj, plan.bands);
-    const prodPct = plan.includeProduction ? (plan.productionPct || 0) : 0;
-    const annProdComm = annEvProj * prodPct;
-    const projCommInc = (annGrossComm + annProdComm) * r.effectiveKpi;
-    const projTotalPackage = r.baseInc + projCommInc;
-    projEl.textContent = fmtMoney(projCommInc);
-    projSubEl.innerHTML = `At this pace your total package is <strong>${fmtMoney(projTotalPackage)}</strong> — keep it up!`;
-  } else {
-    projEl.textContent = '—';
-    projSubEl.textContent = 'Enter a month or two to see your year-end projection';
+  if (projEl) {
+    if (monthsWithData > 0) {
+      const annGPProj = (mTot.gpReceived / monthsWithData) * 12;
+      const annEvProj = (mTot.eventGP / monthsWithData) * 12;
+      const { total: annGrossComm } = calcBandCommission(annGPProj, plan.bands);
+      const prodPct = plan.includeProduction ? (plan.productionPct || 0) : 0;
+      const annProdComm = annEvProj * prodPct;
+      const projCommInc = (annGrossComm + annProdComm) * r.effectiveKpi;
+      const projTotalPackage = r.baseInc + projCommInc;
+      projEl.textContent = fmtMoney(projCommInc);
+      projSubEl.innerHTML = `At this pace your total package is <strong>${fmtMoney(projTotalPackage)}</strong> — keep it up!`;
+    } else {
+      projEl.textContent = '—';
+      projSubEl.textContent = 'Enter a month or two to see your year-end projection';
+    }
   }
 
-  document.getElementById('ytd-gp').textContent = fmtMoney(mTot.gpReceived);
-  document.getElementById('ytd-gp-sub').textContent = `Event GP: ${fmtMoney(mTot.eventGP)}`;
+  const ytdGpEl = document.getElementById('ytd-gp');
+  if (ytdGpEl) {
+    ytdGpEl.textContent = fmtMoney(mTot.gpReceived);
+    document.getElementById('ytd-gp-sub').textContent = `Event GP: ${fmtMoney(mTot.eventGP)}`;
+  }
 
   // True-Up Balance Fwd card — small/standard, amount owed into future months
   const tuEl = document.getElementById('trueup-delta');
   const tuSub = document.getElementById('trueup-delta-sub');
-  const bal = annualSummary.yearEndBalance;
-  if (annualSummary.annualGP === 0) {
-    tuEl.textContent = '—';
-    tuSub.textContent = 'No data yet';
-  } else if (bal < 0.5) {
-    tuEl.textContent = fmtMoney(0);
-    tuSub.textContent = `All even · paid matches entitled so far`;
-  } else {
-    tuEl.textContent = fmtMoney(bal);
-    tuSub.textContent = `Offsets future commissions until worked off`;
+  if (tuEl) {
+    const bal = annualSummary.yearEndBalance;
+    if (annualSummary.annualGP === 0) {
+      tuEl.textContent = '—';
+      tuSub.textContent = 'No data yet';
+    } else if (bal < 0.5) {
+      tuEl.textContent = fmtMoney(0);
+      tuSub.textContent = `All even · paid matches entitled so far`;
+    } else {
+      tuEl.textContent = fmtMoney(bal);
+      tuSub.textContent = `Offsets future commissions until worked off`;
+    }
   }
 
   // Monthly Scenario card (sandbox)
@@ -4527,12 +4527,21 @@ function renderBreakdown(r) {
   // editable rows for the rep's historical GP Sold figures.
   // ============================================================
   const TRAILING_MONTHS = [
-    { label: 'May 2025' }, { label: 'Jun 2025' }, { label: 'Jul 2025' },
-    { label: 'Aug 2025' }, { label: 'Sep 2025' }, { label: 'Oct 2025' },
-    { label: 'Nov 2025' }, { label: 'Dec 2025' }, { label: 'Jan 2026' },
-    { label: 'Feb 2026' }, { label: 'Mar 2026' }, { label: 'Apr 2026' }
+    { label: 'Jun 2025' }, { label: 'Jul 2025' }, { label: 'Aug 2025' },
+    { label: 'Sep 2025' }, { label: 'Oct 2025' }, { label: 'Nov 2025' },
+    { label: 'Dec 2025' }, { label: 'Jan 2026' }, { label: 'Feb 2026' },
+    { label: 'Mar 2026' }, { label: 'Apr 2026' }, { label: 'May 2026' }
   ];
-  const trailingValues = new Array(TRAILING_MONTHS.length).fill(0);
+
+  // Pre-populated GP Sold by employee — from Zoho "After 1 Jun 2025" categorised report.
+  // May 2026 is partial (month-to-date as of upload).
+  const TRAILING_PREFILL = {
+    daniel: [33884, 8808, 26269, 36892, 46825, 27506, 18701, 31135, 32295, 26527, 22220, 8603],
+    nic:    [28005, 11042, 34616, 23800, 30254, 32979, 33598, 23490, 39928, 26466, 45449, 12065],
+    dane:   [38117, 38062, 27580, 29976, 42448, 30911, 29210, 31098, 46367, 30471, 43155, 10105],
+    evie:   [14869, 20595, 15405, 24117,  4930,  8114,  2390, 33770, 20622,  6758, 10535,   840]
+  };
+  const trailingValues = (TRAILING_PREFILL[EMPLOYEE_ID] ? TRAILING_PREFILL[EMPLOYEE_ID].slice() : new Array(TRAILING_MONTHS.length).fill(0));
 
   function renderTrailing() {
     const tBody = document.getElementById('trailing-body');
