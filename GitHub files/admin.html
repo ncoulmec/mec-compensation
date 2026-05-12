@@ -382,37 +382,12 @@
         </div>
       </div>
 
-      <!-- Step 1: Export instructions -->
-      <div class="card" style="margin-bottom:14px;">
-        <h2 style="margin-bottom:10px;">Step 1 · Set up your Xero custom report (one-time)</h2>
-        <div style="font-size:13px; color:var(--ink); line-height:1.75;">
-          In Xero go to <strong>Accounting → Reports → Account Transactions</strong> and set:
-          <div style="margin:8px 0 4px 0; display:flex; flex-wrap:wrap; gap:8px; font-size:12px;">
-            <span style="background:#f3f4f6; border:1px solid var(--border); border-radius:6px; padding:4px 10px; font-family:var(--mono);">Account: 001 - Business Account</span>
-            <span style="background:#f3f4f6; border:1px solid var(--border); border-radius:6px; padding:4px 10px; font-family:var(--mono);">Date range: This Month</span>
-            <span style="background:#f3f4f6; border:1px solid var(--border); border-radius:6px; padding:4px 10px; font-family:var(--mono);">Columns: Source + Reference visible</span>
-          </div>
-          Click <strong>Update</strong>, then use <strong>Save as custom report</strong> → name it <em>"Monthly Invoice Payments"</em>.
-          Each month: open that saved report, click <strong>Export → CSV</strong>, and drop it below.
-        </div>
-        <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-          <span style="font-size:11px; color:var(--muted); margin-right:4px;">Rows auto-excluded:</span>
-          <span class="recon-rule-chip excl">PIN payment fees</span>
-          <span class="recon-rule-chip excl">DJ School reports</span>
-          <span class="recon-rule-chip excl">DJ Lesson reports</span>
-          <span class="recon-rule-chip">Payable Payments</span>
-          <span class="recon-rule-chip">Spend Money</span>
-          <span class="recon-rule-chip">Receive Money</span>
-          <span class="recon-rule-chip">No INV- reference</span>
-        </div>
-      </div>
-
-      <!-- Step 2 & 3: Upload zones -->
+      <!-- Upload zones -->
       <div class="recon-upload-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
 
         <div class="card">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
-            <h2 style="margin:0;">Step 2 · Xero CSV <span style="color:var(--danger); font-size:10px; margin-left:4px; font-weight:700;">REQUIRED</span></h2>
+            <h2 style="margin:0;">Step 1 · Xero export <span style="color:var(--danger); font-size:10px; margin-left:4px; font-weight:700;">REQUIRED</span></h2>
             <a href="https://reporting.xero.com/!!w0P0/v1/Run/15071015?isCustom=True" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:5px; background:var(--navy); color:#fff; font-size:11px; font-weight:600; font-family:inherit; padding:5px 11px; border-radius:6px; text-decoration:none; white-space:nowrap;">↗ Get Xero CSV</a>
           </div>
           <div class="recon-upload-zone" id="xr-xero-zone">
@@ -425,7 +400,7 @@
 
         <div class="card">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
-            <h2 style="margin:0;">Step 3 · Zoho Payments CSV <span style="color:var(--muted); font-size:10px; margin-left:4px;">OPTIONAL — cross-check</span></h2>
+            <h2 style="margin:0;">Step 2 · Zoho Payments <span style="color:var(--muted); font-size:10px; margin-left:4px;">OPTIONAL — cross-check</span></h2>
             <a href="https://crm.zoho.com/crm/org657079535/tab/Reports/2877869000295257008" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:5px; background:var(--accent); color:#fff; font-size:11px; font-weight:600; font-family:inherit; padding:5px 11px; border-radius:6px; text-decoration:none; white-space:nowrap;">↗ Get Zoho report</a>
           </div>
           <div class="recon-upload-zone" id="xr-zoho-zone">
@@ -2594,8 +2569,13 @@ function renderFortnightlyAdmin() {
       }
 
       // Also index by client/booking name for fallback matching
+      // Use a Set of seen keys per entry to avoid pushing the same entry twice
+      // (e.g. when paymentName and bookingName are identical)
+      const seenNameKeys = new Set();
       for (const nameStr of [paymentName, bookingName]) {
         for (const key of nameKeys(nameStr)) {
+          if (seenNameKeys.has(key)) continue;
+          seenNameKeys.add(key);
           if (!nameMap.has(key)) nameMap.set(key, []);
           nameMap.get(key).push(entry);
         }
@@ -2624,7 +2604,15 @@ function renderFortnightlyAdmin() {
       const zohoEntries = zohoMap.invMap.get(lookupKey);
 
       if (zohoEntries && zohoEntries.length > 0) {
-        // Sum all Zoho amounts for this invoice (handles multi-booking invoices like RACV)
+        // 1. First check: does any single Zoho entry match the Xero amount exactly?
+        //    This handles cases where an old payment for the same invoice is in Zoho
+        //    (e.g. Adam Wong: one entry from Dec 2025, one from May 2026 — only May matches).
+        const singleMatch = zohoEntries.find(e => Math.abs((e.amount || 0) - row.amount) <= 0.05);
+        if (singleMatch) {
+          return { ...row, status: 'ok', zohoTotal: row.amount, zohoEntries, singleMatch: true };
+        }
+        // 2. Fallback: sum all entries (handles split-booking invoices like RACV where
+        //    each booking has its own Zoho payment that together equal the Xero amount).
         const zohoTotal = zohoEntries.reduce((s, e) => s + (e.amount || 0), 0);
         const diff = Math.abs(zohoTotal - row.amount);
         const status = diff <= 0.05 ? 'ok' : 'mismatch';
@@ -2643,8 +2631,11 @@ function renderFortnightlyAdmin() {
         }
       }
       if (nameMatches) {
-        const zohoTotal = nameMatches.reduce((s, e) => s + (e.amount || 0), 0);
-        return { ...row, status: 'possible_match', zohoTotal, zohoEntries: nameMatches };
+        // Check if any name-matched entry also has the right amount
+        const singleMatch = nameMatches.find(e => Math.abs((e.amount || 0) - row.amount) <= 0.05);
+        const zohoTotal = singleMatch ? row.amount : nameMatches.reduce((s, e) => s + (e.amount || 0), 0);
+        const status = singleMatch ? 'ok' : 'possible_match';
+        return { ...row, status, zohoTotal, zohoEntries: nameMatches, nameMatchedClient: (nameMatches[0].paymentName || nameMatches[0].bookingName || ''), singleMatch: !!singleMatch };
       }
 
       return { ...row, status: 'missing', zohoTotal: null, zohoEntries: [] };
@@ -2699,19 +2690,28 @@ function renderFortnightlyAdmin() {
 
       // Build expandable sub-row for multi-payment or possible-match entries
       if (hasZoho && row.zohoEntries && row.zohoEntries.length > 1) {
+        const entryTotal = row.zohoEntries.reduce((s, e) => s + (e.amount || 0), 0);
         expandDetail = `<details style="margin-top:4px;"><summary style="cursor:pointer; font-size:11px; color:var(--muted); user-select:none; list-style:none; display:inline-flex; align-items:center; gap:4px;"><span style="font-size:9px;">▶</span> ${row.zohoEntries.length} Zoho entries — expand</summary><div style="margin-top:6px; padding:6px 8px; background:#f9fafb; border-radius:6px; font-size:11px; font-family:var(--mono);">`;
         row.zohoEntries.forEach(e => {
-          expandDetail += `<div style="padding:2px 0; color:var(--slate);">${xesc(e.date || '—')} &nbsp;·&nbsp; ${fmtAUD(e.amount)} &nbsp;·&nbsp; <span style="color:var(--muted); font-family:inherit;">${xesc(e.paymentName || e.bookingName || '')}</span></div>`;
+          const isMatch = row.singleMatch && Math.abs((e.amount || 0) - row.amount) <= 0.05;
+          const matchStyle = isMatch ? ' font-weight:700; color:var(--accent);' : '';
+          const matchMark  = isMatch ? ' ✓' : '';
+          expandDetail += `<div style="padding:2px 0; color:var(--slate);${matchStyle}">${xesc(e.date || '—')} &nbsp;·&nbsp; ${fmtAUD(e.amount)}${matchMark} &nbsp;·&nbsp; <span style="color:var(--muted); font-family:inherit;">${xesc(e.paymentName || e.bookingName || '')}</span></div>`;
         });
+        expandDetail += `<div style="margin-top:5px; padding-top:5px; border-top:1px solid var(--border); color:var(--ink); font-weight:600;">Total: ${fmtAUD(entryTotal)}</div>`;
         expandDetail += `</div></details>`;
-      } else if (hasZoho && row.zohoEntries && row.zohoEntries.length === 1 && row.status === 'possible_match') {
+      } else if (hasZoho && row.zohoEntries && row.zohoEntries.length === 1 && (row.status === 'possible_match' || row.nameMatchedClient)) {
         const e = row.zohoEntries[0];
-        expandDetail = `<div style="font-size:11px; color:#6d28d9; margin-top:3px;">Matched on name: <em>${xesc(e.paymentName || e.bookingName || '')}</em></div>`;
+        expandDetail = `<div style="font-size:11px; color:#6d28d9; margin-top:3px;">Matched on name: <em>${xesc(e.paymentName || e.bookingName || '')}</em> · ${xesc(e.date || '—')} · ${fmtAUD(e.amount)}</div>`;
       }
 
       if (row.status === 'ok') {
-        const multi = row.zohoEntries && row.zohoEntries.length > 1 ? ` <span style="font-size:10px; color:var(--accent);">(${row.zohoEntries.length} payments)</span>` : '';
-        badge = `<span class="recon-badge ok">✓ Matched${multi ? '' : ''}</span>${multi}`;
+        const nEntries = row.zohoEntries ? row.zohoEntries.length : 0;
+        const extras = nEntries > 1 && row.singleMatch
+          ? ` <span style="font-size:10px; color:var(--muted);">(+${nEntries - 1} other Zoho entr${nEntries - 1 === 1 ? 'y' : 'ies'})</span>` : '';
+        const nameNote = row.nameMatchedClient
+          ? ` <span style="font-size:10px; color:var(--muted);">via name</span>` : '';
+        badge = `<span class="recon-badge ok">✓ Matched</span>${extras}${nameNote}`;
       } else if (row.status === 'mismatch') {
         badge = `<span class="recon-badge mismatch">⚠ Amount differs</span>${searchLink}`;
         rowBg = 'background:#fffbeb;';
