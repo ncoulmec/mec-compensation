@@ -725,11 +725,11 @@
     <button class="tab-btn active" aria-current="page" data-tab="overview">Overview</button>
     <button class="tab-btn" data-tab="planning">Planning</button>
     <button class="tab-btn" data-tab="projects">Projects</button>
-    <button class="tab-btn" data-tab="pool">🤝 Team Pool <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
-    <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
     <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
     <button class="tab-btn" data-tab="faq">FAQ</button>
     <button class="tab-btn" data-tab="howitworks">How This Works</button>
+    <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
+    <button class="tab-btn" data-tab="pool">🤝 Team Pool <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
   </div>
 </nav>
 </div>
@@ -1283,15 +1283,17 @@
   <section class="panel" id="panel-payouts">
     <!-- payout-banner removed — payout cadence is implied by the fortnightly preview below. -->
 
-    <div class="super-card">
-      <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px;">Superannuation &amp; Total Package (Planning)</h2>
-      <div class="super-line"><span>Base salary (ex-super)</span><span id="spr-base">—</span></div>
-      <div class="super-line"><span>+ GP Commission (ex-super portion)</span><span id="spr-comm" class="plus-line">—</span></div>
-      <div class="super-line"><span>+ Production Commission (ex-super portion)</span><span id="spr-prod" class="plus-line">—</span></div>
-      <div class="super-line muted"><span>Subtotal ex-super</span><span id="spr-subtotal">—</span></div>
-      <div class="super-line"><span id="spr-super-label">+ Superannuation (total)</span><span id="spr-super" class="plus-line">—</span></div>
-      <div class="super-line total"><span>Total package (inc. super)</span><span id="spr-total">—</span></div>
-    </div>
+    <details class="super-card" style="margin-bottom: 14px;">
+      <summary style="cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 4px 0; user-select: none;">▸ Detailed breakdown — base, commission &amp; super</summary>
+      <div style="margin-top: 12px;">
+        <div class="super-line"><span>Base salary (ex-super)</span><span id="spr-base">—</span></div>
+        <div class="super-line"><span>+ GP Commission (ex-super portion)</span><span id="spr-comm" class="plus-line">—</span></div>
+        <div class="super-line"><span>+ Production Commission (ex-super portion)</span><span id="spr-prod" class="plus-line">—</span></div>
+        <div class="super-line muted"><span>Subtotal ex-super</span><span id="spr-subtotal">—</span></div>
+        <div class="super-line"><span id="spr-super-label">+ Superannuation (total)</span><span id="spr-super" class="plus-line">—</span></div>
+        <div class="super-line total"><span>Total package (inc. super)</span><span id="spr-total">—</span></div>
+      </div>
+    </details>
 
     <!-- ============================================================
          FORTNIGHTLY PAYOUT — ACTIVE PLAN (Forward 12 months)
@@ -1311,13 +1313,15 @@
         <table class="monthly" id="fortnightly-table" style="width: 100%;">
           <thead>
             <tr>
-              <th>Period</th>
-              <th class="num">GP Received <span class="fn-tip" data-tip="<strong>Editable</strong> — type any value to model the fortnight. Pull these figures from the Zoho Payments report once your fortnight closes. Live recalc as you type.">?</span></th>
-              <th class="num">YTD GP</th>
-              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the fortnight in.">?</span></th>
-              <th class="num">Pay This FN <small>(inc. super)</small></th>
-              <th class="num">TU Adj <span class="fn-tip" data-tip="<strong>True-Up Adjustment</strong> — corrects pay when a single fortnight straddles a band threshold mid-fortnight.<br><br><strong>Important:</strong> The sales rep plan is flat 4% on the first $300k of YTD GP — so TU won't trigger until your YTD crosses $300k. That's when bands start increasing (9% at $300k, 12% at $400k, 13% at $450k, 14% at $500k, 16% at $550k+). After that, expect 3–5 TU fires per year as you cross each new threshold. Most fortnights = <code>$0</code>.<br><br>Hover any TU value (even on collapsed months) for the full breakdown.">?</span></th>
-              <th class="num">Cumulative</th>
+              <th style="text-align: left;">Period</th>
+              <th class="num" style="width: 100px;">GP Received <span class="fn-tip" data-tip="<strong>Editable</strong> — type any value to model the fortnight. Pull these figures from the Zoho Payments report once your fortnight closes. Live recalc as you type.">?</span></th>
+              <th class="num" style="width: 90px;">YTD GP</th>
+              <th class="num" style="width: 90px;">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the fortnight in.">?</span></th>
+              <th class="num" style="width: 110px;">GP Comm <small>(inc. super)</small></th>
+              <th class="num" style="width: 80px;">TU Adj <span class="fn-tip" data-tip="<strong>True-Up Adjustment</strong> — corrects pay when a single fortnight straddles a band threshold mid-fortnight.<br><br><strong>Important:</strong> The sales rep plan is flat 4% on the first $300k of YTD GP — so TU won't trigger until your YTD crosses $300k. That's when bands start increasing (9% at $300k, 12% at $400k, 13% at $450k, 14% at $500k, 16% at $550k+).<br><br>Hover any TU value for breakdown.">?</span></th>
+              <th class="num" style="width: 100px; border-left: 2px solid #ecebe5;">Event GP <span class="fn-tip" data-tip="<strong>Editable</strong> — total GP <em>produced</em> (events delivered) in this fortnight. Drives the 1% production commission below. Every sales role generates some production GP — log it here as the event closes out.">?</span></th>
+              <th class="num" style="width: 100px;">Prod Comm <small>(inc. super)</small> <span class="fn-tip" data-tip="Production commission — <strong>1% of Event GP</strong>. Paid alongside GP commission each fortnight, no band math (flat rate). Inclusive of super.">?</span></th>
+              <th class="num" style="width: 110px;">Cumulative <span class="fn-tip" data-tip="Running total of GP Comm + Production Comm — what's been paid year-to-date.">?</span></th>
             </tr>
           </thead>
           <tbody id="fortnightly-body"></tbody>
@@ -1328,30 +1332,51 @@
       <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Click any month to expand its fortnights · Months containing a band crossing are highlighted gold · Hover any cell for context · No quarter-end TU required — every fortnight reconciles itself.</p>
 
       <!-- ============================================================
-           YEAR-END AUDIT — Cross-check rep entries against company GP
+           YEAR-END AUDIT — Cross-check GP Received AND Event GP
            ============================================================ -->
-      <div style="margin-top: 22px; padding: 16px; border: 1px dashed #b8860b; border-radius: 8px; background: #fefcf7;">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;">
+      <div style="margin-top: 22px; padding: 14px 16px; border: 1px solid #d4b85a; border-radius: 8px; background: #fefcf7;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
           <h3 style="margin: 0; font-size: 14px; color: #6a4a00;">Year-End Audit <span style="font-size: 9px; padding: 1px 5px; background: #fff3cd; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 3px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Sanity check</span></h3>
-          <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Run at FY close — confirms fortnightly entries reconcile to the company books.</span>
+          <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Run at FY close — both GP Received and Event GP must reconcile to the books.</span>
         </div>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Pull total GP received for this rep from the source of truth (Zoho Payments report, or Xero cash-basis P&amp;L if a single-rep account), enter it here, and we'll verify it matches the sum of every fortnight above. Differences over $1 indicate a missing or duplicated entry that needs investigation.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: end;">
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px;">Paste the full-year totals from the source of truth (Zoho Payments for GP Received, Zoho Bookings for Event GP Produced). We'll verify both sums match every fortnight entry above.</p>
+
+        <!-- GP Received audit row -->
+        <div style="display: grid; grid-template-columns: 110px repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: end; margin-bottom: 8px;">
+          <div style="font-size: 11px; color: #6a4a00; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 8px;">GP Received</div>
           <div>
-            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Full-year GP received (from Zoho)</label>
-            <input type="text" id="audit-actual" placeholder="e.g. 445,000" inputmode="decimal" style="width: 100%; padding: 8px 10px; border: 1px solid #d3d1c7; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fff;">
+            <label style="display: block; font-size: 10px; color: var(--muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Full-year (from Zoho)</label>
+            <input type="text" id="audit-actual" placeholder="e.g. 445,000" inputmode="decimal" style="width: 100%; padding: 6px 8px; border: 1px solid #d3d1c7; border-radius: 4px; font-family: var(--mono); font-size: 13px; background: #fff;">
           </div>
           <div>
-            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Sum of 26 fortnight entries</label>
-            <div id="audit-sum" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7; color: var(--ink);">—</div>
+            <label style="display: block; font-size: 10px; color: var(--muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Sum of 26 fortnights</label>
+            <div id="audit-sum" style="padding: 6px 8px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 13px; background: #fafaf7; color: var(--ink);">—</div>
           </div>
           <div>
-            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Variance</label>
-            <div id="audit-variance" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7;">—</div>
+            <label style="display: block; font-size: 10px; color: var(--muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Variance</label>
+            <div id="audit-variance" style="padding: 6px 8px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 13px; background: #fafaf7;">—</div>
           </div>
         </div>
-        <div id="audit-verdict" style="margin-top: 14px; padding: 12px; border-radius: 6px; background: #f4f3ed; border: 1px solid #d3d1c7; font-size: 13px; color: var(--muted);">
-          <span style="font-family: var(--mono); font-size: 11px;">▸ Enter the full-year GP received above to verify.</span>
+
+        <!-- Event GP audit row -->
+        <div style="display: grid; grid-template-columns: 110px repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: end;">
+          <div style="font-size: 11px; color: #6a4a00; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 8px;">Event GP</div>
+          <div>
+            <label style="display: block; font-size: 10px; color: var(--muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Full-year (from Zoho)</label>
+            <input type="text" id="audit-event-actual" placeholder="e.g. 200,000" inputmode="decimal" style="width: 100%; padding: 6px 8px; border: 1px solid #d3d1c7; border-radius: 4px; font-family: var(--mono); font-size: 13px; background: #fff;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 10px; color: var(--muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Sum of 26 fortnights</label>
+            <div id="audit-event-sum" style="padding: 6px 8px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 13px; background: #fafaf7; color: var(--ink);">—</div>
+          </div>
+          <div>
+            <label style="display: block; font-size: 10px; color: var(--muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Variance</label>
+            <div id="audit-event-variance" style="padding: 6px 8px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 13px; background: #fafaf7;">—</div>
+          </div>
+        </div>
+
+        <div id="audit-verdict" style="margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: #f4f3ed; border: 1px solid #d3d1c7; font-size: 13px; color: var(--muted);">
+          <span style="font-family: var(--mono); font-size: 11px;">▸ Enter the full-year GP Received and Event GP above to verify.</span>
         </div>
         <p style="font-size: 11px; color: var(--faint); margin: 10px 0 0; font-family: var(--mono);">Tolerance: ±$1.00 (rounding) · ±$1,000 (acceptable timing variance) · &gt;$1,000 requires reconciliation.</p>
       </div>
@@ -1563,7 +1588,7 @@ const EMPLOYEE_ID = 'daniel';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v30`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v31`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -3595,32 +3620,38 @@ function renderOTECard() {
   const card = document.createElement('div');
   card.className = 'card';
   card.id = 'ote-card';
-  card.style.cssText = 'background: linear-gradient(135deg, #eef4fa 0%, #ffffff 100%); border-left: 4px solid var(--accent); margin-bottom: 18px;';
+  card.style.cssText = 'border-left: 4px solid #b8860b; margin-bottom: 14px; padding: 14px 18px;';
   card.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 6px;">
-      <h2 style="margin: 0;">Your On-Target Earnings (OTE)</h2>
-      ${snapTo ? `<button id="ote-snap-btn" style="background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k GP)</button>` : ''}
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+      <div>
+        <h2 style="margin: 0 0 2px; font-size: 16px;">Your On-Target Earnings</h2>
+        <p style="font-size: 11px; color: var(--muted); margin: 0; font-family: var(--mono);">All figures super-inclusive · Variable updates live with GP slider</p>
+      </div>
+      ${snapTo ? `<button id="ote-snap-btn" style="background: #b8860b; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k GP)</button>` : ''}
     </div>
-    <p style="font-size: 13px; color: var(--muted); margin: 0 0 16px;">A normal year, when you hit target, looks like this. <strong>All figures are super-inclusive</strong>. The Variable Target below updates live as you drag the floating GP Received slider.</p>
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
-      <div style="padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
-        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Base Salary <span style="color: var(--faint); font-weight: 500;">(inc super)</span></div>
-        <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 4px;">${fmtMoney(ote.baseInclSuper)}</div>
-        <div style="font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">${fmtMoney(ote.baseSalary)} + ${fmtMoney(ote.baseSuperOnBase)} super</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
+      <div style="padding: 10px 14px; background: #fff; border: 1px solid #ecebe5; border-radius: 6px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Base</div>
+        <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 2px;">${fmtMoney(ote.baseInclSuper)}</div>
+        <div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">${fmtMoney(ote.baseSalary)} + ${fmtMoney(ote.baseSuperOnBase)} super</div>
       </div>
-      <div style="padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: 8px;">
-        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Variable @ Current GP <span style="color: var(--faint); font-weight: 500;">(inc super)</span></div>
-        <div id="ote-variable-live" style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent); margin-top: 4px;">—</div>
-        <div id="ote-variable-sub" style="font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">at —</div>
+      <div style="padding: 10px 14px; background: #fff; border: 1px solid #ecebe5; border-radius: 6px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Variable @ Current GP</div>
+        <div id="ote-variable-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: #b8860b; margin-top: 2px;">—</div>
+        <div id="ote-variable-sub" style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">at —</div>
       </div>
-      <div style="padding: 12px 14px; background: var(--ink); color: #fff; border-radius: 8px;">
-        <div style="font-size: 10px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total <span style="color: rgba(255,255,255,0.5); font-weight: 500;">(inc super)</span></div>
-        <div id="ote-total-live" style="font-family: var(--mono); font-size: 22px; font-weight: 700; margin-top: 4px;">—</div>
-        <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px;">What you'll be paid before tax this year</div>
+      <div style="padding: 10px 14px; background: #fefcf7; border: 1px solid #d4b85a; border-radius: 6px;">
+        <div style="font-size: 10px; color: #6a4a00; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total</div>
+        <div id="ote-total-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: #6a4a00; margin-top: 2px;">—</div>
+        <div style="font-size: 10px; color: #8a6a00; margin-top: 2px; font-family: var(--mono);">pre-tax annual package</div>
       </div>
     </div>
-    <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6;">
-      <strong style="color: var(--navy);">Pay mix philosophy:</strong> Historically most MEC roles sat at roughly <strong>${philosophy?.legacyMix || '85:15'}</strong> or even <strong>${philosophy?.legacyMixOlder || '90:10'}</strong> base-to-variable — comfortable, predictable, but with limited upside. The plan you're looking at nudges us toward <strong>${philosophy?.futureGoal || '75:25'}</strong> over the next few years — gradually putting more of your earnings inside your control. Not a flip-of-the-switch change, more a steady walk in that direction. Bigger ceiling, more reward for stretching. You&rsquo;ll notice this compensation plan starts moving the dial that way.</div>
+    <details style="margin-top: 10px;">
+      <summary style="cursor: pointer; font-size: 11px; color: var(--muted); padding: 4px 0; font-family: var(--mono); user-select: none;">▸ Pay mix philosophy — why the plan is moving toward more variable</summary>
+      <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6; margin-top: 6px;">
+        Historically most MEC roles sat at roughly <strong>${philosophy?.legacyMix || '85:15'}</strong> or even <strong>${philosophy?.legacyMixOlder || '90:10'}</strong> base-to-variable — comfortable, predictable, but with limited upside. The plan you're looking at nudges us toward <strong>${philosophy?.futureGoal || '75:25'}</strong> over the next few years — gradually putting more of your earnings inside your control. Not a flip-of-the-switch change, more a steady walk in that direction. Bigger ceiling, more reward for stretching.
+      </div>
+    </details>
   `;
   wrap.insertBefore(card, wrap.firstChild);
 
@@ -4068,6 +4099,10 @@ function renderBreakdown(r) {
 
   // Per-fortnight GP — starts BLANK (0). User edits via inline inputs.
   const gpValues = new Array(FORTNIGHTS.length).fill(0);
+  // Parallel array for Event GP Produced (drives 1% production commission).
+  const eventGpValues = new Array(FORTNIGHTS.length).fill(0);
+  // Production commission rate — flat 1% of Event GP, inc super (matches all sales plans).
+  const PROD_RATE = 0.01;
 
   const _fmt = (window.fmtMoney || ((n) => '$' + Math.round(n).toLocaleString()));
   const _fmtSigned = (n) => (n >= 0 ? '+' : '−') + _fmt(Math.abs(n));
@@ -4255,14 +4290,20 @@ function renderBreakdown(r) {
     return body;
   }
 
-  // -------- Main render: re-runs every time a GP cell changes --------
+  // -------- Main render: re-runs every time a GP / Event GP cell changes --------
   function render() {
-    // Compute per-fortnight rows
+    // Compute per-fortnight rows. Two parallel cash streams:
+    //   • GP commission — banded math against YTD GP Received (with TU on crossings)
+    //   • Production commission — flat 1% × Event GP Produced this fortnight
+    // Cumulative includes BOTH so the rep sees one running total.
     let ytd = 0;
-    let cumPay = 0;
+    let cumPay = 0;       // cumulative GP commission only
+    let cumProd = 0;      // cumulative production commission
+    let cumEventGp = 0;   // cumulative Event GP (for tooltips)
     const rows = [];
     FORTNIGHTS.forEach((fn, i) => {
       const gp = gpValues[i] || 0;
+      const eventGp = eventGpValues[i] || 0;
       const prevYtd = ytd;
       ytd = prevYtd + gp;
       const properPay = cumBandComm(ytd) - cumBandComm(prevYtd);
@@ -4270,14 +4311,20 @@ function renderBreakdown(r) {
       const startRate = marginalRate(prevYtd);
       const naivePay = gp * endRate;
       const tuAdj = properPay - naivePay;
+      const prodComm = eventGp * PROD_RATE;
       cumPay += properPay;
+      cumProd += prodComm;
+      cumEventGp += eventGp;
       const crossed = Math.abs(tuAdj) > 0.5;
       rows.push({
-        ...fn, idx: i, gp,
+        ...fn, idx: i, gp, eventGp,
         ytd, prevYtd,
         properPay, naivePay, tuAdj,
         endRate, startRate,
-        cumPay, crossed
+        prodComm,
+        cumPay, cumProd, cumEventGp,
+        cumTotal: cumPay + cumProd,
+        crossed
       });
     });
 
@@ -4351,12 +4398,16 @@ function renderBreakdown(r) {
     let html = '';
     // Track which group each fortnight idx belongs to (for Tab navigation auto-expand)
     const idxToGroup = {};
+    // Visual separator style for Event-GP columns (border-left to distinguish production block)
+    const SEP = 'border-left: 2px solid #ecebe5;';
     byMonth.forEach((group, gi) => {
       const groupGP = group.rows.reduce((s, r) => s + r.gp, 0);
+      const groupEventGp = group.rows.reduce((s, r) => s + r.eventGp, 0);
+      const groupProd = group.rows.reduce((s, r) => s + r.prodComm, 0);
       const groupPay = group.rows.reduce((s, r) => s + r.properPay, 0);
       const groupTU = group.rows.reduce((s, r) => s + r.tuAdj, 0);
       const lastYtd = group.rows[group.rows.length - 1].ytd;
-      const lastCum = group.rows[group.rows.length - 1].cumPay;
+      const lastCumTotal = group.rows[group.rows.length - 1].cumTotal;
       const lastRate = group.rows[group.rows.length - 1].endRate;
       const hasCrossing = group.rows.some(r => r.crossed);
       const groupBg = hasCrossing ? 'background: #fffbeb;' : '';
@@ -4382,7 +4433,9 @@ function renderBreakdown(r) {
           <td class="num">${monthBandCellHtml}</td>
           <td class="num">${groupPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(monthPayTip)}'>${_fmt(groupPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num">${groupTuPill}</td>
-          <td class="num" style="color: var(--muted);">${_fmt(lastCum)}</td>
+          <td class="num" style="${SEP}">${groupEventGp > 0 ? _fmt(groupEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
+          <td class="num">${groupProd > 0 ? _fmt(groupProd) : '<span style="color: var(--faint);">—</span>'}</td>
+          <td class="num" style="color: var(--muted);">${_fmt(lastCumTotal)}</td>
         </tr>
       `;
 
@@ -4396,6 +4449,9 @@ function renderBreakdown(r) {
         const displayStyle = isOpen ? '' : 'display: none;';
         const rBandCellHtml = bandCellHtml(r);
         const rPayTip = payCellTipHtml(r);
+        const prodTip = r.prodComm > 0
+          ? `<div style="font-weight: 700; margin-bottom: 4px;">Production commission</div><div>Event GP this fortnight: <code>${_fmt(r.eventGp)}</code></div><div>× 1% = <code>${_fmt(r.prodComm)}</code></div><div style="margin-top: 4px; color: #aaa; font-size: 11px;">Flat 1% on Event GP Produced (no band math). Inclusive of super.</div>`
+          : `<div>No Event GP entered for this fortnight.</div>`;
         html += `
           <tr class="fn-detail-row fn-detail-${gi}" style="${displayStyle} ${rowBg}">
             <td style="padding-left: 24px; color: var(--muted); font-family: var(--mono); font-size: 11px;">
@@ -4406,7 +4462,9 @@ function renderBreakdown(r) {
             <td class="num">${rBandCellHtml}</td>
             <td class="num">${r.properPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(rPayTip)}'>${_fmt(r.properPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
             <td class="num">${tuPill}</td>
-            <td class="num" style="color: var(--muted);">${_fmt(r.cumPay)}</td>
+            <td class="num" style="${SEP}"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
+            <td class="num">${r.prodComm > 0 ? `<span class="fn-pay-cell" data-tip='${esc(prodTip)}'>${_fmt(r.prodComm)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
+            <td class="num" style="color: var(--muted);">${_fmt(r.cumTotal)}</td>
           </tr>
         `;
       });
@@ -4415,7 +4473,11 @@ function renderBreakdown(r) {
 
     // Footer — band cell: end-of-year band as main, effective rate as small pill
     const totalTu = rows.reduce((s, r) => s + r.tuAdj, 0);
-    const totalPayTip = payAggTipHtml('Total FY27 pay', totalPay);
+    const totalEventGp = rows.reduce((s, r) => s + r.eventGp, 0);
+    const totalProd = rows.reduce((s, r) => s + r.prodComm, 0);
+    const totalAll = totalPay + totalProd;
+    const totalPayTip = payAggTipHtml('Total FY27 GP pay', totalPay);
+    const totalCumTip = payAggTipHtml('Total FY27 pay (GP + Production)', totalAll);
     const endBand = totalGP > 0 ? marginalRate(totalGP) : 0;
     const endBandPct = (endBand * 100).toFixed(0) + '%';
     const effRatePct = (avgRate * 100).toFixed(1) + '%';
@@ -4432,7 +4494,9 @@ function renderBreakdown(r) {
         <td class="num">${bandFooterHtml}</td>
         <td class="num">${totalPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalPayTip)}'>${_fmt(totalPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num">${Math.abs(totalTu) < 0.5 ? '<span class="fn-tu-pill dim">—</span>' : '<span class="fn-tu-pill live">' + _fmtSigned(totalTu) + '</span>'}</td>
-        <td class="num">${_fmt(totalPay)}</td>
+        <td class="num" style="${SEP}">${totalEventGp > 0 ? _fmt(totalEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num">${totalProd > 0 ? _fmt(totalProd) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num">${totalAll > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalCumTip)}'>${_fmt(totalAll)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
       </tr>
     `;
 
@@ -4463,43 +4527,22 @@ function renderBreakdown(r) {
       if (caret) caret.style.transform = 'rotate(90deg)';
     }
 
-    // Wire GP inputs — recalc on blur for speed. Tab moves to next fortnight,
-    // auto-expanding its month if currently collapsed.
-    const inputs = Array.from(tbody.querySelectorAll('.fn-gp-input'));
-    inputs.forEach(inp => {
+    // Generic input wiring — used for both GP Received and Event GP inputs.
+    // `targetArr` is the array to mutate on commit; `selector` finds same-column inputs.
+    function wireFortnightInput(inp, targetArr, selector) {
       inp.addEventListener('click', (e) => e.stopPropagation()); // don't toggle row
       inp.addEventListener('focus', (e) => e.target.select());
       const commit = () => {
         const idx = parseInt(inp.getAttribute('data-idx'), 10);
         const raw = inp.value.replace(/[^0-9.\-]/g, '');
         const n = parseFloat(raw);
-        gpValues[idx] = isFinite(n) ? n : 0;
+        targetArr[idx] = isFinite(n) ? n : 0;
       };
-      const commitAndRender = () => { commit(); render(); };
-      inp.addEventListener('blur', commitAndRender);
+      inp.addEventListener('blur', () => { commit(); render(); });
       inp.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          commit();
-          // Move to next fortnight (same behaviour as Tab)
-          const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
-          if (curIdx < FORTNIGHTS.length - 1) {
-            const nextIdx = curIdx + 1;
-            const nextGroup = idxToGroup[nextIdx];
-            ensureGroupOpen(nextGroup);
-            render();
-            const nextInput = tbody.querySelector('.fn-gp-input[data-idx="' + nextIdx + '"]');
-            if (nextInput) { nextInput.focus(); nextInput.select && nextInput.select(); }
-          } else {
-            render();
-            inp.blur();
-          }
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          inp.blur();
-        } else if (e.key === 'Tab' && !e.shiftKey) {
-          // Override default tab to ensure next fortnight's row is visible
-          const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
+        if (e.key === 'Escape') { e.preventDefault(); inp.blur(); return; }
+        const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
+        if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
           if (curIdx < FORTNIGHTS.length - 1) {
             e.preventDefault();
             commit();
@@ -4507,12 +4550,14 @@ function renderBreakdown(r) {
             const nextGroup = idxToGroup[nextIdx];
             ensureGroupOpen(nextGroup);
             render();
-            const nextInput = tbody.querySelector('.fn-gp-input[data-idx="' + nextIdx + '"]');
+            const nextInput = tbody.querySelector(selector + '[data-idx="' + nextIdx + '"]');
             if (nextInput) { nextInput.focus(); nextInput.select && nextInput.select(); }
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            render();
+            inp.blur();
           }
         } else if (e.key === 'Tab' && e.shiftKey) {
-          // Shift+Tab goes to previous fortnight
-          const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
           if (curIdx > 0) {
             e.preventDefault();
             commit();
@@ -4520,69 +4565,116 @@ function renderBreakdown(r) {
             const prevGroup = idxToGroup[prevIdx];
             ensureGroupOpen(prevGroup);
             render();
-            const prevInput = tbody.querySelector('.fn-gp-input[data-idx="' + prevIdx + '"]');
+            const prevInput = tbody.querySelector(selector + '[data-idx="' + prevIdx + '"]');
             if (prevInput) { prevInput.focus(); prevInput.select && prevInput.select(); }
           }
         }
       });
+    }
+    tbody.querySelectorAll('.fn-gp-input').forEach(inp => wireFortnightInput(inp, gpValues, '.fn-gp-input'));
+    tbody.querySelectorAll('.fn-event-input').forEach(inp => wireFortnightInput(inp, eventGpValues, '.fn-event-input'));
+
+    // Apply same styling to Event GP inputs as GP inputs (shared CSS class via JS)
+    tbody.querySelectorAll('.fn-event-input').forEach(inp => {
+      inp.classList.add('fn-gp-input');
     });
 
     // Update audit feature live
-    updateAudit(totalGP);
+    updateAudit(totalGP, totalEventGp);
   }
 
   // ============================================================
-  // YEAR-END AUDIT — recompute whenever sum-of-fortnights changes
+  // YEAR-END AUDIT — recompute for both GP Received AND Event GP
   // ============================================================
   const auditInput = document.getElementById('audit-actual');
   const auditSum = document.getElementById('audit-sum');
   const auditVariance = document.getElementById('audit-variance');
+  const auditEventInput = document.getElementById('audit-event-actual');
+  const auditEventSum = document.getElementById('audit-event-sum');
+  const auditEventVariance = document.getElementById('audit-event-variance');
   const auditVerdict = document.getElementById('audit-verdict');
 
-  function updateAudit(currentSum) {
-    if (!auditSum) return;
-    auditSum.textContent = currentSum > 0 ? _fmt(currentSum) : '—';
-    const raw = (auditInput && auditInput.value || '').replace(/[^0-9.\-]/g, '');
+  // Compute variance status for one stream — returns { state: 'idle'|'ok'|'warn'|'err', varTxt, diff, absDiff }
+  function _auditVar(inpEl, currentSum) {
+    const raw = (inpEl && inpEl.value || '').replace(/[^0-9.\-]/g, '');
     const actual = parseFloat(raw);
-    if (!isFinite(actual) || raw === '') {
-      auditVariance.style.background = '#fafaf7';
-      auditVariance.style.color = 'var(--ink)';
-      auditVariance.style.borderColor = '#ecebe5';
-      auditVariance.textContent = '—';
-      auditVerdict.style.background = '#f4f3ed';
-      auditVerdict.style.borderColor = '#d3d1c7';
-      auditVerdict.style.color = 'var(--muted)';
-      auditVerdict.innerHTML = '<span style="font-family: var(--mono); font-size: 11px;">▸ Enter the full-year GP received above to verify.</span>';
-      return;
-    }
+    if (!isFinite(actual) || raw === '') return { state: 'idle' };
     const diff = actual - currentSum;
     const absDiff = Math.abs(diff);
     const sign = diff >= 0 ? '+' : '−';
     const varTxt = absDiff < 0.5 ? '$0' : sign + _fmt(absDiff);
-    let bg, border, color, verdict;
-    if (absDiff <= 1) {
-      bg = '#e7f6ea'; border = '#48a14d'; color = '#1e6624';
-      verdict = `<div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 22px; line-height: 1;">✓</span><div><div style="font-weight: 700; font-size: 14px; color: #1e6624;">Reconciled — entries match the books</div><div style="font-size: 12px; color: #2a6b30; margin-top: 2px;">Sum of 26 fortnight entries (${_fmt(currentSum)}) matches the company figure within rounding tolerance. Safe to close the FY.</div></div></div>`;
-    } else if (absDiff <= 1000) {
-      bg = '#fff8e1'; border = '#d4a017'; color = '#6a4a00';
-      verdict = `<div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 22px; line-height: 1;">⚠</span><div><div style="font-weight: 700; font-size: 14px; color: #6a4a00;">Minor variance — likely timing</div><div style="font-size: 12px; color: #6a4a00; margin-top: 2px;">${varTxt} ${diff >= 0 ? 'company recorded MORE than rep entries' : 'rep entries exceed company total'}. Within tolerance for cutoff timing (a payment landing 1 day either side of year-end). Spot-check the final fortnight before closing.</div></div></div>`;
-    } else {
-      bg = '#fdecec'; border = '#c04a4a'; color = '#7a1f1f';
-      verdict = `<div style="display: flex; align-items: flex-start; gap: 10px;"><span style="font-size: 22px; line-height: 1;">✗</span><div><div style="font-weight: 700; font-size: 14px; color: #7a1f1f;">Mismatch — reconcile before closing</div><div style="font-size: 12px; color: #7a1f1f; margin-top: 2px;">Variance of ${varTxt} ${diff >= 0 ? '(company recorded more than rep entries — possibly a payment was missed in the fortnightly log)' : '(rep entries exceed company total — possibly a duplicate or miscategorised entry)'}. Cross-reference each fortnight against the Zoho Payments report to find the discrepancy.</div></div></div>`;
+    let state = 'err';
+    if (absDiff <= 1) state = 'ok';
+    else if (absDiff <= 1000) state = 'warn';
+    return { state, varTxt, diff, absDiff };
+  }
+
+  function _paintVar(el, v) {
+    if (!el) return;
+    if (v.state === 'idle') {
+      el.style.background = '#fafaf7'; el.style.color = 'var(--ink)'; el.style.borderColor = '#ecebe5';
+      el.textContent = '—';
+      return;
     }
-    auditVariance.style.background = bg;
-    auditVariance.style.borderColor = border;
-    auditVariance.style.color = color;
-    auditVariance.textContent = varTxt;
-    auditVerdict.style.background = bg;
-    auditVerdict.style.borderColor = border;
-    auditVerdict.style.color = color;
-    auditVerdict.innerHTML = verdict;
+    const palette = {
+      ok:   { bg: '#e7f6ea', border: '#48a14d', color: '#1e6624' },
+      warn: { bg: '#fff8e1', border: '#d4a017', color: '#6a4a00' },
+      err:  { bg: '#fdecec', border: '#c04a4a', color: '#7a1f1f' }
+    }[v.state];
+    el.style.background = palette.bg; el.style.borderColor = palette.border; el.style.color = palette.color;
+    el.textContent = v.varTxt;
+  }
+
+  function _verdictHtml(label, v, fmtSum, streamName) {
+    if (v.state === 'ok') return `<div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 18px; line-height: 1;">✓</span><div style="flex: 1;"><strong>${label}:</strong> Reconciled — ${streamName} fortnight entries (${fmtSum}) match the books within rounding.</div></div>`;
+    if (v.state === 'warn') return `<div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 18px; line-height: 1;">⚠</span><div style="flex: 1;"><strong>${label}:</strong> ${v.varTxt} variance — ${v.diff >= 0 ? 'company > rep entries' : 'rep entries > company'}. Within timing tolerance.</div></div>`;
+    return `<div style="display: flex; align-items: flex-start; gap: 10px;"><span style="font-size: 18px; line-height: 1;">✗</span><div style="flex: 1;"><strong>${label}:</strong> ${v.varTxt} mismatch — needs reconciliation. Cross-reference each fortnight against Zoho.</div></div>`;
+  }
+
+  function updateAudit(currentGpSum, currentEventSum) {
+    if (auditSum) auditSum.textContent = currentGpSum > 0 ? _fmt(currentGpSum) : '—';
+    if (auditEventSum) auditEventSum.textContent = currentEventSum > 0 ? _fmt(currentEventSum) : '—';
+    const vGp = _auditVar(auditInput, currentGpSum);
+    const vEv = _auditVar(auditEventInput, currentEventSum);
+    _paintVar(auditVariance, vGp);
+    _paintVar(auditEventVariance, vEv);
+
+    // Combined verdict — show one line per stream that's been entered.
+    if (vGp.state === 'idle' && vEv.state === 'idle') {
+      auditVerdict.style.background = '#f4f3ed';
+      auditVerdict.style.borderColor = '#d3d1c7';
+      auditVerdict.style.color = 'var(--muted)';
+      auditVerdict.innerHTML = '<span style="font-family: var(--mono); font-size: 11px;">▸ Enter the full-year GP Received and Event GP above to verify.</span>';
+      return;
+    }
+    // Overall verdict colour = worst of the two streams
+    const worst = (vGp.state === 'err' || vEv.state === 'err') ? 'err'
+                 : (vGp.state === 'warn' || vEv.state === 'warn') ? 'warn' : 'ok';
+    const palette = {
+      ok:   { bg: '#e7f6ea', border: '#48a14d', color: '#1e6624' },
+      warn: { bg: '#fff8e1', border: '#d4a017', color: '#6a4a00' },
+      err:  { bg: '#fdecec', border: '#c04a4a', color: '#7a1f1f' }
+    }[worst];
+    auditVerdict.style.background = palette.bg;
+    auditVerdict.style.borderColor = palette.border;
+    auditVerdict.style.color = palette.color;
+    const parts = [];
+    if (vGp.state !== 'idle') parts.push(_verdictHtml('GP Received', vGp, _fmt(currentGpSum), 'GP'));
+    if (vEv.state !== 'idle') parts.push(_verdictHtml('Event GP', vEv, _fmt(currentEventSum), 'Event GP'));
+    auditVerdict.innerHTML = parts.join('<hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.08); margin: 8px 0;">');
   }
   if (auditInput) {
     auditInput.addEventListener('input', () => {
-      const sum = gpValues.reduce((s, v) => s + (v || 0), 0);
-      updateAudit(sum);
+      const gpSum = gpValues.reduce((s, v) => s + (v || 0), 0);
+      const evSum = eventGpValues.reduce((s, v) => s + (v || 0), 0);
+      updateAudit(gpSum, evSum);
+    });
+  }
+  if (auditEventInput) {
+    auditEventInput.addEventListener('input', () => {
+      const gpSum = gpValues.reduce((s, v) => s + (v || 0), 0);
+      const evSum = eventGpValues.reduce((s, v) => s + (v || 0), 0);
+      updateAudit(gpSum, evSum);
     });
   }
 

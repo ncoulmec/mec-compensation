@@ -417,8 +417,8 @@
           </div>
           <div class="recon-upload-zone" id="xr-xero-zone">
             <div class="zone-icon">📊</div>
-            <div class="zone-label">Drop Xero CSV here or click to browse</div>
-            <div class="zone-sub">Account Transactions export · .xlsx or .csv</div>
+            <div class="zone-label">Drop Xero file here or click to browse</div>
+            <div class="zone-sub">Account Transactions export · .xlsx</div>
           </div>
           <input type="file" id="xr-xero-input" accept=".csv,.xlsx,.xls" style="display:none;">
         </div>
@@ -430,7 +430,7 @@
           </div>
           <div class="recon-upload-zone" id="xr-zoho-zone">
             <div class="zone-icon">🗂️</div>
-            <div class="zone-label">Drop Zoho Payments CSV here or click to browse</div>
+            <div class="zone-label">Drop Zoho Payments file here or click to browse</div>
             <div class="zone-sub">Export from Zoho CRM Payments module · .xlsx or .csv</div>
           </div>
           <input type="file" id="xr-zoho-input" accept=".csv,.xlsx,.xls" style="display:none;">
@@ -654,7 +654,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v25';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v26';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -2022,11 +2022,18 @@ function renderFortnightlyAdmin() {
     { period: '17 May – 30 May 2027', paid: '31 May 2027', month: 'May 2027' }
   ];
 
-  // Per-rep × per-fortnight GP. All start blank.
-  // gpMatrix[repId] = number[26]
+  // Per-rep × per-fortnight matrices (GP Received + Event GP). All start blank.
   const gpMatrix = {};
-  const auditActuals = {};
-  reps.forEach(r => { gpMatrix[r.id] = new Array(FORTNIGHTS.length).fill(0); auditActuals[r.id] = ''; });
+  const eventMatrix = {};
+  const auditActuals = {};        // GP Received full-year totals (rep -> string)
+  const auditEventActuals = {};   // Event GP full-year totals (rep -> string)
+  const PROD_RATE = 0.01;          // 1% of Event GP, inc super (matches all sales plans)
+  reps.forEach(r => {
+    gpMatrix[r.id] = new Array(FORTNIGHTS.length).fill(0);
+    eventMatrix[r.id] = new Array(FORTNIGHTS.length).fill(0);
+    auditActuals[r.id] = '';
+    auditEventActuals[r.id] = '';
+  });
 
   // Group fortnights by month
   const monthGroups = [];
@@ -2043,13 +2050,15 @@ function renderFortnightlyAdmin() {
   const _fmtSigned = (n) => (n >= 0 ? '+' : '−') + _fmt(Math.abs(n));
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
-  // Compute per-fortnight rows for one rep
+  // Compute per-fortnight rows for one rep (now includes Event GP + production commission)
   function computeRepRows(repId) {
     const gp = gpMatrix[repId];
-    let ytd = 0, cumPay = 0;
+    const ev = eventMatrix[repId];
+    let ytd = 0, cumPay = 0, cumProd = 0, cumEv = 0;
     const rows = [];
     for (let i = 0; i < FORTNIGHTS.length; i++) {
       const g = gp[i] || 0;
+      const e = ev[i] || 0;
       const prevYtd = ytd;
       ytd = prevYtd + g;
       const properPay = cumBandComm(ytd) - cumBandComm(prevYtd);
@@ -2057,8 +2066,11 @@ function renderFortnightlyAdmin() {
       const startRate = marginalRate(prevYtd);
       const naivePay = g * endRate;
       const tuAdj = properPay - naivePay;
+      const prodComm = e * PROD_RATE;
       cumPay += properPay;
-      rows.push({ idx: i, gp: g, ytd, prevYtd, properPay, naivePay, tuAdj, endRate, startRate, cumPay, crossed: Math.abs(tuAdj) > 0.5 });
+      cumProd += prodComm;
+      cumEv += e;
+      rows.push({ idx: i, gp: g, eventGp: e, ytd, prevYtd, properPay, naivePay, tuAdj, endRate, startRate, prodComm, cumPay, cumProd, cumEv, cumTotal: cumPay + cumProd, crossed: Math.abs(tuAdj) > 0.5 });
     }
     return rows;
   }
@@ -2067,7 +2079,7 @@ function renderFortnightlyAdmin() {
     const rows = computeRepRows(repId);
     const last = rows[rows.length - 1];
     const crossings = rows.filter(r => r.crossed).length;
-    return { rows, totalGP: last.ytd, totalPay: last.cumPay, crossings };
+    return { rows, totalGP: last.ytd, totalEv: last.cumEv, totalPay: last.cumPay, totalProd: last.cumProd, totalAll: last.cumTotal, crossings };
   }
 
   // ----- Render header -----
@@ -2164,28 +2176,46 @@ function renderFortnightlyAdmin() {
           const incSuper = row.properPay;
           const exSuper = incSuper / 1.12;
           const superAmt = incSuper - exSuper;
+          const prodInc = row.prodComm;
+          const prodEx = prodInc / 1.12;
+          const prodSuper = prodInc - prodEx;
+          // Combined fortnight pay = GP commission + production commission
+          const totalIncSuper = incSuper + prodInc;
+          const totalExSuper = exSuper + prodEx;
+          const totalSuperAmt = superAmt + prodSuper;
           // Round to whole dollars for copy-paste convenience into Xero
-          const bonusRounded = Math.round(exSuper);
-          const superRounded = Math.round(superAmt);
-          const tip = row.properPay > 0
-            ? `${esc(r.fullName)} · ${esc(fn.paid)}\nGP: ${_fmt(row.gp)} · YTD: ${_fmt(row.ytd)}\nBand: ${(row.endRate*100).toFixed(0)}%\nBonus (ex super): ${_fmt(exSuper)}\nSuper (12%): ${_fmt(superAmt)}\nTotal pay (inc super): ${_fmt(incSuper)}` + (row.crossed ? `\n⚡ Band crossing · TU ${_fmtSigned(row.tuAdj)}` : '')
-            : `${esc(r.fullName)} · ${esc(fn.paid)}\nNo GP entered yet.`;
+          const bonusRounded = Math.round(totalExSuper);
+          const superRounded = Math.round(totalSuperAmt);
+          const tip = totalIncSuper > 0
+            ? `${esc(r.fullName)} · ${esc(fn.paid)}\nGP Received: ${_fmt(row.gp)} · YTD: ${_fmt(row.ytd)} · Band: ${(row.endRate*100).toFixed(0)}%\nEvent GP: ${_fmt(row.eventGp)}\n———\nGP Comm (inc super): ${_fmt(incSuper)}\nProd Comm (inc super): ${_fmt(prodInc)}\nTotal bonus (ex super): ${_fmt(totalExSuper)}\nTotal super (12%): ${_fmt(totalSuperAmt)}\nTotal pay (inc super): ${_fmt(totalIncSuper)}` + (row.crossed ? `\n⚡ Band crossing · TU ${_fmtSigned(row.tuAdj)}` : '')
+            : `${esc(r.fullName)} · ${esc(fn.paid)}\nNo GP / Event GP entered yet.`;
           const cellBg = row.crossed ? 'background: #fffbeb;' : '';
-          // Two read-only copy-paste inputs (bonus = ex-super, super = 12%). Click to copy.
-          const copyVals = row.properPay > 0
+          // Two read-only copy-paste inputs (bonus = ex-super total, super = 12% total). Click to copy.
+          const copyVals = totalIncSuper > 0
             ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px;">
                  <div style="text-align: left;">
                    <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Bonus</div>
-                   <input type="text" class="fnp-copy-bonus" readonly value="${bonusRounded.toLocaleString()}" title="Bonus ex super — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #c3e4d0; border-radius: 3px; background: #f5faf7; text-align: right; font-family: var(--mono); font-size: 11px; color: #1e6624; cursor: pointer;">
+                   <input type="text" class="fnp-copy-bonus" readonly value="${bonusRounded.toLocaleString()}" title="Bonus ex super (GP + Production) — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #c3e4d0; border-radius: 3px; background: #f5faf7; text-align: right; font-family: var(--mono); font-size: 11px; color: #1e6624; cursor: pointer;">
                  </div>
                  <div style="text-align: left;">
                    <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Super</div>
-                   <input type="text" class="fnp-copy-super" readonly value="${superRounded.toLocaleString()}" title="Super (12%) — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;">
+                   <input type="text" class="fnp-copy-super" readonly value="${superRounded.toLocaleString()}" title="Super (12%) total — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;">
                  </div>
-               </div>${tuStr ? `<div style="font-size: 9px; color: ${tuColor}; margin-top: 3px; text-align: right; font-family: var(--mono);">⚡ TU ${tuStr}</div>` : ''}`
+               </div>
+               ${prodInc > 0 ? `<div style="font-size: 9px; color: var(--muted); margin-top: 3px; text-align: right; font-family: var(--mono);">incl. <strong>+${_fmt(prodInc)}</strong> prod</div>` : ''}
+               ${tuStr ? `<div style="font-size: 9px; color: ${tuColor}; margin-top: 2px; text-align: right; font-family: var(--mono);">⚡ TU ${tuStr}</div>` : ''}`
             : `<div style="font-size: 10px; color: var(--faint); margin-top: 3px; font-family: var(--mono); text-align: right;">—</div>`;
-          return `<td class="fnp-cell" data-rep="${esc(r.id)}" data-idx="${fi}" data-tip="${esc(tip)}" style="padding: 5px 6px; border-bottom: 1px solid #f4f3ed; vertical-align: top; min-width: 150px; ${cellBg}">
-            <input type="text" class="fnp-input" data-rep="${esc(r.id)}" data-idx="${fi}" value="${row.gp ? row.gp.toLocaleString() : ''}" placeholder="GP received" inputmode="decimal" style="width: 100%; padding: 4px 6px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink); box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);">
+          return `<td class="fnp-cell" data-rep="${esc(r.id)}" data-idx="${fi}" data-tip="${esc(tip)}" style="padding: 5px 6px; border-bottom: 1px solid #f4f3ed; vertical-align: top; min-width: 160px; ${cellBg}">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px;">
+              <div>
+                <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; margin-bottom: 1px;">GP</div>
+                <input type="text" class="fnp-input" data-rep="${esc(r.id)}" data-idx="${fi}" value="${row.gp ? row.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" style="width: 100%; padding: 3px 5px; border: 1px solid #d3d1c7; border-radius: 3px; background: #fff; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--ink);">
+              </div>
+              <div>
+                <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; margin-bottom: 1px;">Event GP</div>
+                <input type="text" class="fnp-event-input" data-rep="${esc(r.id)}" data-idx="${fi}" value="${row.eventGp ? row.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" style="width: 100%; padding: 3px 5px; border: 1px solid #d3d1c7; border-radius: 3px; background: #fff; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--ink);">
+              </div>
+            </div>
             ${copyVals}
           </td>`;
         }).join('');
@@ -2202,7 +2232,7 @@ function renderFortnightlyAdmin() {
     });
     tbody.innerHTML = h;
 
-    // Footer — year totals row per rep
+    // Footer — year totals row per rep (now includes Event GP + Production)
     const tfoot = document.getElementById('fnp-tfoot');
     let footHtml = `<tr style="font-weight: 700; background: #fefcf7; border-top: 2px solid #d3d1c7;">
       <td style="padding: 10px; position: sticky; left: 0; background: #fefcf7; z-index: 2; border-top: 2px solid #d3d1c7;">Year Total</td>`;
@@ -2212,8 +2242,9 @@ function renderFortnightlyAdmin() {
       grandTotal += t.totalGP;
       const eff = t.totalGP > 0 ? (t.totalPay / t.totalGP) * 100 : 0;
       footHtml += `<td style="text-align: right; padding: 10px; font-family: var(--mono); font-size: 13px; border-top: 2px solid #d3d1c7;">
-        ${_fmt(t.totalGP)}
-        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 3px;">${_fmt(t.totalPay)} (${eff.toFixed(1)}%)</div>
+        ${_fmt(t.totalGP)} <span style="font-size: 9px; color: var(--faint); font-weight: 400;">GP</span>
+        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 2px;">${_fmt(t.totalEv)} <span style="color: var(--faint);">Event GP</span></div>
+        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 4px;">${_fmt(t.totalAll)} pay (${eff.toFixed(1)}%)</div>
       </td>`;
     });
     footHtml += `<td style="text-align: right; padding: 10px; font-family: var(--mono); font-size: 14px; background: #fff8e1; color: #6a4a00; border-top: 2px solid #d4b85a;">${_fmt(grandTotal)}</td></tr>`;
@@ -2251,87 +2282,98 @@ function renderFortnightlyAdmin() {
         } catch (e) { /* clipboard blocked — selection is still useful */ }
       });
     });
-    // Inputs
-    const allInputs = Array.from(tbody.querySelectorAll('.fnp-input'));
-    allInputs.forEach(inp => {
+    // Generic input wiring used for both GP Received and Event GP inputs
+    function wireGridInput(inp, matrix, selector) {
       inp.addEventListener('focus', (e) => e.target.select());
       const commit = () => {
         const rep = inp.getAttribute('data-rep');
         const idx = parseInt(inp.getAttribute('data-idx'), 10);
         const raw = inp.value.replace(/[^0-9.\-]/g, '');
         const n = parseFloat(raw);
-        gpMatrix[rep][idx] = isFinite(n) ? n : 0;
+        matrix[rep][idx] = isFinite(n) ? n : 0;
       };
       inp.addEventListener('blur', () => { commit(); renderTotals(); renderBody(); renderAudit(); });
       inp.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          commit();
-          // Move to next rep in same fortnight, then next fortnight
-          const curRep = inp.getAttribute('data-rep');
-          const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
-          const repIdx = reps.findIndex(r => r.id === curRep);
-          if (repIdx < reps.length - 1) {
-            renderTotals(); renderBody(); renderAudit();
-            const nextInp = document.querySelector(`.fnp-input[data-rep="${reps[repIdx + 1].id}"][data-idx="${curIdx}"]`);
-            if (nextInp) { nextInp.focus(); nextInp.select && nextInp.select(); }
-          } else if (curIdx < FORTNIGHTS.length - 1) {
-            // Move to first rep of next fortnight
-            const nextIdx = curIdx + 1;
-            // Ensure next month is expanded
-            const nextMonthMi = monthGroups.findIndex(g => g.idxs.includes(nextIdx));
-            if (nextMonthMi >= 0) expanded.add(nextMonthMi);
-            renderTotals(); renderBody(); renderAudit();
-            const nextInp = document.querySelector(`.fnp-input[data-rep="${reps[0].id}"][data-idx="${nextIdx}"]`);
-            if (nextInp) { nextInp.focus(); nextInp.select && nextInp.select(); }
-          } else {
-            renderTotals(); renderBody(); renderAudit();
-            inp.blur();
-          }
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
+        if (e.key === 'Escape') { e.preventDefault(); inp.blur(); return; }
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        commit();
+        const curRep = inp.getAttribute('data-rep');
+        const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
+        const repIdx = reps.findIndex(r => r.id === curRep);
+        if (repIdx < reps.length - 1) {
+          renderTotals(); renderBody(); renderAudit();
+          const nextInp = document.querySelector(selector + `[data-rep="${reps[repIdx + 1].id}"][data-idx="${curIdx}"]`);
+          if (nextInp) { nextInp.focus(); nextInp.select && nextInp.select(); }
+        } else if (curIdx < FORTNIGHTS.length - 1) {
+          const nextIdx = curIdx + 1;
+          const nextMonthMi = monthGroups.findIndex(g => g.idxs.includes(nextIdx));
+          if (nextMonthMi >= 0) expanded.add(nextMonthMi);
+          renderTotals(); renderBody(); renderAudit();
+          const nextInp = document.querySelector(selector + `[data-rep="${reps[0].id}"][data-idx="${nextIdx}"]`);
+          if (nextInp) { nextInp.focus(); nextInp.select && nextInp.select(); }
+        } else {
+          renderTotals(); renderBody(); renderAudit();
           inp.blur();
         }
       });
-    });
+    }
+    tbody.querySelectorAll('.fnp-input').forEach(inp => wireGridInput(inp, gpMatrix, '.fnp-input'));
+    tbody.querySelectorAll('.fnp-event-input').forEach(inp => wireGridInput(inp, eventMatrix, '.fnp-event-input'));
   }
 
-  // ----- Year-End Audit per rep -----
+  // ----- Year-End Audit per rep — now audits BOTH GP Received and Event GP -----
   function renderAudit() {
     const body = document.getElementById('fnp-audit-body');
+    // Helper: compute variance display + verdict for one stream
+    function varCell(repId, sumValue, actualsMap) {
+      const actualRaw = (actualsMap[repId] || '').replace(/[^0-9.\-]/g, '');
+      const actual = parseFloat(actualRaw);
+      if (!isFinite(actual) || actualRaw === '') return { variance: '—', verdict: '—', varColor: 'var(--ink)', state: 'idle' };
+      const diff = actual - sumValue;
+      const absDiff = Math.abs(diff);
+      const sign = diff >= 0 ? '+' : '−';
+      const variance = absDiff < 0.5 ? '$0' : sign + _fmt(absDiff);
+      if (absDiff <= 1) return { variance, verdict: '<span style="color: #1e6624; font-weight: 700;">✓</span>', varColor: '#1e6624', state: 'ok' };
+      if (absDiff <= 1000) return { variance, verdict: '<span style="color: #6a4a00; font-weight: 700;">⚠</span>', varColor: '#6a4a00', state: 'warn' };
+      return { variance, verdict: '<span style="color: #7a1f1f; font-weight: 700;">✗</span>', varColor: '#7a1f1f', state: 'err' };
+    }
     let h = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #fafaf7; border-bottom: 1px solid #d3d1c7;">';
     h += '<th style="text-align: left; padding: 8px 10px; font-size: 11px;">Rep</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Stream</th>';
     h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Sum of fortnights</th>';
-    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Full-year GP (Zoho)</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Full-year (Zoho)</th>';
     h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Variance</th>';
-    h += '<th style="text-align: center; padding: 8px 10px; font-size: 11px;">Verdict</th>';
+    h += '<th style="text-align: center; padding: 8px 10px; font-size: 11px;">✓</th>';
     h += '</tr></thead><tbody>';
     reps.forEach(r => {
       const t = getRepTotals(r.id);
-      const actualRaw = (auditActuals[r.id] || '').replace(/[^0-9.\-]/g, '');
-      const actual = parseFloat(actualRaw);
-      let variance = '—', verdict = '<span style="color: var(--faint);">—</span>';
-      let varColor = 'var(--ink)';
-      if (isFinite(actual) && actualRaw !== '') {
-        const diff = actual - t.totalGP;
-        const absDiff = Math.abs(diff);
-        const sign = diff >= 0 ? '+' : '−';
-        variance = absDiff < 0.5 ? '$0' : sign + _fmt(absDiff);
-        if (absDiff <= 1) { verdict = '<span style="color: #1e6624; font-weight: 700;">✓ Reconciled</span>'; varColor = '#1e6624'; }
-        else if (absDiff <= 1000) { verdict = '<span style="color: #6a4a00; font-weight: 700;">⚠ Minor variance</span>'; varColor = '#6a4a00'; }
-        else { verdict = '<span style="color: #7a1f1f; font-weight: 700;">✗ Mismatch</span>'; varColor = '#7a1f1f'; }
-      }
+      const gpVar = varCell(r.id, t.totalGP, auditActuals);
+      const evVar = varCell(r.id, t.totalEv, auditEventActuals);
+      // GP Received row
       h += `<tr style="border-bottom: 1px solid #f4f3ed;">
-        <td style="padding: 8px 10px; font-weight: 600;">${esc(r.fullName)}</td>
-        <td style="text-align: right; padding: 8px 10px; font-family: var(--mono);">${t.totalGP > 0 ? _fmt(t.totalGP) : '<span style="color: var(--faint);">—</span>'}</td>
-        <td style="text-align: right; padding: 8px 10px;"><input type="text" class="fnp-audit-input" data-rep="${esc(r.id)}" value="${esc(auditActuals[r.id])}" placeholder="e.g. 445,000" inputmode="decimal" style="width: 130px; padding: 5px 8px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px;"></td>
-        <td style="text-align: right; padding: 8px 10px; font-family: var(--mono); color: ${varColor};">${variance}</td>
-        <td style="text-align: center; padding: 8px 10px; font-size: 12px;">${verdict}</td>
+        <td style="padding: 6px 10px; font-weight: 600;" rowspan="2">${esc(r.fullName)}</td>
+        <td style="text-align: right; padding: 6px 10px; font-size: 11px; color: var(--muted); font-weight: 600;">GP Received</td>
+        <td style="text-align: right; padding: 6px 10px; font-family: var(--mono);">${t.totalGP > 0 ? _fmt(t.totalGP) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td style="text-align: right; padding: 6px 10px;"><input type="text" class="fnp-audit-input" data-rep="${esc(r.id)}" value="${esc(auditActuals[r.id])}" placeholder="e.g. 445,000" inputmode="decimal" style="width: 130px; padding: 4px 8px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px;"></td>
+        <td style="text-align: right; padding: 6px 10px; font-family: var(--mono); color: ${gpVar.varColor};">${gpVar.variance}</td>
+        <td style="text-align: center; padding: 6px 10px; font-size: 12px;">${gpVar.verdict}</td>
+      </tr>`;
+      // Event GP row
+      h += `<tr style="border-bottom: 2px solid #d3d1c7;">
+        <td style="text-align: right; padding: 6px 10px; font-size: 11px; color: var(--muted); font-weight: 600;">Event GP</td>
+        <td style="text-align: right; padding: 6px 10px; font-family: var(--mono);">${t.totalEv > 0 ? _fmt(t.totalEv) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td style="text-align: right; padding: 6px 10px;"><input type="text" class="fnp-audit-event-input" data-rep="${esc(r.id)}" value="${esc(auditEventActuals[r.id])}" placeholder="e.g. 200,000" inputmode="decimal" style="width: 130px; padding: 4px 8px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px;"></td>
+        <td style="text-align: right; padding: 6px 10px; font-family: var(--mono); color: ${evVar.varColor};">${evVar.variance}</td>
+        <td style="text-align: center; padding: 6px 10px; font-size: 12px;">${evVar.verdict}</td>
       </tr>`;
     });
     h += '</tbody></table>';
     body.innerHTML = h;
-    // Wire audit inputs
+    // Wire audit inputs (Event GP audit added)
+    body.querySelectorAll('.fnp-audit-event-input').forEach(inp => {
+      inp.addEventListener('input', () => { auditEventActuals[inp.getAttribute('data-rep')] = inp.value; renderAudit(); });
+    });
     body.querySelectorAll('.fnp-audit-input').forEach(inp => {
       inp.addEventListener('input', () => { auditActuals[inp.getAttribute('data-rep')] = inp.value; renderAudit(); });
     });
@@ -2501,30 +2543,65 @@ function renderFortnightlyAdmin() {
     return { included, excluded };
   }
 
+  // ---- Name normalisation for fuzzy client-name matching ----
+  function normName(str) {
+    return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  // A booking name like "Lauren jar | Lauren & Daniel" yields multiple keys
+  function nameKeys(str) {
+    const keys = new Set();
+    String(str || '').split(/[|\/,]/).forEach(p => { const k = normName(p); if (k.length > 3) keys.add(k); });
+    const full = normName(str); if (full.length > 3) keys.add(full);
+    return [...keys];
+  }
+
   // ---- Process Zoho file (CSV rows or Excel rows) ----
+  // Returns { invMap: Map<invNum, [{amount,date,paymentName,bookingName}]>,
+  //           nameMap: Map<normName, [{...}]>,
+  //           totalRecords: number }
   function processZoho(rows) {
     if (rows.length < 2) throw new Error('Zoho file appears empty.');
-    const hdrIdx = findHeaderRow(rows, 'Invoice Number', 'InvoiceNumber');
-    const hdrs   = rows[hdrIdx];
-    const cInv  = colIdx(hdrs, 'Invoice Number', 'InvoiceNumber', 'Invoice #', 'Invoice No');
-    const cAmt  = colIdx(hdrs, 'Amount Received', 'AmountReceived', 'Amount');
-    const cDate = colIdx(hdrs, 'Payment Date', 'PaymentDate', 'Date');
+    const hdrIdx   = findHeaderRow(rows, 'Invoice Number', 'InvoiceNumber');
+    const hdrs     = rows[hdrIdx];
+    const cInv     = colIdx(hdrs, 'Invoice Number', 'InvoiceNumber', 'Invoice #', 'Invoice No');
+    const cAmt     = colIdx(hdrs, 'Amount Received', 'AmountReceived', 'Amount');
+    const cDate    = colIdx(hdrs, 'Payment Date', 'PaymentDate', 'Date');
+    const cPayName = colIdx(hdrs, 'Payment Name', 'PaymentName', 'Name');
+    const cBooking = colIdx(hdrs, 'Booking', 'BookingName');
     if (cInv === -1) throw new Error('Could not find an "Invoice Number" column in the Zoho export. Check the column headers in your export.');
-    const map = new Map();
+
+    const invMap  = new Map();  // invNum  → [{amount, date, paymentName, bookingName}]
+    const nameMap = new Map();  // normName → [{...}]
+    let totalRecords = 0;
+
     for (let i = hdrIdx + 1; i < rows.length; i++) {
       const r = rows[i];
-      const invRaw = String(r[cInv] || '').trim();
-      if (!invRaw) continue;
+      const invRaw     = String(r[cInv]     || '').trim();
+      const paymentName = String(r[cPayName >= 0 ? cPayName : -1] || '').trim();
+      const bookingName = String(r[cBooking >= 0 ? cBooking : -1] || '').trim();
       const amt  = cAmt  >= 0 ? (parseAmt(r[cAmt]) || null) : null;
       const date = cDate >= 0 ? excelDateToStr(r[cDate]) : '';
-      // A single Zoho payment can cover multiple invoices — extract each number and map them all
+      const entry = { amount: amt, date, paymentName, bookingName, invRaw };
+
+      // Index by every invoice number found in the field
       const nums = extractInvNums(invRaw);
-      if (nums.length === 0) continue;
-      for (const num of nums) {
-        map.set(num, { amount: amt, date, rawField: invRaw });
+      if (nums.length > 0) {
+        totalRecords++;
+        for (const num of nums) {
+          if (!invMap.has(num)) invMap.set(num, []);
+          invMap.get(num).push(entry);
+        }
+      }
+
+      // Also index by client/booking name for fallback matching
+      for (const nameStr of [paymentName, bookingName]) {
+        for (const key of nameKeys(nameStr)) {
+          if (!nameMap.has(key)) nameMap.set(key, []);
+          nameMap.get(key).push(entry);
+        }
       }
     }
-    return map;
+    return { invMap, nameMap, totalRecords };
   }
 
   // ---- Helpers ----
@@ -2534,48 +2611,71 @@ function renderFortnightlyAdmin() {
   // ---- Render results ----
   function render() {
     const el = document.getElementById('xr-results');
-    if (!xeroResult) { el.innerHTML = '<div style="text-align:center; padding:40px 20px; color:var(--faint); font-size:13px;">Upload a Xero CSV above to see invoice payments that need entering into Zoho.</div>'; return; }
+    if (!xeroResult) { el.innerHTML = '<div style="text-align:center; padding:40px 20px; color:var(--faint); font-size:13px;">Upload a Xero Excel file above to see invoice payments that need entering into Zoho.</div>'; return; }
 
     const { included, excluded } = xeroResult;
-    const hasZoho = zohoMap && zohoMap.size > 0;
+    const hasZoho = zohoMap && zohoMap.invMap && zohoMap.invMap.size > 0;
 
-    // Annotate each row with match status
-    // Match on plain numeric invoice number to handle Zoho's inconsistent prefixes/formats
+    // ---- Annotate each Xero row with match status ----
     const rows = included.map(row => {
       if (!hasZoho) return { ...row, status: 'pending' };
+
       const lookupKey = row.invNumeric || row.invoiceNumber.replace(/^INV[-\s]*/i, '').trim();
-      const zm = zohoMap.get(lookupKey);
-      if (!zm) return { ...row, status: 'missing', zohoAmt: null };
-      const diff = Math.abs((zm.amount || 0) - row.amount);
-      return diff > 0.05
-        ? { ...row, status: 'mismatch', zohoAmt: zm.amount }
-        : { ...row, status: 'ok',      zohoAmt: zm.amount };
+      const zohoEntries = zohoMap.invMap.get(lookupKey);
+
+      if (zohoEntries && zohoEntries.length > 0) {
+        // Sum all Zoho amounts for this invoice (handles multi-booking invoices like RACV)
+        const zohoTotal = zohoEntries.reduce((s, e) => s + (e.amount || 0), 0);
+        const diff = Math.abs(zohoTotal - row.amount);
+        const status = diff <= 0.05 ? 'ok' : 'mismatch';
+        return { ...row, status, zohoTotal, zohoEntries };
+      }
+
+      // No invoice match — try fuzzy name fallback
+      const clientKey = normName(row.client);
+      let nameMatches = zohoMap.nameMap.get(clientKey);
+      if (!nameMatches) {
+        // Partial match: does any stored name key contain or overlap the client name?
+        for (const [k, v] of zohoMap.nameMap.entries()) {
+          if (clientKey.length > 4 && (k.includes(clientKey) || clientKey.includes(k))) {
+            nameMatches = v; break;
+          }
+        }
+      }
+      if (nameMatches) {
+        const zohoTotal = nameMatches.reduce((s, e) => s + (e.amount || 0), 0);
+        return { ...row, status: 'possible_match', zohoTotal, zohoEntries: nameMatches };
+      }
+
+      return { ...row, status: 'missing', zohoTotal: null, zohoEntries: [] };
     });
 
-    const total    = rows.reduce((s, r) => s + r.amount, 0);
-    const nOk      = rows.filter(r => r.status === 'ok').length;
-    const nMissing = rows.filter(r => r.status === 'missing').length;
-    const nBad     = rows.filter(r => r.status === 'mismatch').length;
+    const total        = rows.reduce((s, r) => s + r.amount, 0);
+    const nOk          = rows.filter(r => r.status === 'ok').length;
+    const nMissing     = rows.filter(r => r.status === 'missing').length;
+    const nMismatch    = rows.filter(r => r.status === 'mismatch').length;
+    const nPossible    = rows.filter(r => r.status === 'possible_match').length;
 
-    // Sort: missing → mismatch → pending → ok
-    const sortOrd = { missing: 0, mismatch: 1, pending: 2, ok: 3 };
+    // Sort: missing → mismatch → possible_match → pending → ok
+    const sortOrd = { missing: 0, mismatch: 1, possible_match: 2, pending: 3, ok: 4 };
     rows.sort((a, b) => (sortOrd[a.status] || 0) - (sortOrd[b.status] || 0));
 
     let h = '';
 
-    // Summary stats
+    // ---- Summary stats ----
     h += '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:18px;">';
     h += `<div class="recon-stat"><div class="rs-val">${rows.length}</div><div class="rs-lbl">Invoice payments</div></div>`;
     h += `<div class="recon-stat"><div class="rs-val">${fmtAUD(total)}</div><div class="rs-lbl">Total received</div></div>`;
     if (hasZoho) {
       h += `<div class="recon-stat"><div class="rs-val" style="color:var(--accent)">${nOk}</div><div class="rs-lbl">Matched in Zoho</div></div>`;
-      if (nMissing) h += `<div class="recon-stat"><div class="rs-val" style="color:var(--danger)">${nMissing}</div><div class="rs-lbl">Missing from Zoho</div></div>`;
-      if (nBad)     h += `<div class="recon-stat"><div class="rs-val" style="color:#b45309">${nBad}</div><div class="rs-lbl">Amount mismatch</div></div>`;
+      if (nMissing)  h += `<div class="recon-stat"><div class="rs-val" style="color:var(--danger)">${nMissing}</div><div class="rs-lbl">Missing from Zoho</div></div>`;
+      if (nMismatch) h += `<div class="recon-stat"><div class="rs-val" style="color:#b45309">${nMismatch}</div><div class="rs-lbl">Amount mismatch</div></div>`;
+      if (nPossible) h += `<div class="recon-stat"><div class="rs-val" style="color:#7c3aed">${nPossible}</div><div class="rs-lbl">Possible name match</div></div>`;
     }
     h += `<div class="recon-stat"><div class="rs-val" style="color:var(--faint)">${excluded.length}</div><div class="rs-lbl">Auto-excluded</div></div>`;
     h += '</div>';
 
-    // Main table
+    // ---- Main table ----
     h += '<div style="overflow-x:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:14px;">';
     h += '<table style="width:100%; border-collapse:collapse; font-size:13px;">';
     h += '<thead><tr style="background:#fafaf7; border-bottom:1px solid var(--border);">';
@@ -2584,20 +2684,46 @@ function renderFortnightlyAdmin() {
     h += '<th style="padding:9px 10px; text-align:left; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Invoice #</th>';
     h += '<th style="padding:9px 10px; text-align:right; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Xero Amount</th>';
     if (hasZoho) {
-      h += '<th style="padding:9px 10px; text-align:right; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Zoho Amount</th>';
-      h += '<th style="padding:9px 10px; text-align:center; font-size:11px; font-weight:600; color:var(--muted);">Status</th>';
+      h += '<th style="padding:9px 10px; text-align:right; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Zoho Total</th>';
+      h += '<th style="padding:9px 10px; text-align:left; font-size:11px; font-weight:600; color:var(--muted);">Status</th>';
     } else {
       h += '<th style="padding:9px 10px; text-align:center; font-size:11px; font-weight:600; color:var(--muted);">Action</th>';
     }
     h += '</tr></thead><tbody>';
 
     rows.forEach(row => {
-      let badge = '', rowBg = '';
-      const zohoSearchUrl = `https://crm.zoho.com/crm/org657079535/global_search?searchword=${encodeURIComponent(row.invoiceNumber)}`;
-      if (row.status === 'ok')      { badge = '<span class="recon-badge ok">✓ Matched</span>'; }
-      else if (row.status === 'missing')  { badge = `<span class="recon-badge missing">✗ Not in Zoho</span> <a href="${xesc(zohoSearchUrl)}" target="_blank" rel="noopener" style="font-size:10px; color:var(--navy); text-decoration:none; margin-left:4px; white-space:nowrap;">↗ Search Zoho</a>`; rowBg = 'background:#fef2f2;'; }
-      else if (row.status === 'mismatch') { badge = `<span class="recon-badge mismatch">⚠ Amount differs</span> <a href="${xesc(zohoSearchUrl)}" target="_blank" rel="noopener" style="font-size:10px; color:var(--navy); text-decoration:none; margin-left:4px; white-space:nowrap;">↗ Search Zoho</a>`; rowBg = 'background:#fffbeb;'; }
-      else                                { badge = `<span class="recon-badge pending">→ Add to Zoho</span> <a href="${xesc(zohoSearchUrl)}" target="_blank" rel="noopener" style="font-size:10px; color:var(--navy); text-decoration:none; margin-left:4px; white-space:nowrap;">↗ Search Zoho</a>`; }
+      let badge = '', rowBg = '', expandDetail = '';
+      const searchNum = row.invNumeric || row.invoiceNumber.replace(/^INV[-\s]*/i, '').trim();
+      const zohoSearchUrl = `https://crm.zoho.com/crm/org657079535/search?searchword=${encodeURIComponent(searchNum)}&isRelevance=false`;
+      const searchLink = `<a href="${xesc(zohoSearchUrl)}" target="_blank" rel="noopener" style="font-size:10px; color:var(--navy); text-decoration:none; margin-left:6px; white-space:nowrap;">↗ Search Zoho</a>`;
+
+      // Build expandable sub-row for multi-payment or possible-match entries
+      if (hasZoho && row.zohoEntries && row.zohoEntries.length > 1) {
+        expandDetail = `<details style="margin-top:4px;"><summary style="cursor:pointer; font-size:11px; color:var(--muted); user-select:none; list-style:none; display:inline-flex; align-items:center; gap:4px;"><span style="font-size:9px;">▶</span> ${row.zohoEntries.length} Zoho entries — expand</summary><div style="margin-top:6px; padding:6px 8px; background:#f9fafb; border-radius:6px; font-size:11px; font-family:var(--mono);">`;
+        row.zohoEntries.forEach(e => {
+          expandDetail += `<div style="padding:2px 0; color:var(--slate);">${xesc(e.date || '—')} &nbsp;·&nbsp; ${fmtAUD(e.amount)} &nbsp;·&nbsp; <span style="color:var(--muted); font-family:inherit;">${xesc(e.paymentName || e.bookingName || '')}</span></div>`;
+        });
+        expandDetail += `</div></details>`;
+      } else if (hasZoho && row.zohoEntries && row.zohoEntries.length === 1 && row.status === 'possible_match') {
+        const e = row.zohoEntries[0];
+        expandDetail = `<div style="font-size:11px; color:#6d28d9; margin-top:3px;">Matched on name: <em>${xesc(e.paymentName || e.bookingName || '')}</em></div>`;
+      }
+
+      if (row.status === 'ok') {
+        const multi = row.zohoEntries && row.zohoEntries.length > 1 ? ` <span style="font-size:10px; color:var(--accent);">(${row.zohoEntries.length} payments)</span>` : '';
+        badge = `<span class="recon-badge ok">✓ Matched${multi ? '' : ''}</span>${multi}`;
+      } else if (row.status === 'mismatch') {
+        badge = `<span class="recon-badge mismatch">⚠ Amount differs</span>${searchLink}`;
+        rowBg = 'background:#fffbeb;';
+      } else if (row.status === 'possible_match') {
+        badge = `<span class="recon-badge" style="background:#ede9fe; color:#5b21b6;">? Possible name match</span>${searchLink}`;
+        rowBg = 'background:#faf5ff;';
+      } else if (row.status === 'missing') {
+        badge = `<span class="recon-badge missing">✗ Not in Zoho</span>${searchLink}`;
+        rowBg = 'background:#fef2f2;';
+      } else {
+        badge = `<span class="recon-badge pending">→ Add to Zoho</span>${searchLink}`;
+      }
 
       h += `<tr style="border-bottom:1px solid var(--border);${rowBg}">`;
       h += `<td style="padding:7px 10px; font-family:var(--mono); font-size:12px; white-space:nowrap;">${xesc(row.date)}</td>`;
@@ -2605,8 +2731,9 @@ function renderFortnightlyAdmin() {
       h += `<td style="padding:7px 10px; font-family:var(--mono); font-size:12px; white-space:nowrap;">${xesc(row.invoiceNumber)}</td>`;
       h += `<td style="padding:7px 10px; text-align:right; font-family:var(--mono); font-size:12px;">${fmtAUD(row.amount)}</td>`;
       if (hasZoho) {
-        h += `<td style="padding:7px 10px; text-align:right; font-family:var(--mono); font-size:12px;">${row.zohoAmt != null ? fmtAUD(row.zohoAmt) : '<span style="color:var(--faint)">—</span>'}</td>`;
-        h += `<td style="padding:7px 10px; text-align:center;">${badge}</td>`;
+        const zohoDisplay = row.zohoTotal != null ? fmtAUD(row.zohoTotal) : '<span style="color:var(--faint)">—</span>';
+        h += `<td style="padding:7px 10px; text-align:right; font-family:var(--mono); font-size:12px;">${zohoDisplay}</td>`;
+        h += `<td style="padding:7px 10px;">${badge}${expandDetail}</td>`;
       } else {
         h += `<td style="padding:7px 10px; text-align:center;">${badge}</td>`;
       }
@@ -2614,7 +2741,7 @@ function renderFortnightlyAdmin() {
     });
     h += '</tbody></table></div>';
 
-    // Excluded rows (collapsible)
+    // ---- Excluded rows (collapsible) ----
     if (excluded.length) {
       h += `<details style="margin-top:4px;"><summary style="cursor:pointer; font-size:12px; color:var(--muted); padding:8px 0; user-select:none;">${excluded.length} rows auto-excluded — click to review</summary>`;
       h += '<div style="margin-top:10px; overflow-x:auto; border:1px solid var(--border); border-radius:8px;">';
@@ -2662,7 +2789,7 @@ function renderFortnightlyAdmin() {
         const zone = document.getElementById('xr-zoho-zone');
         zone.classList.add('loaded');
         zone.querySelector('.zone-label').textContent = '✓ ' + fileName;
-        zone.querySelector('.zone-sub').textContent = zohoMap.size + ' Zoho payment records loaded';
+        zone.querySelector('.zone-sub').textContent = zohoMap.totalRecords + ' payment records · ' + zohoMap.invMap.size + ' unique invoices';
       }
       render();
     } catch (err) {
