@@ -988,12 +988,49 @@
       </div>
     </div>
 
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
-        <h2 style="margin: 0;">Monthly Payout <span class="tooltip-trigger" data-tip="Monthly bands pay each month for cash flow. At quarter-end the true-up reconciles against what you've actually earned. Any overpayment becomes a running balance that offsets future commissions — never a deduction from your base salary.">?</span></h2>
-        <a id="zoho-actual-btn" href="#" target="_blank" rel="noopener" style="display: none; text-decoration: none; background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap;">📊 Fetch My Zoho Actual Data ↗</a>
+    <!-- ============================================================
+         TRAILING 12 MONTHS — "What you would've earned"
+         Historical GP Sold (booking confirmed date) backfeeds through
+         the new fortnightly plan to show what comp would have looked
+         like. Editable inputs — paste from Zoho's GP Sold report.
+         ============================================================ -->
+    <div class="card" style="background: linear-gradient(135deg, #f0f7f3 0%, #fff 100%); border-left: 4px solid #48a14d;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
+        <div>
+          <h2 style="margin: 0 0 4px;">Last 12 Months <span style="font-size: 10px; padding: 1px 6px; background: #e7f6ea; color: #1e6624; border: 1px solid #c3e4d0; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">What you would've earned</span></h2>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">If the new fortnightly plan had been live the last 12 months, this is what your variable comp would've been. Enter your historical <strong>GP Sold</strong> (booking-confirmed date — from Zoho's Bookings → GP Sold report) below.</p>
+        </div>
+        <span style="font-size: 11px; color: #1e6624; font-family: var(--mono); font-weight: 600;">May 2025 – Apr 2026</span>
       </div>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Each month's GP Received runs through the monthly bands (annual ÷ 12). Months 3 / 6 / 9 / 12 reconcile against <strong>quarterly entitlement</strong>, and any overpayment becomes a <strong>running true-up balance</strong> that reduces future commissions until worked off. If the balance is still positive at year-end, it carries into next year. Your base salary is never affected.</p>
+
+      <div id="trailing-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
+
+      <div style="overflow-x: auto;">
+        <table class="monthly" id="trailing-table" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">GP Sold <span class="fn-tip" data-tip="<strong>Editable</strong> — paste from Zoho's GP Sold (booking-confirmed) report for each calendar month.">?</span></th>
+              <th class="num">YTD GP</th>
+              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the month in.">?</span></th>
+              <th class="num">Commission This Month <small>(inc. super)</small></th>
+              <th class="num">Cumulative</th>
+            </tr>
+          </thead>
+          <tbody id="trailing-body"></tbody>
+          <tfoot id="trailing-foot"></tfoot>
+        </table>
+      </div>
+
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Same cumulative band math as the forward view · TU only applies to fortnightly payments, so monthly granularity here is just a "what if" snapshot · Use this to validate the new plan against your actual year.</p>
+    </div>
+
+    <!-- Legacy monthly schedule retained collapsed for audit/reference -->
+    <details class="card" style="background: #fafaf7;">
+      <summary style="cursor: pointer; font-weight: 600; color: var(--muted); padding: 4px 0;">
+        Legacy: Monthly Payout schedule (deprecated · superseded by fortnightly Option B)
+      </summary>
+      <p style="font-size: 12px; color: var(--muted); margin: 10px 0 14px;">The previous monthly cycle is preserved here for audit reference. The <strong>fortnightly view below</strong> is now the active plan. <a id="zoho-actual-btn" href="#" target="_blank" rel="noopener" style="display: none; text-decoration: none; color: var(--navy); border-bottom: 1px solid var(--navy); font-size: 11px;">📊 Fetch My Zoho Actual Data</a></p>
       <div style="overflow-x: auto;">
         <div class="table-wrap"><table class="monthly" id="monthly-table">
           <thead>
@@ -1001,7 +1038,7 @@
               <th>Month</th>
               <th class="num">GP Received</th>
               <th class="num">Event GP<br>Produced</th>
-              <th class="num band-col">Band <span class="tooltip-trigger" data-tip="The monthly band rate your GP Received this month falls into. Bands are annual ÷ 12. The rate applies only to the slice of monthly GP that lands inside this band — earlier dollars earn at lower rates.">?</span></th>
+              <th class="num band-col">Band</th>
               <th class="num">GP<br>Commission<small>Inc. Super</small></th>
               <th class="num">Production<br>Commission<small>Inc. Super</small></th>
               <th class="num">Monthly<br>Total<small>Inc. Super</small></th>
@@ -1011,19 +1048,17 @@
           <tbody id="monthly-body"></tbody>
         </table></div>
       </div>
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Months highlighted amber are where a true-up adjustment applied. Tooltip on the GP Commission cell shows the raw monthly figure before adjustment.</p>
-    </div>
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Frozen reference only — not the active payout plan.</p>
+    </details>
 
     <!-- ============================================================
-         FORTNIGHTLY PAYOUT — OPTION B PREVIEW (EXPERIMENTAL)
-         Self-contained section using sample data. Does not affect the
-         monthly logic above. Demo-only.
+         FORTNIGHTLY PAYOUT — ACTIVE PLAN (Forward 12 months)
          ============================================================ -->
     <div class="card" style="background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
         <div>
-          <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Option B preview</span></h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — so each pay is exactly what you've earned, no monthly or quarterly true-up needed. <strong>Edit the GP Received cells</strong> to model your year — hover the totals or any row for the breakdown.</p>
+          <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #fff8e1; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. <strong>Edit the GP Received cells</strong> to model your year — hover the totals or any row for the breakdown.</p>
         </div>
         <span style="font-size: 11px; color: #b8860b; font-family: var(--mono); font-weight: 600;">26 fortnights · Jun 2026 – May 2027</span>
       </div>
@@ -4902,7 +4937,8 @@ function renderBreakdown(r) {
   const SUPER_RATE = 0.12;
 
   // Escape HTML special chars (for inserting tooltip content safely)
-  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  // CRITICAL: must also escape single quotes since we use data-tip='...' with single-quoted attribute
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
   // Annualised pace at end of fortnight `idx` (0-based) with running YTD totalSoFar
   function pace(ytdSoFar, idx) {
@@ -5357,8 +5393,135 @@ function renderBreakdown(r) {
     });
   }
 
+  // ============================================================
+  // TRAILING 12 MONTHS — "What you would've earned" panel
+  // Same band math as the forward fortnightly view, just 12 monthly
+  // editable rows for the rep's historical GP Sold figures.
+  // ============================================================
+  const TRAILING_MONTHS = [
+    { label: 'May 2025' }, { label: 'Jun 2025' }, { label: 'Jul 2025' },
+    { label: 'Aug 2025' }, { label: 'Sep 2025' }, { label: 'Oct 2025' },
+    { label: 'Nov 2025' }, { label: 'Dec 2025' }, { label: 'Jan 2026' },
+    { label: 'Feb 2026' }, { label: 'Mar 2026' }, { label: 'Apr 2026' }
+  ];
+  const trailingValues = new Array(TRAILING_MONTHS.length).fill(0);
+
+  function renderTrailing() {
+    const tBody = document.getElementById('trailing-body');
+    const tFoot = document.getElementById('trailing-foot');
+    const tTotals = document.getElementById('trailing-totals');
+    if (!tBody || !tFoot || !tTotals) return;
+
+    let ytd = 0, cumPay = 0;
+    const rows = [];
+    TRAILING_MONTHS.forEach((m, i) => {
+      const gp = trailingValues[i] || 0;
+      const prevYtd = ytd;
+      ytd = prevYtd + gp;
+      const properPay = cumBandComm(ytd) - cumBandComm(prevYtd);
+      const endRate = marginalRate(ytd);
+      cumPay += properPay;
+      rows.push({ label: m.label, idx: i, gp, ytd, properPay, endRate, cumPay });
+    });
+
+    const totalGP = ytd;
+    const totalPay = cumPay;
+    const avgRate = totalGP > 0 ? totalPay / totalGP : 0;
+    const finalBand = marginalRate(totalGP);
+
+    const yearGpTip = `<div style="font-weight: 700; margin-bottom: 4px;">Year GP Sold</div><div>Sum of all 12 monthly GP Sold entries above.</div><div style="margin-top: 4px; font-size: 11px; color: #aaa;">Source of truth: Zoho Bookings · GP Sold (booking confirmed date).</div>`;
+    const wouldveEarnedTip = payAggTipHtml('Last 12 months commission', totalPay);
+    const finalBandTip = `<div style="font-weight: 700; margin-bottom: 4px;">Year-end band</div><div>The marginal rate the <strong>last dollar</strong> earned at after 12 months of GP.</div>`;
+    const effTip = `<div style="font-weight: 700; margin-bottom: 4px;">Effective rate (blended)</div><div>Total commission ÷ Total GP across all 12 months. Always sits between the lowest and highest bands you touched.</div>`;
+
+    tTotals.innerHTML = `
+      <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">Year GP <span class="fn-tip" data-tip='${esc(yearGpTip)}'>?</span></div>
+        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 2px;">${_fmt(totalGP)}</div>
+      </div>
+      <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">Would've Earned <span class="fn-tip" data-tip='${esc(wouldveEarnedTip)}'>?</span></div>
+        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: #1e6624; margin-top: 2px;">${_fmt(totalPay)}</div>
+      </div>
+      <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">Effective Rate <span class="fn-tip" data-tip='${esc(effTip)}'>?</span></div>
+        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 2px;">${(avgRate*100).toFixed(1)}%</div>
+      </div>
+      <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">End Band <span class="fn-tip" data-tip='${esc(finalBandTip)}'>?</span></div>
+        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: ${finalBand >= 0.09 ? '#1e6624' : 'var(--ink)'}; margin-top: 2px;">${(finalBand*100).toFixed(0)}%</div>
+      </div>
+    `;
+
+    let html = '';
+    rows.forEach(r => {
+      const payTip = payCellTipHtml({ properPay: r.properPay });
+      html += `
+        <tr>
+          <td style="font-family: var(--mono); font-size: 12px;">${esc(r.label)}</td>
+          <td class="num"><input type="text" class="trailing-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
+          <td class="num" style="color: var(--muted);">${_fmt(r.ytd)}</td>
+          <td class="num" style="color: var(--muted);">${(r.endRate*100).toFixed(0)}%</td>
+          <td class="num">${r.properPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(payTip)}'>${_fmt(r.properPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
+          <td class="num" style="color: var(--muted);">${_fmt(r.cumPay)}</td>
+        </tr>
+      `;
+    });
+    tBody.innerHTML = html;
+
+    tFoot.innerHTML = `
+      <tr style="font-weight: 700; border-top: 2px solid #d3d1c7; background: #f0f7f3;">
+        <td>Total trailing 12mo</td>
+        <td class="num">${totalGP > 0 ? _fmt(totalGP) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="color: var(--muted);">—</td>
+        <td class="num" style="color: var(--muted);">${(avgRate*100).toFixed(1)}%</td>
+        <td class="num">${totalPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(wouldveEarnedTip)}'>${_fmt(totalPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num">${_fmt(totalPay)}</td>
+      </tr>
+    `;
+
+    // Style + wire inputs (reuse .fn-gp-input style by adding class)
+    tBody.querySelectorAll('.trailing-gp-input').forEach(inp => {
+      // Apply same styling as fortnightly inputs
+      inp.className = 'fn-gp-input trailing-gp-input';
+      inp.addEventListener('focus', (e) => e.target.select());
+      const commit = () => {
+        const idx = parseInt(inp.getAttribute('data-idx'), 10);
+        const raw = inp.value.replace(/[^0-9.\-]/g, '');
+        const n = parseFloat(raw);
+        trailingValues[idx] = isFinite(n) ? n : 0;
+      };
+      inp.addEventListener('blur', () => { commit(); renderTrailing(); });
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
+          const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
+          if (curIdx < TRAILING_MONTHS.length - 1) {
+            e.preventDefault();
+            commit();
+            renderTrailing();
+            const nextInp = tBody.querySelector('.trailing-gp-input[data-idx="' + (curIdx + 1) + '"]');
+            if (nextInp) { nextInp.focus(); nextInp.select && nextInp.select(); }
+          }
+        } else if (e.key === 'Tab' && e.shiftKey) {
+          const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
+          if (curIdx > 0) {
+            e.preventDefault();
+            commit();
+            renderTrailing();
+            const prevInp = tBody.querySelector('.trailing-gp-input[data-idx="' + (curIdx - 1) + '"]');
+            if (prevInp) { prevInp.focus(); prevInp.select && prevInp.select(); }
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          inp.blur();
+        }
+      });
+    });
+  }
+
   // Initial render (all-blank)
   render();
+  renderTrailing();
 })();
 
 load();
