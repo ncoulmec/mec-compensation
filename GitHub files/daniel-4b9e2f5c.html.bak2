@@ -6,7 +6,7 @@
 <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="pragma" content="no-cache">
 <meta http-equiv="expires" content="0">
-<title>Demo Dashboard · Sample Sales Rep</title>
+<title>Compensation Dashboard · Daniel Steer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -447,8 +447,19 @@
   .scenario-row .value-input:focus { outline: none; border-color: var(--navy); }
 
   .tooltip-trigger { display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 50%; background: var(--border); font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 4px; cursor: help; position: relative; font-family: 'DM Sans', sans-serif; text-transform: none; letter-spacing: normal; }
+  /* Body-level tooltip for .tooltip-trigger — escapes overflow containers (table wrappers etc) */
   .tooltip-trigger:hover { color: var(--accent); background: var(--accent-bg); border-color: var(--accent); }
-  #tt-bubble { position: fixed; z-index: 10000; background: var(--ink); color: #fff; padding: 9px 13px; border-radius: 6px; font-size: 12px; font-weight: 400; line-height: 1.5; max-width: 320px; pointer-events: none; box-shadow: 0 4px 14px rgba(0,0,0,0.22); opacity: 0; transition: opacity 0.12s ease; text-align: left; font-family: 'DM Sans', sans-serif; white-space: normal; }
+  #tt-bubble {
+    position: fixed; z-index: 10000;
+    background: var(--ink); color: #fff;
+    padding: 9px 13px; border-radius: 6px;
+    font-size: 12px; font-weight: 400; line-height: 1.5;
+    max-width: 320px; pointer-events: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+    opacity: 0; transition: opacity 0.12s ease;
+    text-align: left; font-family: 'DM Sans', sans-serif;
+    white-space: normal;
+  }
   #tt-bubble.show { opacity: 1; }
 
   .rate-calc { background: #fafaf7; border-left: 3px solid var(--navy); border-radius: 4px; padding: 14px 18px; margin: 14px 0 4px; font-size: 13px; }
@@ -687,7 +698,6 @@
     <dt>Realistic Range</dt>
     <dd>The green zone on your Annual GP Sold slider — the window where most of your year is likely to land. The slider moves slowly through this zone so you can dial in the exact figure easily.</dd>
 
-
     <dt>Quarterly True-Up</dt>
     <dd>Your monthly commission is paid on monthly GP — but the real entitlement is your quarterly figure. At quarter-end, we reconcile: if you've been overpaid, the difference becomes a balance that reduces future commissions (never base salary). If underpaid, your month-3 cheque tops up.</dd><dt>Margin Calculator</dt>
     <dd>Sanity-checks your realised margin (GP ÷ Revenue ex-GST) on bookings. Currently informational only — Margin Multipliers will reward higher-margin work in a future pass.</dd>
@@ -725,18 +735,15 @@
 </div>
 
 <main>
-  <div style="background: #fef5e6; border: 1px solid #f5d890; color: #8a6a00; padding: 10px 18px; border-radius: 10px; margin-top: 6px; margin-bottom: 12px; font-size: 13px; display: flex; align-items: center; gap: 12px;">
-    <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; padding: 3px 8px; border-radius: 999px; background: #8a6a00; color: #fff; text-transform: uppercase;">Demo</span>
-    <span>This is a sample dashboard with demo data — used for training and the team walkthrough video. No real numbers are shown.</span>
-  </div>
-
 
   <div id="error-slot"></div>
   <div id="loading" class="loading">Loading compensation data…</div>
 
   <!-- Overview -->
   <section class="panel" id="panel-overview">
-        <!-- ============ PLANNING SECTION ============ -->
+
+    <!-- ============ PLANNING SECTION ============ -->
+    <div id="pay-increase-banner"></div>
     <div class="section-head">      <h2>Forecast your year</h2>
       <p class="blurb">Drag the sliders below to model different GP scenarios — numbers reset on reload.</p>
     </div>
@@ -988,6 +995,153 @@
       </div>
     </div>
 
+    <!-- ============================================================
+         TRAILING 12 MONTHS — "What you would've earned"
+         Historical GP Sold (booking confirmed date) backfeeds through
+         the new fortnightly plan to show what comp would have looked
+         like. Editable inputs — paste from Zoho's GP Sold report.
+         ============================================================ -->
+    <div class="card" style="background: linear-gradient(135deg, #f0f7f3 0%, #fff 100%); border-left: 4px solid #48a14d;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
+        <div>
+          <h2 style="margin: 0 0 4px;">Last 12 Months <span style="font-size: 10px; padding: 1px 6px; background: #e7f6ea; color: #1e6624; border: 1px solid #c3e4d0; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">What you would've earned</span></h2>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">If the new fortnightly plan had been live the last 12 months, this is what your variable comp would've been. Enter your historical <strong>GP Sold</strong> (booking-confirmed date — from Zoho's Bookings → GP Sold report) below.</p>
+        </div>
+        <span style="font-size: 11px; color: #1e6624; font-family: var(--mono); font-weight: 600;">May 2025 – Apr 2026</span>
+      </div>
+
+      <div id="trailing-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
+
+      <div style="overflow-x: auto;">
+        <table class="monthly" id="trailing-table" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">GP Sold <span class="fn-tip" data-tip="<strong>Editable</strong> — paste from Zoho's GP Sold (booking-confirmed) report for each calendar month.">?</span></th>
+              <th class="num">YTD GP</th>
+              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the month in.">?</span></th>
+              <th class="num">Commission This Month <small>(inc. super)</small></th>
+              <th class="num">Cumulative</th>
+            </tr>
+          </thead>
+          <tbody id="trailing-body"></tbody>
+          <tfoot id="trailing-foot"></tfoot>
+        </table>
+      </div>
+
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Same cumulative band math as the forward view · TU only applies to fortnightly payments, so monthly granularity here is just a "what if" snapshot · Use this to validate the new plan against your actual year.</p>
+    </div>
+
+    <!-- Legacy monthly schedule retained collapsed for audit/reference -->
+    <details class="card" style="background: #fafaf7;">
+      <summary style="cursor: pointer; font-weight: 600; color: var(--muted); padding: 4px 0;">
+        Legacy: Monthly Payout schedule (deprecated · superseded by fortnightly Option B)
+      </summary>
+      <p style="font-size: 12px; color: var(--muted); margin: 10px 0 14px;">The previous monthly cycle is preserved here for audit reference. The <strong>fortnightly view below</strong> is now the active plan. <a id="zoho-actual-btn" href="#" target="_blank" rel="noopener" style="display: none; text-decoration: none; color: var(--navy); border-bottom: 1px solid var(--navy); font-size: 11px;">📊 Fetch My Zoho Actual Data</a></p>
+      <div style="overflow-x: auto;">
+        <div class="table-wrap"><table class="monthly" id="monthly-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">GP Received</th>
+              <th class="num">Event GP<br>Produced</th>
+              <th class="num band-col">Band</th>
+              <th class="num">GP<br>Commission<small>Inc. Super</small></th>
+              <th class="num">Production<br>Commission<small>Inc. Super</small></th>
+              <th class="num">Monthly<br>Total<small>Inc. Super</small></th>
+              <th class="num">Monthly<br>Total<small>Ex. Super</small></th>
+            </tr>
+          </thead>
+          <tbody id="monthly-body"></tbody>
+        </table></div>
+      </div>
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Frozen reference only — not the active payout plan.</p>
+    </details>
+
+    <!-- ============================================================
+         FORTNIGHTLY PAYOUT — ACTIVE PLAN (Forward 12 months)
+         ============================================================ -->
+    <div class="card" style="background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
+        <div>
+          <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #fff8e1; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. <strong>Edit the GP Received cells</strong> to model your year — hover the totals or any row for the breakdown.</p>
+        </div>
+        <span style="font-size: 11px; color: #b8860b; font-family: var(--mono); font-weight: 600;">26 fortnights · Jun 2026 – May 2027</span>
+      </div>
+
+      <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
+
+      <div style="overflow-x: auto;">
+        <table class="monthly" id="fortnightly-table" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th class="num">GP Received <span class="fn-tip" data-tip="<strong>Editable</strong> — type any value to model the fortnight. Pull these figures from the Zoho Payments report once your fortnight closes. Live recalc as you type.">?</span></th>
+              <th class="num">YTD GP</th>
+              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the fortnight in.">?</span></th>
+              <th class="num">Pay This FN <small>(inc. super)</small></th>
+              <th class="num">TU Adj <span class="fn-tip" data-tip="<strong>True-Up Adjustment</strong> — the difference between the proper cumulative-band math and the naive 'GP × current rate' estimate. Most fortnights = <code>$0</code>. Non-zero only when YTD straddles a band threshold during the fortnight. Hover any TU value (even on collapsed months) for the full breakdown.">?</span></th>
+              <th class="num">Cumulative</th>
+            </tr>
+          </thead>
+          <tbody id="fortnightly-body"></tbody>
+          <tfoot id="fortnightly-foot"></tfoot>
+        </table>
+      </div>
+
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Click any month to expand its fortnights · Months containing a band crossing are highlighted gold · Hover any cell for context · No quarter-end TU required — every fortnight reconciles itself.</p>
+
+      <!-- ============================================================
+           YEAR-END AUDIT — Cross-check rep entries against company GP
+           ============================================================ -->
+      <div style="margin-top: 22px; padding: 16px; border: 1px dashed #b8860b; border-radius: 8px; background: #fefcf7;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;">
+          <h3 style="margin: 0; font-size: 14px; color: #6a4a00;">Year-End Audit <span style="font-size: 9px; padding: 1px 5px; background: #fff3cd; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 3px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Sanity check</span></h3>
+          <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Run at FY close — confirms fortnightly entries reconcile to the company books.</span>
+        </div>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Pull total GP received for this rep from the source of truth (Zoho Payments report, or Xero cash-basis P&amp;L if a single-rep account), enter it here, and we'll verify it matches the sum of every fortnight above. Differences over $1 indicate a missing or duplicated entry that needs investigation.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: end;">
+          <div>
+            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Full-year GP received (from Zoho)</label>
+            <input type="text" id="audit-actual" placeholder="e.g. 445,000" inputmode="decimal" style="width: 100%; padding: 8px 10px; border: 1px solid #d3d1c7; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fff;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Sum of 26 fortnight entries</label>
+            <div id="audit-sum" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7; color: var(--ink);">—</div>
+          </div>
+          <div>
+            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Variance</label>
+            <div id="audit-variance" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7;">—</div>
+          </div>
+        </div>
+        <div id="audit-verdict" style="margin-top: 14px; padding: 12px; border-radius: 6px; background: #f4f3ed; border: 1px solid #d3d1c7; font-size: 13px; color: var(--muted);">
+          <span style="font-family: var(--mono); font-size: 11px;">▸ Enter the full-year GP received above to verify.</span>
+        </div>
+        <p style="font-size: 11px; color: var(--faint); margin: 10px 0 0; font-family: var(--mono);">Tolerance: ±$1.00 (rounding) · ±$1,000 (acceptable timing variance) · &gt;$1,000 requires reconciliation.</p>
+      </div>
+    </div>
+
+    <!-- Quarterly summary strip -->
+    <div class="card">
+      <h2>Quarterly True-Up Summary <span class="tooltip-trigger" data-tip="Each quarter's entitled commission (using quarterly bands) vs what's been paid. If paid more than entitled, the excess carries into the next quarter's balance.">?</span></h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Each quarter reconciles commission paid vs entitled. Differences flow through the running balance shown under each bar.</p>
+      <div id="quarterly-strip" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;"></div>
+
+      <details class="tu-help">
+        <summary>What is the True-Up?</summary>
+        <div class="body">
+          <p>Your GP commissions are paid <strong>monthly</strong> so you get cash flow through the year instead of waiting until year-end. But monthly payouts are only an estimate — your real entitlement depends on your <strong>quarterly</strong> and <strong>annual</strong> GP.</p>
+          <p>At the end of each quarter we check:</p>
+          <ul>
+            <li><strong>Did you get paid more than you earned this quarter?</strong> The extra becomes a <em>true-up balance</em> — future commissions are reduced until the balance is worked off. Your base salary never moves.</li>
+            <li><strong>Did you get paid less than you earned?</strong> Your month-3 commission tops up to match.</li>
+          </ul>
+          <p>If a true-up balance is still sitting there at year-end, it carries into next year and nets against your first months' commissions. This way monthly payouts stay generous and fair, without anyone being over- or under-paid in the long run.</p>
+          <p style="color: var(--muted); font-size: 12px;">Example: you sell $70k of GP in month 1 and $0 in months 2-3. The monthly bands pay you about $4,100 in month 1. But at the end of the quarter, your entitlement on $70k quarterly is only $1,900. The $2,200 difference becomes your true-up balance — it'll offset what you earn in Q2 until worked off.</p>
+        </div>
+      </details>
+    </div>
   </section>
 
   <!-- Planning — bookings funnel calculator -->
@@ -1313,119 +1467,6 @@
       <div class="super-line"><span id="spr-super-label">+ Superannuation (total)</span><span id="spr-super" class="plus-line">—</span></div>
       <div class="super-line total"><span>Total package (inc. super)</span><span id="spr-total">—</span></div>
     </div>
-
-    <!-- ============================================================
-         FORTNIGHTLY PAYOUT — ACTIVE PLAN (Forward 12 months)
-         ============================================================ -->
-    <div class="card" style="background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
-        <div>
-          <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #fff8e1; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. <strong>Edit the GP Received cells</strong> to model your year — hover the totals or any row for the breakdown.</p>
-        </div>
-        <span style="font-size: 11px; color: #b8860b; font-family: var(--mono); font-weight: 600;">26 fortnights · Jun 2026 – May 2027</span>
-      </div>
-
-      <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
-
-      <div style="overflow-x: auto;">
-        <table class="monthly" id="fortnightly-table" style="width: 100%;">
-          <thead>
-            <tr>
-              <th>Period</th>
-              <th class="num">GP Received <span class="fn-tip" data-tip="<strong>Editable</strong> — type any value to model the fortnight. Pull these figures from the Zoho Payments report once your fortnight closes. Live recalc as you type.">?</span></th>
-              <th class="num">YTD GP</th>
-              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the fortnight in.">?</span></th>
-              <th class="num">Pay This FN <small>(inc. super)</small></th>
-              <th class="num">TU Adj <span class="fn-tip" data-tip="<strong>True-Up Adjustment</strong> — the difference between the proper cumulative-band math and the naive 'GP × current rate' estimate. Most fortnights = <code>$0</code>. Non-zero only when YTD straddles a band threshold during the fortnight. Hover any TU value (even on collapsed months) for the full breakdown.">?</span></th>
-              <th class="num">Cumulative</th>
-            </tr>
-          </thead>
-          <tbody id="fortnightly-body"></tbody>
-          <tfoot id="fortnightly-foot"></tfoot>
-        </table>
-      </div>
-
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Click any month to expand its fortnights · Months containing a band crossing are highlighted gold · Hover any cell for context · No quarter-end TU required — every fortnight reconciles itself.</p>
-
-      <!-- ============================================================
-           YEAR-END AUDIT — Cross-check rep entries against company GP
-           ============================================================ -->
-      <div style="margin-top: 22px; padding: 16px; border: 1px dashed #b8860b; border-radius: 8px; background: #fefcf7;">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;">
-          <h3 style="margin: 0; font-size: 14px; color: #6a4a00;">Year-End Audit <span style="font-size: 9px; padding: 1px 5px; background: #fff3cd; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 3px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Sanity check</span></h3>
-          <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Run at FY close — confirms fortnightly entries reconcile to the company books.</span>
-        </div>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Pull total GP received for this rep from the source of truth (Zoho Payments report, or Xero cash-basis P&amp;L if a single-rep account), enter it here, and we'll verify it matches the sum of every fortnight above. Differences over $1 indicate a missing or duplicated entry that needs investigation.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: end;">
-          <div>
-            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Full-year GP received (from Zoho)</label>
-            <input type="text" id="audit-actual" placeholder="e.g. 445,000" inputmode="decimal" style="width: 100%; padding: 8px 10px; border: 1px solid #d3d1c7; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fff;">
-          </div>
-          <div>
-            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Sum of 26 fortnight entries</label>
-            <div id="audit-sum" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7; color: var(--ink);">—</div>
-          </div>
-          <div>
-            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Variance</label>
-            <div id="audit-variance" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7;">—</div>
-          </div>
-        </div>
-        <div id="audit-verdict" style="margin-top: 14px; padding: 12px; border-radius: 6px; background: #f4f3ed; border: 1px solid #d3d1c7; font-size: 13px; color: var(--muted);">
-          <span style="font-family: var(--mono); font-size: 11px;">▸ Enter the full-year GP received above to verify.</span>
-        </div>
-        <p style="font-size: 11px; color: var(--faint); margin: 10px 0 0; font-family: var(--mono);">Tolerance: ±$1.00 (rounding) · ±$1,000 (acceptable timing variance) · &gt;$1,000 requires reconciliation.</p>
-      </div>
-    </div>
-
-    <!-- ============================================================
-         TRAILING 12 MONTHS — "What you would've earned"
-         ============================================================ -->
-    <div class="card" style="background: linear-gradient(135deg, #f0f7f3 0%, #fff 100%); border-left: 4px solid #48a14d;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
-        <div>
-          <h2 style="margin: 0 0 4px;">Last 12 Months <span style="font-size: 10px; padding: 1px 6px; background: #e7f6ea; color: #1e6624; border: 1px solid #c3e4d0; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">What you would've earned</span></h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0;">If the new fortnightly plan had been live the last 12 months, this is what your variable comp would've been. Enter your historical <strong>GP Sold</strong> (booking-confirmed date — from Zoho's Bookings → GP Sold report) below.</p>
-        </div>
-        <span style="font-size: 11px; color: #1e6624; font-family: var(--mono); font-weight: 600;">May 2025 – Apr 2026</span>
-      </div>
-
-      <div id="trailing-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
-
-      <div style="overflow-x: auto;">
-        <table class="monthly" id="trailing-table" style="width: 100%;">
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th class="num">GP Sold <span class="fn-tip" data-tip="<strong>Editable</strong> — paste from Zoho's GP Sold (booking-confirmed) report for each calendar month.">?</span></th>
-              <th class="num">YTD GP</th>
-              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the month in.">?</span></th>
-              <th class="num">Commission This Month <small>(inc. super)</small></th>
-              <th class="num">Cumulative</th>
-            </tr>
-          </thead>
-          <tbody id="trailing-body"></tbody>
-          <tfoot id="trailing-foot"></tfoot>
-        </table>
-      </div>
-
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Same cumulative band math as the forward view · Use this to validate the new plan against your actual year and bridge the transition period.</p>
-    </div>
-
-    <!-- ============================================================
-         "What is the True-Up?" — reworded for fortnightly context
-         ============================================================ -->
-    <div class="card">
-      <details class="tu-help" open>
-        <summary>What is the True-Up?</summary>
-        <div class="body">
-          <p>Most fortnights, the simple <code>GP × current band rate</code> formula gives you exactly what you've earned — no adjustment needed. But occasionally a single fortnight's GP <strong>straddles a band threshold</strong> mid-fortnight.</p>
-          <p>Example: you start a fortnight with YTD GP of <strong>$295k</strong> (in the 4% band) and earn another <strong>$15k</strong>, ending YTD at <strong>$310k</strong> (now in the 9% band). That fortnight, the first $5k was earned at 4% (= $200) and the next $10k at 9% (= $900) — proper pay $1,100. A naive <code>$15k × 9%</code> would over-pay you to $1,350. The <strong>True-Up Adjustment</strong> (TU column on the table above) corrects the math so you receive the exact entitled amount — never over, never under.</p>
-          <p>Most reps see 3–5 band crossings per year (one per band entered). Every other fortnight pays cleanly with <code>$0</code> TU. Your <strong>base salary is never affected</strong> by any of this — the TU only nudges variable comp.</p>
-          <p style="color: var(--muted); font-size: 12px;">Why this is better than the old quarterly system: under quarterly true-up, you might be overpaid for 2 months then have commissions clawed back in month 3. Under fortnightly cumulative math, every payment is already exactly right — no surprises, no claw-backs, no running balance to track.</p>
-        </div>
-      </details>
-    </div>
   </section>
 </main>
 
@@ -1510,845 +1551,15 @@
 // DEV_MODE — single switch to bypass encryption + cache during iteration.
 // Flick to false (and run prod-deploy) for production.
 // =========================================================================
-const DEV_MODE = true;
+const DEV_MODE = false;
 
-// DEMO MODE — data is fully inlined below. No fetch, no PIN gate, no dependency on data.json.
-const DEMO_INLINE_DATA = {
-  "meta": {
-    "companyName": "MEC Group",
-    "companyInitials": "MEC",
-    "effectiveDate": "2026-04-22",
-    "lastUpdatedBy": "nathan",
-    "schemaVersion": "2.0",
-    "currency": "AUD"
-  },
-  "globals": {
-    "superRate": 0.12,
-    "gstRate": 0.1,
-    "guardrailMargin": 0.35,
-    "quarterlyPayoutPct": 0.75,
-    "yearEndHoldbackPct": 0.25,
-    "marginMultipliers": [
-      {
-        "minMargin": 0.35,
-        "multiplier": 1
-      },
-      {
-        "minMargin": 0.4,
-        "multiplier": 1.1
-      },
-      {
-        "minMargin": 0.45,
-        "multiplier": 1.2
-      },
-      {
-        "minMargin": 0.5,
-        "multiplier": 1.3
-      }
-    ],
-    "kpiScoreCap": 1.5,
-    "kpiMinForComm": 0,
-    "guardrailBasis": "gm",
-    "guardrailBasisOptions": {
-      "gm": "Gross Margin (Rev \u2212 CoS) / Rev",
-      "cm": "Contribution Margin (GP \u2212 Contrib. Exp) / Rev",
-      "np": "Net Margin (CM \u2212 OpEx) / Rev"
-    },
-    "guardrailEnabled": false,
-    "zohoDashboardUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000036989261",
-    "kpiScoreFloor": 0,
-    "payMixPhilosophy": {
-      "legacyMix": "85:15",
-      "legacyMixOlder": "90:10",
-      "currentDefault": "85:15",
-      "futureGoal": "75:25",
-      "note": "Historically most MEC roles sat at 85:15 or 90:10 base/variable. The plan moves us gradually toward 75:25 over a number of years \u2014 not a sudden flip."
-    },
-    "actualsHistorical2025": {
-      "leadsHandled": 6234,
-      "bookingsCreatedFromLeads": 4125,
-      "totalQuotesSent": 4326,
-      "bookingsWonFromLeads": 1387,
-      "bookingsWonTotal": 1920,
-      "leadToBookingConv": 0.662,
-      "bookingToWonConv": 0.336,
-      "leadToWonConv": 0.222,
-      "events": 1833,
-      "avgGPPerEvent": 790.37,
-      "totalEntertainers": 2261,
-      "entertainersPerEvent": 1.23,
-      "totalGP": 1476405,
-      "sourceUrl": "https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000016804290",
-      "sourceLabel": "Get Annual Zoho Data Here",
-      "year": 2025
-    },
-    "targets2026": {
-      "annualGP": 2026600,
-      "annualGPMax": 2500000,
-      "annualGPMin": 1000000,
-      "annualGPStep": 25000,
-      "targetEvents": 2000,
-      "targetEventsMax": 2500,
-      "targetEventsMin": 1500,
-      "targetEventsStep": 25,
-      "leadToBookingConv": 0.662,
-      "bookingToWonConv": 0.336,
-      "year": 2026
-    }
-  },
-  "planTypes": {
-    "gp_bands": {
-      "name": "Sales Rep (GP Incremental Bands)",
-      "description": "For Sales Reps (Daniel, Nic, Sales 4.0). Flat 4% on every dollar up to $300k — matches the old 3.5% plan within rounding. Above $300k the curve climbs steeply: 9 / 12 / 13 / 14 / 16% — that's where stretch reward kicks in. Designed for steady cash flow on the way to the inflection point. Band output is super-INCLUSIVE. 1% production commission on Event GP. Fortnightly cumulative band math — no quarterly true-up needed.",
-      "metricLabel": "Annual GP Sold",
-      "maxMetricValue": 600000,
-      "metricBasis": "gp",
-      "inputIncludesGST": true,
-      "bandsIncludeSuper": true,
-      "payoutFrequency": "fortnightly",
-      "payoutPercentage": 1,
-      "includeProduction": true,
-      "bands": [
-        { "threshold": 0,      "rate": 0.04, "poolRate": 0 },
-        { "threshold": 100000, "rate": 0.04, "poolRate": 0 },
-        { "threshold": 200000, "rate": 0.04, "poolRate": 0 },
-        { "threshold": 300000, "rate": 0.09, "poolRate": 0 },
-        { "threshold": 400000, "rate": 0.12, "poolRate": 0 },
-        { "threshold": 450000, "rate": 0.13, "poolRate": 0 },
-        { "threshold": 500000, "rate": 0.14, "poolRate": 0 },
-        { "threshold": 550000, "rate": 0.16, "poolRate": 0 }
-      ],
-      "productionPct": 0.01,
-      "productionBasis": "eventGP",
-      "maxProductionValue": 400000,
-      "productionIncludesSuper": true,
-      "showOldCommissionComparison": true,
-      "oldCommissionRate": 0.035,
-      "trueUpMode": "fortnightly_cumulative",
-      "includeProjects": false
-    }
-  },
-  "kpis": {
-    "definitions": [
-      {
-        "id": "conversion_rate_quoted",
-        "name": "Conversion Rate (Quoted \u2192 Confirmed)",
-        "unit": "%",
-        "direction": "higher",
-        "defaultWeight": 0.25,
-        "formula": "bookingsConfirmed / bookingsQuoted"
-      },
-      {
-        "id": "call_rate",
-        "name": "Call Rate (Quotes with Call/VM Attached)",
-        "unit": "%",
-        "direction": "higher",
-        "defaultWeight": 0.15,
-        "formula": "quotesWithCall / totalQuotes",
-        "draft": true
-      },
-      {
-        "id": "revenue_target",
-        "name": "Revenue vs Target",
-        "unit": "AUD",
-        "direction": "higher",
-        "defaultWeight": 0.2
-      },
-      {
-        "id": "margin_target",
-        "name": "Realised Margin vs Target",
-        "unit": "%",
-        "direction": "higher",
-        "defaultWeight": 0.15
-      },
-      {
-        "id": "client_satisfaction",
-        "name": "Client Satisfaction",
-        "unit": "/10",
-        "direction": "higher",
-        "defaultWeight": 0.1
-      },
-      {
-        "id": "bookings_on_time",
-        "name": "Bookings Delivered On-Time",
-        "unit": "%",
-        "direction": "higher",
-        "defaultWeight": 0.1
-      },
-      {
-        "id": "complaint_rate",
-        "name": "Complaint Rate",
-        "unit": "%",
-        "direction": "lower",
-        "defaultWeight": 0.05
-      },
-      {
-        "id": "team_engagement",
-        "name": "Team Engagement (GM only)",
-        "unit": "score",
-        "direction": "higher",
-        "defaultWeight": 0.1
-      }
-    ]
-  },
-  "faqs": {
-    "sales_rep": {
-      "label": "Sales Representative",
-      "items": [
-        {
-          "q": "When Do I Get Paid Commission?",
-          "a": "First fortnightly pay cycle of the month \u2014 once a month, like clockwork. The figure is built from cash that's actually arrived in MEC's bank account that month, not from bookings you've quoted or even confirmed. Customer pays \u2192 you get paid. The Payments module in Zoho is where every dollar gets tracked back to the booking and back to you."
-        },
-        {
-          "q": "What is the True-up?",
-          "a": "Monthly commission is an honest estimate, not gospel. At quarter-end we run the proper quarterly bands math against what you actually delivered. If we paid you too much, the excess sits as a balance and nets against next month's commission \u2014 your bank account never goes backwards. If we paid you too little, next month tops you up. Your base salary stays untouched either way."
-        },
-        {
-          "q": "What if a Booking I Made Gets Cancelled or Refunded?",
-          "a": "Refunds aren't fun, but here's how it works: the refunded amount shows as negative cash on the booking in Zoho, and gets netted against your next commission cycle. Your base salary is never touched, and your paycheck never goes negative \u2014 at worst, that month's commission gets a bit thinner. We move on."
-        },
-        {
-          "q": "How is my Band Rate Calculated?",
-          "a": "Your annual GP received climbs through bands like rungs on a ladder. The first chunk earns at rate A%, the next chunk at a higher rate, the next at higher again. The further you climb, the more you earn per dollar of GP \u2014 that's the whole point of a banded structure. The 'Effective Rate' shown on your dashboard is your blended average across every band you've already climbed through."
-        },
-        {
-          "q": "Why Monthly Bands Instead of Quarterly or Annual?",
-          "a": "Cash flow. Annual bands would mean waiting until December to see a single dollar of commission \u2014 no thanks. Monthly bands keep money landing in your account regularly. The quarterly true-up keeps it fair: monthly is the estimate, quarterly is the proper math."
-        },
-        {
-          "q": "What is the Difference Between GP Sold and GP Received?",
-          "a": "GP Sold is the total expected GP from bookings you've quoted and converted. GP Received is the slice of that GP that's actually arrived as cash from customers. Commission is paid on GP Received only \u2014 cash in, cash out. It can be a bit slower than the old way, but it lines up your pay with the company's actual cash flow."
-        },
-        {
-          "q": "What if a Client Adds Extra Services or Bumps Up Their Booking? Do I Need to Email About a Catch-Up Commission?",
-          "a": "<strong>No more chasing. No more emails.</strong> Under the old plan, if a client added an extra performer, extended their booking, or bumped up their package <em>after</em> confirmation, you'd have to flag it so the team could manually adjust your commission. Easy to miss, awkward to ask about. Under the new plan it just sorts itself out: commission is paid on <strong>GP Received</strong>, so whatever cash actually lands in MEC's account on a booking is what gets attributed to you \u2014 including any add-ons, upgrades, or extras the client paid for along the way. They added a saxophonist? Extra cash arrives \u2192 extra commission flows to you next cycle, automatically. They cancelled an add-on? Refunded amount nets off, also automatically. Win on both sides \u2014 you don't have to email anyone, and the books always tell the truth."
-        },
-        {
-          "q": "Why Are My Commissions Inclusive of Super?",
-          "a": "Short answer: when your dashboard shows $1,000 in commission, that $1,000 is the <strong>full amount paid in your name</strong>. Roughly $890 of it lands in your bank account on payday (pre-tax \u2014 the tax man does find that one). The other $110 slips quietly into your super fund \u2014 call it the future-you-on-a-beach-with-a-margarita-at-70 fund, and the slice the tax man can't touch on the way in. Both halves are your money; the super part is just locked away until you're 60, the government's quiet way of making sure you don't spend it all on a bender. Why we display it this way: the number on your dashboard is the <strong>whole package</strong> \u2014 what MEC actually pays in your name, full stop. No 'plus 12% super on top', no mental math, no asterisks."
-        },
-        {
-          "q": "What About KPIs \u2014 When Do They Affect my Pay?",
-          "a": "Right now, nothing. KPIs are locked at 1.0\u00d7 for Year 1, so they don't move your variable comp at all. From Year 2, KPIs may apply a multiplier somewhere between 0.7\u00d7 and 1.3\u00d7 based on your scorecard. The full draft scorecard is on the KPIs tab \u2014 read it now, push back, ask questions. We'd rather sort it before activation than after."
-        },
-        {
-          "q": "Will my Plan Change Next Year?",
-          "a": "Expect annual band tweaks based on what we've learned and where the business is heading. Bigger structural changes (new shape, team-pool kickers, etc.) get communicated well in advance and are never applied retrospectively. Cash you've already earned is locked in \u2014 that's a hard rule, not a soft one."
-        },
-        {
-          "q": "What if a Number Looks Wrong or My Pay Seems Off?",
-          "a": "Tell Hayley or Nathan straight away \u2014 the sooner the better. Bring the specific figure, what you expected to see, and a Zoho or Xero screenshot if you've got one. We'd much rather find the bug than have you underpaid for a month. Your base salary is never the variable here, so any discrepancy will be in the commission line."
-        },
-        {
-          "q": "Where Does the Dashboard Data Come From?",
-          "a": "GP and bookings data flows in from Zoho. Company-level P&L data flows in from Xero. Numbers refresh at the start of each pay cycle. The dashboard is read-only \u2014 to change a number on here, the source system has to be updated first. No spreadsheet middleman."
-        },
-        {
-          "q": "Who Calculates and Inputs the Actual Data?",
-          "a": "Payroll administration staff grab the actual data from Zoho, which is sent to Hayley for approval \u2014 then to Nathan for payment. The dashboard pulls automatically from Zoho (GP, payments) and Xero (P&L), so humans aren't hand-keying numbers \u2014 fewer fat-finger mistakes. If a figure looks off, raise it with Hayley or Nathan immediately and we'll trace the source together."
-        },
-        {
-          "q": "Is There a Ceiling on the Bonus / Variable Comp?",
-          "a": "No cap. The harder you push, the more you earn per dollar \u2014 that's deliberate. Bigger numbers mean higher band rates mean bigger commission cheques. If you want to chase a wild year, the system is built to reward it, not box you in."
-        },
-        {
-          "q": "Are Commission Figures Audited?",
-          "a": "Yes \u2014 back-audited. As part of each pay cycle the previous months are checked for any errors. But because the new plan is cash-received, any adjustments only ever flow forward \u2014 a refund this month reduces a future commission, never claws back from money already in your bank. Annual true-up at year-end catches any drift. Trust, but verify \u2014 applies to both sides."
-        },
-        {
-          "q": "What Changed About How My GP is Counted? (GP Sold vs GP Received)",
-          "a": "Under the old plan, you got commission the moment a booking was confirmed \u2014 based on GP Sold. The new plan ties commission to GP Received: cash that has actually arrived at MEC from the customer. Quotes don't pay. Confirmed bookings don't pay. Cash that lands in MEC's account pays. Yes, this means commission can land later than it used to (especially for events booked far in advance) \u2014 but it also means the business pays you out of money it's actually holding, not money it's still waiting for. Healthier for everyone."
-        },
-        {
-          "q": "What is GP Attribution and How Does the Payments Module Work?",
-          "a": "When a client pays in instalments \u2014 say a deposit now and the balance later \u2014 Zoho splits the booking's total expected GP across each payment in proportion to its share of the total. So a $1,000 deposit on a $3,000 booking gives you a third of the GP attributed to that payment, hitting your commission for the month it landed. The remaining two-thirds come through when the balance arrives. The Payments module in Zoho is where you can see exactly how each dollar of GP got attributed back to which payment, and which booking, and which person."
-        },
-        {
-          "q": "What About Bookings Confirmed Under the Old Plan? Will I Get Commission Twice?",
-          "a": "No double-dipping in either direction. If your booking was confirmed BEFORE the new plan's effective date and you already received commission under the old 'paid on confirmation' scheme, that's it \u2014 you've been paid. The customer's eventual payment doesn't trigger a second commission. So a wedding booked in May 2026 (old plan, paid on confirmation) but happening in October 2026 \u2014 the eventual cash arriving in MEC's account doesn't pay you again. On the flip side: GP-attributed commission still flows on bookings CONFIRMED after the effective date, even if the event itself is later in the year. The cutoff is the booking confirmation date, not the event date."
-        },
-        {
-          "q": "What if I Leave MEC Mid-quarter?",
-          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
-        },
-        {
-          "q": "What Happens to my Commission if my Employment Ends?",
-          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
-        }
-      ]
-    },
-    "hybrid_sales": {
-      "label": "Sales + Production (Admin & Production Coordinator)",
-      "items": [
-        {
-          "q": "What is the Production Gate? Why Does It Exist?",
-          "a": "Your role has both sales and production responsibilities. The production gate sets a minimum annual Event GP Produced target (the GP you have shepherded through to actual event date). The gate ensures we are paying you for both sides of your role \u2014 not just Sales-style commission when you have not done the production side."
-        },
-        {
-          "q": "What Happens if I Do Not Hit the Production Gate?",
-          "a": "Below the floor ($150k Event GP) no Sales commission is paid (Production Commission of 1% on Event GP still flows). Between floor and full ($300k), Sales commission ramps linearly from 0% up to 100%. At full rate ($300k+), full Sales commission flows. You can see the ramp on your Planning area."
-        },
-        {
-          "q": "When Do I Get Paid Commission?",
-          "a": "First fortnightly pay cycle of the month \u2014 once a month, like clockwork. The figure is built from cash that's actually arrived in MEC's bank account that month, not from bookings you've quoted or even confirmed. Customer pays \u2192 you get paid. The Payments module in Zoho is where every dollar gets tracked back to the booking and back to you."
-        },
-        {
-          "q": "What is the True-up?",
-          "a": "Monthly commission is an honest estimate, not gospel. At quarter-end we run the proper quarterly bands math against what you actually delivered. If we paid you too much, the excess sits as a balance and nets against next month's commission \u2014 your bank account never goes backwards. If we paid you too little, next month tops you up. Your base salary stays untouched either way."
-        },
-        {
-          "q": "What if a Booking I Worked on Gets Cancelled or Refunded?",
-          "a": "Refunds aren't fun, but here's how it works: the refunded amount shows as negative cash on the booking in Zoho, and gets netted against your next commission cycle. Your base salary is never touched, and your paycheck never goes negative \u2014 at worst, that month's commission gets a bit thinner. We move on."
-        },
-        {
-          "q": "Why is my Plan Structured This Way (compared to a Sales Rep)?",
-          "a": "You have less time on pure sales because you are also doing production. The bands are tuned to that reality \u2014 they pay slightly differently to a pure Sales rep. The production gate is the structural piece that ensures you get rewarded for both sides of your role."
-        },
-        {
-          "q": "What About KPIs \u2014 When Do They Affect my Pay?",
-          "a": "Right now, nothing. KPIs are locked at 1.0\u00d7 for Year 1, so they don't move your variable comp at all. From Year 2, KPIs may apply a multiplier somewhere between 0.7\u00d7 and 1.3\u00d7 based on your scorecard. The full draft scorecard is on the KPIs tab \u2014 read it now, push back, ask questions. We'd rather sort it before activation than after."
-        },
-        {
-          "q": "What if a Number Looks Wrong or My Pay Seems Off?",
-          "a": "Tell Hayley or Nathan straight away \u2014 the sooner the better. Bring the specific figure, what you expected to see, and a Zoho or Xero screenshot if you've got one. We'd much rather find the bug than have you underpaid for a month. Your base salary is never the variable here, so any discrepancy will be in the commission line."
-        },
-        {
-          "q": "Where Does the Dashboard Data Come From?",
-          "a": "GP and bookings data flows in from Zoho. Company-level P&L data flows in from Xero. Numbers refresh at the start of each pay cycle. The dashboard is read-only \u2014 to change a number on here, the source system has to be updated first. No spreadsheet middleman."
-        },
-        {
-          "q": "Who Calculates and Inputs the Actual Data?",
-          "a": "Payroll administration staff grab the actual data from Zoho, which is sent to Hayley for approval \u2014 then to Nathan for payment. The dashboard pulls automatically from Zoho (GP, payments) and Xero (P&L), so humans aren't hand-keying numbers \u2014 fewer fat-finger mistakes. If a figure looks off, raise it with Hayley or Nathan immediately and we'll trace the source together."
-        },
-        {
-          "q": "Is There a Ceiling on the Bonus / Variable Comp?",
-          "a": "No cap. The harder you push, the more you earn per dollar \u2014 that's deliberate. Bigger numbers mean higher band rates mean bigger commission cheques. If you want to chase a wild year, the system is built to reward it, not box you in."
-        },
-        {
-          "q": "Are Commission Figures Audited?",
-          "a": "Yes \u2014 back-audited. As part of each pay cycle the previous months are checked for any errors. But because the new plan is cash-received, any adjustments only ever flow forward \u2014 a refund this month reduces a future commission, never claws back from money already in your bank. Annual true-up at year-end catches any drift. Trust, but verify \u2014 applies to both sides."
-        },
-        {
-          "q": "Why Are My Commissions Inclusive of Super?",
-          "a": "Short answer: when your dashboard shows $1,000 in commission, that $1,000 is the <strong>full amount paid in your name</strong>. Roughly $890 of it lands in your bank account on payday (pre-tax \u2014 the tax man does find that one). The other $110 slips quietly into your super fund \u2014 call it the future-you-on-a-beach-with-a-margarita-at-70 fund, and the slice the tax man can't touch on the way in. Both halves are your money; the super part is just locked away until you're 60, the government's quiet way of making sure you don't spend it all on a bender. Why we display it this way: the number on your dashboard is the <strong>whole package</strong> \u2014 what MEC actually pays in your name, full stop. No 'plus 12% super on top', no mental math, no asterisks."
-        },
-        {
-          "q": "What Changed About How My GP is Counted? (GP Sold vs GP Received)",
-          "a": "Under the old plan, you got commission the moment a booking was confirmed \u2014 based on GP Sold. The new plan ties commission to GP Received: cash that has actually arrived at MEC from the customer. Quotes don't pay. Confirmed bookings don't pay. Cash that lands in MEC's account pays. Yes, this means commission can land later than it used to (especially for events booked far in advance) \u2014 but it also means the business pays you out of money it's actually holding, not money it's still waiting for. Healthier for everyone."
-        },
-        {
-          "q": "What if a Client Adds Extra Services or Bumps Up Their Booking? Do I Need to Email About a Catch-Up Commission?",
-          "a": "<strong>No more chasing. No more emails.</strong> Under the old plan, if a client added an extra performer, extended their booking, or bumped up their package <em>after</em> confirmation, you'd have to flag it so the team could manually adjust your commission. Easy to miss, awkward to ask about. Under the new plan it just sorts itself out: commission is paid on <strong>GP Received</strong>, so whatever cash actually lands in MEC's account on a booking is what gets attributed to you \u2014 including any add-ons, upgrades, or extras the client paid for along the way. They added a saxophonist? Extra cash arrives \u2192 extra commission flows to you next cycle, automatically. They cancelled an add-on? Refunded amount nets off, also automatically. Win on both sides \u2014 you don't have to email anyone, and the books always tell the truth."
-        },
-        {
-          "q": "What is GP Attribution and How Does the Payments Module Work?",
-          "a": "When a client pays in instalments \u2014 say a deposit now and the balance later \u2014 Zoho splits the booking's total expected GP across each payment in proportion to its share of the total. So a $1,000 deposit on a $3,000 booking gives you a third of the GP attributed to that payment, hitting your commission for the month it landed. The remaining two-thirds come through when the balance arrives. The Payments module in Zoho is where you can see exactly how each dollar of GP got attributed back to which payment, and which booking, and which person."
-        },
-        {
-          "q": "What About Bookings Confirmed Under the Old Plan? Will I Get Commission Twice?",
-          "a": "No double-dipping in either direction. If your booking was confirmed BEFORE the new plan's effective date and you already received commission under the old 'paid on confirmation' scheme, that's it \u2014 you've been paid. The customer's eventual payment doesn't trigger a second commission. So a wedding booked in May 2026 (old plan, paid on confirmation) but happening in October 2026 \u2014 the eventual cash arriving in MEC's account doesn't pay you again. On the flip side: GP-attributed commission still flows on bookings CONFIRMED after the effective date, even if the event itself is later in the year. The cutoff is the booking confirmation date, not the event date."
-        },
-        {
-          "q": "What if I Leave MEC Mid-quarter?",
-          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
-        },
-        {
-          "q": "What Happens to my Commission if my Employment Ends?",
-          "a": "Anything already in your bank account stays in your bank account \u2014 no clawbacks. Commission earned on cash that's already arrived at MEC but hasn't been paid out yet is yours, and lands in your final paycheck. Cash that arrives at MEC after your last day stays with the company. Base salary is never touched. We try to keep it fair on both sides of the door."
-        }
-      ]
-    },
-    "gm": {
-      "label": "General Manager",
-      "items": [
-        {
-          "q": "Why is my Plan Based on Contribution Margin (CM) and Net Profit (NP), Not Personal GP?",
-          "a": "As GM your job is to make the whole business work \u2014 not to personally generate sales. Tying your variable comp to business-level metrics aligns your incentives with what is good for the company overall, not just one rep's funnel."
-        },
-        {
-          "q": "What is Contribution Margin (CM)?",
-          "a": "Revenue minus all direct costs of doing the work \u2014 talent fees, cost of goods sold, anything that scales with the gig. CM is what is left after the work is done, before fixed costs like salaries, rent, software."
-        },
-        {
-          "q": "What is Net Profit (NP)?",
-          "a": "CM minus all fixed costs (salaries, rent, software, etc.). NP is what is left for the business after every cost is paid for."
-        },
-        {
-          "q": "When Does my CM Band Start Paying?",
-          "a": "Your CM bands kick in at $1.0M of annual CM. Below $1.0M no variable comp flows from CM. From $1.0M-$1.1M you earn 10%. From $1.1M-$1.4M the rate is 5%. Above $1.4M the rate climbs back to 7.5%."
-        },
-        {
-          "q": "Why is the Rate Lower in the $1.1M-$1.4M Zone?",
-          "a": "The $1.0M to $1.1M band is where your higher base salary (effective April 2026) is being paid back. The trough at 5% reflects the cost of the uplift \u2014 once you have grown CM beyond $1.4M, the rate climbs again to 7.5% to reward the stretch."
-        },
-        {
-          "q": "How Does my NP Kicker Work?",
-          "a": "On top of CM commission, an NP-tied kicker scales with annual Net Profit. NP bonuses ramp from $0 to $30k at $1.5M annual NP \u2014 see the NP bonus card on your Overview tab for the band structure."
-        },
-        {
-          "q": "When Do I Get Paid Commission?",
-          "a": "First fortnightly pay cycle of the <strong>quarter</strong> \u2014 once a quarter, not monthly. Your variable comp is built from quarterly Contribution Margin and Net Profit, so we wait for the full quarter to close before calculating and paying out. The Payments module in Zoho still tracks every dollar back to the source."
-        },
-        {
-          "q": "What if a Quarter is Bad?",
-          "a": "Your trailing-12-month CM smooths quarterly variation \u2014 one bad quarter does not zero you out, but a sustained drop will reduce variable comp. Your base salary does not move."
-        },
-        {
-          "q": "What About KPIs \u2014 When Do They Affect my Pay?",
-          "a": "Right now, nothing. KPIs are locked at 1.0\u00d7 for Year 1, so they don't move your variable comp at all. From Year 2, KPIs may apply a multiplier somewhere between 0.7\u00d7 and 1.3\u00d7 based on your scorecard. The full draft scorecard is on the KPIs tab \u2014 read it now, push back, ask questions. We'd rather sort it before activation than after."
-        },
-        {
-          "q": "What if a Number Looks Wrong or My Pay Seems Off?",
-          "a": "Tell the director (Nathan) straight away \u2014 the sooner the better. Bring the specific figure, what you expected to see, and a Zoho or Xero screenshot if you've got one. We'd much rather find the bug than have you underpaid for a month. Your base salary is never the variable here, so any discrepancy will be in the commission line."
-        },
-        {
-          "q": "Where Does the Dashboard Data Come From?",
-          "a": "GP and bookings data flows in from Zoho. Company-level P&L data flows in from Xero. Numbers refresh at the start of each pay cycle. The dashboard is read-only \u2014 to change a number on here, the source system has to be updated first. No spreadsheet middleman."
-        },
-        {
-          "q": "Who Calculates and Inputs the Actual Data?",
-          "a": "Payroll administration staff grab the actual data from Zoho, which is sent to Hayley for approval \u2014 then to Nathan for payment. The dashboard pulls automatically from Zoho (GP, payments) and Xero (P&L), so humans aren't hand-keying numbers \u2014 fewer fat-finger mistakes. If a figure looks off, raise it with Hayley or Nathan immediately and we'll trace the source together."
-        },
-        {
-          "q": "Is There a Ceiling on the Bonus / Variable Comp?",
-          "a": "No cap. The harder you push, the more you earn per dollar \u2014 that's deliberate. Bigger numbers mean higher band rates mean bigger commission cheques. If you want to chase a wild year, the system is built to reward it, not box you in."
-        },
-        {
-          "q": "Are Commission Figures Audited?",
-          "a": "Yes \u2014 back-audited. As part of each pay cycle the previous months are checked for any errors. But because the new plan is cash-received, any adjustments only ever flow forward \u2014 a refund this month reduces a future commission, never claws back from money already in your bank. Annual true-up at year-end catches any drift. Trust, but verify \u2014 applies to both sides."
-        },
-        {
-          "q": "Why Are My Commissions Inclusive of Super?",
-          "a": "Short answer: when your dashboard shows $1,000 in commission, that $1,000 is the <strong>full amount paid in your name</strong>. Roughly $890 of it lands in your bank account on payday (pre-tax \u2014 the tax man does find that one). The other $110 slips quietly into your super fund \u2014 call it the future-you-on-a-beach-with-a-margarita-at-70 fund, and the slice the tax man can't touch on the way in. Both halves are your money; the super part is just locked away until you're 60, the government's quiet way of making sure you don't spend it all on a bender. Why we display it this way: the number on your dashboard is the <strong>whole package</strong> \u2014 what MEC actually pays in your name, full stop. No 'plus 12% super on top', no mental math, no asterisks."
-        },
-        {
-          "q": "What Changed About How My GP is Counted? (GP Sold vs GP Received)",
-          "a": "Under the old plan, you got commission the moment a booking was confirmed \u2014 based on GP Sold. The new plan ties commission to GP Received: cash that has actually arrived at MEC from the customer. Quotes don't pay. Confirmed bookings don't pay. Cash that lands in MEC's account pays. Yes, this means commission can land later than it used to (especially for events booked far in advance) \u2014 but it also means the business pays you out of money it's actually holding, not money it's still waiting for. Healthier for everyone."
-        },
-        {
-          "q": "What if a Client Adds Extra Services or Bumps Up Their Booking? Do I Need to Email About a Catch-Up Commission?",
-          "a": "<strong>No more chasing. No more emails.</strong> Under the old plan, if a client added an extra performer, extended their booking, or bumped up their package <em>after</em> confirmation, you'd have to flag it so the team could manually adjust your commission. Easy to miss, awkward to ask about. Under the new plan it just sorts itself out: commission is paid on <strong>GP Received</strong>, so whatever cash actually lands in MEC's account on a booking is what gets attributed to you \u2014 including any add-ons, upgrades, or extras the client paid for along the way. They added a saxophonist? Extra cash arrives \u2192 extra commission flows to you next cycle, automatically. They cancelled an add-on? Refunded amount nets off, also automatically. Win on both sides \u2014 you don't have to email anyone, and the books always tell the truth."
-        },
-        {
-          "q": "What is GP Attribution and How Does the Payments Module Work?",
-          "a": "When a client pays in instalments \u2014 say a deposit now and the balance later \u2014 Zoho splits the booking's total expected GP across each payment in proportion to its share of the total. So a $1,000 deposit on a $3,000 booking gives you a third of the GP attributed to that payment, hitting your commission for the month it landed. The remaining two-thirds come through when the balance arrives. The Payments module in Zoho is where you can see exactly how each dollar of GP got attributed back to which payment, and which booking, and which person."
-        },
-        {
-          "q": "What About Bookings Confirmed Under the Old Plan? Will I Get Commission Twice?",
-          "a": "No double-dipping in either direction. If your booking was confirmed BEFORE the new plan's effective date and you already received commission under the old 'paid on confirmation' scheme, that's it \u2014 you've been paid. The customer's eventual payment doesn't trigger a second commission. So a wedding booked in May 2026 (old plan, paid on confirmation) but happening in October 2026 \u2014 the eventual cash arriving in MEC's account doesn't pay you again. On the flip side: GP-attributed commission still flows on bookings CONFIRMED after the effective date, even if the event itself is later in the year. The cutoff is the booking confirmation date, not the event date."
-        },
-        {
-          "q": "What if I Leave MEC Mid-quarter?",
-          "a": "Different to the sales team: because your variable comp is calculated <strong>quarterly</strong> (and the quarter hasn't fully landed yet), you need to be employed through the end of the quarter to be eligible for that quarter's commission. If you leave mid-quarter, that quarter's commission doesn't pay out. Anything from previous fully-completed quarters is yours and lands in your final paycheck. Base salary is never touched."
-        },
-        {
-          "q": "What Happens to my Commission if my Employment Ends?",
-          "a": "Same logic as the mid-quarter answer above: any commission already paid out to you stays with you \u2014 no clawbacks. The current in-progress quarter only pays out if you're employed at the end of it (your plan is calculated on the full quarter's results). Any previous quarter's amounts already calculated but not yet paid land in your final paycheck. Base salary is never touched."
-        }
-      ]
-    },
-    "performer": {
-      "label": "Performer / Sales & Talent Manager",
-      "items": [
-        {
-          "q": "How is my Commission Different From a Pure Sales Rep?",
-          "a": "Your bands are calculated from Performance Revenue (revenue you bring in as a performer) rather than GP Sold. Performer economics are different \u2014 you typically earn more per dollar of revenue than a Sales rep earns per dollar of GP, because the cost structure of a performance is different to a sale."
-        },
-        {
-          "q": "What Counts as Performance Revenue?",
-          "a": "Total revenue (ex-GST) from your personally-booked performances over the period. Every gig you perform contributes to your annual Performance Revenue figure."
-        },
-        {
-          "q": "What if I Step In for Another Performer Last-Minute?",
-          "a": "You're looked after. Performance Revenue is attributed to whoever <em>actually performed</em> the gig \u2014 so if you cover for someone else and you're the one on the floor, the revenue (and the commission) flow to you, not to whoever was originally rostered. The Talent Manager updates the booking in Zoho to reflect who performed; the cash trail follows. No paperwork on your end \u2014 just turn up and do your thing."
-        },
-        {
-          "q": "When Do I Get Paid Commission?",
-          "a": "First fortnightly pay cycle of the <strong>quarter</strong> \u2014 once a quarter, not monthly. Your performance revenue is reconciled at quarter-end, so we wait for the full quarter to land before calculating and paying out. (Different cycle to the sales team \u2014 they're paid monthly.)"
-        },
-        {
-          "q": "What if a Gig Gets Cancelled or Refunded?",
-          "a": "Refunds aren't fun, but here's how it works: the refunded amount shows as negative cash on the gig in Zoho, and gets netted against your next commission cycle. Your base salary is never touched, and your paycheck never goes negative. (And honestly \u2014 have you ever had to process a refund on one of your own gigs? They're extremely rare. We back you to do a great job, and the dashboard math is just here for the edge cases.)"
-        },
-        {
-          "q": "What About Sales-side Responsibilities?",
-          "a": "If your role includes sales contributions, those are tracked separately on the Planning tab. Sales-side GP feeds into a separate calculation that runs alongside your performance-based commission."
-        },
-        {
-          "q": "What About KPIs \u2014 When Do They Affect my Pay?",
-          "a": "Right now, nothing. KPIs are locked at 1.0\u00d7 for Year 1, so they don't move your variable comp at all. From Year 2, KPIs may apply a multiplier somewhere between 0.7\u00d7 and 1.3\u00d7 based on your scorecard. The full draft scorecard is on the KPIs tab \u2014 read it now, push back, ask questions. We'd rather sort it before activation than after."
-        },
-        {
-          "q": "Why Are My Commissions Inclusive of Super?",
-          "a": "Short answer: when your dashboard shows $1,000 in commission, that $1,000 is the <strong>full amount paid in your name</strong>. Roughly $890 of it lands in your bank account on payday (pre-tax \u2014 the tax man does find that one). The other $110 slips quietly into your super fund \u2014 call it the future-you-on-a-beach-with-a-margarita-at-70 fund, and the slice the tax man can't touch on the way in. Both halves are your money; the super part is just locked away until you're 60, the government's quiet way of making sure you don't spend it all on a bender. Why we display it this way: the number on your dashboard is the <strong>whole package</strong> \u2014 what MEC actually pays in your name, full stop. No 'plus 12% super on top', no mental math, no asterisks."
-        },
-        {
-          "q": "Will my Plan Change Next Year?",
-          "a": "Expect annual band tweaks based on what we've learned and where the business is heading. Bigger structural changes (new shape, team-pool kickers, etc.) get communicated well in advance and are never applied retrospectively. Cash you've already earned is locked in \u2014 that's a hard rule, not a soft one."
-        },
-        {
-          "q": "What if a Number Looks Wrong or My Pay Seems Off?",
-          "a": "Tell Hayley or Nathan straight away \u2014 the sooner the better. Bring the specific figure, what you expected to see, and a Zoho or Xero screenshot if you've got one. We'd much rather find the bug than have you underpaid for a month. Your base salary is never the variable here, so any discrepancy will be in the commission line."
-        },
-        {
-          "q": "Who Calculates and Inputs the Actual Data?",
-          "a": "Payroll administration staff grab the actual data from Zoho, which is sent to Hayley for approval \u2014 then to Nathan for payment. The dashboard pulls automatically from Zoho (GP, payments) and Xero (P&L), so humans aren't hand-keying numbers \u2014 fewer fat-finger mistakes. If a figure looks off, raise it with Hayley or Nathan immediately and we'll trace the source together."
-        },
-        {
-          "q": "Is There a Ceiling on the Bonus / Variable Comp?",
-          "a": "No cap. The harder you push, the more you earn per dollar \u2014 that's deliberate. Bigger numbers mean higher band rates mean bigger commission cheques. If you want to chase a wild year, the system is built to reward it, not box you in."
-        },
-        {
-          "q": "Are Commission Figures Audited?",
-          "a": "Yes \u2014 back-audited. As part of each pay cycle the previous months are checked for any errors. But because the new plan is cash-received, any adjustments only ever flow forward \u2014 a refund this month reduces a future commission, never claws back from money already in your bank. Annual true-up at year-end catches any drift. Trust, but verify \u2014 applies to both sides."
-        },
-        {
-          "q": "What if I Leave MEC Mid-quarter?",
-          "a": "Different to the sales team: because your variable comp is calculated <strong>quarterly</strong> (and the quarter hasn't fully landed yet), you need to be employed through the end of the quarter to be eligible for that quarter's commission. If you leave mid-quarter, that quarter's commission doesn't pay out. Anything from previous fully-completed quarters is yours and lands in your final paycheck. Base salary is never touched."
-        },
-        {
-          "q": "What Happens to my Commission if my Employment Ends?",
-          "a": "Same logic as the mid-quarter answer above: any commission already paid out to you stays with you \u2014 no clawbacks. The current in-progress quarter only pays out if you're employed at the end of it (your plan is calculated on the full quarter's results). Any previous quarter's amounts already calculated but not yet paid land in your final paycheck. Base salary is never touched."
-        }
-      ]
-    }
-  },
-  "projects": [],
-  "companyPL": {
-    "label": "Company P&L (Cash Basis)",
-    "subLabel": "Quarterly company financials. Feeds the company-wide view and can gate variable comp payouts (e.g., 'comm only pays if company NP > X'). Fiscal year starts July.",
-    "fiscalYearStart": "2026-07",
-    "xeroIntegration": {
-      "enabled": false,
-      "note": "TODO: create an integration that pulls in directly from Xero. In the meantime, use CSV upload or manual entry."
-    },
-    "quarters": [
-      {
-        "label": "Apr-Jun 2025",
-        "revenue": 736680,
-        "cogs": 276345,
-        "contribExp": 208953,
-        "opex": 17781
-      },
-      {
-        "label": "Jul-Sep 2025",
-        "revenue": 913414,
-        "cogs": 332610,
-        "contribExp": 229616,
-        "opex": 57214
-      },
-      {
-        "label": "Oct-Dec 2025",
-        "revenue": 1168425,
-        "cogs": 707559,
-        "contribExp": 241306,
-        "opex": 33456
-      },
-      {
-        "label": "Jan-Mar 2026",
-        "revenue": 987753,
-        "cogs": 459256,
-        "contribExp": 239627,
-        "opex": 52191
-      }
-    ],
-    "currentQuarter": {
-      "label": "Apr-Jun 2026",
-      "revenue": 0,
-      "cogs": 0,
-      "contribExp": 0,
-      "opex": 0
-    },
-    "historicalQuarters": [
-      {
-        "label": "Jul-Sep 2023",
-        "revenue": 605642,
-        "cogs": 169422,
-        "contribExp": 136868,
-        "opex": 29127
-      },
-      {
-        "label": "Oct-Dec 2023",
-        "revenue": 889100,
-        "cogs": 490656,
-        "contribExp": 134350,
-        "opex": 16927
-      },
-      {
-        "label": "Jan-Mar 2024",
-        "revenue": 695000,
-        "cogs": 375340,
-        "contribExp": 175298,
-        "opex": 29556
-      },
-      {
-        "label": "Apr-Jun 2024",
-        "revenue": 615855,
-        "cogs": 278120,
-        "contribExp": 181917,
-        "opex": 20523
-      },
-      {
-        "label": "Jul-Sep 2024",
-        "revenue": 753116,
-        "cogs": 227517,
-        "contribExp": 195132,
-        "opex": 43354
-      },
-      {
-        "label": "Oct-Dec 2024",
-        "revenue": 964984,
-        "cogs": 595819,
-        "contribExp": 199633,
-        "opex": 29634
-      },
-      {
-        "label": "Jan-Mar 2025",
-        "revenue": 779829,
-        "cogs": 386494,
-        "contribExp": 164919,
-        "opex": 54189
-      }
-    ]
-  },
-  "employees": [
-    {
-      "id": "demo",
-      "name": "Sample Sales Rep",
-      "role": "Sales Rep (Demo Dashboard)",
-      "roleShort": "DEMO",
-      "baseSalary": 60000,
-      "previousBaseSalary": 55000,
-      "baseSalaryIncludesSuper": false,
-      "planType": "gp_bands",
-      "planOverrides": null,
-      "kpiAssignments": [],
-      "dashboardFile": "demo.html",
-      "placeholder": true,
-      "demo": true,
-      "last365GPSold": 300000,
-      "annualGPTarget": 400000,
-      "minProductionGP": null,
-      "realisticRange": {
-        "min": 200000,
-        "max": 425000,
-        "absoluteMax": 600000
-      },
-      "scenarioDefaults": {
-        "gp": 300000,
-        "eventGP": 50000
-      },
-      "ote": {
-        "baseSalary": 60000,
-        "variableTarget": 24300,
-        "otePackage": 91500,
-        "targetMetricLabel": "$400k GP Sold",
-        "baseMixPct": 73.4,
-        "variableMixPct": 26.6,
-        "baseSuperOnBase": 7200,
-        "baseInclSuper": 67200,
-        "snapToGP": 400000
-      },
-      "hideOldPlan": false,
-      "faqGroup": "sales_rep",
-      "kpiScorecard": {
-        "overallNote": "BETA \u2014 sample KPI scorecard for the demo. Real KPIs come from your employment agreement.",
-        "categories": [
-          {
-            "id": "sales_targets",
-            "title": "Sales Performance",
-            "weight": 60,
-            "score": 100,
-            "included": true,
-            "criteria": [
-              "Annual GP Sold target",
-              "Conversion rate floor",
-              "Average GP per booking floor",
-              "Quote volume target"
-            ]
-          },
-          {
-            "id": "behavioural",
-            "title": "Behavioural & Conduct",
-            "weight": 40,
-            "score": 100,
-            "included": true,
-            "criteria": [
-              "Behavioural review weighted average",
-              "Diligence and amicable conduct"
-            ]
-          }
-        ]
-      },
-      "actuals": {
-        "fiscalYearStart": "2026-04",
-        "monthlyGP": [
-          {
-            "month": "Apr 2026",
-            "gpReceived": 25000,
-            "eventGP": 5000,
-            "revenueReceivedIncGST": 75000
-          },
-          {
-            "month": "May 2026",
-            "gpReceived": 30000,
-            "eventGP": 4000,
-            "revenueReceivedIncGST": 88000
-          },
-          {
-            "month": "Jun 2026",
-            "gpReceived": 28000,
-            "eventGP": 6000,
-            "revenueReceivedIncGST": 82000
-          },
-          {
-            "month": "Jul 2026",
-            "gpReceived": 35000,
-            "eventGP": 5000,
-            "revenueReceivedIncGST": 100000
-          },
-          {
-            "month": "Aug 2026",
-            "gpReceived": 32000,
-            "eventGP": 7000,
-            "revenueReceivedIncGST": 92000
-          },
-          {
-            "month": "Sep 2026",
-            "gpReceived": 40000,
-            "eventGP": 4000,
-            "revenueReceivedIncGST": 115000
-          },
-          {
-            "month": "Oct 2026",
-            "gpReceived": 0,
-            "eventGP": 0,
-            "revenueReceivedIncGST": 0
-          },
-          {
-            "month": "Nov 2026",
-            "gpReceived": 0,
-            "eventGP": 0,
-            "revenueReceivedIncGST": 0
-          },
-          {
-            "month": "Dec 2026",
-            "gpReceived": 0,
-            "eventGP": 0,
-            "revenueReceivedIncGST": 0
-          },
-          {
-            "month": "Jan 2027",
-            "gpReceived": 0,
-            "eventGP": 0,
-            "revenueReceivedIncGST": 0
-          },
-          {
-            "month": "Feb 2027",
-            "gpReceived": 0,
-            "eventGP": 0,
-            "revenueReceivedIncGST": 0
-          },
-          {
-            "month": "Mar 2027",
-            "gpReceived": 0,
-            "eventGP": 0,
-            "revenueReceivedIncGST": 0
-          }
-        ]
-      },
-      "actualPayouts": [
-        {
-          "month": "Apr 2026",
-          "commissionPaid": 1850,
-          "gpReceived": 25000,
-          "eventGP": 5000,
-          "notes": "Demo: example payout."
-        },
-        {
-          "month": "May 2026",
-          "commissionPaid": 2240,
-          "gpReceived": 30000,
-          "eventGP": 4000,
-          "notes": ""
-        },
-        {
-          "month": "Jun 2026",
-          "commissionPaid": 2080,
-          "gpReceived": 28000,
-          "eventGP": 6000,
-          "notes": ""
-        },
-        {
-          "month": "Jul 2026",
-          "commissionPaid": 2630,
-          "gpReceived": 35000,
-          "eventGP": 5000,
-          "notes": ""
-        },
-        {
-          "month": "Aug 2026",
-          "commissionPaid": 2370,
-          "gpReceived": 32000,
-          "eventGP": 7000,
-          "notes": ""
-        },
-        {
-          "month": "Sep 2026",
-          "commissionPaid": 3120,
-          "gpReceived": 40000,
-          "eventGP": 4000,
-          "notes": ""
-        },
-        {
-          "month": "Oct 2026",
-          "commissionPaid": null,
-          "gpReceived": null,
-          "eventGP": null,
-          "notes": ""
-        },
-        {
-          "month": "Nov 2026",
-          "commissionPaid": null,
-          "gpReceived": null,
-          "eventGP": null,
-          "notes": ""
-        },
-        {
-          "month": "Dec 2026",
-          "commissionPaid": null,
-          "gpReceived": null,
-          "eventGP": null,
-          "notes": ""
-        },
-        {
-          "month": "Jan 2027",
-          "commissionPaid": null,
-          "gpReceived": null,
-          "eventGP": null,
-          "notes": ""
-        },
-        {
-          "month": "Feb 2027",
-          "commissionPaid": null,
-          "gpReceived": null,
-          "eventGP": null,
-          "notes": ""
-        },
-        {
-          "month": "Mar 2027",
-          "commissionPaid": null,
-          "gpReceived": null,
-          "eventGP": null,
-          "notes": ""
-        }
-      ]
-    }
-  ]
-};
+// Try to load plaintext data.json from same folder. Returns null if not found.
 async function _devLoadPlaintext() {
-  // Return a deep clone so the dashboard's mutations don't pollute the constant
-  return JSON.parse(JSON.stringify(DEMO_INLINE_DATA));
+  try {
+    const res = await fetch('./data.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_) { return null; }
 }
 
 function _showDevBanner(label) {
@@ -2394,7 +1605,7 @@ async function _devLoadDashboard() {
    Planning + Actual split, no margin multiplier, super-inclusive everywhere.
    ============================================================ */
 
-const EMPLOYEE_ID = 'demo';
+const EMPLOYEE_ID = 'daniel';
 
 // =========================================================================
 // PIN GATE + DECRYPTION (v40)
@@ -2475,11 +1686,8 @@ async function _fetchEncrypted() {
   return res.json();
 }
 
-// DEMO: fall back to the inlined data even if encryption is enabled (this dashboard never has a real .enc.json file)
+// Returns the decrypted data object, prompting for PIN if no valid cache exists.
 async function unlockDashboard() {
-  return JSON.parse(JSON.stringify(DEMO_INLINE_DATA));
-}
-async function _unlockDashboard_unused() {
   // Try cache first
   const cached = _readCachedData();
   if (cached) return cached;
@@ -2919,6 +2127,8 @@ function wireInputs() {
   const mGpSlider = document.getElementById('margin-gp-slider');
   const mGpInput = document.getElementById('margin-gp-input');
   if (mRevSlider && mRevInput && mGpSlider && mGpInput) {
+    // Hybrid (Evie) gets half the range; full Sales (Daniel/Nic/Dane) gets full range
+    // Linked to the GP slider's absolute max from realisticRange schema.
     if (emp.realisticRange) {
       const gpAbsMax = emp.realisticRange.absoluteMax || 600000;
       mGpSlider.max = gpAbsMax;
@@ -3157,10 +2367,8 @@ function calcGuardrail() {
 }
 
 // --- Monthly grid rendering + actuals-driven calculation ---
-// Guarded: monthly-body was removed in the fortnightly migration. No-op if missing.
 function renderMonthlyGrid() {
   const tbody = document.getElementById('monthly-body');
-  if (!tbody) return;
   const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
   // Lock signal: admin has entered GP or Event GP for that month (commission is then auto-calculated by the plan bands)
   const isLocked = (i) => {
@@ -3739,26 +2947,27 @@ function update() {
     }
   }
   const tbody = document.getElementById('monthly-body');
-  if (!tbody) return; // monthly-body removed in fortnightly migration — skip calc-cell updates
   // Update the calc cells per row (leave inputs untouched so caret/focus survives)
   mRows.forEach(r2 => {
     const row = tbody.querySelector(`tr[data-mon-idx="${r2.idx}"]`);
     if (!row) return;
     row.classList.toggle('tu-capped', r2.wasCapped);
-    // Band % cell
+    // Band % cell — show the marginal rate that the month's last GP dollar earned at
     const bandCell = row.querySelector('[data-cell="band"]');
     if (bandCell) {
       if (r2.gpReceived > 0) {
         const mb = monthlyBands();
         let activeRate = mb[0]?.rate || 0;
-        for (let bi = 0; bi < mb.length; bi++) { if (r2.gpReceived > mb[bi].threshold) activeRate = mb[bi].rate; }
+        for (let bi = 0; bi < mb.length; bi++) {
+          if (r2.gpReceived > mb[bi].threshold) activeRate = mb[bi].rate;
+        }
         bandCell.textContent = (activeRate * 100).toFixed(1) + '%';
         bandCell.title = `At $${fmtNum(r2.gpReceived)}/mo GP, the last dollar earned at ${(activeRate * 100).toFixed(2)}%. Earlier dollars earned at lower band rates.`;
-      } else { bandCell.textContent = '—'; bandCell.title = ''; }
+      } else {
+        bandCell.textContent = '—';
+        bandCell.title = '';
+      }
     }
-    // TU fires whenever the actual paid amount differs from the raw monthly calc — i.e. either
-    // a balance carry-forward offset chewed into this month's commission, OR a quarter-end /
-    // annual-end cap fired. We surface this on EVERY such month, not only the quarter/annual end.
     const tuFired = r2.wasCapped || (r2.isAnnualEnd && r2.annualCapFired);
     let mLabel = '';
     if (r2.isAnnualEnd && r2.annualCapFired) mLabel = ' 🔒 annual TU';
@@ -3767,16 +2976,18 @@ function update() {
     const gpCommCell = row.querySelector('[data-cell="gpComm"]');
     gpCommCell.textContent = r2.gpCommInc > 0 ? fmtMoney(r2.gpCommInc) + mLabel : (r2.wasCapped ? '$0' + mLabel : '—');
     if (tuFired) {
-      const raw = r2.rawMonthlyGPComm; const final = r2.gpCommInc;
-      const tuAdj = final - raw; const adjSign = tuAdj >= 0 ? '+' : '−';
+      // Detailed TU explanation — render an inline "?" trigger that opens a
+      // body-level tooltip bubble (escapes the table's overflow:auto clipping).
+      const raw = r2.rawMonthlyGPComm;
+      const final = r2.gpCommInc;
+      const tuAdj = final - raw;  // negative = capped down, positive = top-up
+      const adjSign = tuAdj >= 0 ? '+' : '−';
       const monthlyBandsArr = monthlyBands();
       let activeRate = monthlyBandsArr[0]?.rate || 0;
-      for (let bi = 0; bi < monthlyBandsArr.length; bi++) { if (r2.gpReceived > monthlyBandsArr[bi].threshold) activeRate = monthlyBandsArr[bi].rate; }
+      for (let bi = 0; bi < monthlyBandsArr.length; bi++) {
+        if (r2.gpReceived > monthlyBandsArr[bi].threshold) activeRate = monthlyBandsArr[bi].rate;
+      }
       const ratePct = (activeRate * 100).toFixed(1) + '%';
-      const balAfter = +r2.balanceAfterMonth || 0;
-      const balLine = balAfter > 0.5
-        ? `<br><strong>True-up balance after this month: ${fmtMoney(balAfter)}</strong> still to offset against future commissions.`
-        : `<br>True-up balance after this month: <strong>$0</strong> — fully cleared. ✓`;
       // Lead with a contextual opener depending on whether this was a full catch-up,
       // partial offset, or quarter-end cap — much clearer for the employee than the generic version.
       const isFullCatchUp = final < 0.5 && raw > 0.5;
@@ -3799,10 +3010,15 @@ function update() {
         `That would normally yield <strong>${fmtMoney(raw)}</strong> in commission.<br>` +
         `True-up adjustment: <strong>${adjSign}${fmtMoney(Math.abs(tuAdj))}</strong>.<br>` +
         `<strong>Final GP commission paid this month: ${fmtMoney(final)}.</strong>` +
-        balLine;
+        ((+r2.balanceAfterMonth || 0) > 0.5
+          ? `<br><strong>True-up balance after this month: ${fmtMoney(r2.balanceAfterMonth)}</strong> still to offset against future commissions.`
+          : `<br>True-up balance after this month: <strong>$0</strong> — fully cleared. ✓`);
+      // Append a visible "?" trigger after the existing label
       gpCommCell.innerHTML += ` <span class="tu-explainer-trigger" data-tip="${tuTip.replace(/"/g, '&quot;')}" style="display: inline-flex; width: 16px; height: 16px; line-height: 14px; text-align: center; border-radius: 50%; background: #fff; border: 1px solid var(--navy); color: var(--navy); font-size: 10px; font-weight: 700; cursor: help; vertical-align: middle; justify-content: center; align-items: center;">?</span>`;
+      gpCommCell.title = '';  // suppress the native title in favour of the bubble
+    } else {
       gpCommCell.title = '';
-    } else { gpCommCell.title = ''; }
+    }
     row.querySelector('[data-cell="prodComm"]').textContent = r2.prodCommInc > 0 ? fmtMoney(r2.prodCommInc) : '—';
     row.querySelector('[data-cell="monTotal"]').textContent = r2.monTotalInc > 0 ? fmtMoney(r2.monTotalInc) : '—';
     const monTotalEx = r2.monTotalInc / (1 + g.superRate);
@@ -5639,28 +4855,46 @@ function renderFaqTab() {
 }
 
 
+// Body-level tooltip for .tooltip-trigger and .tu-explainer-trigger elements.
+// Escapes the overflow:auto wrappers that clip the CSS ::after approach.
 (function wireTooltipBubble() {
   if (window._ttBubbleWired) return;
   window._ttBubbleWired = true;
   let bubble = document.getElementById('tt-bubble');
-  if (!bubble) { bubble = document.createElement('div'); bubble.id = 'tt-bubble'; document.body.appendChild(bubble); }
+  if (!bubble) {
+    bubble = document.createElement('div');
+    bubble.id = 'tt-bubble';
+    document.body.appendChild(bubble);
+  }
   document.addEventListener('mouseover', (ev) => {
     const t = ev.target.closest('.tooltip-trigger, .tu-explainer-trigger');
     if (!t) return;
-    const tip = t.dataset.tip || ''; if (!tip) return;
-    bubble.innerHTML = tip; bubble.classList.add('show');
+    const tip = t.dataset.tip || '';
+    if (!tip) return;
+    // Support \n and HTML in tips
+    bubble.innerHTML = tip;
+    bubble.classList.add('show');
+    // Position above the trigger; clamp to viewport
     bubble.style.left = '0px'; bubble.style.top = '0px';
     const r = t.getBoundingClientRect();
     const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
-    let left = r.left + (r.width / 2) - (bw / 2); let top = r.top - bh - 8;
+    let left = r.left + (r.width / 2) - (bw / 2);
+    let top = r.top - bh - 8;
     const margin = 8;
     if (left < margin) left = margin;
     if (left + bw > window.innerWidth - margin) left = window.innerWidth - bw - margin;
     if (top < margin) top = r.bottom + 8;
-    bubble.style.left = left + 'px'; bubble.style.top = top + 'px';
+    bubble.style.left = left + 'px';
+    bubble.style.top = top + 'px';
   });
-  document.addEventListener('mouseout', (ev) => { const t = ev.target.closest('.tooltip-trigger, .tu-explainer-trigger'); if (t) bubble.classList.remove('show'); });
-  document.addEventListener('scroll', () => { bubble.classList.remove('show'); }, true);
+  document.addEventListener('mouseout', (ev) => {
+    const t = ev.target.closest('.tooltip-trigger, .tu-explainer-trigger');
+    if (!t) return;
+    bubble.classList.remove('show');
+  });
+  document.addEventListener('scroll', () => {
+    bubble.classList.remove('show');
+  }, true);
 })();
 
 

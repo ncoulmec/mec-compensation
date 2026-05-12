@@ -283,68 +283,16 @@
   <div id="content" style="display: none;">
 
     <div class="admin-tabs">
-      <button class="admin-tab-btn active" aria-current="page" data-admin-tab="unified">Monthly Payroll <span style="font-size:9px; color: var(--accent); margin-left: 6px;">●NEW</span></button>
-      <button class="admin-tab-btn" data-admin-tab="fortnightly">📅 Fortnightly Payroll <span style="font-size:9px; color: #b8860b; margin-left: 6px;">●BETA</span></button>
-      <button class="admin-tab-btn" data-admin-tab="byemployee">By Employee (legacy detail)</button>
-      <button class="admin-tab-btn" data-admin-tab="pool">🤝 Team Pool <span style="font-size:9px; color: #b8860b; margin-left: 6px;">●NEW</span></button>
+      <button class="admin-tab-btn active" aria-current="page" data-admin-tab="fortnightly">📅 Fortnightly Payroll</button>
+      <button class="admin-tab-btn" data-admin-tab="pool">🤝 Team Pool <span style="font-size:9px; color: #b8860b; margin-left: 6px;">●BETA</span></button>
     </div>
 
-    <!-- ========== UNIFIED MONTHLY PAYROLL VIEW (NEW) ========== -->
-    <div class="admin-panel active" id="admin-panel-unified">
-      <div class="card" style="margin-bottom: 14px;">
-        <h2>Monthly Payroll · Single-Screen Entry</h2>
-        <p class="blurb">Two grids stacked: sales reps on top (monthly cycle), Tom/Michael/Hayley below (quarterly cycle). Pick the active month from the dropdown — past months are locked, the current month is editable, and future months are previewed (greyed). On quarter-end months the bottom grid lights up for Performance Revenue + CM/NP entries.</p>
-
-        <div class="um-controls">
-          <label for="um-month-select" style="font-size:12px; color: var(--muted);">Pay cycle for:</label>
-          <select id="um-month-select" style="font-family: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; min-width: 160px;"></select>
-          <span class="um-period-label" id="um-period-label">—</span>
-        </div>
-
-        <!-- ===== Sales grid (monthly) ===== -->
-        <div class="um-grid-heading">
-          <span>Sales Team · Monthly Cycle</span>
-          <span class="right" style="display: flex; gap: 10px; align-items: center;">
-            <a href="https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000097394002" target="_blank" rel="noopener" style="text-decoration: none; background: #eaf3fb; color: var(--navy); border: 1px solid #c5dbef; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap;">📊 Get real data from Zoho ↗</a>
-            <span id="um-sales-window-label">—</span>
-          </span>
-        </div>
-        <div style="overflow-x: auto;">
-          <div class="table-wrap"><table class="unified-payroll" id="unified-sales-table">
-            <thead id="unified-sales-thead"></thead>
-            <tbody id="unified-sales-tbody"></tbody>
-          </table></div>
-        </div>
-
-        <!-- ===== Performer + GM grid (quarterly) ===== -->
-        <div class="um-grid-heading alt" style="margin-top: 26px;">
-          <span>Quarterly Cycle · Tom · Michael · Hayley</span>
-          <span class="right" id="um-quarter-window-label">FY 2026 quarters</span>
-        </div>
-        <div style="overflow-x: auto;">
-          <div class="table-wrap"><table class="unified-payroll" id="unified-quarter-table">
-            <thead id="unified-quarter-thead"></thead>
-            <tbody id="unified-quarter-tbody"></tbody>
-          </table></div>
-        </div>
-
-        <div class="um-legend" style="margin-top: 18px;">
-          <span class="key"><span class="swatch history"></span> Past · locked (already paid)</span>
-          <span class="key"><span class="swatch current"></span> Current · enter here</span>
-          <span class="key"><span class="swatch computed"></span> Computed · enter into Xero</span>
-          <span class="key"><span class="swatch qend"></span> Future · preview only</span>
-        </div>
-
-        <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Tip: any value you enter locks the matching month on that employee's dashboard. Clear a cell on the legacy "By Employee" view to unlock it.</p>
-      </div>
-    </div>
-
-    <!-- ========== FORTNIGHTLY PAYROLL VIEW (BETA) ========== -->
-    <div class="admin-panel" id="admin-panel-fortnightly">
+    <!-- ========== FORTNIGHTLY PAYROLL VIEW (ACTIVE) ========== -->
+    <div class="admin-panel active" id="admin-panel-fortnightly">
       <div class="card" style="margin-bottom: 14px; padding: 16px 20px; background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
-        <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">📅 Beta — Fortnightly cycle preview</div>
+        <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">📅 Active payroll cycle</div>
         <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.55;">
-          Same Option B logic as the demo dashboard's Fortnightly Payout section, rotated for admin entry. <strong>Fortnights as rows, reps as columns.</strong> Each cell = GP received for that fortnight. Pay is computed live using cumulative band math — no separate True-Up needed except on band crossings (gold highlights). First pay date: <strong>Mon 15 Jun 2026</strong>. Run alongside the existing Monthly Payroll tab while we evaluate.
+          Fortnights as rows, reps as columns. Each cell = <strong>GP received</strong> for that fortnight; pay is computed live using cumulative band math. Two values per cell — <strong>ex super</strong> (paste into the Xero <em>bonus</em> field) and <strong>super</strong> (paste into the Xero <em>super contribution</em> field). First pay date: <strong>Mon 15 Jun 2026</strong>.
         </div>
       </div>
 
@@ -377,42 +325,6 @@
         <h2>Year-End Audit · All Sales Reps</h2>
         <p class="blurb">For each rep, paste their full-year GP received total from the source of truth (Zoho Payments report) and we'll verify it matches the sum of their 26 fortnight entries above.</p>
         <div id="fnp-audit-body" style="overflow-x: auto;"></div>
-      </div>
-    </div>
-
-    <!-- ========== LEGACY BY-EMPLOYEE VIEW ========== -->
-    <div class="admin-panel" id="admin-panel-byemployee">
-      <div class="controls">
-        <div>
-          <label for="emp-select" style="display:block; margin-bottom:4px;">Employee</label>
-          <select id="emp-select"></select>
-        </div>
-        <div class="emp-context" id="emp-context">—</div>
-      </div>
-
-      <div class="ytd-row" id="ytd-row"></div>
-
-      <div class="card">
-        <h2>Monthly Payroll Entries</h2>
-        <p class="blurb">Enter each month's <strong>GP Received</strong> (net of refunds) and <strong>Event GP Produced</strong>. The system auto-calculates commission using the employee's plan bands and monthly payout rules — you don't enter the $ paid, it's computed for you. Rows you've filled appear with a 🔒 and lock that month on the employee dashboard (read-only for the employee). Notes are a free-text audit trail.</p>
-        <div style="overflow-x: auto;">
-          <div class="table-wrap"><table class="payroll" id="payroll-table">
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th class="num">GP Received<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Net of refunds</small></th>
-                <th class="num">Event GP<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Produced</small></th>
-                <th class="num" style="background:#f5faf7;">GP Commission<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · ex super</small></th>
-                <th class="num" style="background:#f5faf7;">Production<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Computed · ex super</small></th>
-                <th class="num" style="background:#f5faf7;">Pay this month<br><small style="font-weight:400;color:var(--faint);font-size:9px;text-transform:none;letter-spacing:0.03em;">Ex super — enter into Xero</small></th>
-                <th>Notes</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="payroll-body"></tbody>
-          </table></div>
-        </div>
-        <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Highlighted green columns are calculated automatically from the employee's plan. Clear a row to unlock that month on the employee dashboard.</p>
       </div>
     </div>
 
@@ -628,7 +540,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v24';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v25';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -735,12 +647,16 @@ async function load() {
     $('#loading').style.display = 'none';
     $('#content').style.display = 'block';
     $('#meta-sub').textContent = `${data.meta.companyName} · Actuals for payroll — last edited ${data.meta.effectiveDate}`;
+    // Legacy Monthly Payroll + By Employee tabs have been removed. The corresponding
+    // init functions still exist but early-return when their DOM elements are missing.
     populateEmployeeDropdown();
     initUnifiedView();
     wireAdminTabs();
     wireUmTooltips();
     renderGhStatus();
     renderPoolAdmin();
+    // Fortnightly is now the active default tab — render it on load.
+    if (typeof renderFortnightlyAdmin === 'function') renderFortnightlyAdmin();
   } catch (err) {
     console.error('Admin dashboard load failed:', err);
     $('#loading').style.display = 'none';
@@ -821,6 +737,7 @@ function wireUmTooltips() {
 
 function populateEmployeeDropdown() {
   const sel = $('#emp-select');
+  if (!sel) return; // By-Employee panel removed in fortnightly migration
   sel.innerHTML = data.employees.map(e => `<option value="${e.id}">${e.name} — ${e.roleShort || e.role}</option>`).join('');
   sel.addEventListener('change', () => selectEmployee(sel.value));
   // Select first non-placeholder employee
@@ -1086,6 +1003,9 @@ function getMonthLabels() {
 }
 
 function initUnifiedView() {
+  // Monthly Payroll panel was removed in the fortnightly migration. Early-return
+  // if the panel's controls aren't present.
+  if (!document.getElementById('um-month-select')) return;
   // Ensure every employee has the extended actuals fields
   data.employees.forEach(e => { if (!e.placeholder) ensureExtendedActuals(e); });
 
@@ -1914,9 +1834,16 @@ function renderFortnightlyAdmin() {
 
   // Sales reps included in the grid. Pull from employees, filtered to sales plans.
   const SALES_PLAN_IDS = ['gp_bands', 'gp_bands_senior', 'hybrid_gp'];
+  // Smart short name: if the full name (or id) contains a "2.0" marker, keep it
+  // so we don't get two "Evie" columns. Otherwise first word only.
+  function shortName(full, id) {
+    const has20 = /2\.0/.test(full) || /2[\s_]?0/.test(id || '');
+    const first = full.split(' ')[0];
+    return has20 ? `${first} 2.0` : first;
+  }
   const reps = (data.employees || []).filter(e => SALES_PLAN_IDS.includes(e.planType) && !e.placeholder).map(e => ({
     id: e.id,
-    name: e.name.split(' ')[0],
+    name: shortName(e.name, e.id),
     fullName: e.name,
     planType: e.planType
   }));
@@ -2120,16 +2047,30 @@ function renderFortnightlyAdmin() {
           const tuStr = row.crossed ? _fmtSigned(row.tuAdj) : '';
           const incSuper = row.properPay;
           const exSuper = incSuper / 1.12;
+          const superAmt = incSuper - exSuper;
+          // Round to whole dollars for copy-paste convenience into Xero
+          const bonusRounded = Math.round(exSuper);
+          const superRounded = Math.round(superAmt);
           const tip = row.properPay > 0
-            ? `${esc(r.fullName)} · ${esc(fn.paid)}\nGP: ${_fmt(row.gp)} · YTD: ${_fmt(row.ytd)}\nBand: ${(row.endRate*100).toFixed(0)}%\nPay ex super: ${_fmt(exSuper)}\nSuper (12%): ${_fmt(incSuper - exSuper)}\nPay (inc super): ${_fmt(incSuper)}` + (row.crossed ? `\n⚡ Band crossing · TU ${_fmtSigned(row.tuAdj)}` : '')
+            ? `${esc(r.fullName)} · ${esc(fn.paid)}\nGP: ${_fmt(row.gp)} · YTD: ${_fmt(row.ytd)}\nBand: ${(row.endRate*100).toFixed(0)}%\nBonus (ex super): ${_fmt(exSuper)}\nSuper (12%): ${_fmt(superAmt)}\nTotal pay (inc super): ${_fmt(incSuper)}` + (row.crossed ? `\n⚡ Band crossing · TU ${_fmtSigned(row.tuAdj)}` : '')
             : `${esc(r.fullName)} · ${esc(fn.paid)}\nNo GP entered yet.`;
           const cellBg = row.crossed ? 'background: #fffbeb;' : '';
-          return `<td class="fnp-cell" data-rep="${esc(r.id)}" data-idx="${fi}" data-tip="${esc(tip)}" style="padding: 5px 6px; border-bottom: 1px solid #f4f3ed; vertical-align: top; ${cellBg}">
-            <input type="text" class="fnp-input" data-rep="${esc(r.id)}" data-idx="${fi}" value="${row.gp ? row.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" style="width: 100%; max-width: 110px; padding: 4px 6px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink); box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);">
-            <div style="font-size: 10px; color: ${row.properPay > 0 ? 'var(--muted)' : 'var(--faint)'}; margin-top: 3px; font-family: var(--mono); display: flex; justify-content: space-between; gap: 4px;">
-              <span>${row.properPay > 0 ? _fmt(row.properPay) : '—'}</span>
-              <span style="color: ${tuColor};">${tuStr}</span>
-            </div>
+          // Two read-only copy-paste inputs (bonus = ex-super, super = 12%). Click to copy.
+          const copyVals = row.properPay > 0
+            ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px;">
+                 <div style="text-align: left;">
+                   <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Bonus</div>
+                   <input type="text" class="fnp-copy-bonus" readonly value="${bonusRounded.toLocaleString()}" title="Bonus ex super — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #c3e4d0; border-radius: 3px; background: #f5faf7; text-align: right; font-family: var(--mono); font-size: 11px; color: #1e6624; cursor: pointer;">
+                 </div>
+                 <div style="text-align: left;">
+                   <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Super</div>
+                   <input type="text" class="fnp-copy-super" readonly value="${superRounded.toLocaleString()}" title="Super (12%) — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;">
+                 </div>
+               </div>${tuStr ? `<div style="font-size: 9px; color: ${tuColor}; margin-top: 3px; text-align: right; font-family: var(--mono);">⚡ TU ${tuStr}</div>` : ''}`
+            : `<div style="font-size: 10px; color: var(--faint); margin-top: 3px; font-family: var(--mono); text-align: right;">—</div>`;
+          return `<td class="fnp-cell" data-rep="${esc(r.id)}" data-idx="${fi}" data-tip="${esc(tip)}" style="padding: 5px 6px; border-bottom: 1px solid #f4f3ed; vertical-align: top; min-width: 150px; ${cellBg}">
+            <input type="text" class="fnp-input" data-rep="${esc(r.id)}" data-idx="${fi}" value="${row.gp ? row.gp.toLocaleString() : ''}" placeholder="GP received" inputmode="decimal" style="width: 100%; padding: 4px 6px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink); box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);">
+            ${copyVals}
           </td>`;
         }).join('');
 
@@ -2174,6 +2115,24 @@ function renderFortnightlyAdmin() {
         const mi = parseInt(row.getAttribute('data-mi'), 10);
         if (expanded.has(mi)) expanded.delete(mi); else expanded.add(mi);
         renderBody();
+      });
+    });
+    // Copy-to-clipboard for bonus/super read-only inputs
+    tbody.querySelectorAll('.fnp-copy-bonus, .fnp-copy-super').forEach(inp => {
+      inp.addEventListener('click', async () => {
+        try {
+          inp.select();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(inp.value);
+          } else {
+            document.execCommand('copy');
+          }
+          // Flash feedback
+          const originalBg = inp.style.background;
+          inp.style.background = '#d4edda';
+          inp.style.transition = 'background 0.2s';
+          setTimeout(() => { inp.style.background = originalBg; }, 400);
+        } catch (e) { /* clipboard blocked — selection is still useful */ }
       });
     });
     // Inputs

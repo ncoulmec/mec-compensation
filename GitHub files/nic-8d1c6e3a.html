@@ -995,153 +995,6 @@
       </div>
     </div>
 
-    <!-- ============================================================
-         TRAILING 12 MONTHS — "What you would've earned"
-         Historical GP Sold (booking confirmed date) backfeeds through
-         the new fortnightly plan to show what comp would have looked
-         like. Editable inputs — paste from Zoho's GP Sold report.
-         ============================================================ -->
-    <div class="card" style="background: linear-gradient(135deg, #f0f7f3 0%, #fff 100%); border-left: 4px solid #48a14d;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
-        <div>
-          <h2 style="margin: 0 0 4px;">Last 12 Months <span style="font-size: 10px; padding: 1px 6px; background: #e7f6ea; color: #1e6624; border: 1px solid #c3e4d0; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">What you would've earned</span></h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0;">If the new fortnightly plan had been live the last 12 months, this is what your variable comp would've been. Enter your historical <strong>GP Sold</strong> (booking-confirmed date — from Zoho's Bookings → GP Sold report) below.</p>
-        </div>
-        <span style="font-size: 11px; color: #1e6624; font-family: var(--mono); font-weight: 600;">May 2025 – Apr 2026</span>
-      </div>
-
-      <div id="trailing-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
-
-      <div style="overflow-x: auto;">
-        <table class="monthly" id="trailing-table" style="width: 100%;">
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th class="num">GP Sold <span class="fn-tip" data-tip="<strong>Editable</strong> — paste from Zoho's GP Sold (booking-confirmed) report for each calendar month.">?</span></th>
-              <th class="num">YTD GP</th>
-              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the month in.">?</span></th>
-              <th class="num">Commission This Month <small>(inc. super)</small></th>
-              <th class="num">Cumulative</th>
-            </tr>
-          </thead>
-          <tbody id="trailing-body"></tbody>
-          <tfoot id="trailing-foot"></tfoot>
-        </table>
-      </div>
-
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Same cumulative band math as the forward view · TU only applies to fortnightly payments, so monthly granularity here is just a "what if" snapshot · Use this to validate the new plan against your actual year.</p>
-    </div>
-
-    <!-- Legacy monthly schedule retained collapsed for audit/reference -->
-    <details class="card" style="background: #fafaf7;">
-      <summary style="cursor: pointer; font-weight: 600; color: var(--muted); padding: 4px 0;">
-        Legacy: Monthly Payout schedule (deprecated · superseded by fortnightly Option B)
-      </summary>
-      <p style="font-size: 12px; color: var(--muted); margin: 10px 0 14px;">The previous monthly cycle is preserved here for audit reference. The <strong>fortnightly view below</strong> is now the active plan. <a id="zoho-actual-btn" href="#" target="_blank" rel="noopener" style="display: none; text-decoration: none; color: var(--navy); border-bottom: 1px solid var(--navy); font-size: 11px;">📊 Fetch My Zoho Actual Data</a></p>
-      <div style="overflow-x: auto;">
-        <div class="table-wrap"><table class="monthly" id="monthly-table">
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th class="num">GP Received</th>
-              <th class="num">Event GP<br>Produced</th>
-              <th class="num band-col">Band</th>
-              <th class="num">GP<br>Commission<small>Inc. Super</small></th>
-              <th class="num">Production<br>Commission<small>Inc. Super</small></th>
-              <th class="num">Monthly<br>Total<small>Inc. Super</small></th>
-              <th class="num">Monthly<br>Total<small>Ex. Super</small></th>
-            </tr>
-          </thead>
-          <tbody id="monthly-body"></tbody>
-        </table></div>
-      </div>
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Frozen reference only — not the active payout plan.</p>
-    </details>
-
-    <!-- ============================================================
-         FORTNIGHTLY PAYOUT — ACTIVE PLAN (Forward 12 months)
-         ============================================================ -->
-    <div class="card" style="background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
-        <div>
-          <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #fff8e1; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. <strong>Edit the GP Received cells</strong> to model your year — hover the totals or any row for the breakdown.</p>
-        </div>
-        <span style="font-size: 11px; color: #b8860b; font-family: var(--mono); font-weight: 600;">26 fortnights · Jun 2026 – May 2027</span>
-      </div>
-
-      <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
-
-      <div style="overflow-x: auto;">
-        <table class="monthly" id="fortnightly-table" style="width: 100%;">
-          <thead>
-            <tr>
-              <th>Period</th>
-              <th class="num">GP Received <span class="fn-tip" data-tip="<strong>Editable</strong> — type any value to model the fortnight. Pull these figures from the Zoho Payments report once your fortnight closes. Live recalc as you type.">?</span></th>
-              <th class="num">YTD GP</th>
-              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the fortnight in.">?</span></th>
-              <th class="num">Pay This FN <small>(inc. super)</small></th>
-              <th class="num">TU Adj <span class="fn-tip" data-tip="<strong>True-Up Adjustment</strong> — the difference between the proper cumulative-band math and the naive 'GP × current rate' estimate. Most fortnights = <code>$0</code>. Non-zero only when YTD straddles a band threshold during the fortnight. Hover any TU value (even on collapsed months) for the full breakdown.">?</span></th>
-              <th class="num">Cumulative</th>
-            </tr>
-          </thead>
-          <tbody id="fortnightly-body"></tbody>
-          <tfoot id="fortnightly-foot"></tfoot>
-        </table>
-      </div>
-
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Click any month to expand its fortnights · Months containing a band crossing are highlighted gold · Hover any cell for context · No quarter-end TU required — every fortnight reconciles itself.</p>
-
-      <!-- ============================================================
-           YEAR-END AUDIT — Cross-check rep entries against company GP
-           ============================================================ -->
-      <div style="margin-top: 22px; padding: 16px; border: 1px dashed #b8860b; border-radius: 8px; background: #fefcf7;">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;">
-          <h3 style="margin: 0; font-size: 14px; color: #6a4a00;">Year-End Audit <span style="font-size: 9px; padding: 1px 5px; background: #fff3cd; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 3px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Sanity check</span></h3>
-          <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Run at FY close — confirms fortnightly entries reconcile to the company books.</span>
-        </div>
-        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Pull total GP received for this rep from the source of truth (Zoho Payments report, or Xero cash-basis P&amp;L if a single-rep account), enter it here, and we'll verify it matches the sum of every fortnight above. Differences over $1 indicate a missing or duplicated entry that needs investigation.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: end;">
-          <div>
-            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Full-year GP received (from Zoho)</label>
-            <input type="text" id="audit-actual" placeholder="e.g. 445,000" inputmode="decimal" style="width: 100%; padding: 8px 10px; border: 1px solid #d3d1c7; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fff;">
-          </div>
-          <div>
-            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Sum of 26 fortnight entries</label>
-            <div id="audit-sum" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7; color: var(--ink);">—</div>
-          </div>
-          <div>
-            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Variance</label>
-            <div id="audit-variance" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7;">—</div>
-          </div>
-        </div>
-        <div id="audit-verdict" style="margin-top: 14px; padding: 12px; border-radius: 6px; background: #f4f3ed; border: 1px solid #d3d1c7; font-size: 13px; color: var(--muted);">
-          <span style="font-family: var(--mono); font-size: 11px;">▸ Enter the full-year GP received above to verify.</span>
-        </div>
-        <p style="font-size: 11px; color: var(--faint); margin: 10px 0 0; font-family: var(--mono);">Tolerance: ±$1.00 (rounding) · ±$1,000 (acceptable timing variance) · &gt;$1,000 requires reconciliation.</p>
-      </div>
-    </div>
-
-    <!-- Quarterly summary strip -->
-    <div class="card">
-      <h2>Quarterly True-Up Summary <span class="tooltip-trigger" data-tip="Each quarter's entitled commission (using quarterly bands) vs what's been paid. If paid more than entitled, the excess carries into the next quarter's balance.">?</span></h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Each quarter reconciles commission paid vs entitled. Differences flow through the running balance shown under each bar.</p>
-      <div id="quarterly-strip" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;"></div>
-
-      <details class="tu-help">
-        <summary>What is the True-Up?</summary>
-        <div class="body">
-          <p>Your GP commissions are paid <strong>monthly</strong> so you get cash flow through the year instead of waiting until year-end. But monthly payouts are only an estimate — your real entitlement depends on your <strong>quarterly</strong> and <strong>annual</strong> GP.</p>
-          <p>At the end of each quarter we check:</p>
-          <ul>
-            <li><strong>Did you get paid more than you earned this quarter?</strong> The extra becomes a <em>true-up balance</em> — future commissions are reduced until the balance is worked off. Your base salary never moves.</li>
-            <li><strong>Did you get paid less than you earned?</strong> Your month-3 commission tops up to match.</li>
-          </ul>
-          <p>If a true-up balance is still sitting there at year-end, it carries into next year and nets against your first months' commissions. This way monthly payouts stay generous and fair, without anyone being over- or under-paid in the long run.</p>
-          <p style="color: var(--muted); font-size: 12px;">Example: you sell $70k of GP in month 1 and $0 in months 2-3. The monthly bands pay you about $4,100 in month 1. But at the end of the quarter, your entitlement on $70k quarterly is only $1,900. The $2,200 difference becomes your true-up balance — it'll offset what you earn in Q2 until worked off.</p>
-        </div>
-      </details>
-    </div>
   </section>
 
   <!-- Planning — bookings funnel calculator -->
@@ -1466,6 +1319,119 @@
       <div class="super-line muted"><span>Subtotal ex-super</span><span id="spr-subtotal">—</span></div>
       <div class="super-line"><span id="spr-super-label">+ Superannuation (total)</span><span id="spr-super" class="plus-line">—</span></div>
       <div class="super-line total"><span>Total package (inc. super)</span><span id="spr-total">—</span></div>
+    </div>
+
+    <!-- ============================================================
+         FORTNIGHTLY PAYOUT — ACTIVE PLAN (Forward 12 months)
+         ============================================================ -->
+    <div class="card" style="background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
+        <div>
+          <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #fff8e1; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. <strong>Edit the GP Received cells</strong> to model your year — hover the totals or any row for the breakdown.</p>
+        </div>
+        <span style="font-size: 11px; color: #b8860b; font-family: var(--mono); font-weight: 600;">26 fortnights · Jun 2026 – May 2027</span>
+      </div>
+
+      <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
+
+      <div style="overflow-x: auto;">
+        <table class="monthly" id="fortnightly-table" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th class="num">GP Received <span class="fn-tip" data-tip="<strong>Editable</strong> — type any value to model the fortnight. Pull these figures from the Zoho Payments report once your fortnight closes. Live recalc as you type.">?</span></th>
+              <th class="num">YTD GP</th>
+              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the fortnight in.">?</span></th>
+              <th class="num">Pay This FN <small>(inc. super)</small></th>
+              <th class="num">TU Adj <span class="fn-tip" data-tip="<strong>True-Up Adjustment</strong> — the difference between the proper cumulative-band math and the naive 'GP × current rate' estimate. Most fortnights = <code>$0</code>. Non-zero only when YTD straddles a band threshold during the fortnight. Hover any TU value (even on collapsed months) for the full breakdown.">?</span></th>
+              <th class="num">Cumulative</th>
+            </tr>
+          </thead>
+          <tbody id="fortnightly-body"></tbody>
+          <tfoot id="fortnightly-foot"></tfoot>
+        </table>
+      </div>
+
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Click any month to expand its fortnights · Months containing a band crossing are highlighted gold · Hover any cell for context · No quarter-end TU required — every fortnight reconciles itself.</p>
+
+      <!-- ============================================================
+           YEAR-END AUDIT — Cross-check rep entries against company GP
+           ============================================================ -->
+      <div style="margin-top: 22px; padding: 16px; border: 1px dashed #b8860b; border-radius: 8px; background: #fefcf7;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;">
+          <h3 style="margin: 0; font-size: 14px; color: #6a4a00;">Year-End Audit <span style="font-size: 9px; padding: 1px 5px; background: #fff3cd; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 3px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Sanity check</span></h3>
+          <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Run at FY close — confirms fortnightly entries reconcile to the company books.</span>
+        </div>
+        <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Pull total GP received for this rep from the source of truth (Zoho Payments report, or Xero cash-basis P&amp;L if a single-rep account), enter it here, and we'll verify it matches the sum of every fortnight above. Differences over $1 indicate a missing or duplicated entry that needs investigation.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: end;">
+          <div>
+            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Full-year GP received (from Zoho)</label>
+            <input type="text" id="audit-actual" placeholder="e.g. 445,000" inputmode="decimal" style="width: 100%; padding: 8px 10px; border: 1px solid #d3d1c7; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fff;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Sum of 26 fortnight entries</label>
+            <div id="audit-sum" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7; color: var(--ink);">—</div>
+          </div>
+          <div>
+            <label style="display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Variance</label>
+            <div id="audit-variance" style="padding: 8px 10px; border: 1px solid #ecebe5; border-radius: 4px; font-family: var(--mono); font-size: 14px; background: #fafaf7;">—</div>
+          </div>
+        </div>
+        <div id="audit-verdict" style="margin-top: 14px; padding: 12px; border-radius: 6px; background: #f4f3ed; border: 1px solid #d3d1c7; font-size: 13px; color: var(--muted);">
+          <span style="font-family: var(--mono); font-size: 11px;">▸ Enter the full-year GP received above to verify.</span>
+        </div>
+        <p style="font-size: 11px; color: var(--faint); margin: 10px 0 0; font-family: var(--mono);">Tolerance: ±$1.00 (rounding) · ±$1,000 (acceptable timing variance) · &gt;$1,000 requires reconciliation.</p>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TRAILING 12 MONTHS — "What you would've earned"
+         ============================================================ -->
+    <div class="card" style="background: linear-gradient(135deg, #f0f7f3 0%, #fff 100%); border-left: 4px solid #48a14d;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
+        <div>
+          <h2 style="margin: 0 0 4px;">Last 12 Months <span style="font-size: 10px; padding: 1px 6px; background: #e7f6ea; color: #1e6624; border: 1px solid #c3e4d0; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">What you would've earned</span></h2>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">If the new fortnightly plan had been live the last 12 months, this is what your variable comp would've been. Enter your historical <strong>GP Sold</strong> (booking-confirmed date — from Zoho's Bookings → GP Sold report) below.</p>
+        </div>
+        <span style="font-size: 11px; color: #1e6624; font-family: var(--mono); font-weight: 600;">May 2025 – Apr 2026</span>
+      </div>
+
+      <div id="trailing-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
+
+      <div style="overflow-x: auto;">
+        <table class="monthly" id="trailing-table" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">GP Sold <span class="fn-tip" data-tip="<strong>Editable</strong> — paste from Zoho's GP Sold (booking-confirmed) report for each calendar month.">?</span></th>
+              <th class="num">YTD GP</th>
+              <th class="num">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the month in.">?</span></th>
+              <th class="num">Commission This Month <small>(inc. super)</small></th>
+              <th class="num">Cumulative</th>
+            </tr>
+          </thead>
+          <tbody id="trailing-body"></tbody>
+          <tfoot id="trailing-foot"></tfoot>
+        </table>
+      </div>
+
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Same cumulative band math as the forward view · Use this to validate the new plan against your actual year and bridge the transition period.</p>
+    </div>
+
+    <!-- ============================================================
+         "What is the True-Up?" — reworded for fortnightly context
+         ============================================================ -->
+    <div class="card">
+      <details class="tu-help" open>
+        <summary>What is the True-Up?</summary>
+        <div class="body">
+          <p>Most fortnights, the simple <code>GP × current band rate</code> formula gives you exactly what you've earned — no adjustment needed. But occasionally a single fortnight's GP <strong>straddles a band threshold</strong> mid-fortnight.</p>
+          <p>Example: you start a fortnight with YTD GP of <strong>$295k</strong> (in the 4% band) and earn another <strong>$15k</strong>, ending YTD at <strong>$310k</strong> (now in the 9% band). That fortnight, the first $5k was earned at 4% (= $200) and the next $10k at 9% (= $900) — proper pay $1,100. A naive <code>$15k × 9%</code> would over-pay you to $1,350. The <strong>True-Up Adjustment</strong> (TU column on the table above) corrects the math so you receive the exact entitled amount — never over, never under.</p>
+          <p>Most reps see 3–5 band crossings per year (one per band entered). Every other fortnight pays cleanly with <code>$0</code> TU. Your <strong>base salary is never affected</strong> by any of this — the TU only nudges variable comp.</p>
+          <p style="color: var(--muted); font-size: 12px;">Why this is better than the old quarterly system: under quarterly true-up, you might be overpaid for 2 months then have commissions clawed back in month 3. Under fortnightly cumulative math, every payment is already exactly right — no surprises, no claw-backs, no running balance to track.</p>
+        </div>
+      </details>
     </div>
   </section>
 </main>
@@ -2365,8 +2331,10 @@ function calcGuardrail() {
 }
 
 // --- Monthly grid rendering + actuals-driven calculation ---
+// Guarded: monthly-body was removed in the fortnightly migration. No-op if missing.
 function renderMonthlyGrid() {
   const tbody = document.getElementById('monthly-body');
+  if (!tbody) return;
   const actualPayouts = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
   // Lock signal: admin has entered GP or Event GP for that month (commission is then auto-calculated by the plan bands)
   const isLocked = (i) => {
@@ -2945,6 +2913,7 @@ function update() {
     }
   }
   const tbody = document.getElementById('monthly-body');
+  if (!tbody) return; // monthly-body removed in fortnightly migration — skip calc-cell updates
   // Update the calc cells per row (leave inputs untouched so caret/focus survives)
   mRows.forEach(r2 => {
     const row = tbody.querySelector(`tr[data-mon-idx="${r2.idx}"]`);
