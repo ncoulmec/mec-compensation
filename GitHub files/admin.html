@@ -2382,6 +2382,14 @@ function renderFortnightlyAdmin() {
     return out;
   }
 
+  // ---- Extract all invoice numbers (4-6 digit sequences) from a messy string ----
+  // Handles: "13726", "INV-13726", "INV 13726", "11378 | 13550", "INV-12075 and INV-13598",
+  //          "INVOICE POST EVENTINV 13613", "12343 | 13491 AND 13641", etc.
+  function extractInvNums(str) {
+    const matches = String(str || '').match(/\b(\d{4,6})\b/g) || [];
+    return [...new Set(matches)];
+  }
+
   // ---- Find a column index by name (flexible matching) ----
   function colIdx(headers, ...names) {
     const h = headers.map(x => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
@@ -2486,7 +2494,9 @@ function renderFortnightlyAdmin() {
 
       // Clean up client name — strip "Payment: " prefix
       const client = desc.replace(/^Payment:\s*/i, '').trim() || desc;
-      included.push({ date, invoiceNumber: invNo, client, amount });
+      // Also store the raw numeric part for matching against Zoho (which may omit the INV- prefix)
+      const invNumeric = (extractInvNums(invNo)[0] || '').trim();
+      included.push({ date, invoiceNumber: invNo, invNumeric, client, amount });
     }
     return { included, excluded };
   }
@@ -2503,11 +2513,16 @@ function renderFortnightlyAdmin() {
     const map = new Map();
     for (let i = hdrIdx + 1; i < rows.length; i++) {
       const r = rows[i];
-      const inv = String(r[cInv] || '').trim().toUpperCase();
-      if (!inv) continue;
+      const invRaw = String(r[cInv] || '').trim();
+      if (!invRaw) continue;
       const amt  = cAmt  >= 0 ? (parseAmt(r[cAmt]) || null) : null;
       const date = cDate >= 0 ? excelDateToStr(r[cDate]) : '';
-      map.set(inv, { amount: amt, date });
+      // A single Zoho payment can cover multiple invoices — extract each number and map them all
+      const nums = extractInvNums(invRaw);
+      if (nums.length === 0) continue;
+      for (const num of nums) {
+        map.set(num, { amount: amt, date, rawField: invRaw });
+      }
     }
     return map;
   }
@@ -2525,9 +2540,11 @@ function renderFortnightlyAdmin() {
     const hasZoho = zohoMap && zohoMap.size > 0;
 
     // Annotate each row with match status
+    // Match on plain numeric invoice number to handle Zoho's inconsistent prefixes/formats
     const rows = included.map(row => {
       if (!hasZoho) return { ...row, status: 'pending' };
-      const zm = zohoMap.get(row.invoiceNumber.toUpperCase());
+      const lookupKey = row.invNumeric || row.invoiceNumber.replace(/^INV[-\s]*/i, '').trim();
+      const zm = zohoMap.get(lookupKey);
       if (!zm) return { ...row, status: 'missing', zohoAmt: null };
       const diff = Math.abs((zm.amount || 0) - row.amount);
       return diff > 0.05
@@ -2576,10 +2593,11 @@ function renderFortnightlyAdmin() {
 
     rows.forEach(row => {
       let badge = '', rowBg = '';
+      const zohoSearchUrl = `https://crm.zoho.com/crm/org657079535/global_search?searchword=${encodeURIComponent(row.invoiceNumber)}`;
       if (row.status === 'ok')      { badge = '<span class="recon-badge ok">✓ Matched</span>'; }
-      else if (row.status === 'missing')  { badge = '<span class="recon-badge missing">✗ Not in Zoho</span>'; rowBg = 'background:#fef2f2;'; }
-      else if (row.status === 'mismatch') { badge = '<span class="recon-badge mismatch">⚠ Amount differs</span>'; rowBg = 'background:#fffbeb;'; }
-      else                                { badge = '<span class="recon-badge pending">→ Add to Zoho</span>'; }
+      else if (row.status === 'missing')  { badge = `<span class="recon-badge missing">✗ Not in Zoho</span> <a href="${xesc(zohoSearchUrl)}" target="_blank" rel="noopener" style="font-size:10px; color:var(--navy); text-decoration:none; margin-left:4px; white-space:nowrap;">↗ Search Zoho</a>`; rowBg = 'background:#fef2f2;'; }
+      else if (row.status === 'mismatch') { badge = `<span class="recon-badge mismatch">⚠ Amount differs</span> <a href="${xesc(zohoSearchUrl)}" target="_blank" rel="noopener" style="font-size:10px; color:var(--navy); text-decoration:none; margin-left:4px; white-space:nowrap;">↗ Search Zoho</a>`; rowBg = 'background:#fffbeb;'; }
+      else                                { badge = `<span class="recon-badge pending">→ Add to Zoho</span> <a href="${xesc(zohoSearchUrl)}" target="_blank" rel="noopener" style="font-size:10px; color:var(--navy); text-decoration:none; margin-left:4px; white-space:nowrap;">↗ Search Zoho</a>`; }
 
       h += `<tr style="border-bottom:1px solid var(--border);${rowBg}">`;
       h += `<td style="padding:7px 10px; font-family:var(--mono); font-size:12px; white-space:nowrap;">${xesc(row.date)}</td>`;

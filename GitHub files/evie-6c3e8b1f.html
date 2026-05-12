@@ -1284,10 +1284,7 @@
 
   <!-- Payouts -->
   <section class="panel" id="panel-payouts">
-    <div class="banner info" id="payout-banner">
-      <span class="dot"></span>
-      <span id="payout-banner-text">—</span>
-    </div>
+    <!-- payout-banner removed — payout cadence is implied by the fortnightly preview below. -->
 
     <div class="super-card">
       <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px;">Superannuation &amp; Total Package (Planning)</h2>
@@ -1569,7 +1566,7 @@ const EMPLOYEE_ID = 'evie';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v29`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v30`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -2817,13 +2814,16 @@ function update() {
   document.getElementById('spr-total').textContent = fmtMoney(r.totalPackage);
 
   // Payout banner — dynamic
+  // payout-banner-text was removed from the Payouts & Super tab — guarded no-op.
   const banner = document.getElementById('payout-banner-text');
-  const freq = plan.payoutFrequency || 'monthly';
-  const payoutPct = plan.payoutPercentage != null ? plan.payoutPercentage : 1.0;
-  if (payoutPct >= 0.999) {
-    banner.textContent = `Your commission is paid ${freq} — 100% paid out each period.`;
-  } else {
-    banner.textContent = `Your commission is paid ${freq} — ${(payoutPct*100).toFixed(0)}% paid out each period, ${((1-payoutPct)*100).toFixed(0)}% reconciled at year-end.`;
+  if (banner) {
+    const freq = plan.payoutFrequency || 'monthly';
+    const payoutPct = plan.payoutPercentage != null ? plan.payoutPercentage : 1.0;
+    if (payoutPct >= 0.999) {
+      banner.textContent = `Your commission is paid ${freq} — 100% paid out each period.`;
+    } else {
+      banner.textContent = `Your commission is paid ${freq} — ${(payoutPct*100).toFixed(0)}% paid out each period, ${((1-payoutPct)*100).toFixed(0)}% reconciled at year-end.`;
+    }
   }
 
   // /12 chips in Scenario Inputs (Planning)
@@ -2904,8 +2904,11 @@ function update() {
       gateBanner.innerHTML = '';
     }
   }
+  // Legacy monthly-table block — only runs if the table is still in the DOM (it was removed
+  // in the fortnightly migration). Scoped skip — NOT an early return — so the rest of update()
+  // (Monthly Scenario, commission curve, OTE card, etc.) keeps rendering.
   const tbody = document.getElementById('monthly-body');
-  if (!tbody) return; // monthly-body removed in fortnightly migration — skip calc-cell updates
+  if (tbody) {
   // Update the calc cells per row (leave inputs untouched so caret/focus survives)
   mRows.forEach(r2 => {
     const row = tbody.querySelector(`tr[data-mon-idx="${r2.idx}"]`);
@@ -3047,6 +3050,7 @@ function update() {
   document.getElementById('tot-prodcomm').textContent = fmtMoney(mTot.prodCommInc);
   document.getElementById('tot-total').textContent = fmtMoney(mTot.monTotalInc);
   document.getElementById('tot-total-ex').textContent = fmtMoney(mTot.monTotalInc / (1 + g.superRate));
+  } // end if (tbody) — legacy monthly-table block
 
   // Months with data = any month where GP or Event GP is non-zero (employee or admin entered)
   const monthsWithData = mRows.filter(row => row.gpReceived > 0 || row.eventGP > 0).length;
