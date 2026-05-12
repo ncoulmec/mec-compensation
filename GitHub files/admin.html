@@ -237,6 +237,30 @@
   }
   #um-tooltip-bubble.show { opacity: 1; }
 
+  /* ===== XERO RECONCILIATION TAB ===== */
+  .recon-upload-zone {
+    border: 2px dashed var(--border); border-radius: 10px; padding: 28px 20px;
+    text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    background: #fafaf9; min-height: 100px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .recon-upload-zone:hover, .recon-upload-zone.drag-over { border-color: var(--navy); background: #eef4fa; }
+  .recon-upload-zone .zone-icon { font-size: 26px; margin-bottom: 8px; pointer-events: none; }
+  .recon-upload-zone .zone-label { font-size: 13px; font-weight: 600; color: var(--ink); pointer-events: none; }
+  .recon-upload-zone .zone-sub { font-size: 11px; color: var(--muted); margin-top: 4px; pointer-events: none; }
+  .recon-upload-zone.loaded { border-color: var(--accent); background: var(--accent-bg); border-style: solid; }
+  .recon-upload-zone.loaded .zone-label { color: var(--accent); }
+  .recon-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; font-family: var(--mono); }
+  .recon-badge.ok { background: #d1fae5; color: #065f46; }
+  .recon-badge.missing { background: #fee2e2; color: #991b1b; }
+  .recon-badge.mismatch { background: #fef9c3; color: #713f12; }
+  .recon-badge.pending { background: #eff6ff; color: #1e40af; }
+  .recon-stat { text-align: center; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+  .recon-stat .rs-val { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); }
+  .recon-stat .rs-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .recon-rule-chip { display: inline-flex; align-items: center; gap: 5px; background: #f3f4f6; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-family: var(--mono); color: var(--muted); }
+  .recon-rule-chip.excl { background: #fef3c7; border-color: #d97706; color: #92400e; }
+
   /* Future / disabled cells */
   table.unified-payroll td.future {
     background: repeating-linear-gradient(45deg, #fafaf7 0 6px, #f5f3ee 6px 12px);
@@ -285,6 +309,7 @@
     <div class="admin-tabs">
       <button class="admin-tab-btn active" aria-current="page" data-admin-tab="fortnightly">📅 Fortnightly Payroll</button>
       <button class="admin-tab-btn" data-admin-tab="pool">🤝 Team Pool <span style="font-size:9px; color: #b8860b; margin-left: 6px;">●BETA</span></button>
+      <button class="admin-tab-btn" data-admin-tab="xero-recon">💳 Xero Recon</button>
     </div>
 
     <!-- ========== FORTNIGHTLY PAYROLL VIEW (ACTIVE) ========== -->
@@ -341,6 +366,80 @@
         <p class="blurb">When activated, payroll will enter each quarter's team total GP-sold (from Zoho's "Quarterly GP Sold · Booking Closed Date" report) plus per-rep splits here. The dashboard auto-computes the pool funded (rep slice + company contribution), ramp factor, and per-person share. <strong>Close-out is disabled in beta.</strong></p>
         <div id="pool-admin-body"></div>
       </div>
+    </div>
+
+    <!-- ========== XERO RECONCILIATION TAB ========== -->
+    <div class="admin-panel" id="admin-panel-xero-recon">
+
+      <!-- Banner -->
+      <div class="card" style="margin-bottom:14px; padding:16px 20px; background:linear-gradient(135deg,#eef4fa 0%,#fff 100%); border-left:4px solid var(--navy);">
+        <div style="font-size:11px; color:var(--navy); text-transform:uppercase; letter-spacing:0.08em; font-weight:800;">💳 Xero Reconciliation · Admin weekly check-in</div>
+        <div style="font-size:13px; color:var(--ink); margin-top:6px; line-height:1.6;">
+          Upload your Xero account transactions export to see which invoice payments need to be added to Zoho.
+          Optionally also upload a Zoho payments CSV to cross-check what's already entered.<br>
+          <span style="color:var(--muted);">Auto-filters apply: only <strong>Receivable Payments</strong> with an <strong>INV- reference</strong> are shown. PIN fees, DJ School/Lesson reports, payable payments, and spend money are silently excluded.</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Export instructions -->
+      <div class="card" style="margin-bottom:14px;">
+        <h2 style="margin-bottom:10px;">Step 1 · Set up your Xero custom report (one-time)</h2>
+        <div style="font-size:13px; color:var(--ink); line-height:1.75;">
+          In Xero go to <strong>Accounting → Reports → Account Transactions</strong> and set:
+          <div style="margin:8px 0 4px 0; display:flex; flex-wrap:wrap; gap:8px; font-size:12px;">
+            <span style="background:#f3f4f6; border:1px solid var(--border); border-radius:6px; padding:4px 10px; font-family:var(--mono);">Account: 001 - Business Account</span>
+            <span style="background:#f3f4f6; border:1px solid var(--border); border-radius:6px; padding:4px 10px; font-family:var(--mono);">Date range: This Month</span>
+            <span style="background:#f3f4f6; border:1px solid var(--border); border-radius:6px; padding:4px 10px; font-family:var(--mono);">Columns: Source + Reference visible</span>
+          </div>
+          Click <strong>Update</strong>, then use <strong>Save as custom report</strong> → name it <em>"Monthly Invoice Payments"</em>.
+          Each month: open that saved report, click <strong>Export → CSV</strong>, and drop it below.
+        </div>
+        <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+          <span style="font-size:11px; color:var(--muted); margin-right:4px;">Rows auto-excluded:</span>
+          <span class="recon-rule-chip excl">PIN payment fees</span>
+          <span class="recon-rule-chip excl">DJ School reports</span>
+          <span class="recon-rule-chip excl">DJ Lesson reports</span>
+          <span class="recon-rule-chip">Payable Payments</span>
+          <span class="recon-rule-chip">Spend Money</span>
+          <span class="recon-rule-chip">Receive Money</span>
+          <span class="recon-rule-chip">No INV- reference</span>
+        </div>
+      </div>
+
+      <!-- Step 2 & 3: Upload zones -->
+      <div class="recon-upload-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+
+        <div class="card">
+          <h2 style="margin-bottom:10px;">Step 2 · Xero CSV <span style="color:var(--danger); font-size:10px; margin-left:4px; font-weight:700;">REQUIRED</span></h2>
+          <div class="recon-upload-zone" id="xr-xero-zone">
+            <div class="zone-icon">📊</div>
+            <div class="zone-label">Drop Xero CSV here or click to browse</div>
+            <div class="zone-sub">Account Transactions export · .csv file</div>
+          </div>
+          <input type="file" id="xr-xero-input" accept=".csv" style="display:none;">
+        </div>
+
+        <div class="card">
+          <h2 style="margin-bottom:10px;">Step 3 · Zoho Payments CSV <span style="color:var(--muted); font-size:10px; margin-left:4px;">OPTIONAL — for cross-check</span></h2>
+          <div class="recon-upload-zone" id="xr-zoho-zone">
+            <div class="zone-icon">🗂️</div>
+            <div class="zone-label">Drop Zoho Payments CSV here or click to browse</div>
+            <div class="zone-sub">Export from Zoho CRM Payments module · .csv file</div>
+          </div>
+          <input type="file" id="xr-zoho-input" accept=".csv" style="display:none;">
+        </div>
+
+      </div>
+
+      <!-- Results -->
+      <div class="card" style="margin-bottom:14px;">
+        <div id="xr-results">
+          <div style="text-align:center; padding:40px 20px; color:var(--faint); font-size:13px;">
+            Upload a Xero CSV above to see invoice payments that need entering into Zoho.
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -657,6 +756,8 @@ async function load() {
     renderPoolAdmin();
     // Fortnightly is now the active default tab — render it on load.
     if (typeof renderFortnightlyAdmin === 'function') renderFortnightlyAdmin();
+    // Wire up Xero Reconciliation tab upload zones.
+    if (typeof initXeroRecon === 'function') initXeroRecon();
   } catch (err) {
     console.error('Admin dashboard load failed:', err);
     $('#loading').style.display = 'none';
@@ -2237,6 +2338,289 @@ function renderFortnightlyAdmin() {
   renderBody();
   renderAudit();
 }
+
+// =========================================================================
+// XERO RECONCILIATION TAB
+// Upload a Xero Account Transactions CSV → auto-filter → show invoice payments
+// that need to be entered into Zoho. Optionally upload a Zoho payments CSV
+// to cross-check what's already in the system.
+// =========================================================================
+(function() {
+  let xeroResult = null;   // { included: [], excluded: [] }
+  let zohoMap    = null;   // Map<invoiceNumber → {amount, date}> or null
+
+  // ---- Minimal CSV parser (handles quoted fields) ----
+  function parseCSV(text) {
+    const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    const out = [];
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const row = []; let cell = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { if (inQ && line[i+1] === '"') { cell += '"'; i++; } else { inQ = !inQ; } }
+        else if (c === ',' && !inQ) { row.push(cell.trim()); cell = ''; }
+        else { cell += c; }
+      }
+      row.push(cell.trim()); out.push(row);
+    }
+    return out;
+  }
+
+  // ---- Find a column index by name (flexible matching) ----
+  function colIdx(headers, ...names) {
+    const h = headers.map(x => x.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    for (const n of names) {
+      const idx = h.indexOf(n.toLowerCase().replace(/[^a-z0-9]/g, ''));
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  }
+
+  // ---- Exclusion rules (applied AFTER source + INV- checks) ----
+  const EXCL_RULES = [
+    { re: /pin\s*payments/i,  reason: 'PIN payment fee / reimbursement' },
+    { re: /dj\s*school/i,     reason: 'DJ School (separate business)' },
+    { re: /dj\s*lesson/i,     reason: 'DJ Lesson report (separate business)' },
+  ];
+
+  // ---- Process Xero CSV ----
+  function processXero(rows) {
+    if (rows.length < 2) throw new Error('CSV looks empty — no data rows found.');
+    const hdrs = rows[0];
+    const cDate   = colIdx(hdrs, 'Date');
+    const cSrc    = colIdx(hdrs, 'Source');
+    const cDesc   = colIdx(hdrs, 'Description');
+    const cRef    = colIdx(hdrs, 'Reference');
+    const cInvNo  = colIdx(hdrs, 'Invoice Number', 'InvoiceNumber', 'Invoice #');
+    const cCredit = colIdx(hdrs, 'Credit', 'Received');
+    const cGross  = colIdx(hdrs, 'Gross');
+
+    if (cSrc === -1) throw new Error('Could not find a "Source" column. Make sure the Source column is visible in your Xero export.');
+
+    const included = [], excluded = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (r.every(c => !c)) continue;
+
+      const source = (r[cSrc]    || '').trim();
+      const desc   = (r[cDesc]   || '').trim();
+      const ref    = (r[cRef]    || '').trim();
+      const invCol = cInvNo >= 0 ? (r[cInvNo] || '').trim() : '';
+      const date   = cDate >= 0  ? (r[cDate]  || '').trim() : '';
+
+      // Determine invoice number: explicit column first, then Reference
+      const invNo = (invCol.match(/^INV-/i) ? invCol : '') || (ref.match(/^INV-/i) ? ref : '');
+
+      // Parse amount — Credit col preferred, fall back to positive Gross
+      let amount = 0;
+      if (cCredit >= 0) { const v = parseFloat((r[cCredit] || '').replace(/[^0-9.\-]/g, '')); if (v > 0) amount = v; }
+      if (!amount && cGross >= 0) { const v = parseFloat((r[cGross] || '').replace(/[^0-9.\-]/g, '')); if (v > 0) amount = v; }
+
+      // Must be a Receivable Payment
+      if (source.toLowerCase() !== 'receivable payment') {
+        excluded.push({ date, source, desc, ref, amount, reason: `Source "${source}" — not a receivable payment` });
+        continue;
+      }
+      // Must have an INV- reference
+      if (!invNo) {
+        excluded.push({ date, source, desc, ref: ref || invCol, amount, reason: 'No INV- invoice number found' });
+        continue;
+      }
+      // Named exclusion patterns
+      let excl = null;
+      for (const rule of EXCL_RULES) { if (rule.re.test(desc)) { excl = rule.reason; break; } }
+      if (excl) { excluded.push({ date, source, desc, ref: invNo, amount, reason: excl }); continue; }
+
+      // Clean up client name — strip "Payment: " prefix
+      const client = desc.replace(/^Payment:\s*/i, '').trim() || desc;
+      included.push({ date, invoiceNumber: invNo, client, amount });
+    }
+    return { included, excluded };
+  }
+
+  // ---- Process Zoho CSV ----
+  function processZoho(rows) {
+    if (rows.length < 2) throw new Error('Zoho CSV appears empty.');
+    const hdrs = rows[0];
+    const cInv  = colIdx(hdrs, 'Invoice Number', 'InvoiceNumber', 'Invoice #', 'Invoice No');
+    const cAmt  = colIdx(hdrs, 'Amount Received', 'AmountReceived', 'Amount');
+    const cDate = colIdx(hdrs, 'Payment Date', 'PaymentDate', 'Date');
+    if (cInv === -1) throw new Error('Could not find an "Invoice Number" column in the Zoho CSV. Check the column headers in your export.');
+    const map = new Map();
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const inv = (r[cInv] || '').trim().toUpperCase();
+      if (!inv) continue;
+      const amt  = cAmt  >= 0 ? (parseFloat((r[cAmt]  || '').replace(/[^0-9.\-]/g, '')) || null) : null;
+      const date = cDate >= 0 ? (r[cDate] || '').trim() : '';
+      map.set(inv, { amount: amt, date });
+    }
+    return map;
+  }
+
+  // ---- Helpers ----
+  function xesc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtAUD(n) { return n > 0 ? '$' + n.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'; }
+
+  // ---- Render results ----
+  function render() {
+    const el = document.getElementById('xr-results');
+    if (!xeroResult) { el.innerHTML = '<div style="text-align:center; padding:40px 20px; color:var(--faint); font-size:13px;">Upload a Xero CSV above to see invoice payments that need entering into Zoho.</div>'; return; }
+
+    const { included, excluded } = xeroResult;
+    const hasZoho = zohoMap && zohoMap.size > 0;
+
+    // Annotate each row with match status
+    const rows = included.map(row => {
+      if (!hasZoho) return { ...row, status: 'pending' };
+      const zm = zohoMap.get(row.invoiceNumber.toUpperCase());
+      if (!zm) return { ...row, status: 'missing', zohoAmt: null };
+      const diff = Math.abs((zm.amount || 0) - row.amount);
+      return diff > 0.05
+        ? { ...row, status: 'mismatch', zohoAmt: zm.amount }
+        : { ...row, status: 'ok',      zohoAmt: zm.amount };
+    });
+
+    const total    = rows.reduce((s, r) => s + r.amount, 0);
+    const nOk      = rows.filter(r => r.status === 'ok').length;
+    const nMissing = rows.filter(r => r.status === 'missing').length;
+    const nBad     = rows.filter(r => r.status === 'mismatch').length;
+
+    // Sort: missing → mismatch → pending → ok
+    const sortOrd = { missing: 0, mismatch: 1, pending: 2, ok: 3 };
+    rows.sort((a, b) => (sortOrd[a.status] || 0) - (sortOrd[b.status] || 0));
+
+    let h = '';
+
+    // Summary stats
+    h += '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:18px;">';
+    h += `<div class="recon-stat"><div class="rs-val">${rows.length}</div><div class="rs-lbl">Invoice payments</div></div>`;
+    h += `<div class="recon-stat"><div class="rs-val">${fmtAUD(total)}</div><div class="rs-lbl">Total received</div></div>`;
+    if (hasZoho) {
+      h += `<div class="recon-stat"><div class="rs-val" style="color:var(--accent)">${nOk}</div><div class="rs-lbl">Matched in Zoho</div></div>`;
+      if (nMissing) h += `<div class="recon-stat"><div class="rs-val" style="color:var(--danger)">${nMissing}</div><div class="rs-lbl">Missing from Zoho</div></div>`;
+      if (nBad)     h += `<div class="recon-stat"><div class="rs-val" style="color:#b45309">${nBad}</div><div class="rs-lbl">Amount mismatch</div></div>`;
+    }
+    h += `<div class="recon-stat"><div class="rs-val" style="color:var(--faint)">${excluded.length}</div><div class="rs-lbl">Auto-excluded</div></div>`;
+    h += '</div>';
+
+    // Main table
+    h += '<div style="overflow-x:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:14px;">';
+    h += '<table style="width:100%; border-collapse:collapse; font-size:13px;">';
+    h += '<thead><tr style="background:#fafaf7; border-bottom:1px solid var(--border);">';
+    h += '<th style="padding:9px 10px; text-align:left; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Date</th>';
+    h += '<th style="padding:9px 10px; text-align:left; font-size:11px; font-weight:600; color:var(--muted);">Client</th>';
+    h += '<th style="padding:9px 10px; text-align:left; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Invoice #</th>';
+    h += '<th style="padding:9px 10px; text-align:right; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Xero Amount</th>';
+    if (hasZoho) {
+      h += '<th style="padding:9px 10px; text-align:right; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Zoho Amount</th>';
+      h += '<th style="padding:9px 10px; text-align:center; font-size:11px; font-weight:600; color:var(--muted);">Status</th>';
+    } else {
+      h += '<th style="padding:9px 10px; text-align:center; font-size:11px; font-weight:600; color:var(--muted);">Action</th>';
+    }
+    h += '</tr></thead><tbody>';
+
+    rows.forEach(row => {
+      let badge = '', rowBg = '';
+      if (row.status === 'ok')      { badge = '<span class="recon-badge ok">✓ Matched</span>'; }
+      else if (row.status === 'missing')  { badge = '<span class="recon-badge missing">✗ Not in Zoho</span>'; rowBg = 'background:#fef2f2;'; }
+      else if (row.status === 'mismatch') { badge = '<span class="recon-badge mismatch">⚠ Amount differs</span>'; rowBg = 'background:#fffbeb;'; }
+      else                                { badge = '<span class="recon-badge pending">→ Add to Zoho</span>'; }
+
+      h += `<tr style="border-bottom:1px solid var(--border);${rowBg}">`;
+      h += `<td style="padding:7px 10px; font-family:var(--mono); font-size:12px; white-space:nowrap;">${xesc(row.date)}</td>`;
+      h += `<td style="padding:7px 10px;">${xesc(row.client)}</td>`;
+      h += `<td style="padding:7px 10px; font-family:var(--mono); font-size:12px; white-space:nowrap;">${xesc(row.invoiceNumber)}</td>`;
+      h += `<td style="padding:7px 10px; text-align:right; font-family:var(--mono); font-size:12px;">${fmtAUD(row.amount)}</td>`;
+      if (hasZoho) {
+        h += `<td style="padding:7px 10px; text-align:right; font-family:var(--mono); font-size:12px;">${row.zohoAmt != null ? fmtAUD(row.zohoAmt) : '<span style="color:var(--faint)">—</span>'}</td>`;
+        h += `<td style="padding:7px 10px; text-align:center;">${badge}</td>`;
+      } else {
+        h += `<td style="padding:7px 10px; text-align:center;">${badge}</td>`;
+      }
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+
+    // Excluded rows (collapsible)
+    if (excluded.length) {
+      h += `<details style="margin-top:4px;"><summary style="cursor:pointer; font-size:12px; color:var(--muted); padding:8px 0; user-select:none;">${excluded.length} rows auto-excluded — click to review</summary>`;
+      h += '<div style="margin-top:10px; overflow-x:auto; border:1px solid var(--border); border-radius:8px;">';
+      h += '<table style="width:100%; border-collapse:collapse; font-size:12px;">';
+      h += '<thead><tr style="background:#fafaf7; border-bottom:1px solid var(--border);">';
+      h += '<th style="padding:7px 10px; text-align:left; font-size:10px; font-weight:600; color:var(--muted);">Date</th>';
+      h += '<th style="padding:7px 10px; text-align:left; font-size:10px; font-weight:600; color:var(--muted);">Description</th>';
+      h += '<th style="padding:7px 10px; text-align:left; font-size:10px; font-weight:600; color:var(--muted);">Reference</th>';
+      h += '<th style="padding:7px 10px; text-align:right; font-size:10px; font-weight:600; color:var(--muted);">Amount</th>';
+      h += '<th style="padding:7px 10px; text-align:left; font-size:10px; font-weight:600; color:var(--muted);">Reason excluded</th>';
+      h += '</tr></thead><tbody>';
+      excluded.forEach(row => {
+        h += '<tr style="border-bottom:1px solid var(--border);">';
+        h += `<td style="padding:6px 10px; font-family:var(--mono); font-size:11px;">${xesc(row.date)}</td>`;
+        h += `<td style="padding:6px 10px; color:var(--muted); font-size:12px;">${xesc(row.desc)}</td>`;
+        h += `<td style="padding:6px 10px; font-family:var(--mono); font-size:11px;">${xesc(row.ref)}</td>`;
+        h += `<td style="padding:6px 10px; text-align:right; font-family:var(--mono); font-size:11px;">${row.amount > 0 ? fmtAUD(row.amount) : '—'}</td>`;
+        h += `<td style="padding:6px 10px;"><span class="recon-rule-chip excl">${xesc(row.reason)}</span></td>`;
+        h += '</tr>';
+      });
+      h += '</tbody></table></div></details>';
+    }
+
+    el.innerHTML = h;
+  }
+
+  // ---- File handler ----
+  function handleFile(file, type) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const rawRows = parseCSV(e.target.result);
+        if (type === 'xero') {
+          xeroResult = processXero(rawRows);
+          const zone = document.getElementById('xr-xero-zone');
+          zone.classList.add('loaded');
+          zone.querySelector('.zone-label').textContent = '✓ ' + file.name;
+          zone.querySelector('.zone-sub').textContent = xeroResult.included.length + ' invoice payments found · ' + xeroResult.excluded.length + ' excluded';
+        } else {
+          zohoMap = processZoho(rawRows);
+          const zone = document.getElementById('xr-zoho-zone');
+          zone.classList.add('loaded');
+          zone.querySelector('.zone-label').textContent = '✓ ' + file.name;
+          zone.querySelector('.zone-sub').textContent = zohoMap.size + ' Zoho payment records loaded';
+        }
+        render();
+      } catch (err) {
+        alert('Error reading CSV: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ---- Wire up drag-drop / click for a zone ----
+  function wireZone(zoneId, inputId, type) {
+    const zone  = document.getElementById(zoneId);
+    const input = document.getElementById(inputId);
+    if (!zone || !input) return;
+    zone.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => { if (input.files[0]) handleFile(input.files[0], type); });
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f && (f.name.endsWith('.csv') || f.type === 'text/csv')) handleFile(f, type);
+      else alert('Please drop a .csv file.');
+    });
+  }
+
+  // Called from load() after DOM is ready
+  window.initXeroRecon = function() {
+    wireZone('xr-xero-zone', 'xr-xero-input', 'xero');
+    wireZone('xr-zoho-zone', 'xr-zoho-input', 'zoho');
+  };
+})();
 
 load();
 </script>
