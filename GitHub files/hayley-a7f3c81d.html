@@ -319,13 +319,13 @@
     <dd>Same metric this quarter vs the same quarter last year. Shows whether you're growing the business compared to the previous period.</dd>
 
     <dt>Maintenance Bonus</dt>
-    <dd>If the company stays profitable at $1M+ CM with no growth, you still earn a $10k baseline. This protects you from being penalised for steady-state years.</dd>
+    <dd>If the company stays profitable at $1M+ CM with no growth, you still earn an $11,200 baseline (inc super). This protects you from being penalised for steady-state years.</dd>
 
     <dt>CM Baseline ($1M)</dt>
-    <dd>The floor below which CM bonus = $0. Above $1M, every dollar of CM earns at the band rate.</dd>
+    <dd>The floor below which CM bonus = $0. Above $1M, the Maintenance Milestone bonus begins ramping; above $1.1M, the growth bands kick in.</dd>
 
     <dt>Maintenance Milestone</dt>
-    <dd>Flat $10k bonus that ramps from $1.0M to $1.1M CM. Ensures you still earn a baseline bonus for keeping the business at steady-state performance.</dd>
+    <dd>Flat <strong>$11,200 bonus (inc super)</strong> that ramps linearly from $1.0M to $1.1M CM. Stated super-inclusive so you see the full benefit value — equivalent to $10,000 ex super + 12% super added on top, but presented as one figure matching how the rest of your plan is framed.</dd>
 
     <dt>Super-Inclusive</dt>
     <dd>The dollar figures already include the 12% superannuation. So a $46k commission means $41k paid into your bank (pre-tax) and $5k paid into your super fund — $46k total in your name.</dd>
@@ -397,7 +397,7 @@
         <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Company CM annual projection. See the Company P&amp;L in MEC Overview for historical reference.</p>
 
         <div class="scenario-row">
-          <label>Company CM (annual) <span class="tooltip-trigger" data-tip="Contribution Margin = Revenue − Cost of Sales − Contribution Expenses. $1M is the commission floor; hit $1.1M (your rounded baseline) and you've earned $10,000 exactly; above that, growth bands keep climbing.">?</span></label>
+          <label>Company CM (annual) <span class="tooltip-trigger" data-tip="Contribution Margin = Revenue − Cost of Sales − Contribution Expenses. $1M is the commission floor; hit $1.1M (your rounded baseline) and you've earned the full $11,200 Maintenance Milestone (inc super); above that, growth bands keep climbing.">?</span></label>
           <input type="range" id="cm-slider" min="900000" max="1600000" step="10000" value="1200000">
           <div style="display: flex; flex-direction: column; gap: 4px; align-items: stretch;">
             <div style="position: relative;">
@@ -426,7 +426,7 @@
 
     <div class="card">
       <h2>CM Bands — Incremental</h2>
-      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 14px;">Commission starts accruing at <strong>$1,000,000</strong> CM. You hit <strong>$10,000 commission</strong> exactly at <strong>$1,100,000</strong> (your baseline — rounded from last year's LTM of ~$1.11M). Above that, rates escalate every $100k. Highlighted row is your current slice.</p>
+      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 14px;">The first $100k zone ($1.0M → $1.1M) is captured by the <strong>Maintenance Milestone</strong> bonus above (one-time $11,200 inc super, ramps linearly). Growth bands below kick in once cumulative CM clears <strong>$1,100,000</strong> — your baseline (rounded from last year's LTM ~$1.11M). Above that, rates escalate every $100k. Highlighted row is your current slice.</p>
       <div class="table-wrap"><table class="bands">
         <thead>
           <tr>
@@ -576,7 +576,7 @@
         In April 2026 we agreed your base salary moves to <strong>$120k</strong>, up from your previous package. The agreement was that the higher base needs to be paid for by the business performing well enough to absorb it. The plan trigger is:
       </p>
       <ul style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0 0 12px; padding-left: 22px;">
-        <li><strong>Maintain Contribution Margin</strong> — variable comp triggers when annual CM passes <strong>$1.0M</strong> (the level of business performance that supports the higher base). A flat $10k milestone bonus ramps in between $1.0M and $1.1M, and growth bands kick in above $1.1M.</li>
+        <li><strong>Maintain Contribution Margin</strong> — variable comp triggers when annual CM passes <strong>$1.0M</strong> (the level of business performance that supports the higher base). A flat <strong>$11,200 Maintenance Milestone (inc super)</strong> ramps in linearly between $1.0M and $1.1M, and growth bands kick in above $1.1M.</li>
       </ul>
       <p style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0;">
         What this means in practice: <strong>your $120k base is fixed</strong> and never moves with business performance. Your variable comp only flows when the business is doing well enough to cover the cost — when CM is positive past the $1.0M baseline. Above that, the bands shown below kick in. The intent is that you and the business win together.
@@ -765,7 +765,7 @@ const EMPLOYEE_ID = 'hayley';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v33`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v34`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1143,8 +1143,9 @@ function wireInputs() {
   kpiInput.addEventListener('input', () => syncKpi(kpiInput.value));
 }
 
-/* CM incentive: incremental band calc on CM directly. Bands start earning at $1M ($0 floor),
-   hit $10k at the $1.1M baseline, then climb through escalating rates. Output super-INCLUSIVE. */
+/* CM incentive: incremental band calc on CM directly. Bands start earning above the $1.1M
+   baseline; the $1M–$1.1M zone is captured by the $11,200 Maintenance Milestone (inc super)
+   handled separately via plan.flatBonuses. Output super-INCLUSIVE. */
 function calcCMIncentive(cm) {
   if (!plan.cmBands) return { earning: 0, activeBand: null, breakdown: [], maintenanceHit: false };
   const sorted = [...plan.cmBands].sort((a, b) => a.threshold - b.threshold);
@@ -1478,7 +1479,7 @@ function update() {
   document.getElementById('card-cm').textContent = fmtMoney(r.cmIncGross);
   let cmSubText;
   if (r.cmIncGross === 0) {
-    cmSubText = scenario.cm < 1000000 ? 'Below $1M floor — no commission' : 'Commission accruing — hit $1.1M for $10k';
+    cmSubText = scenario.cm < 1000000 ? 'Below $1M floor — no commission' : 'Milestone accruing — hit $1.1M for $11,200 (inc super)';
   } else {
     const maintHit = r.cmCalc.maintenanceHit ? ' · Baseline hit ✓' : '';
     cmSubText = `${fmtMoney(r.cmIncEx)} + ${fmtMoney(r.cmIncSuperPart)} super${maintHit}`;
