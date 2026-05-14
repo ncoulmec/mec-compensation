@@ -1301,13 +1301,13 @@
     <!-- ============================================================
          FORTNIGHTLY PAYOUT — ACTIVE PLAN (Forward 12 months)
          ============================================================ -->
-    <div class="card" style="background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
+    <div class="card" style="background: #fff; border-left: 4px solid var(--navy);">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
         <div>
-          <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #fff8e1; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
+          <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
           <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. <strong>Edit the GP Received cells</strong> to model your year — hover the totals or any row for the breakdown.</p>
         </div>
-        <span style="font-size: 11px; color: #b8860b; font-family: var(--mono); font-weight: 600;">26 fortnights · Jun 2026 – May 2027</span>
+        <span style="font-size: 11px; color: var(--navy); font-family: var(--mono); font-weight: 600;">26 fortnights · Jun 2026 – May 2027</span>
       </div>
 
       <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
@@ -1337,16 +1337,16 @@
       <!-- ============================================================
            YEAR-END AUDIT — Cross-check GP Received AND Event GP
            ============================================================ -->
-      <div style="margin-top: 22px; padding: 14px 16px; border: 1px solid #d4b85a; border-radius: 8px; background: #fefcf7;">
+      <div style="margin-top: 22px; padding: 14px 16px; border: 1px solid #cdd9e8; border-radius: 8px; background: #f6f8fc;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px;">
-          <h3 style="margin: 0; font-size: 14px; color: #6a4a00;">Year-End Audit <span style="font-size: 9px; padding: 1px 5px; background: #fff3cd; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 3px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Sanity check</span></h3>
+          <h3 style="margin: 0; font-size: 14px; color: var(--navy);">Year-End Audit <span style="font-size: 9px; padding: 1px 5px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8; border-radius: 3px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Sanity check</span></h3>
           <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Run at FY close — both GP Received and Event GP must reconcile to the books.</span>
         </div>
         <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px;">Paste the full-year totals from the source of truth (Zoho Payments for GP Received, Zoho Bookings for Event GP Produced). We'll verify both sums match every fortnight entry above.</p>
 
         <!-- GP Received audit row -->
         <div style="display: grid; grid-template-columns: 110px repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: end; margin-bottom: 8px;">
-          <div style="font-size: 11px; color: #6a4a00; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 8px;">GP Received</div>
+          <div style="font-size: 11px; color: var(--navy); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 8px;">GP Received</div>
           <div>
             <label style="display: block; font-size: 10px; color: var(--muted); margin-bottom: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Full-year (from Zoho)</label>
             <input type="text" id="audit-actual" placeholder="e.g. 445,000" inputmode="decimal" style="width: 100%; padding: 6px 8px; border: 1px solid #d3d1c7; border-radius: 4px; font-family: var(--mono); font-size: 13px; background: #fff;">
@@ -1591,7 +1591,7 @@ const EMPLOYEE_ID = 'evie';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v31`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v32`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -3621,14 +3621,14 @@ function renderOTECard() {
   const card = document.createElement('div');
   card.className = 'card';
   card.id = 'ote-card';
-  card.style.cssText = 'border-left: 4px solid #b8860b; margin-bottom: 14px; padding: 14px 18px;';
+  card.style.cssText = 'border-left: 4px solid var(--navy); margin-bottom: 14px; padding: 14px 18px;';
   card.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
       <div>
         <h2 style="margin: 0 0 2px; font-size: 16px;">Your On-Target Earnings</h2>
         <p style="font-size: 11px; color: var(--muted); margin: 0; font-family: var(--mono);">All figures super-inclusive · Variable updates live with GP slider</p>
       </div>
-      ${snapTo ? `<button id="ote-snap-btn" style="background: #b8860b; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k GP)</button>` : ''}
+      ${snapTo ? `<button id="ote-snap-btn" style="background: var(--navy); color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k GP)</button>` : ''}
     </div>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
       <div style="padding: 10px 14px; background: #fff; border: 1px solid #ecebe5; border-radius: 6px;">
@@ -3638,13 +3638,13 @@ function renderOTECard() {
       </div>
       <div style="padding: 10px 14px; background: #fff; border: 1px solid #ecebe5; border-radius: 6px;">
         <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Variable @ Current GP</div>
-        <div id="ote-variable-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: #b8860b; margin-top: 2px;">—</div>
+        <div id="ote-variable-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--navy); margin-top: 2px;">—</div>
         <div id="ote-variable-sub" style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">at —</div>
       </div>
-      <div style="padding: 10px 14px; background: #fefcf7; border: 1px solid #d4b85a; border-radius: 6px;">
-        <div style="font-size: 10px; color: #6a4a00; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total</div>
-        <div id="ote-total-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: #6a4a00; margin-top: 2px;">—</div>
-        <div style="font-size: 10px; color: #8a6a00; margin-top: 2px; font-family: var(--mono);">pre-tax annual package</div>
+      <div style="padding: 10px 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 6px;">
+        <div style="font-size: 10px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total</div>
+        <div id="ote-total-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--navy); margin-top: 2px;">—</div>
+        <div style="font-size: 10px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">pre-tax annual package</div>
       </div>
     </div>
     <details style="margin-top: 10px;">
@@ -3985,8 +3985,8 @@ function renderBreakdown(r) {
     const st = document.createElement('style');
     st.id = 'fn-tip-style';
     st.textContent = `
-      .fn-tip { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: rgba(184, 134, 11, 0.15); color: #8a6a00; font-size: 9px; font-weight: 700; cursor: help; border: 1px solid rgba(184, 134, 11, 0.3); margin-left: 3px; vertical-align: middle; transition: all 0.12s; }
-      .fn-tip:hover { background: #b8860b; color: #fff; }
+      .fn-tip { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: rgba(26, 58, 92, 0.10); color: var(--navy); font-size: 9px; font-weight: 700; cursor: help; border: 1px solid rgba(26, 58, 92, 0.25); margin-left: 3px; vertical-align: middle; transition: all 0.12s; }
+      .fn-tip:hover { background: var(--navy); color: #fff; }
       .fn-tu-pill { display: inline-block; padding: 1px 6px; border-radius: 3px; font-family: var(--mono); cursor: help; }
       .fn-tu-pill.dim { color: var(--faint); cursor: default; }
       .fn-tu-pill.live { background: rgba(184, 134, 11, 0.12); color: #6a4a00; border: 1px solid rgba(184, 134, 11, 0.3); }
@@ -3994,8 +3994,8 @@ function renderBreakdown(r) {
       #fn-tip-popover strong { color: #ffd97a; }
       #fn-tip-popover hr { border: 0; border-top: 1px solid #2a2a2a; margin: 6px 0; }
       .fn-gp-input { width: 100px; padding: 5px 7px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 13px; color: var(--ink); transition: border-color 0.12s, box-shadow 0.12s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); }
-      .fn-gp-input:hover { border-color: #b8860b; }
-      .fn-gp-input:focus { outline: none; border-color: #b8860b; box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.18); background: #fff; }
+      .fn-gp-input:hover { border-color: var(--navy); }
+      .fn-gp-input:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 2px rgba(26, 58, 92, 0.18); background: #fff; }
       .fn-gp-input::placeholder { color: var(--faint); font-style: italic; }
       .fn-pace-pill { display: inline-block; padding: 0 5px; border-radius: 3px; font-size: 10px; font-family: var(--mono); font-weight: 600; margin-left: 4px; vertical-align: middle; cursor: help; background: rgba(72, 161, 77, 0.12); color: #1e6624; border: 1px solid rgba(72, 161, 77, 0.3); }
       .fn-pace-pill.same { background: #f4f3ed; color: var(--muted); border-color: #d3d1c7; }
@@ -4133,12 +4133,13 @@ function renderBreakdown(r) {
     const incSuper = r.properPay;
     const exSuper = incSuper / (1 + SUPER_RATE);
     const superAmt = incSuper - exSuper;
-    return `<div style="font-weight: 700; margin-bottom: 4px;">Pay this fortnight — breakdown</div>
-      <div>Ex super: <code>${_fmt(exSuper)}</code></div>
-      <div>+ Super (12%): <code>${_fmt(superAmt)}</code></div>
+    return `<div style="font-weight: 700; margin-bottom: 4px;">Pay this fortnight</div>
+      <div><strong>Total you've earned: ${_fmt(incSuper)}</strong> <span style="color: #aaa;">(inc super)</span></div>
       <hr>
-      <div><strong>Total (inc super): ${_fmt(incSuper)}</strong></div>
-      <div style="margin-top: 6px; font-size: 11px; color: #aaa;">Bands are stated inclusive of super so the figure you see in the column equals what hits your bank + super fund combined.</div>`;
+      <div style="font-weight: 600; margin-bottom: 4px;">How this appears in Xero:</div>
+      <div>· "Bonus" line: <code>${_fmt(exSuper)}</code> <span style="color: #aaa;">(ex super)</span></div>
+      <div>· "Super" line: <code>${_fmt(superAmt)}</code> <span style="color: #aaa;">(12% on top)</span></div>
+      <div style="margin-top: 6px; font-size: 11px; color: #aaa;">Xero shows the bonus and super on separate lines. Adding them back together = the total above. Bands are stated inclusive of super so the figure you see here is everything that ends up in your bank + super fund combined.</div>`;
   }
 
   // ---------- Aggregate Pay tooltip (month or year) ----------
@@ -4380,7 +4381,7 @@ function renderBreakdown(r) {
       </div>
       <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
         <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">Band Crossings <span class="fn-tip" data-tip='${esc(crossingTip)}'>?</span></div>
-        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: ${crossingCount > 0 ? '#b8860b' : 'var(--ink)'}; margin-top: 2px;">${crossingCount}</div>
+        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: ${crossingCount > 0 ? 'var(--navy)' : 'var(--ink)'}; margin-top: 2px;">${crossingCount}</div>
       </div>
     `;
 
@@ -4428,17 +4429,25 @@ function renderBreakdown(r) {
 
       const monthPayTip = payAggTipHtml(group.month + ' pay', groupPay);
 
+      // Month aggregate ex-super / super breakdown
+      const groupPayEx = groupPay / 1.12;
+      const groupPaySuper = groupPay - groupPayEx;
+      const groupProdEx = groupProd / 1.12;
+      const groupProdSuper = groupProd - groupProdEx;
+      const lastCumEx = lastCumTotal / 1.12;
+      const lastCumSuper = lastCumTotal - lastCumEx;
+      const _breakdown = (ex, sup) => `<div style="font-size: 9px; color: var(--muted); margin-top: 2px; font-family: var(--mono); font-weight: 400;">${_fmt(ex)} bonus + ${_fmt(sup)} super</div>`;
       html += `
         <tr class="fn-month-row" data-group="${gi}" data-open="${isOpen ? '1' : '0'}" data-tip='${esc(mTip)}' style="cursor: pointer; font-weight: 600; ${groupBg}">
           <td><span class="fn-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span> ${group.month}${hasCrossing ? ' <span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 4px;">CROSSING</span>' : ''}</td>
           <td class="num">${groupGP > 0 ? _fmt(groupGP) : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num" style="color: var(--muted);">${_fmt(lastYtd)}</td>
           <td class="num">${monthBandCellHtml}</td>
-          <td class="num">${groupPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(monthPayTip)}'>${_fmt(groupPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
+          <td class="num">${groupPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(monthPayTip)}'>${_fmt(groupPay)}</span>${_breakdown(groupPayEx, groupPaySuper)}` : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num">${groupTuPill}</td>
           <td class="num" style="${SEP}">${groupEventGp > 0 ? _fmt(groupEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
-          <td class="num">${groupProd > 0 ? _fmt(groupProd) : '<span style="color: var(--faint);">—</span>'}</td>
-          <td class="num" style="color: var(--muted);">${_fmt(lastCumTotal)}</td>
+          <td class="num">${groupProd > 0 ? `${_fmt(groupProd)}${_breakdown(groupProdEx, groupProdSuper)}` : '<span style="color: var(--faint);">—</span>'}</td>
+          <td class="num" style="color: var(--muted);">${_fmt(lastCumTotal)}${lastCumTotal > 0 ? _breakdown(lastCumEx, lastCumSuper) : ''}</td>
         </tr>
       `;
 
@@ -4455,6 +4464,14 @@ function renderBreakdown(r) {
         const prodTip = r.prodComm > 0
           ? `<div style="font-weight: 700; margin-bottom: 4px;">Production commission</div><div>Event GP this fortnight: <code>${_fmt(r.eventGp)}</code></div><div>× 1% = <code>${_fmt(r.prodComm)}</code></div><div style="margin-top: 4px; color: #aaa; font-size: 11px;">Flat 1% on Event GP Produced (no band math). Inclusive of super.</div>`
           : `<div>No Event GP entered for this fortnight.</div>`;
+        // Per-fortnight ex-super / super breakdown lines
+        const rGpEx = r.properPay / 1.12;
+        const rGpSup = r.properPay - rGpEx;
+        const rProdEx = r.prodComm / 1.12;
+        const rProdSup = r.prodComm - rProdEx;
+        const rCumEx = r.cumTotal / 1.12;
+        const rCumSup = r.cumTotal - rCumEx;
+        const _bk = (ex, sup) => `<div style="font-size: 9px; color: var(--muted); margin-top: 2px; font-family: var(--mono); font-weight: 400;">${_fmt(ex)} bonus + ${_fmt(sup)} super</div>`;
         html += `
           <tr class="fn-detail-row fn-detail-${gi}" style="${displayStyle} ${rowBg}">
             <td style="padding-left: 24px; color: var(--muted); font-family: var(--mono); font-size: 11px;">
@@ -4463,11 +4480,11 @@ function renderBreakdown(r) {
             <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
             <td class="num" style="color: var(--muted);">${_fmt(r.ytd)}</td>
             <td class="num">${rBandCellHtml}</td>
-            <td class="num">${r.properPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(rPayTip)}'>${_fmt(r.properPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
+            <td class="num">${r.properPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(rPayTip)}'>${_fmt(r.properPay)}</span>${_bk(rGpEx, rGpSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
             <td class="num">${tuPill}</td>
             <td class="num" style="${SEP}"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
-            <td class="num">${r.prodComm > 0 ? `<span class="fn-pay-cell" data-tip='${esc(prodTip)}'>${_fmt(r.prodComm)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
-            <td class="num" style="color: var(--muted);">${_fmt(r.cumTotal)}</td>
+            <td class="num">${r.prodComm > 0 ? `<span class="fn-pay-cell" data-tip='${esc(prodTip)}'>${_fmt(r.prodComm)}</span>${_bk(rProdEx, rProdSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
+            <td class="num" style="color: var(--muted);">${_fmt(r.cumTotal)}${r.cumTotal > 0 ? _bk(rCumEx, rCumSup) : ''}</td>
           </tr>
         `;
       });
@@ -4489,17 +4506,25 @@ function renderBreakdown(r) {
     const bandFooterHtml = totalGP > 0
       ? `<span class="fn-pace-main" data-tip='${esc(yearEndTip)}'>${endBandPct}</span><span class="fn-ytd-pill" data-tip='${esc(yearEffTip)}'>Eff ${effRatePct}</span>`
       : `<span style="color: var(--faint);">—</span>`;
+    // Year-total breakdowns
+    const totalPayEx = totalPay / 1.12;
+    const totalPaySup = totalPay - totalPayEx;
+    const totalProdEx = totalProd / 1.12;
+    const totalProdSup = totalProd - totalProdEx;
+    const totalAllEx = totalAll / 1.12;
+    const totalAllSup = totalAll - totalAllEx;
+    const _bkFoot = (ex, sup) => `<div style="font-size: 10px; color: var(--muted); margin-top: 3px; font-family: var(--mono); font-weight: 500;">${_fmt(ex)} bonus + ${_fmt(sup)} super</div>`;
     tfoot.innerHTML = `
-      <tr style="font-weight: 700; border-top: 2px solid #d3d1c7; background: #fefcf7;">
+      <tr style="font-weight: 700; border-top: 2px solid #d3d1c7; background: #f6f8fc;">
         <td>Total FY27</td>
         <td class="num">${totalGP > 0 ? _fmt(totalGP) : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num" style="color: var(--muted);">—</td>
         <td class="num">${bandFooterHtml}</td>
-        <td class="num">${totalPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalPayTip)}'>${_fmt(totalPay)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num">${totalPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalPayTip)}'>${_fmt(totalPay)}</span>${_bkFoot(totalPayEx, totalPaySup)}` : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num">${Math.abs(totalTu) < 0.5 ? '<span class="fn-tu-pill dim">—</span>' : '<span class="fn-tu-pill live">' + _fmtSigned(totalTu) + '</span>'}</td>
         <td class="num" style="${SEP}">${totalEventGp > 0 ? _fmt(totalEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num">${totalProd > 0 ? _fmt(totalProd) : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num">${totalAll > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalCumTip)}'>${_fmt(totalAll)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num">${totalProd > 0 ? `${_fmt(totalProd)}${_bkFoot(totalProdEx, totalProdSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num">${totalAll > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalCumTip)}'>${_fmt(totalAll)}</span>${_bkFoot(totalAllEx, totalAllSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
       </tr>
     `;
 

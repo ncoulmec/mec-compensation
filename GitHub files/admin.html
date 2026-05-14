@@ -629,7 +629,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v26';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v27';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -2587,6 +2587,11 @@ function renderFortnightlyAdmin() {
   // ---- Helpers ----
   function xesc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function fmtAUD(n) { return n > 0 ? '$' + n.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'; }
+  // Parse DD/MM/YYYY → timestamp (ms). Returns null if unparseable.
+  function parseDMY(str) {
+    const m = String(str || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    return m ? new Date(+m[3], +m[2] - 1, +m[1]).getTime() : null;
+  }
 
   // ---- Render results ----
   function render() {
@@ -2763,6 +2768,125 @@ function renderFortnightlyAdmin() {
         h += '</tr>';
       });
       h += '</tbody></table></div></details>';
+    }
+
+    // ---- Zoho → Xero reverse check ----
+    // For every Zoho entry, make sure there is a real Xero receipt backing it up.
+    // Entries with no Xero counterpart within the export period could be duplicates or errors.
+    if (hasZoho) {
+      const DAY = 86400000;
+
+      // Infer the date range covered by this Xero export
+      const xeroDates = included.map(r => parseDMY(r.date)).filter(Boolean);
+      const xeroMin = xeroDates.length ? Math.min(...xeroDates) : null;
+      const xeroMax = xeroDates.length ? Math.max(...xeroDates) : null;
+
+      // Build a quick lookup: numeric invoice → xero row
+      const xeroInvMap = new Map();
+      included.forEach(r => {
+        const k = r.invNumeric || r.invoiceNumber.replace(/^INV[-\s]*/i, '').trim();
+        if (k) xeroInvMap.set(k, r);
+      });
+
+      const suspectEntries    = []; // within Xero period, no Xero match — likely error/duplicate
+      const historicalEntries = []; // outside Xero period — probably a prior-period payment
+
+      for (const [invNum, entries] of zohoMap.invMap.entries()) {
+        const xeroRow  = xeroInvMap.get(invNum);
+        const zohoSum  = entries.reduce((s, e) => s + (e.amount || 0), 0);
+
+        if (xeroRow) {
+          // Invoice IS in Xero — decide which Zoho entries are "covered"
+          const sumMatchesXero    = Math.abs(zohoSum - xeroRow.amount) <= 0.05;
+          const singleMatchEntry  = entries.find(e => Math.abs((e.amount || 0) - xeroRow.amount) <= 0.05);
+
+          if (sumMatchesXero) continue; // all entries account for the Xero total (e.g. RACV split bookings) — nothing to flag
+
+          // Mark the single matched entry as covered; flag the rest as extras
+          entries.forEach(entry => {
+            if (singleMatchEntry && entry === singleMatchEntry) return; // this one is fine
+            const entryTs = parseDMY(entry.date);
+            const withinPeriod = !entryTs || !xeroMin || (entryTs >= xeroMin - 7 * DAY && entryTs <= xeroMax + 7 * DAY);
+            const rec = { invNum, entry, xeroAmount: xeroRow.amount, invoiceInXero: true };
+            (withinPeriod ? suspectEntries : historicalEntries).push(rec);
+          });
+        } else {
+          // Invoice not in Xero export at all — could be outside the period, or a genuine error
+          entries.forEach(entry => {
+            const entryTs = parseDMY(entry.date);
+            const withinPeriod = !entryTs || !xeroMin || (entryTs >= xeroMin - 7 * DAY && entryTs <= xeroMax + 7 * DAY);
+            const rec = { invNum, entry, xeroAmount: null, invoiceInXero: false };
+            (withinPeriod ? suspectEntries : historicalEntries).push(rec);
+          });
+        }
+      }
+
+      // ---- Render reverse-check section ----
+      h += `<div style="border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:14px;">`;
+      h += `<div style="padding:12px 16px; background:#fafaf7; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">`;
+      h += `<div style="font-size:12px; font-weight:700; color:var(--ink);">↩ Zoho → Xero check <span style="font-weight:400; color:var(--muted);">— Zoho payments that don't have a matching Xero receipt</span></div>`;
+      if (suspectEntries.length === 0) {
+        h += `<span class="recon-badge ok" style="margin-left:auto;">✓ All clear</span>`;
+      } else {
+        h += `<span class="recon-badge mismatch" style="margin-left:auto;">⚠ ${suspectEntries.length} suspect entr${suspectEntries.length === 1 ? 'y' : 'ies'}</span>`;
+      }
+      h += `</div>`;
+
+      if (suspectEntries.length > 0) {
+        h += `<div style="padding:10px 16px; background:#fffbeb; border-bottom:1px solid #fde68a; font-size:12px; color:#92400e;">`;
+        h += `These Zoho payments fall <strong>within the Xero export period</strong> but have no exact Xero receipt backing them up. `;
+        h += `They may be <strong>accidental duplicates</strong> (commission would be paid twice), entries for the wrong invoice, or payments that haven't cleared in Xero yet.`;
+        h += `</div>`;
+        h += `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:12px;">`;
+        h += `<thead><tr style="background:#fafaf7; border-bottom:1px solid var(--border);">`;
+        h += `<th style="padding:7px 10px; text-align:left; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Date</th>`;
+        h += `<th style="padding:7px 10px; text-align:left; font-size:11px; font-weight:600; color:var(--muted);">Invoice #</th>`;
+        h += `<th style="padding:7px 10px; text-align:right; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Zoho Amount</th>`;
+        h += `<th style="padding:7px 10px; text-align:right; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap;">Xero Amount</th>`;
+        h += `<th style="padding:7px 10px; text-align:left; font-size:11px; font-weight:600; color:var(--muted);">Payment / Booking</th>`;
+        h += `<th style="padding:7px 10px; text-align:left; font-size:11px; font-weight:600; color:var(--muted);">Note</th>`;
+        h += `</tr></thead><tbody>`;
+        suspectEntries.forEach(({ invNum, entry, xeroAmount, invoiceInXero }) => {
+          const note = invoiceInXero
+            ? `<span class="recon-badge mismatch" style="font-size:10px;">Possible duplicate</span>`
+            : `<span class="recon-badge missing" style="font-size:10px;">Invoice not in Xero period</span>`;
+          const zohoSearchUrl = `https://crm.zoho.com/crm/org657079535/search?searchword=${encodeURIComponent(invNum)}&isRelevance=false`;
+          h += `<tr style="border-bottom:1px solid var(--border); background:#fffbeb;">`;
+          h += `<td style="padding:6px 10px; font-family:var(--mono); font-size:11px; white-space:nowrap;">${xesc(entry.date || '—')}</td>`;
+          h += `<td style="padding:6px 10px; font-family:var(--mono); font-size:11px;"><a href="${xesc(zohoSearchUrl)}" target="_blank" rel="noopener" style="color:var(--navy); text-decoration:none;">${xesc(invNum)} ↗</a></td>`;
+          h += `<td style="padding:6px 10px; text-align:right; font-family:var(--mono); font-size:11px;">${fmtAUD(entry.amount)}</td>`;
+          h += `<td style="padding:6px 10px; text-align:right; font-family:var(--mono); font-size:11px; color:var(--muted);">${xeroAmount != null ? fmtAUD(xeroAmount) : '—'}</td>`;
+          h += `<td style="padding:6px 10px; font-size:11px;">${xesc(entry.paymentName || entry.bookingName || '—')}</td>`;
+          h += `<td style="padding:6px 10px;">${note}</td>`;
+          h += `</tr>`;
+        });
+        h += `</tbody></table></div>`;
+      } else {
+        h += `<div style="padding:16px; font-size:12px; color:var(--accent); text-align:center;">No Zoho payments found within the Xero export period that lack a Xero receipt. ✓</div>`;
+      }
+
+      if (historicalEntries.length > 0) {
+        h += `<details style="border-top:1px solid var(--border);"><summary style="padding:10px 16px; cursor:pointer; font-size:12px; color:var(--muted); user-select:none;">${historicalEntries.length} historical Zoho entr${historicalEntries.length === 1 ? 'y' : 'ies'} outside the Xero export period — click to review</summary>`;
+        h += `<div style="padding:8px 16px 4px; font-size:11px; color:var(--muted); font-style:italic;">These are from a prior period — expected if your Zoho export covers all-time. No action needed unless you see something unexpected.</div>`;
+        h += `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:11px;">`;
+        h += `<thead><tr style="background:#fafaf7; border-bottom:1px solid var(--border);">`;
+        h += `<th style="padding:5px 10px; text-align:left; font-size:10px; font-weight:600; color:var(--muted);">Date</th>`;
+        h += `<th style="padding:5px 10px; text-align:left; font-size:10px; font-weight:600; color:var(--muted);">Invoice #</th>`;
+        h += `<th style="padding:5px 10px; text-align:right; font-size:10px; font-weight:600; color:var(--muted);">Amount</th>`;
+        h += `<th style="padding:5px 10px; text-align:left; font-size:10px; font-weight:600; color:var(--muted);">Payment / Booking</th>`;
+        h += `</tr></thead><tbody>`;
+        historicalEntries.forEach(({ invNum, entry }) => {
+          h += `<tr style="border-bottom:1px solid var(--border);">`;
+          h += `<td style="padding:5px 10px; font-family:var(--mono);">${xesc(entry.date || '—')}</td>`;
+          h += `<td style="padding:5px 10px; font-family:var(--mono);">${xesc(invNum)}</td>`;
+          h += `<td style="padding:5px 10px; text-align:right; font-family:var(--mono);">${fmtAUD(entry.amount)}</td>`;
+          h += `<td style="padding:5px 10px;">${xesc(entry.paymentName || entry.bookingName || '—')}</td>`;
+          h += `</tr>`;
+        });
+        h += `</tbody></table></div></details>`;
+      }
+
+      h += `</div>`; // end reverse-check card
     }
 
     el.innerHTML = h;

@@ -312,9 +312,6 @@
     <dt>CM (Contribution Margin)</dt>
     <dd>Revenue − COGS − Contribution Expenses (Sales/Account team salaries + super + commissions). The cash left after the team that produced the revenue is paid. Your CM bonus is calculated incrementally above the $1M baseline.</dd>
 
-    <dt>NP (Net Profit)</dt>
-    <dd>CM − OpEx (overheads not tied to projects). The bottom line. Your NP kicker pays in tiers above thresholds — every $100k more earns more.</dd>
-
     <dt>LTM (Last Twelve Months)</dt>
     <dd>Rolling sum of the last 4 complete quarters from Xero. Drives your projected commission and the maintenance bonus calculation.</dd>
 
@@ -327,18 +324,18 @@
     <dt>CM Baseline ($1M)</dt>
     <dd>The floor below which CM bonus = $0. Above $1M, every dollar of CM earns at the band rate.</dd>
 
-    <dt>NP Kicker</dt>
-    <dd>Extra bonus paid when company NP crosses certain milestones ($100k / $300k / $700k / $1M / $1.3M / $1.5M). Tiered — bigger NP unlocks bigger bonuses.</dd>
+    <dt>Maintenance Milestone</dt>
+    <dd>Flat $10k bonus that ramps from $1.0M to $1.1M CM. Ensures you still earn a baseline bonus for keeping the business at steady-state performance.</dd>
 
     <dt>Super-Inclusive</dt>
     <dd>The dollar figures already include the 12% superannuation. So a $46k commission means $41k paid into your bank (pre-tax) and $5k paid into your super fund — $46k total in your name.</dd>
 
     <dt>75% Quarterly / 25% Holdback</dt>
-    <dd>Each quarter pays 75% of commission earned to that point. The remaining 25% is held back and reconciled at year-end based on actual full-year CM/NP.</dd>
+    <dd>Each quarter pays 75% of commission earned to that point. The remaining 25% is held back and reconciled at year-end based on actual full-year CM.</dd>
 
     <dt>Quarterly True-Up</dt>
-    <dd>Each quarter we look at cumulative CM/NP, calculate the commission earned to date, subtract what's been paid in earlier quarters, and pay the difference (capped at 75% per quarter).</dd><dt>Total Package</dt>
-    <dd>Base salary + super on base + CM commission + NP kicker. The full cost-to-MEC of employing you for the year.</dd>
+    <dd>Each quarter we look at cumulative CM, calculate the commission earned to date, subtract what's been paid in earlier quarters, and pay the difference (capped at 75% per quarter).</dd><dt>Total Package</dt>
+    <dd>Base salary + super on base + CM commission. The full cost-to-MEC of employing you for the year.</dd>
   
     <dt>KPI Multiplier</dt>
     <dd>A multiplier applied to your variable comp once KPIs go live. Indicative range is roughly 0.7× to 1.3×, but the exact range will be confirmed before activation. Currently locked at 1.0× — KPIs are still in DRAFT.</dd>
@@ -373,7 +370,7 @@
 
     <div id="pay-increase-banner"></div>
     <div class="section-head">      <h2>Forecast your year</h2>
-      <p class="blurb">Drag the sliders to model full-year CM and NP — your incentive is driven by both. Numbers are super-inclusive.</p>
+      <p class="blurb">Drag the slider to model full-year CM — your incentive is driven entirely by Contribution Margin. Numbers are super-inclusive.</p>
     </div>
 
     <div class="kpi-row">
@@ -387,11 +384,6 @@
         <div class="value" id="card-cm">—</div>
         <div class="sub" id="card-cm-sub">—</div>
       </div>
-      <div class="kpi-card">
-        <div class="label">NP Incentive</div>
-        <div class="value" id="card-np">—</div>
-        <div class="sub" id="card-np-sub">—</div>
-      </div>
       <div class="kpi-card inverted">
         <div class="label">Total Package</div>
         <div class="value" id="card-total">—</div>
@@ -402,7 +394,7 @@
     <div class="two-col">
       <div class="card" style="margin-bottom: 0;">
         <h2>Scenario Inputs</h2>
-        <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Company CM and NP annual projections. See the Company P&amp;L in MEC Overview for historical reference.</p>
+        <p style="font-size: 13px; color: var(--muted); margin: 0 0 10px;">Company CM annual projection. See the Company P&amp;L in MEC Overview for historical reference.</p>
 
         <div class="scenario-row">
           <label>Company CM (annual) <span class="tooltip-trigger" data-tip="Contribution Margin = Revenue − Cost of Sales − Contribution Expenses. $1M is the commission floor; hit $1.1M (your rounded baseline) and you've earned $10,000 exactly; above that, growth bands keep climbing.">?</span></label>
@@ -413,15 +405,6 @@
               <input type="text" inputmode="numeric" id="cm-input" class="value-input" style="padding-left: 22px;" value="1,200,000">
             </div>
             <div style="font-size: 11px; color: var(--muted); font-family: var(--mono); text-align: right;">LTM: <span id="cm-ltm-chip" style="color:var(--navy);font-weight:600;">—</span> · Baseline: <span style="color:var(--navy);font-weight:600;">$1.1M</span></div>
-          </div>
-        </div>
-
-        <div class="scenario-row">
-          <label>Company NP (annual) <span class="tooltip-trigger" data-tip="Net Profit = CM − Operating Expenses. Bonus accrues on NP above the matched band threshold, at that band's rate.">?</span></label>
-          <input type="range" id="np-slider" min="0" max="1500000" step="10000" value="950000">
-          <div style="position: relative;">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>
-            <input type="text" inputmode="numeric" id="np-input" class="value-input" style="padding-left: 22px;" value="950,000">
           </div>
         </div>
 
@@ -459,24 +442,24 @@
     </div>
 
     <div class="card">
-      <h2>NP Kicker — Flat Milestone Bonuses</h2>
-      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 14px;">Ties you to net profit with a small bonus at each NP milestone. You get the bonus of the <strong>highest</strong> threshold you clear — no stacking. Designed to stay at ~10% or less of your total commission at expected CM performance. Highlighted row is your current matched milestone.</p>
+      <h2>Maintenance Milestone — Flat Bonus</h2>
+      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 14px;">A flat <strong>$10,000</strong> milestone bonus that ramps in linearly from <strong>$1.0M</strong> to <strong>$1.1M</strong> CM. Below $1.0M you earn nothing; at $1.1M you've earned the full $10k. This protects you from being penalised for steady-state years and bridges the gap to the growth bands above.</p>
       <div class="table-wrap"><table class="bands">
         <thead>
           <tr>
-            <th style="width: 40px;">Tier</th>
-            <th>NP Threshold</th>
-            <th style="text-align: right;">Kicker Bonus</th>
+            <th>CM Threshold</th>
+            <th style="text-align: right;">Bonus</th>
+            <th style="text-align: right;">Status</th>
           </tr>
         </thead>
-        <tbody id="np-bands-body"></tbody>
+        <tbody id="flat-bonus-body"></tbody>
       </table></div>
     </div>
 
     <div class="section-gap"></div>
 
     <div class="section-head">      <h2>What you've earned</h2>
-      <p class="blurb">Enter the company's actual CM and NP at each quarter-end. Quarterly payouts are 75% of annualised commission pro-rata; the 25% holdback is reconciled at year-end. Edits persist on this device.</p>
+      <p class="blurb">Enter the company's actual CM at each quarter-end. Quarterly payouts are 75% of annualised commission pro-rata; the 25% holdback is reconciled at year-end. Edits persist on this device.</p>
     </div>
 
     <div class="kpi-row">
@@ -491,8 +474,8 @@
         <div class="sub" id="ytd-projection-sub">Enter a quarter or two to see year-end projection</div>
       </div>
       <div class="kpi-card">
-        <div class="label">YTD CM / NP</div>
-        <div class="value" id="ytd-cmnp">— / —</div>
+        <div class="label">YTD CM</div>
+        <div class="value" id="ytd-cmnp">—</div>
         <div class="sub" id="ytd-cmnp-sub">Sum across quarters entered</div>
       </div>
       <div class="kpi-card">
@@ -504,7 +487,7 @@
 
     <div class="card">
       <h2>Quarterly Payouts</h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 8px;">Enter the company's actual CM and NP at each quarter's end (cumulative fiscal year to date). Each quarter pays 75% of the commission earned to that point, minus what's been paid already.</p>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 8px;">Enter the company's actual CM at each quarter's end (cumulative fiscal year to date). Each quarter pays 75% of the commission earned to that point, minus what's been paid already.</p>
       <div style="margin: 0 0 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
         <a class="btn small" href="https://go.xero.com/Reports/Default.aspx?reportType=ProfitAndLoss" target="_blank" rel="noopener" style="text-decoration: none; background: #13b5ea; color: #fff; border: 1px solid #13b5ea; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Open Xero P&amp;L ↗</a>
         <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Pull this quarter's Revenue / COGS / Contribution Exp / OpEx from Xero, then update the Company P&amp;L tab on MEC Group.</span>
@@ -515,9 +498,7 @@
             <tr>
               <th>Quarter</th>
               <th class="num">CM<small>This quarter</small></th>
-              <th class="num">NP<small>This quarter</small></th>
               <th class="num" style="background:#fafaf7;">Last Year CM<small>Same Q last year</small></th>
-              <th class="num" style="background:#fafaf7;">Last Year NP<small>Same Q last year</small></th>
               <th class="num">Annualised Commission<small>Inc. super</small></th>
               <th class="num">Quarterly Payout<small>75% · inc. super</small></th>
             </tr>
@@ -577,7 +558,6 @@
       <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px;">Superannuation &amp; Total Package (Planning)</h2>
       <div class="super-line"><span>Base salary (ex-super)</span><span id="spr-base">—</span></div>
       <div class="super-line"><span>+ CM Incentive (ex-super portion)</span><span id="spr-cm" class="plus-line">—</span></div>
-      <div class="super-line"><span>+ NP Incentive (ex-super portion)</span><span id="spr-np" class="plus-line">—</span></div>
       <div class="super-line muted"><span>Subtotal ex-super</span><span id="spr-subtotal">—</span></div>
       <div class="super-line"><span id="spr-super-label">+ Superannuation (total)</span><span id="spr-super" class="plus-line">—</span></div>
       <div class="super-line total"><span>Total package (inc. super)</span><span id="spr-total">—</span></div>
@@ -603,14 +583,13 @@
     <div class="card" style="background: linear-gradient(135deg, #fff8e8 0%, #ffffff 100%); border-left: 4px solid var(--accent); margin-bottom: 18px;">
       <h2 style="margin: 0 0 10px;">Why your plan looks like this</h2>
       <p style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0 0 12px;">
-        Your role is to make the whole business work — not to personally generate sales — so your variable compensation is tied to <strong>business-level performance</strong> rather than personal GP. Specifically, your plan is anchored on <strong>Contribution Margin (CM)</strong> and tracks <strong>Net Profit (NP)</strong> alongside it.
+        Your role is to make the whole business work — not to personally generate sales — so your variable compensation is tied to <strong>business-level performance</strong> rather than personal GP. Specifically, your plan is anchored entirely on <strong>Contribution Margin (CM)</strong>.
       </p>
       <p style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0 0 12px;">
-        In April 2026 we agreed your base salary moves to <strong>$120k</strong>, up from your previous package. The agreement was that the higher base needs to be paid for by the business performing well enough to absorb it. Two business-level gates were proposed at the time:
+        In April 2026 we agreed your base salary moves to <strong>$120k</strong>, up from your previous package. The agreement was that the higher base needs to be paid for by the business performing well enough to absorb it. The plan trigger is:
       </p>
       <ul style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0 0 12px; padding-left: 22px;">
-        <li><strong>Maintain Contribution Margin</strong> — variable comp triggers when annual CM passes <strong>$1.0M</strong> (the level of business performance that supports the higher base).</li>
-        <li><strong>Maintain Net Profit</strong> — discussed but not enforced as a hard gate in the plan as built. NP is tracked alongside and an NP-tied kicker scales additional reward as NP grows.</li>
+        <li><strong>Maintain Contribution Margin</strong> — variable comp triggers when annual CM passes <strong>$1.0M</strong> (the level of business performance that supports the higher base). A flat $10k milestone bonus ramps in between $1.0M and $1.1M, and growth bands kick in above $1.1M.</li>
       </ul>
       <p style="font-size: 13px; color: var(--ink); line-height: 1.7; margin: 0;">
         What this means in practice: <strong>your $120k base is fixed</strong> and never moves with business performance. Your variable comp only flows when the business is doing well enough to cover the cost — when CM is positive past the $1.0M baseline. Above that, the bands shown below kick in. The intent is that you and the business win together.
@@ -695,7 +674,7 @@
   </section>
 </main>
 
-<!-- Floating Quick-Adjust card (sticky bottom-right) — two sliders: CM + NP -->
+<!-- Floating Quick-Adjust card (sticky bottom-right) — CM slider only -->
 <style>
   .gp-floater {
     position: fixed; bottom: 18px; right: 18px;
@@ -709,6 +688,12 @@
   .gp-floater .label-mini { font-size: 12px; color: var(--muted); font-weight: 500; line-height: 1.2; }
   .gp-floater input[type="range"] { width: 100%; accent-color: var(--navy); }
   .gp-floater .value { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; text-align: right; }
+  .gp-floater-footer { margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: #fafaf7; display: flex; justify-content: space-between; align-items: baseline; }
+  .gp-floater-footer .ftr-label { font-size: 11px; color: var(--muted); }
+  .gp-floater-footer .ftr-value { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--navy); }
+  .gp-floater-footer.dark { background: var(--ink); }
+  .gp-floater-footer.dark .ftr-label { color: rgba(255,255,255,0.75); }
+  .gp-floater-footer.dark .ftr-value { color: #fff; }
   @media (max-width: 600px) { .gp-floater { left: 14px; right: 14px; min-width: 0; } }
 </style>
 <div class="gp-floater" id="hayley-floater" style="display: none;">
@@ -717,10 +702,13 @@
     <input type="range" id="cm-floater-slider" min="900000" max="1600000" step="10000">
     <div class="value" id="cm-floater-value">—</div>
   </div>
-  <div class="gp-floater-row">
-    <div class="label-mini">Net<br>Profit</div>
-    <input type="range" id="np-floater-slider" min="0" max="1500000" step="10000">
-    <div class="value" id="np-floater-value">—</div>
+  <div class="gp-floater-footer">
+    <span class="ftr-label">Est. Commission @ Scenario</span>
+    <span><span class="ftr-value" id="hayley-comm-v">—</span></span>
+  </div>
+  <div class="gp-floater-footer dark">
+    <span class="ftr-label">Est. Total Package @ Scenario</span>
+    <span class="ftr-value" id="hayley-total-v">—</span>
   </div>
 </div>
 
@@ -781,7 +769,7 @@ async function _devLoadDashboard() {
 
 /* ============================================================
    Employee Compensation Dashboard — Hayley Wilson (GM, gm plan)
-   CM + NP incentive, quarterly 75/25 payout split.
+   CM incentive only, quarterly 75/25 payout split.
    ============================================================ */
 
 const EMPLOYEE_ID = 'hayley';
@@ -790,7 +778,7 @@ const EMPLOYEE_ID = 'hayley';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v24`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v32`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -955,7 +943,6 @@ let actualsQuarters = [];
 
 const scenario = {
   cm: 1200000,
-  np: 950000,
   kpiScore: 1.0,
 };
 
@@ -1107,49 +1094,33 @@ function saveActualsLocal() {
 function wireInputs() {
   const cmSlider = document.getElementById('cm-slider');
   const cmInput = document.getElementById('cm-input');
-  const npSlider = document.getElementById('np-slider');
-  const npInput = document.getElementById('np-input');
   const kpiSlider = document.getElementById('kpi-slider');
   const kpiInput = document.getElementById('kpi-input');
   const kpiSlider2 = document.getElementById('kpi-slider-2');
 
   cmSlider.value = scenario.cm; cmInput.value = fmtNum(scenario.cm);
-  npSlider.value = scenario.np; npInput.value = fmtNum(scenario.np);
   kpiSlider.value = scenario.kpiScore; kpiSlider2.value = scenario.kpiScore;
   kpiInput.value = scenario.kpiScore.toFixed(2);
 
   if (plan.maxMetricValue) cmSlider.max = Math.max(1500000, +plan.maxMetricValue);
 
-  // Floating Quick-Adjust card — sticky bottom-right with both CM and NP sliders
+  // Floating Quick-Adjust card — sticky bottom-right with CM slider only
   const floater = document.getElementById('hayley-floater');
   const cmFloatSlider = document.getElementById('cm-floater-slider');
   const cmFloatValue = document.getElementById('cm-floater-value');
-  const npFloatSlider = document.getElementById('np-floater-slider');
-  const npFloatValue = document.getElementById('np-floater-value');
-  if (floater && cmFloatSlider && npFloatSlider) {
+  if (floater && cmFloatSlider) {
     cmFloatSlider.min = +cmSlider.min; cmFloatSlider.max = +cmSlider.max; cmFloatSlider.step = +cmSlider.step;
-    npFloatSlider.min = +npSlider.min; npFloatSlider.max = +npSlider.max; npFloatSlider.step = +npSlider.step;
     floater.style.display = 'block';
     const syncCmFloat = () => { cmFloatSlider.value = scenario.cm; cmFloatValue.textContent = fmtMoney(scenario.cm); };
-    const syncNpFloat = () => { npFloatSlider.value = scenario.np; npFloatValue.textContent = fmtMoney(scenario.np); };
     cmFloatSlider.addEventListener('input', () => {
       scenario.cm = +cmFloatSlider.value;
       cmFloatValue.textContent = fmtMoney(scenario.cm);
       cmSlider.value = scenario.cm; cmInput.value = fmtNum(scenario.cm);
       update();
     });
-    npFloatSlider.addEventListener('input', () => {
-      scenario.np = +npFloatSlider.value;
-      npFloatValue.textContent = fmtMoney(scenario.np);
-      npSlider.value = scenario.np; npInput.value = fmtNum(scenario.np);
-      update();
-    });
     cmSlider.addEventListener('input', syncCmFloat);
     cmInput.addEventListener('input', syncCmFloat);
-    npSlider.addEventListener('input', syncNpFloat);
-    npInput.addEventListener('input', syncNpFloat);
     syncCmFloat();
-    syncNpFloat();
   }
 
   const syncMoney = (slider, input, field) => {
@@ -1170,7 +1141,6 @@ function wireInputs() {
     });
   };
   syncMoney(cmSlider, cmInput, 'cm');
-  syncMoney(npSlider, npInput, 'np');
 
   const syncKpi = (val) => {
     const floor = data.globals.kpiScoreFloor || 0;
@@ -1218,17 +1188,31 @@ function computeLTMCM() {
   return totals.rev - totals.cogs - totals.ce;
 }
 
-/* NP kicker: pick highest matching npBonuses threshold ≤ NP, return its flat $ bonus.
-   No more rate-based discontinuities — just escalating flat bonuses. */
-function calcNPKicker(np) {
-  const bonuses = plan.npBonuses || [];
-  if (!bonuses.length) return { bonus: 0, matched: null };
-  const sorted = [...bonuses].sort((a, b) => a.threshold - b.threshold);
-  let matched = null;
-  for (const b of sorted) {
-    if (np >= b.threshold) matched = b;
+/* Flat bonus (Maintenance Milestone): ramps linearly from rampFromMetric to threshold.
+   Returns accrued $ bonus given the current CM. Below ramp = 0, above threshold = full amount. */
+function flatBonusAccrued(cm, kicker) {
+  if (!kicker || typeof kicker.amount !== 'number') return 0;
+  const threshold = +kicker.threshold || 0;
+  const rampFrom = +kicker.rampFromMetric || null;
+  if (rampFrom && rampFrom < threshold) {
+    if (cm <= rampFrom) return 0;
+    if (cm >= threshold) return kicker.amount;
+    return kicker.amount * (cm - rampFrom) / (threshold - rampFrom);
   }
-  return matched ? { bonus: matched.bonus, matched } : { bonus: 0, matched: null };
+  return cm >= threshold ? kicker.amount : 0;
+}
+
+/* Sum all flat bonuses applicable at this CM. */
+function calcFlatBonuses(cm) {
+  const bonuses = plan.flatBonuses || [];
+  let total = 0;
+  const breakdown = [];
+  bonuses.forEach(k => {
+    const accrued = flatBonusAccrued(cm, k);
+    total += accrued;
+    breakdown.push({ kicker: k, accrued });
+  });
+  return { total, breakdown };
 }
 
 function calcAll() {
@@ -1237,32 +1221,30 @@ function calcAll() {
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, g.kpiScoreFloor || 0), g.kpiScoreCap || 1);
 
   const cmCalc = calcCMIncentive(scenario.cm);
-  const npCalc = calcNPKicker(scenario.np);
+  const flatCalc = calcFlatBonuses(scenario.cm);
 
-  // Both incentives treated as super-inclusive (v15 convention)
-  const cmIncGross = cmCalc.earning * effectiveKpi;
-  const npIncGross = npCalc.bonus * effectiveKpi;
+  // CM band earnings + flat bonus, both super-inclusive
+  const cmBandsGross = cmCalc.earning * effectiveKpi;
+  const flatBonusGross = flatCalc.total * effectiveKpi;
+  const cmIncGross = cmBandsGross + flatBonusGross;
   const cmIncEx = cmIncGross / (1 + sr);
   const cmIncSuperPart = cmIncGross - cmIncEx;
-  const npIncEx = npIncGross / (1 + sr);
-  const npIncSuperPart = npIncGross - npIncEx;
 
-  const totalCommInc = cmIncGross + npIncGross;
-  const npProportionPct = totalCommInc > 0 ? (npIncGross / totalCommInc) * 100 : 0;
+  const totalCommInc = cmIncGross;
 
   const base = emp.baseSalary;
   const baseSuper = base * sr;
   const baseInc = base + baseSuper;
 
-  const subtotalExSuper = base + cmIncEx + npIncEx;
-  const totalSuper = baseSuper + cmIncSuperPart + npIncSuperPart;
+  const subtotalExSuper = base + cmIncEx;
+  const totalSuper = baseSuper + cmIncSuperPart;
   const totalPackage = subtotalExSuper + totalSuper;
 
   return {
-    cmCalc, npCalc,
+    cmCalc, flatCalc,
+    cmBandsGross, flatBonusGross,
     cmIncGross, cmIncEx, cmIncSuperPart,
-    npIncGross, npIncEx, npIncSuperPart,
-    totalCommInc, npProportionPct,
+    totalCommInc,
     effectiveKpi,
     base, baseSuper, baseInc,
     subtotalExSuper, totalSuper, totalPackage,
@@ -1287,16 +1269,12 @@ function renderQuarterlyGrid() {
     const inputAttrs = auto ? 'disabled style="background:#f5faf7; color:var(--muted); cursor:not-allowed;"' : '';
     const lastYear = lookupLastYearQuarter(q.quarter);
     const lyCM = lastYear ? lastYear.cm : null;
-    const lyNP = lastYear ? lastYear.np : null;
     const lyCMText = lyCM != null ? fmtMoney(lyCM) : '—';
-    const lyNPText = lyNP != null ? fmtMoney(lyNP) : '—';
     return `
     <tr data-qtr-idx="${i}"${auto ? ' class="auto-pl"' : ''}>
       <td class="qtr">${q.quarter}${lockChip}</td>
       <td class="input-cell"><input type="text" inputmode="numeric" data-field="cm" data-idx="${i}" value="${q.cm ? fmtNum(q.cm) : ''}" placeholder="0" ${inputAttrs}></td>
-      <td class="input-cell"><input type="text" inputmode="numeric" data-field="np" data-idx="${i}" value="${q.np ? fmtNum(q.np) : ''}" placeholder="0" ${inputAttrs}></td>
       <td class="num" style="background:#fafaf7; color:var(--muted);">${lyCMText}</td>
-      <td class="num" style="background:#fafaf7; color:var(--muted);">${lyNPText}</td>
       <td class="num" data-cell="annual">—</td>
       <td class="num plus" data-cell="qpayout">—</td>
     </tr>
@@ -1307,9 +1285,7 @@ function renderQuarterlyGrid() {
     <tr class="totals">
       <td class="qtr">Year totals</td>
       <td class="num" id="tot-cm">—</td>
-      <td class="num" id="tot-np">—</td>
       <td class="num" id="tot-ly-cm" style="background:rgba(255,255,255,0.1);">—</td>
-      <td class="num" id="tot-ly-np" style="background:rgba(255,255,255,0.1);">—</td>
       <td class="num" id="tot-annual">—</td>
       <td class="num" id="tot-qpayout">—</td>
     </tr>
@@ -1338,7 +1314,7 @@ function renderQuarterlyGrid() {
   });
 }
 
-// ----- Payroll-locked card: read CM/NP entries from admin (read-only display) -----
+// ----- Payroll-locked card: read CM entries from admin (read-only display) -----
 function renderPayrollLockedCard() {
   const wrap = document.getElementById('payroll-locked-card');
   if (!wrap) return;
@@ -1348,7 +1324,7 @@ function renderPayrollLockedCard() {
 
   const rows = ap
     .map((p, i) => ({ i, p, qEnd: isQEnd(p.month) }))
-    .filter(x => x.qEnd && ((x.p.quarterlyCM != null && x.p.quarterlyCM !== '') || (x.p.quarterlyNP != null && x.p.quarterlyNP !== '')));
+    .filter(x => x.qEnd && (x.p.quarterlyCM != null && x.p.quarterlyCM !== ''));
 
   if (!rows.length) {
     wrap.innerHTML = `
@@ -1356,7 +1332,7 @@ function renderPayrollLockedCard() {
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
           <div>
             <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">🔒 Payroll-Locked Quarters</div>
-            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Awaiting payroll entry — once your quarterly Contribution Margin and Net Profit are entered into payroll admin, they'll show up here as locked actuals.</div>
+            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Awaiting payroll entry — once your quarterly Contribution Margin is entered into payroll admin, it'll show up here as locked actuals.</div>
           </div>
           <div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">0 of 4 quarters</div>
         </div>
@@ -1364,12 +1340,12 @@ function renderPayrollLockedCard() {
     return;
   }
 
-  // Compute the actual payout for each quarter using the same band logic as Hayley's plan.
+  // Compute the actual payout for each quarter using the same band + flat bonus logic as Hayley's plan.
   const sr = (data.globals && data.globals.superRate) || 0.12;
   const planRef = data.planTypes[emp.planType];
   let totalPay = 0;
 
-  const calcQ = (cm, np) => {
+  const calcQ = (cm) => {
     if (!planRef) return 0;
     let inc = 0;
     if (Array.isArray(planRef.cmBands) && cm > 0) {
@@ -1381,28 +1357,32 @@ function renderPayrollLockedCard() {
         inc += Math.max(0, Math.min(cm, next) - t) * b.rate;
       }
     }
-    if (Array.isArray(planRef.npBands) && np > 0) {
-      const sorted = [...planRef.npBands].sort((a, b) => a.threshold - b.threshold);
-      for (let i = 0; i < sorted.length; i++) {
-        const b = sorted[i];
-        const t = b.threshold / 4;
-        const next = i + 1 < sorted.length ? sorted[i + 1].threshold / 4 : Infinity;
-        inc += Math.max(0, Math.min(np, next) - t) * b.rate;
-      }
+    if (Array.isArray(planRef.flatBonuses)) {
+      // Scale ramp/threshold down to quarterly proportions for this single-quarter calc.
+      planRef.flatBonuses.forEach(k => {
+        const amount = +k.amount || 0;
+        const threshold = (+k.threshold || 0) / 4;
+        const rampFrom = k.rampFromMetric != null ? (+k.rampFromMetric / 4) : null;
+        if (rampFrom != null && rampFrom < threshold) {
+          if (cm <= rampFrom) return;
+          if (cm >= threshold) { inc += amount; return; }
+          inc += amount * (cm - rampFrom) / (threshold - rampFrom);
+        } else if (cm >= threshold) {
+          inc += amount;
+        }
+      });
     }
     return inc;
   };
 
   const rowsHtml = rows.map(({ p }) => {
     const cm = +p.quarterlyCM || 0;
-    const np = +p.quarterlyNP || 0;
-    const inc = calcQ(cm, np);
+    const inc = calcQ(cm);
     const ex = inc / (1 + sr);
     totalPay += ex;
     return `<tr>
       <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${p.month}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${cm > 0 ? fmtMoney(cm) : '—'}</td>
-      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${np > 0 ? fmtMoney(np) : '—'}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(ex)}</td>
     </tr>`;
   }).join('');
@@ -1412,7 +1392,7 @@ function renderPayrollLockedCard() {
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 8px;">
         <div>
           <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🔒 Payroll-Locked Quarters</div>
-          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quarterly CM / NP actuals entered by payroll. These are locked — your scenario inputs above are for modelling future quarters only.</div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quarterly CM actuals entered by payroll. These are locked — your scenario inputs above are for modelling future quarters only.</div>
         </div>
         <div style="font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;">${rows.length} of 4 quarters</div>
       </div>
@@ -1421,7 +1401,6 @@ function renderPayrollLockedCard() {
           <tr style="border-bottom: 2px solid var(--border);">
             <th style="text-align: left; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Quarter ending</th>
             <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">CM</th>
-            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">NP</th>
             <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Pay (ex super)</th>
           </tr>
         </thead>
@@ -1429,7 +1408,6 @@ function renderPayrollLockedCard() {
         <tfoot>
           <tr style="border-top: 2px solid var(--ink);">
             <td style="padding: 8px 10px; font-weight: 700;">YTD Total Paid</td>
-            <td></td>
             <td></td>
             <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney(totalPay)}</td>
           </tr>
@@ -1446,25 +1424,23 @@ function computeQuarterlyPayouts() {
   let cumPaid = 0;
   const rows = actualsQuarters.map((q, i) => {
     const cm = +q.cm || 0;
-    const np = +q.np || 0;
-    if (cm === 0 && np === 0) {
-      return { idx: i, quarter: q.quarter, cm: 0, np: 0, annualInc: 0, quarterlyPayout: 0 };
+    if (cm === 0) {
+      return { idx: i, quarter: q.quarter, cm: 0, annualInc: 0, quarterlyPayout: 0 };
     }
     const cmEarn = calcCMIncentive(cm).earning;
-    const npEarn = calcNPKicker(np).bonus;
-    const annualInc = (cmEarn + npEarn) * effectiveKpi;
+    const flatEarn = calcFlatBonuses(cm).total;
+    const annualInc = (cmEarn + flatEarn) * effectiveKpi;
     const cumPayable = annualInc * payoutPct;
     const quarterlyPayout = Math.max(0, cumPayable - cumPaid);
     cumPaid += quarterlyPayout;
-    return { idx: i, quarter: q.quarter, cm, np, annualInc, quarterlyPayout };
+    return { idx: i, quarter: q.quarter, cm, annualInc, quarterlyPayout };
   });
   const totals = rows.reduce((a, r) => ({
     cm: a.cm + r.cm,
-    np: a.np + r.np,
     annualInc: Math.max(a.annualInc, r.annualInc),   // highest latest projection
     quarterlyPayout: a.quarterlyPayout + r.quarterlyPayout,
-  }), { cm: 0, np: 0, annualInc: 0, quarterlyPayout: 0 });
-  const lastRowWithData = [...rows].reverse().find(r => r.cm > 0 || r.np > 0);
+  }), { cm: 0, annualInc: 0, quarterlyPayout: 0 });
+  const lastRowWithData = [...rows].reverse().find(r => r.cm > 0);
   const latestAnnual = lastRowWithData ? lastRowWithData.annualInc : 0;
   const holdback = latestAnnual * (1 - payoutPct);
   return { rows, totals, latestAnnual, holdback };
@@ -1522,23 +1498,20 @@ function update() {
   }
   document.getElementById('card-cm-sub').textContent = cmSubText;
 
-  // NP card — ex-super + super pattern
-  document.getElementById('card-np').textContent = fmtMoney(r.npIncGross);
-  document.getElementById('card-np-sub').textContent = r.npIncGross > 0
-    ? `${fmtMoney(r.npIncEx)} + ${fmtMoney(r.npIncSuperPart)} super`
-    : (scenario.np < (plan.npBonuses?.[0]?.threshold || 850000) ? 'Below first NP milestone' : 'Hit an NP milestone for a kicker bonus');
-
   document.getElementById('card-total').textContent = fmtMoney(r.totalPackage);
   document.getElementById('card-total-sub').textContent = `${fmtMoney(r.subtotalExSuper)} + ${fmtMoney(r.totalSuper)} super`;
 
   // Breakdown
   const table = document.getElementById('breakdown-table');
   const maintainedBadge = r.cmCalc.maintenanceHit ? ` <span style="color:var(--accent); font-weight:600;">✓ baseline hit</span>` : '';
+  const flatBonusRow = r.flatBonusGross > 0
+    ? `<tr class="plus"><td>Maintenance Milestone (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI)</td><td>+ ${fmtMoney(r.flatBonusGross)}</td></tr>`
+    : '';
   table.innerHTML = `
     <tr><td>Base salary (ex-super)</td><td>${fmtMoney(r.base)}</td></tr>
     <tr class="plus"><td>Super on base (${fmtPct(g.superRate, 0)})</td><td>+ ${fmtMoney(r.baseSuper)}</td></tr>
-    <tr class="plus"><td>CM Incentive (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI)${maintainedBadge}</td><td>+ ${fmtMoney(r.cmIncGross)}</td></tr>
-    <tr class="plus"><td>NP Kicker (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI) — tied to net profit</td><td>+ ${fmtMoney(r.npIncGross)}</td></tr>
+    <tr class="plus"><td>CM Bands (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI)${maintainedBadge}</td><td>+ ${fmtMoney(r.cmBandsGross)}</td></tr>
+    ${flatBonusRow}
     <tr class="total"><td>Total package</td><td>${fmtMoney(r.totalPackage)}</td></tr>
   `;
 
@@ -1555,29 +1528,48 @@ function update() {
     </tr>`;
   }).join('');
 
-  // NP kicker table — flat $ bonuses
-  const npBody = document.getElementById('np-bands-body');
-  const bonuses = plan.npBonuses || [];
-  npBody.innerHTML = bonuses.map((b, i) => {
-    const nextT = i + 1 < bonuses.length ? bonuses[i + 1].threshold : Infinity;
-    const isActive = scenario.np >= b.threshold && scenario.np < nextT;
-    return `<tr class="${isActive ? 'active' : ''}">
-      <td class="band-num">${i + 1}</td>
-      <td>${fmtMoney(b.threshold)}+</td>
-      <td class="num">+ ${fmtMoney(b.bonus)}</td>
-    </tr>`;
-  }).join('');
+  // Flat bonus / Maintenance Milestone table
+  const flatBody = document.getElementById('flat-bonus-body');
+  if (flatBody) {
+    const bonuses = plan.flatBonuses || [];
+    if (!bonuses.length) {
+      flatBody.innerHTML = '<tr><td colspan="3" style="color:var(--muted); padding:10px; font-size:12px;">No milestone bonuses configured.</td></tr>';
+    } else {
+      flatBody.innerHTML = bonuses.map((k) => {
+        const accrued = flatBonusAccrued(scenario.cm, k);
+        const rampFrom = +k.rampFromMetric || 0;
+        const threshold = +k.threshold || 0;
+        const amount = +k.amount || 0;
+        let status;
+        let rowClass = '';
+        if (scenario.cm <= rampFrom) {
+          status = `Below ${fmtMoney(rampFrom)} — $0`;
+        } else if (scenario.cm >= threshold) {
+          status = `Full bonus earned`;
+          rowClass = 'active';
+        } else {
+          const pct = ((scenario.cm - rampFrom) / (threshold - rampFrom)) * 100;
+          status = `Ramping · ${pct.toFixed(0)}% (${fmtMoney(accrued)})`;
+          rowClass = 'active';
+        }
+        return `<tr class="${rowClass}">
+          <td>${fmtMoney(rampFrom)} – ${fmtMoney(threshold)}</td>
+          <td class="num">+ ${fmtMoney(amount)}</td>
+          <td class="num">${status}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
 
   // KPI tab
   document.getElementById('kpi-big').textContent = scenario.kpiScore.toFixed(2);
-  document.getElementById('kpi-before').textContent = fmtMoney((r.cmCalc.earning + r.npCalc.earning));
+  document.getElementById('kpi-before').textContent = fmtMoney((r.cmCalc.earning + r.flatCalc.total));
   document.getElementById('kpi-mult').textContent = `× ${scenario.kpiScore.toFixed(2)}`;
   document.getElementById('kpi-after').textContent = fmtMoney(r.totalCommInc);
 
   // Super card (Payouts tab)
   document.getElementById('spr-base').textContent = fmtMoney(r.base);
   document.getElementById('spr-cm').textContent = `+ ${fmtMoney(r.cmIncEx)}`;
-  document.getElementById('spr-np').textContent = `+ ${fmtMoney(r.npIncEx)}`;
   document.getElementById('spr-subtotal').textContent = fmtMoney(r.subtotalExSuper);
   document.getElementById('spr-super').textContent = `+ ${fmtMoney(r.totalSuper)}`;
   document.getElementById('spr-total').textContent = fmtMoney(r.totalPackage);
@@ -1595,29 +1587,28 @@ function update() {
     row.querySelector('[data-cell="qpayout"]').textContent = qr.quarterlyPayout > 0 ? fmtMoney(qr.quarterlyPayout) : '—';
   });
   document.getElementById('tot-cm').textContent = fmtMoney(qTot.cm);
-  document.getElementById('tot-np').textContent = fmtMoney(qTot.np);
-  // Sum last-year CM/NP across the same 4 quarters
-  let lyCMTotal = 0, lyNPTotal = 0;
+  // Sum last-year CM across the same 4 quarters
+  let lyCMTotal = 0;
   actualsQuarters.forEach(q => {
     const ly = lookupLastYearQuarter(q.quarter);
-    if (ly) { lyCMTotal += ly.cm; lyNPTotal += ly.np; }
+    if (ly) { lyCMTotal += ly.cm; }
   });
   const lyCMEl = document.getElementById('tot-ly-cm');
-  const lyNPEl = document.getElementById('tot-ly-np');
   if (lyCMEl) lyCMEl.textContent = lyCMTotal > 0 ? fmtMoney(lyCMTotal) : '—';
-  if (lyNPEl) lyNPEl.textContent = lyNPTotal > 0 ? fmtMoney(lyNPTotal) : '—';
   document.getElementById('tot-annual').textContent = fmtMoney(latestAnnual);
   document.getElementById('tot-qpayout').textContent = fmtMoney(qTot.quarterlyPayout);
 
   // YTD summary
-  const quartersWithData = qRows.filter(q => q.cm > 0 || q.np > 0).length;
+  const quartersWithData = qRows.filter(q => q.cm > 0).length;
   document.getElementById('ytd-cash').textContent = fmtMoney(qTot.quarterlyPayout);
   document.getElementById('ytd-cash-sub').textContent = quartersWithData > 0
     ? `${quartersWithData}/4 quarters · 75% of annualised accrued`
     : 'Nothing paid yet — enter quarters below';
-  document.getElementById('ytd-cmnp').textContent = `${fmtMoney(qTot.cm)} / ${fmtMoney(qTot.np)}`;
-  document.getElementById('ytd-cmnp-sub').textContent = quartersWithData > 0
-    ? `CM / NP sum across ${quartersWithData} quarters`
+  const ytdCmEl = document.getElementById('ytd-cmnp');
+  if (ytdCmEl) ytdCmEl.textContent = fmtMoney(qTot.cm);
+  const ytdCmSubEl = document.getElementById('ytd-cmnp-sub');
+  if (ytdCmSubEl) ytdCmSubEl.textContent = quartersWithData > 0
+    ? `CM sum across ${quartersWithData} quarters`
     : '—';
   document.getElementById('ytd-holdback').textContent = fmtMoney(holdback);
 
@@ -1625,14 +1616,13 @@ function update() {
   const projEl = document.getElementById('ytd-projection');
   const projSubEl = document.getElementById('ytd-projection-sub');
   if (quartersWithData > 0) {
-    // Annualise from latest quarterly CM/NP using linear extrapolation
+    // Annualise from latest quarterly CM using linear extrapolation
     const latestIdx = quartersWithData - 1;
     const latest = qRows[latestIdx];
     const projAnnualCM = latest.cm * (4 / quartersWithData);
-    const projAnnualNP = latest.np * (4 / quartersWithData);
     const projCM = calcCMIncentive(projAnnualCM).earning;
-    const projNP = calcNPKicker(projAnnualNP).bonus;
-    const projTotal = (projCM + projNP) * r.effectiveKpi;
+    const projFlat = calcFlatBonuses(projAnnualCM).total;
+    const projTotal = (projCM + projFlat) * r.effectiveKpi;
     const projPackage = r.baseInc + projTotal;
     projEl.textContent = fmtMoney(projTotal);
     projSubEl.innerHTML = `At this pace your total package is <strong>${fmtMoney(projPackage)}</strong> — keep it up!`;
@@ -1640,6 +1630,12 @@ function update() {
     projEl.textContent = '—';
     projSubEl.textContent = 'Enter a quarter or two to see year-end projection';
   }
+
+  // Floater footers — Commission @ Scenario + Total Package @ Scenario
+  const fComm = document.getElementById('hayley-comm-v');
+  if (fComm) fComm.textContent = fmtMoney(r.totalCommInc);
+  const fTotal = document.getElementById('hayley-total-v');
+  if (fTotal) fTotal.textContent = fmtMoney(r.totalPackage);
 }
 
 load();
