@@ -309,6 +309,7 @@
 
     <div class="admin-tabs">
       <button class="admin-tab-btn active" aria-current="page" data-admin-tab="fortnightly">📅 Fortnightly Payroll</button>
+      <button class="admin-tab-btn" data-admin-tab="quarterly">📈 Quarterly Payroll</button>
       <button class="admin-tab-btn" data-admin-tab="pool">🤝 Team Pool <span style="font-size:9px; color: #b8860b; margin-left: 6px;">●BETA</span></button>
       <button class="admin-tab-btn" data-admin-tab="xero-recon">💳 Xero Recon</button>
     </div>
@@ -320,6 +321,16 @@
         <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.55;">
           Fortnights as rows, reps as columns. Each cell = <strong>GP received</strong> for that fortnight; pay is computed live using cumulative band math. Two values per cell — <strong>ex super</strong> (paste into the Xero <em>bonus</em> field) and <strong>super</strong> (paste into the Xero <em>super contribution</em> field). First pay date: <strong>Mon 15 Jun 2026</strong>.
         </div>
+      </div>
+
+      <!-- Quarter-end reminder strip — always visible so admin staff don't forget the quarterly cycle -->
+      <div class="card" style="margin-bottom: 14px; padding: 12px 16px; background: #f6f8fc; border: 1px solid #cdd9e8; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <span style="font-size: 18px;">⚑</span>
+        <div style="flex: 1; min-width: 220px;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em;">Quarter-end cycles also trigger Quarterly Payroll</div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.5;">Three fortnights this year land on a quarter close — <strong>Sep 2026</strong>, <strong>Dec 2026</strong>, <strong>Mar 2027</strong> (gold ⚑ badge on those month rows below). When you run one of those, also fill in Hayley / Tom / Michael's quarterly commission.</div>
+        </div>
+        <button type="button" id="fnp-goto-quarterly" style="font-size: 12px; font-weight: 600; padding: 7px 14px; border: 1px solid var(--navy); background: var(--navy); color: #fff; border-radius: 6px; cursor: pointer; white-space: nowrap;">📈 Open Quarterly Payroll →</button>
       </div>
 
       <div class="card" style="margin-bottom: 14px;">
@@ -351,6 +362,36 @@
         <h2>Year-End Audit · All Sales Reps</h2>
         <p class="blurb">For each rep, paste their full-year GP received total from the source of truth (Zoho Payments report) and we'll verify it matches the sum of their 26 fortnight entries above.</p>
         <div id="fnp-audit-body" style="overflow-x: auto;"></div>
+      </div>
+    </div>
+
+    <!-- ========== QUARTERLY PAYROLL VIEW ========== -->
+    <div class="admin-panel" id="admin-panel-quarterly">
+      <div class="card" style="margin-bottom: 14px; padding: 16px 20px; background: #f6f8fc; border-left: 4px solid var(--navy);">
+        <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">📈 Quarterly payroll cycle</div>
+        <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.55;">
+          Hayley, Tom &amp; Michael are paid on a <strong>quarterly</strong> cadence (75% paid each quarter, 25% reconciled at year-end). Enter each quarter's metric — <strong>Contribution Margin</strong> for Hayley, <strong>Performance Revenue</strong> for Tom &amp; Michael — and the system annualises (YTD × 4 ÷ quarters entered), applies the bands + milestone, and shows the 75% pro-rata payout. Run this <strong>once per quarter close</strong>, alongside the matching fortnightly cycle.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 14px;">
+        <h2 style="margin: 0 0 12px;">Quarterly Payroll · Single-Screen Entry</h2>
+        <div id="qtp-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px;"></div>
+        <div style="overflow-x: auto; border: 1px solid #ecebe5; border-radius: 6px;">
+          <table class="payroll" id="qtp-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+            <thead id="qtp-thead" style="position: sticky; top: 0; z-index: 5; background: #fafaf7;"></thead>
+            <tbody id="qtp-tbody"></tbody>
+            <tfoot id="qtp-tfoot"></tfoot>
+          </table>
+        </div>
+        <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Each cell = that quarter's metric. Bonus / Super values below the input are the copy-paste figures for Xero. Tab/Enter moves left-to-right then down to the next quarter.</p>
+      </div>
+
+      <!-- Year-End Audit for the quarterly cohort -->
+      <div class="card" style="margin-bottom: 14px;">
+        <h2>Year-End Audit · Quarterly Cohort</h2>
+        <p class="blurb">For each person, paste their full-year metric total from the source of truth (Xero CM report for Hayley, Zoho Performance Revenue for Tom &amp; Michael) and we'll verify it matches the sum of their 4 quarter entries above.</p>
+        <div id="qtp-audit-body" style="overflow-x: auto;"></div>
       </div>
     </div>
 
@@ -770,20 +811,26 @@ function signOut() {
   location.reload();
 }
 
-  document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.admin-tab-btn').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
-      btn.classList.add('active');
-      btn.setAttribute('aria-current', 'page');
-      document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
-      const target = document.getElementById('admin-panel-' + btn.dataset.adminTab);
-      if (target) target.classList.add('active');
-      // Lazy-render the fortnightly admin grid on first open
-      if (btn.dataset.adminTab === 'fortnightly' && typeof renderFortnightlyAdmin === 'function') {
-        renderFortnightlyAdmin();
-      }
+  // Programmatically activate an admin tab (used by the in-page "Open Quarterly Payroll" link too)
+  function activateAdminTab(tabId) {
+    document.querySelectorAll('.admin-tab-btn').forEach(b => {
+      const isThis = b.dataset.adminTab === tabId;
+      b.classList.toggle('active', isThis);
+      if (isThis) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
+    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('admin-panel-' + tabId);
+    if (target) target.classList.add('active');
+    // Lazy-render the heavy grids on first open
+    if (tabId === 'fortnightly' && typeof renderFortnightlyAdmin === 'function') renderFortnightlyAdmin();
+    if (tabId === 'quarterly' && typeof renderQuarterlyAdmin === 'function') renderQuarterlyAdmin();
+  }
+  document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => activateAdminTab(btn.dataset.adminTab));
   });
+  // "Open Quarterly Payroll →" jump-link inside the Fortnightly tab's quarter-end reminder strip
+  const gotoQ = document.getElementById('fnp-goto-quarterly');
+  if (gotoQ) gotoQ.addEventListener('click', () => activateAdminTab('quarterly'));
 }
 
 // Body-level tooltip for .um-tooltip elements — escapes the overflow:auto containers
@@ -2123,11 +2170,19 @@ function renderFortnightlyAdmin() {
       let monthRowGP = 0;
       reps.forEach(r => { monthRowGP += monthGpByRep[r.id]; });
 
+      // Quarter-end months — Sep / Dec / Mar — get a gold ⚑ badge reminding admin staff
+      // that the quarterly payroll cycle also fires for Hayley / Tom / Michael.
+      const QUARTER_END_MONTHS = ['Sep 2026', 'Dec 2026', 'Mar 2027'];
+      const isQuarterEnd = QUARTER_END_MONTHS.includes(mg.month);
+      const qEndBadge = isQuarterEnd
+        ? '<span style="font-size: 9px; padding: 1px 5px; background: #fff8e1; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 3px; margin-left: 6px; font-weight: 700;" title="Quarter close — also run the Quarterly Payroll tab for Hayley, Tom & Michael">⚑ QUARTER-END</span>'
+        : '';
       h += `<tr class="fnp-month-row" data-mi="${mi}" style="cursor: pointer; font-weight: 600; ${groupBg}">
         <td style="padding: 8px 10px; position: sticky; left: 0; ${groupBg} z-index: 2; border-bottom: 1px solid #ecebe5;">
           <span class="fnp-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span>
           ${esc(mg.month)} · ${mg.idxs.length} fortnight${mg.idxs.length === 1 ? '' : 's'}
           ${hasCrossing ? '<span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 6px;">CROSSING</span>' : ''}
+          ${qEndBadge}
         </td>`;
       reps.forEach(r => {
         const gp = monthGpByRep[r.id];
@@ -3036,6 +3091,309 @@ function renderFortnightlyAdmin() {
     wireZone('xr-zoho-zone', 'xr-zoho-input', 'zoho');
   };
 })();
+
+// ============================================================
+// QUARTERLY PAYROLL ADMIN GRID
+// Quarters as rows, the 3 quarterly-cohort employees as columns.
+// Each cell = that quarter's metric (CM for Hayley, Performance
+// Revenue for Tom & Michael). Annualises YTD pace, applies the
+// employee's band ladder + milestone, shows the 75% pro-rata payout.
+// Self-contained, in-memory (mirrors the fortnightly admin pattern).
+// ============================================================
+let _qtpInitialised = false;
+function renderQuarterlyAdmin() {
+  if (_qtpInitialised) return;
+  _qtpInitialised = true;
+
+  // Quarterly-cohort plans + their metric labels
+  const QTP_PLAN_IDS = ['gm', 'hybrid_rev_senior', 'hybrid_rev'];
+  const QTP_METRIC = { gm: 'CM', hybrid_rev_senior: 'Performance Revenue', hybrid_rev: 'Performance Revenue' };
+  const cohort = (data.employees || []).filter(e => QTP_PLAN_IDS.includes(e.planType) && !e.placeholder).map(e => {
+    const plan = data.planTypes[e.planType] || {};
+    return {
+      id: e.id,
+      name: e.name.split(' ')[0],
+      fullName: e.name,
+      planType: e.planType,
+      metricName: QTP_METRIC[e.planType] || 'Metric',
+      bands: plan.cmBands || plan.bands || [],
+      flatBonuses: Array.isArray(plan.flatBonuses) ? plan.flatBonuses : [],
+      payoutPct: plan.payoutPercentage != null ? plan.payoutPercentage : 0.75
+    };
+  });
+  if (cohort.length === 0) { document.getElementById('qtp-tbody').innerHTML = '<tr><td>No quarterly-cohort employees found.</td></tr>'; return; }
+
+  // FY27 quarters
+  const QUARTERS = [
+    { id: 'Q1', label: 'Q1 FY27', period: 'Jul – Sep 2026' },
+    { id: 'Q2', label: 'Q2 FY27', period: 'Oct – Dec 2026' },
+    { id: 'Q3', label: 'Q3 FY27', period: 'Jan – Mar 2027' },
+    { id: 'Q4', label: 'Q4 FY27', period: 'Apr – Jun 2027' }
+  ];
+
+  // Per-employee × per-quarter metric values + audit actuals. Start blank.
+  const qMatrix = {};
+  const qAuditActuals = {};
+  cohort.forEach(c => { qMatrix[c.id] = new Array(QUARTERS.length).fill(0); qAuditActuals[c.id] = ''; });
+
+  const SUPER_RATE = 0.12;
+  const _fmt = (n) => '$' + Math.round(n).toLocaleString();
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  // Generic incremental band commission for any sorted {threshold, rate} ladder
+  function bandComm(value, bands) {
+    if (value <= 0 || !bands.length) return 0;
+    const sorted = [...bands].sort((a, b) => a.threshold - b.threshold);
+    let total = 0;
+    for (let i = 0; i < sorted.length; i++) {
+      const start = +sorted[i].threshold;
+      const rate = +sorted[i].rate;
+      const end = (i + 1 < sorted.length) ? +sorted[i + 1].threshold : Infinity;
+      if (value <= start) break;
+      total += (Math.min(value, end) - start) * rate;
+      if (value <= end) break;
+    }
+    return total;
+  }
+  // Generic flat / milestone bonus (cliff or linear ramp)
+  function flatBonus(value, bonuses) {
+    let total = 0;
+    bonuses.forEach(b => {
+      const rampStart = +b.rampFromMetric || +b.rampFromRevenue || 0;
+      const threshold = +b.threshold || 0;
+      const amount = +b.amount || 0;
+      if (value >= threshold) total += amount;
+      else if (rampStart > 0 && value > rampStart && threshold > rampStart) {
+        total += amount * ((value - rampStart) / (threshold - rampStart));
+      }
+    });
+    return total;
+  }
+
+  // Compute per-quarter rows for one employee: annualise YTD pace, apply bands+milestone, 75% pro-rata
+  function computeEmpQuarters(c) {
+    let ytd = 0, quartersEntered = 0, cumPaid = 0;
+    const rows = [];
+    for (let i = 0; i < QUARTERS.length; i++) {
+      const qVal = qMatrix[c.id][i] || 0;
+      if (qVal <= 0) {
+        rows.push({ idx: i, metric: 0, ytd, annualised: 0, annualComm: 0, payout: 0 });
+        continue;
+      }
+      ytd += qVal;
+      quartersEntered++;
+      const annualised = ytd * (4 / quartersEntered);
+      const annualComm = bandComm(annualised, c.bands) + flatBonus(annualised, c.flatBonuses);
+      const cumPayable = annualComm * c.payoutPct * (quartersEntered / 4);
+      const payout = Math.max(0, cumPayable - cumPaid);
+      cumPaid += payout;
+      rows.push({ idx: i, metric: qVal, ytd, annualised, annualComm, payout });
+    }
+    const last = [...rows].reverse().find(r => r.metric > 0);
+    return {
+      rows,
+      ytdMetric: ytd,
+      annualComm: last ? last.annualComm : 0,
+      totalPayout: cumPaid,
+      holdback: last ? last.annualComm * (1 - c.payoutPct) * (quartersEntered / 4) : 0
+    };
+  }
+
+  // ----- Header -----
+  function renderHeader() {
+    let h = `<tr style="background: #fafaf7;">
+      <th style="text-align: left; padding: 8px 12px; border-bottom: 2px solid #d3d1c7; min-width: 160px;">Quarter</th>`;
+    cohort.forEach(c => {
+      h += `<th style="text-align: right; padding: 8px 12px; border-bottom: 2px solid #d3d1c7; min-width: 170px; white-space: nowrap;">
+        ${esc(c.name)}
+        <div style="font-size: 9px; color: var(--faint); font-weight: 400; text-transform: none; letter-spacing: 0;">${esc(c.metricName)}</div>
+      </th>`;
+    });
+    document.getElementById('qtp-thead').innerHTML = h;
+  }
+
+  // ----- Totals strip -----
+  function renderTotals() {
+    let h = '';
+    cohort.forEach(c => {
+      const t = computeEmpQuarters(c);
+      h += `<div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">${esc(c.name)}</div>
+        <div style="font-size: 15px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 4px;">${_fmt(t.ytdMetric)} <span style="font-size: 9px; color: var(--faint); font-weight: 400;">YTD ${esc(c.metricName)}</span></div>
+        <div style="font-size: 12px; font-family: var(--mono); color: var(--muted); margin-top: 2px;">${_fmt(t.totalPayout)} paid · ${_fmt(t.holdback)} holdback</div>
+      </div>`;
+    });
+    document.getElementById('qtp-totals').innerHTML = h;
+  }
+
+  // ----- Body: 4 quarter rows -----
+  function renderBody() {
+    const empRows = {};
+    cohort.forEach(c => { empRows[c.id] = computeEmpQuarters(c); });
+    let h = '';
+    QUARTERS.forEach((q, qi) => {
+      h += `<tr>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #f4f3ed; font-weight: 600;">
+          <div>${esc(q.label)}</div>
+          <div style="font-size: 10px; color: var(--faint); font-family: var(--mono); font-weight: 400;">${esc(q.period)}</div>
+        </td>`;
+      cohort.forEach(c => {
+        const row = empRows[c.id].rows[qi];
+        const incSuper = row.payout;
+        const exSuper = incSuper / (1 + SUPER_RATE);
+        const superAmt = incSuper - exSuper;
+        const tip = row.metric > 0
+          ? `${esc(c.fullName)} · ${esc(q.label)}\n${esc(c.metricName)} this quarter: ${_fmt(row.metric)}\nYTD: ${_fmt(row.ytd)} · Annualised: ${_fmt(row.annualised)}\nAnnual commission projection: ${_fmt(row.annualComm)}\nQuarterly payout (75% pro-rata): ${_fmt(incSuper)}\n  · Bonus ex super: ${_fmt(exSuper)}\n  · Super (12%): ${_fmt(superAmt)}`
+          : `${esc(c.fullName)} · ${esc(q.label)}\nNo ${esc(c.metricName)} entered yet.`;
+        const copyVals = incSuper > 0
+          ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px;">
+               <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Bonus</div>
+                 <input type="text" class="qtp-copy-bonus" readonly value="${Math.round(exSuper).toLocaleString()}" title="Bonus ex super — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #f6f8fc; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;"></div>
+               <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Super</div>
+                 <input type="text" class="qtp-copy-super" readonly value="${Math.round(superAmt).toLocaleString()}" title="Super (12%) — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;"></div>
+             </div>
+             <div style="font-size: 9px; color: var(--muted); margin-top: 3px; text-align: right; font-family: var(--mono);">annualised ${_fmt(row.annualised)}</div>`
+          : (row.metric > 0
+              ? `<div style="font-size: 10px; color: var(--muted); margin-top: 3px; font-family: var(--mono); text-align: right;">annualised ${_fmt(row.annualised)} · $0 payout</div>`
+              : `<div style="font-size: 10px; color: var(--faint); margin-top: 3px; font-family: var(--mono); text-align: right;">—</div>`);
+        h += `<td class="qtp-cell" data-tip="${esc(tip)}" style="padding: 6px 8px; border-bottom: 1px solid #f4f3ed; vertical-align: top;">
+          <input type="text" class="qtp-input" data-emp="${esc(c.id)}" data-idx="${qi}" value="${row.metric ? row.metric.toLocaleString() : ''}" placeholder="${esc(c.metricName)}" inputmode="decimal" style="width: 100%; padding: 4px 6px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink);">
+          ${copyVals}
+        </td>`;
+      });
+      h += `</tr>`;
+    });
+    document.getElementById('qtp-tbody').innerHTML = h;
+
+    // Footer — year totals per employee
+    let footHtml = `<tr style="font-weight: 700; background: #f6f8fc; border-top: 2px solid #d3d1c7;">
+      <td style="padding: 10px 12px;">Year Total</td>`;
+    cohort.forEach(c => {
+      const t = computeEmpQuarters(c);
+      footHtml += `<td style="text-align: right; padding: 10px 12px; font-family: var(--mono); font-size: 13px;">
+        ${_fmt(t.ytdMetric)} <span style="font-size: 9px; color: var(--faint); font-weight: 400;">${esc(c.metricName)}</span>
+        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 3px;">${_fmt(t.totalPayout)} paid (75%)</div>
+        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 1px;">${_fmt(t.holdback)} holdback (25%)</div>
+      </td>`;
+    });
+    footHtml += `</tr>`;
+    document.getElementById('qtp-tfoot').innerHTML = footHtml;
+
+    wireQtp();
+  }
+
+  // ----- Interactions: copy buttons + Tab/Enter navigation -----
+  function wireQtp() {
+    const tbody = document.getElementById('qtp-tbody');
+    tbody.querySelectorAll('.qtp-copy-bonus, .qtp-copy-super').forEach(inp => {
+      inp.addEventListener('click', async () => {
+        try {
+          inp.select();
+          if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(inp.value);
+          else document.execCommand('copy');
+          const og = inp.style.background;
+          inp.style.background = '#d4edda';
+          setTimeout(() => { inp.style.background = og; }, 400);
+        } catch (e) {}
+      });
+    });
+    let suppressBlur = false;
+    function focusCell(empId, idx) {
+      const el = document.querySelector(`.qtp-input[data-emp="${empId}"][data-idx="${idx}"]`);
+      if (el) { el.focus(); el.select && el.select(); }
+    }
+    // Tab sequence: across employees within a quarter, then down to next quarter's first employee
+    function nextCell(empId, idx, back) {
+      const ei = cohort.findIndex(c => c.id === empId);
+      if (!back) {
+        if (ei < cohort.length - 1) return { emp: cohort[ei + 1].id, idx };
+        if (idx < QUARTERS.length - 1) return { emp: cohort[0].id, idx: idx + 1 };
+        return null;
+      } else {
+        if (ei > 0) return { emp: cohort[ei - 1].id, idx };
+        if (idx > 0) return { emp: cohort[cohort.length - 1].id, idx: idx - 1 };
+        return null;
+      }
+    }
+    tbody.querySelectorAll('.qtp-input').forEach(inp => {
+      inp.addEventListener('focus', (e) => e.target.select());
+      const commit = () => {
+        const emp = inp.getAttribute('data-emp');
+        const idx = parseInt(inp.getAttribute('data-idx'), 10);
+        const raw = inp.value.replace(/[^0-9.\-]/g, '');
+        const n = parseFloat(raw);
+        qMatrix[emp][idx] = isFinite(n) ? n : 0;
+      };
+      inp.addEventListener('blur', () => {
+        commit();
+        renderTotals(); renderAudit();
+        if (!suppressBlur) renderBody();
+      });
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); inp.blur(); return; }
+        const isTab = e.key === 'Tab', isEnter = e.key === 'Enter';
+        if (!isTab && !isEnter) return;
+        e.preventDefault();
+        commit();
+        const emp = inp.getAttribute('data-emp');
+        const idx = parseInt(inp.getAttribute('data-idx'), 10);
+        const target = nextCell(emp, idx, isTab && e.shiftKey);
+        if (!target) { renderTotals(); renderBody(); renderAudit(); inp.blur(); return; }
+        suppressBlur = true;
+        renderTotals(); renderAudit();
+        focusCell(target.emp, target.idx);
+        Promise.resolve().then(() => { suppressBlur = false; });
+      });
+    });
+  }
+
+  // ----- Year-End Audit -----
+  function renderAudit() {
+    const body = document.getElementById('qtp-audit-body');
+    function varCell(empId, sumValue) {
+      const raw = (qAuditActuals[empId] || '').replace(/[^0-9.\-]/g, '');
+      const actual = parseFloat(raw);
+      if (!isFinite(actual) || raw === '') return { variance: '—', verdict: '—', color: 'var(--ink)' };
+      const diff = actual - sumValue;
+      const abs = Math.abs(diff);
+      const sign = diff >= 0 ? '+' : '−';
+      const variance = abs < 0.5 ? '$0' : sign + _fmt(abs);
+      if (abs <= 1) return { variance, verdict: '<span style="color:#1e6624;font-weight:700;">✓ Reconciled</span>', color: '#1e6624' };
+      if (abs <= 1000) return { variance, verdict: '<span style="color:#6a4a00;font-weight:700;">⚠ Minor variance</span>', color: '#6a4a00' };
+      return { variance, verdict: '<span style="color:#7a1f1f;font-weight:700;">✗ Mismatch</span>', color: '#7a1f1f' };
+    }
+    let h = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #fafaf7; border-bottom: 1px solid #d3d1c7;">';
+    h += '<th style="text-align: left; padding: 8px 10px; font-size: 11px;">Person</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Metric</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Sum of 4 quarters</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Full-year (source of truth)</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Variance</th>';
+    h += '<th style="text-align: center; padding: 8px 10px; font-size: 11px;">Verdict</th>';
+    h += '</tr></thead><tbody>';
+    cohort.forEach(c => {
+      const t = computeEmpQuarters(c);
+      const v = varCell(c.id, t.ytdMetric);
+      h += `<tr style="border-bottom: 1px solid #f4f3ed;">
+        <td style="padding: 8px 10px; font-weight: 600;">${esc(c.fullName)}</td>
+        <td style="text-align: right; padding: 8px 10px; font-size: 11px; color: var(--muted);">${esc(c.metricName)}</td>
+        <td style="text-align: right; padding: 8px 10px; font-family: var(--mono);">${t.ytdMetric > 0 ? _fmt(t.ytdMetric) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td style="text-align: right; padding: 8px 10px;"><input type="text" class="qtp-audit-input" data-emp="${esc(c.id)}" value="${esc(qAuditActuals[c.id])}" placeholder="e.g. 1,100,000" inputmode="decimal" style="width: 140px; padding: 5px 8px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px;"></td>
+        <td style="text-align: right; padding: 8px 10px; font-family: var(--mono); color: ${v.color};">${v.variance}</td>
+        <td style="text-align: center; padding: 8px 10px; font-size: 12px;">${v.verdict}</td>
+      </tr>`;
+    });
+    h += '</tbody></table>';
+    body.innerHTML = h;
+    body.querySelectorAll('.qtp-audit-input').forEach(inp => {
+      inp.addEventListener('input', () => { qAuditActuals[inp.getAttribute('data-emp')] = inp.value; renderAudit(); });
+    });
+  }
+
+  renderHeader();
+  renderTotals();
+  renderBody();
+  renderAudit();
+}
 
 load();
 </script>
