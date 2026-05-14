@@ -443,6 +443,24 @@
 
     <div id="milestone-bonus-callout" style="margin-top: 14px;"></div>
 
+    <!-- Commission Curve Chart — visualises the milestone ramp + 5%/7.5% growth bands -->
+    <div class="card" style="margin-top: 14px;">
+      <h2 style="margin-top: 0;">Commission Curve</h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Your total variable compensation (super-inclusive) at every CM level. The Maintenance Milestone ramps in between $1.0M and $1.1M, then the 5% band kicks in, accelerating to 7.5% above $1.4M. The vertical line marks your current scenario — drag the chart to explore.</p>
+      <div id="hayley-curve-wrap" style="display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 18px; align-items: stretch;">
+        <div style="min-width: 0; overflow-x: auto;">
+          <svg id="hayley-commission-curve" role="img" aria-labelledby="hayley-curve-title hayley-curve-desc" viewBox="0 0 800 340" style="width: 100%; height: auto; min-width: 480px;" xmlns="http://www.w3.org/2000/svg"><title id="hayley-curve-title">Commission curve — Maintenance Milestone + CM Bands</title><desc id="hayley-curve-desc">A line chart showing total variable compensation (super-inclusive, Y-axis) as annual Contribution Margin grows (X-axis). Shaded zones mark the milestone ramp ($1M–$1.1M), 5% growth band ($1.1M–$1.4M), and 7.5% stretch band ($1.4M+).</desc></svg>
+        </div>
+        <div id="hayley-curve-summary" style="display: flex; flex-direction: column; gap: 8px; min-width: 0;"></div>
+      </div>
+      <div style="display: flex; gap: 18px; margin-top: 8px; font-size: 12px; font-family: var(--mono); color: var(--muted); flex-wrap: wrap;">
+        <span><span style="display:inline-block; width:14px; height:3px; background: var(--navy); vertical-align: middle; margin-right: 6px;"></span>Total commission (inc super)</span>
+        <span><span style="display:inline-block; width:10px; height:10px; background: rgba(46, 168, 109, 0.20); border: 1px solid rgba(46, 168, 109, 0.45); vertical-align: middle; margin-right: 6px;"></span>Milestone ramp ($1.0M–$1.1M)</span>
+        <span><span style="display:inline-block; width:10px; height:10px; background: rgba(26, 58, 92, 0.10); border: 1px solid rgba(26, 58, 92, 0.30); vertical-align: middle; margin-right: 6px;"></span>5% band ($1.1M–$1.4M)</span>
+        <span><span style="display:inline-block; width:10px; height:10px; background: rgba(26, 58, 92, 0.22); border: 1px solid rgba(26, 58, 92, 0.50); vertical-align: middle; margin-right: 6px;"></span>7.5% stretch ($1.4M+)</span>
+      </div>
+    </div>
+
     <div class="section-gap"></div>
 
     <div class="section-head">      <h2>What you've earned</h2>
@@ -474,10 +492,10 @@
 
     <div class="card">
       <h2>Quarterly Payouts</h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 8px;">Enter the company's actual CM at each quarter's end (cumulative fiscal year to date). Each quarter pays 75% of the commission earned to that point, minus what's been paid already.</p>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 8px;">Enter the company's actual CM <strong>for that quarter</strong> (single-quarter figure, not cumulative). We'll annualise based on your YTD pace (YTD CM × 4 ÷ quarters entered) and project the full-year commission. Each quarter pays 75% of the projected annual, pro-rata by quarters entered, minus what's already been paid.</p>
       <div style="margin: 0 0 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <a class="btn small" href="https://go.xero.com/Reports/Default.aspx?reportType=ProfitAndLoss" target="_blank" rel="noopener" style="text-decoration: none; background: #13b5ea; color: #fff; border: 1px solid #13b5ea; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Open Xero P&amp;L ↗</a>
-        <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Pull this quarter's Revenue / COGS / Contribution Exp / OpEx from Xero, then update the Company P&amp;L tab on MEC Group.</span>
+        <a class="btn small" href="https://reporting.xero.com/!!w0P0/v1/Run/15016844?isCustom=True" target="_blank" rel="noopener" style="text-decoration: none; background: #13b5ea; color: #fff; border: 1px solid #13b5ea; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Open Xero CM Report ↗</a>
+        <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Opens the custom Contribution Margin report — pull each quarter's CM directly and paste into the quarterly grid below.</span>
       </div>
       <div style="overflow-x: auto;">
         <div class="table-wrap"><table class="quarterly" id="quarterly-table">
@@ -765,7 +783,7 @@ const EMPLOYEE_ID = 'hayley';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v34`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v36`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1404,33 +1422,49 @@ function renderPayrollLockedCard() {
     </div>`;
 }
 
+// User enters QUARTERLY CM in each row (single quarter's contribution margin).
+// We then:
+//   1. Accumulate YTD CM across entered quarters
+//   2. ANNUALISE based on pace = ytdCM × 4 / quartersEntered
+//   3. Apply the CM bands + milestone formula to the annualised figure
+//   4. Pro-rata the 75% quarterly payout by quartersEntered/4
+// Each quarter pays only the NEW commission earned since the last quarter (delta).
 function computeQuarterlyPayouts() {
   const g = data.globals;
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, g.kpiScoreFloor || 0), g.kpiScoreCap || 1);
   const payoutPct = plan.payoutPercentage != null ? plan.payoutPercentage : 0.75;
 
+  let ytdCM = 0;
+  let quartersEntered = 0;
   let cumPaid = 0;
   const rows = actualsQuarters.map((q, i) => {
-    const cm = +q.cm || 0;
-    if (cm === 0) {
-      return { idx: i, quarter: q.quarter, cm: 0, annualInc: 0, quarterlyPayout: 0 };
+    const qcm = +q.cm || 0;
+    if (qcm <= 0) {
+      // No data entered yet for this quarter — carry forward state, output zeros
+      return { idx: i, quarter: q.quarter, cm: 0, ytdCM, annualisedCM: 0, annualInc: 0, quarterlyPayout: 0 };
     }
-    const cmEarn = calcCMIncentive(cm).earning;
-    const flatEarn = calcFlatBonuses(cm).total;
+    ytdCM += qcm;
+    quartersEntered++;
+    // Annualised pace: extrapolate YTD CM across the full year proportional to quarters entered
+    const annualisedCM = ytdCM * (4 / quartersEntered);
+    const cmEarn = calcCMIncentive(annualisedCM).earning;
+    const flatEarn = calcFlatBonuses(annualisedCM).total;
     const annualInc = (cmEarn + flatEarn) * effectiveKpi;
-    const cumPayable = annualInc * payoutPct;
+    // Total commission payable to-date = 75% of annualised, pro-rata by quarters entered
+    const cumPayable = annualInc * payoutPct * (quartersEntered / 4);
     const quarterlyPayout = Math.max(0, cumPayable - cumPaid);
     cumPaid += quarterlyPayout;
-    return { idx: i, quarter: q.quarter, cm, annualInc, quarterlyPayout };
+    return { idx: i, quarter: q.quarter, cm: qcm, ytdCM, annualisedCM, annualInc, quarterlyPayout };
   });
   const totals = rows.reduce((a, r) => ({
     cm: a.cm + r.cm,
-    annualInc: Math.max(a.annualInc, r.annualInc),   // highest latest projection
+    annualInc: Math.max(a.annualInc, r.annualInc),
     quarterlyPayout: a.quarterlyPayout + r.quarterlyPayout,
   }), { cm: 0, annualInc: 0, quarterlyPayout: 0 });
   const lastRowWithData = [...rows].reverse().find(r => r.cm > 0);
   const latestAnnual = lastRowWithData ? lastRowWithData.annualInc : 0;
-  const holdback = latestAnnual * (1 - payoutPct);
+  // 25% holdback is only against what the FULL annual projection would pay — pro-rata by quarters entered
+  const holdback = latestAnnual * (1 - payoutPct) * (quartersEntered / 4);
   return { rows, totals, latestAnnual, holdback };
 }
 
@@ -1576,6 +1610,9 @@ function update() {
     milestone.innerHTML = '';
   }
 
+  // Refresh the commission curve chart (marker tracks scenario.cm)
+  if (typeof drawHayleyCommissionCurve === 'function') drawHayleyCommissionCurve();
+
   // KPI tab
   document.getElementById('kpi-big').textContent = scenario.kpiScore.toFixed(2);
   document.getElementById('kpi-before').textContent = fmtMoney((r.cmCalc.earning + r.flatCalc.total));
@@ -1598,8 +1635,23 @@ function update() {
   qRows.forEach(qr => {
     const row = tbody.querySelector(`tr[data-qtr-idx="${qr.idx}"]`);
     if (!row) return;
-    row.querySelector('[data-cell="annual"]').textContent = qr.annualInc > 0 ? fmtMoney(qr.annualInc) : '—';
-    row.querySelector('[data-cell="qpayout"]').textContent = qr.quarterlyPayout > 0 ? fmtMoney(qr.quarterlyPayout) : '—';
+    const annualCell = row.querySelector('[data-cell="annual"]');
+    const qpayoutCell = row.querySelector('[data-cell="qpayout"]');
+    if (qr.cm > 0) {
+      // Always show the annualised CM so the user understands the projection — even when commission is $0.
+      const aCmTxt = qr.annualisedCM ? `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">${fmtMoney(qr.annualisedCM)} annualised CM</div>` : '';
+      annualCell.innerHTML = (qr.annualInc > 0 ? fmtMoney(qr.annualInc) : '<span style="color: var(--muted);">$0</span>') + aCmTxt;
+      qpayoutCell.innerHTML = qr.quarterlyPayout > 0
+        ? fmtMoney(qr.quarterlyPayout) + `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">75% × ¼ of annual</div>`
+        : (qr.annualisedCM > 0 && qr.annualisedCM < 1000000
+            ? '<span style="color: var(--muted);">$0</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">below $1M floor</div>'
+            : (qr.annualisedCM >= 1000000 && qr.annualisedCM < 1100000
+                ? '<span style="color: var(--muted);">$0</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">milestone ramping</div>'
+                : '—'));
+    } else {
+      annualCell.textContent = '—';
+      qpayoutCell.textContent = '—';
+    }
   });
   document.getElementById('tot-cm').textContent = fmtMoney(qTot.cm);
   // Sum last-year CM across the same 4 quarters
@@ -1651,6 +1703,172 @@ function update() {
   if (fComm) fComm.textContent = fmtMoney(r.totalCommInc);
   const fTotal = document.getElementById('hayley-total-v');
   if (fTotal) fTotal.textContent = fmtMoney(r.totalPackage);
+}
+
+// ============================================================
+// COMMISSION CURVE — visualises milestone ramp + 5%/7.5% CM bands
+// ============================================================
+function drawHayleyCommissionCurve() {
+  const svg = document.getElementById('hayley-commission-curve');
+  if (!svg || !emp) return;
+  const plan = data.planTypes[emp.planType];
+  if (!plan || !Array.isArray(plan.cmBands)) {
+    svg.innerHTML = '<text x="400" y="180" text-anchor="middle" fill="#888" font-size="14">No CM plan available.</text>';
+    return;
+  }
+  const maxCM = plan.maxMetricValue || 1600000;
+  const minCM = 900000; // Show the runway from $900k so the floor + ramp are visible
+  const W = 800, H = 340;
+  const padL = 64, padR = 14, padT = 16, padB = 44;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  // Total commission = CM band earnings + milestone bonus accrued
+  const totalCommAt = (cm) => calcCMIncentive(cm).earning + calcFlatBonuses(cm).total;
+
+  // Sample 80 points for a smooth curve through the ramp + bands
+  const samples = 80;
+  const points = [];
+  let maxY = 0;
+  for (let i = 0; i <= samples; i++) {
+    const cm = minCM + ((maxCM - minCM) / samples) * i;
+    const total = totalCommAt(cm);
+    points.push({ cm, total });
+    if (total > maxY) maxY = total;
+  }
+  if (maxY === 0) maxY = 1;
+  // Round maxY up to a nice number for axis labels
+  const niceMaxY = Math.ceil(maxY / 10000) * 10000;
+  const xScale = cm => padL + ((cm - minCM) / (maxCM - minCM)) * innerW;
+  const yScale = v => padT + innerH - (v / niceMaxY) * innerH;
+  const pathStr = 'M ' + points.map(p => `${xScale(p.cm).toFixed(1)} ${yScale(p.total).toFixed(1)}`).join(' L ');
+
+  // ---- Shaded band zones ----
+  // Milestone ramp ($1M → $1.1M) — green tint
+  const rampStart = 1000000, rampEnd = 1100000;
+  const rampX1 = xScale(Math.max(minCM, rampStart));
+  const rampX2 = xScale(rampEnd);
+  const rampHeight = innerH;
+  const rampZone = `<rect x="${rampX1}" y="${padT}" width="${(rampX2 - rampX1).toFixed(1)}" height="${rampHeight}" fill="rgba(46, 168, 109, 0.20)" stroke="rgba(46, 168, 109, 0.45)" stroke-width="1" pointer-events="none"/>`;
+  // 5% band ($1.1M → $1.4M) — light navy
+  const b5X1 = xScale(1100000), b5X2 = xScale(Math.min(maxCM, 1400000));
+  const band5Zone = b5X2 > b5X1
+    ? `<rect x="${b5X1}" y="${padT}" width="${(b5X2 - b5X1).toFixed(1)}" height="${rampHeight}" fill="rgba(26, 58, 92, 0.10)" stroke="rgba(26, 58, 92, 0.30)" stroke-width="1" pointer-events="none"/>`
+    : '';
+  // 7.5% band ($1.4M+) — darker navy tint
+  const b7X1 = xScale(1400000), b7X2 = xScale(maxCM);
+  const band7Zone = b7X2 > b7X1
+    ? `<rect x="${b7X1}" y="${padT}" width="${(b7X2 - b7X1).toFixed(1)}" height="${rampHeight}" fill="rgba(26, 58, 92, 0.22)" stroke="rgba(26, 58, 92, 0.50)" stroke-width="1" pointer-events="none"/>`
+    : '';
+
+  // Zone labels (small, top of each shaded area)
+  const zoneLabel = (cx, text) => `<text x="${cx}" y="${padT + 14}" text-anchor="middle" fill="rgba(0,0,0,0.55)" font-size="10" font-family="DM Mono, monospace" pointer-events="none" font-weight="600">${text}</text>`;
+  const labels =
+    zoneLabel((rampX1 + rampX2) / 2, 'Milestone ramp') +
+    (b5X2 > b5X1 + 20 ? zoneLabel((b5X1 + b5X2) / 2, '5% band') : '') +
+    (b7X2 > b7X1 + 20 ? zoneLabel((b7X1 + b7X2) / 2, '7.5% band') : '');
+
+  // ---- Y axis ticks ----
+  const yTicks = 5;
+  const yAxis = [];
+  for (let i = 0; i <= yTicks; i++) {
+    const v = (niceMaxY / yTicks) * i;
+    const y = yScale(v);
+    yAxis.push(`<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#eee" stroke-width="1"/>`);
+    yAxis.push(`<text x="${padL - 6}" y="${y + 3}" text-anchor="end" fill="#888" font-size="10" font-family="DM Mono, monospace">$${(v/1000).toFixed(0)}k</text>`);
+  }
+
+  // ---- X axis ticks every $100k ----
+  const xTicks = [];
+  for (let v = Math.ceil(minCM / 100000) * 100000; v <= maxCM; v += 100000) {
+    const x = xScale(v);
+    xTicks.push(`<line x1="${x}" y1="${padT + innerH}" x2="${x}" y2="${padT + innerH + 4}" stroke="#888" stroke-width="1"/>`);
+    xTicks.push(`<text x="${x}" y="${padT + innerH + 16}" text-anchor="middle" fill="#888" font-size="10" font-family="DM Mono, monospace">$${(v/1000000).toFixed(1)}M</text>`);
+  }
+
+  // ---- Marker line at current scenario.cm ----
+  const exactCM = Math.max(minCM, Math.min(scenario.cm, maxCM));
+  const markerX = xScale(exactCM);
+  const cur = { cm: exactCM, total: totalCommAt(exactCM) };
+  const markerY = yScale(cur.total);
+
+  svg.style.cursor = 'ew-resize';
+  svg.innerHTML = `
+    <title id="hayley-curve-title">Commission curve — Maintenance Milestone + CM Bands</title>
+    <desc id="hayley-curve-desc">A line chart showing total variable compensation (super-inclusive, Y-axis) as annual Contribution Margin grows (X-axis). Click and drag anywhere to move the scenario marker.</desc>
+    ${yAxis.join('')}
+    ${rampZone}
+    ${band5Zone}
+    ${band7Zone}
+    ${labels}
+    <path d="${pathStr}" fill="none" stroke="#1a3a5c" stroke-width="2.5"/>
+    ${xTicks.join('')}
+    <line x1="${padL}" y1="${padT + innerH}" x2="${W - padR}" y2="${padT + innerH}" stroke="#888" stroke-width="1"/>
+    <rect id="hayley-curve-hit" x="${padL}" y="${padT}" width="${innerW}" height="${innerH}" fill="transparent" style="cursor: ew-resize;"/>
+    <line x1="${markerX}" y1="${padT}" x2="${markerX}" y2="${padT + innerH}" stroke="#d4351c" stroke-width="1.4" stroke-dasharray="3 3" pointer-events="none"/>
+    <circle cx="${markerX}" cy="${markerY}" r="5" fill="#1a3a5c" stroke="#fff" stroke-width="2" pointer-events="none"/>
+    <text x="${W/2}" y="${H - 6}" text-anchor="middle" fill="#888" font-size="11" font-family="DM Mono, monospace" pointer-events="none">Annual Contribution Margin · drag the chart to set scenario</text>
+  `;
+
+  // Wire drag-to-set-scenario on the chart — attach once per page lifecycle
+  if (!svg.dataset.dragWired) {
+    const setCmFromClientX = (clientX) => {
+      const r = svg.getBoundingClientRect();
+      const scale = r.width / W;
+      const svgX = (clientX - r.left) / scale;
+      let cm = minCM + ((svgX - padL) / innerW) * (maxCM - minCM);
+      cm = Math.max(minCM, Math.min(maxCM, Math.round(cm / 10000) * 10000));
+      scenario.cm = cm;
+      // Keep the input field + main CM slider in sync
+      const cmInp = document.getElementById('cm-input');
+      const cmSld = document.getElementById('cm-slider');
+      if (cmInp) cmInp.value = cm.toLocaleString();
+      if (cmSld) cmSld.value = cm;
+      const fSld = document.getElementById('cm-floater-slider');
+      if (fSld) fSld.value = cm;
+      if (typeof update === 'function') update();
+    };
+    let dragging = false;
+    const onDown = (ev) => {
+      dragging = true;
+      svg.style.cursor = 'grabbing';
+      const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+      setCmFromClientX(cx);
+      ev.preventDefault();
+    };
+    const onMove = (ev) => {
+      if (!dragging) return;
+      const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+      setCmFromClientX(cx);
+      ev.preventDefault();
+    };
+    const onUp = () => { dragging = false; svg.style.cursor = 'ew-resize'; };
+    svg.addEventListener('mousedown', onDown);
+    svg.addEventListener('touchstart', onDown, { passive: false });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', onUp);
+    svg.dataset.dragWired = '1';
+  }
+
+  // ---- Side panel summary ----
+  const wrap = document.getElementById('hayley-curve-summary');
+  if (wrap) {
+    const milestoneAt = calcFlatBonuses(exactCM).total;
+    const bandAt = calcCMIncentive(exactCM).earning;
+    const fmtTile = (label, value, sub, accent) => `
+      <div style="padding: 10px 12px; background: ${accent ? '#eef4fa' : '#fff'}; border: 1px solid ${accent ? '#cdd9e8' : '#ecebe5'}; border-radius: 6px;">
+        <div style="font-size: 10px; color: ${accent ? 'var(--navy)' : 'var(--muted)'}; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">${label}</div>
+        <div style="font-family: var(--mono); font-size: ${accent ? '18px' : '14px'}; font-weight: 700; color: ${accent ? 'var(--navy)' : 'var(--ink)'}; margin-top: 2px;">${value}</div>
+        ${sub ? `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">${sub}</div>` : ''}
+      </div>`;
+    wrap.innerHTML =
+      fmtTile('Your CM', `$${(exactCM/1000000).toFixed(2)}M`, exactCM >= 1400000 ? 'In 7.5% band' : (exactCM >= 1100000 ? 'In 5% band' : (exactCM >= 1000000 ? 'Milestone ramping' : 'Below $1M floor')), true) +
+      fmtTile('Milestone bonus', milestoneAt > 0 ? `$${(milestoneAt/1000).toFixed(1)}k` : '$0', milestoneAt >= 11200 ? '✓ fully unlocked' : 'ramping') +
+      fmtTile('CM band earnings', bandAt > 0 ? `$${(bandAt/1000).toFixed(1)}k` : '$0', exactCM > 1100000 ? '5% / 7.5% slices' : 'below $1.1M') +
+      fmtTile('Total commission', `$${(cur.total/1000).toFixed(1)}k`, 'inc super');
+  }
 }
 
 load();
