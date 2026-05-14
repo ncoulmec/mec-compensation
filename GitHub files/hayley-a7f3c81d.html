@@ -352,11 +352,11 @@
   <nav class="tabs">
   <div class="tabs-inner" id="tab-bar">
     <button class="tab-btn active" aria-current="page" data-tab="overview">Overview</button>
-    <button class="tab-btn" data-tab="pool">🤝 Team Pool <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
-    <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
     <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
     <button class="tab-btn" data-tab="faq">FAQ</button>
     <button class="tab-btn" data-tab="howitworks">How This Works</button>
+    <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
+    <button class="tab-btn" data-tab="pool">🤝 Team Pool <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
   </div>
 </nav>
 </div>
@@ -441,20 +441,7 @@
       </table></div>
     </div>
 
-    <div class="card">
-      <h2>Maintenance Milestone — Flat Bonus</h2>
-      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 14px;">A flat <strong>$10,000</strong> milestone bonus that ramps in linearly from <strong>$1.0M</strong> to <strong>$1.1M</strong> CM. Below $1.0M you earn nothing; at $1.1M you've earned the full $10k. This protects you from being penalised for steady-state years and bridges the gap to the growth bands above.</p>
-      <div class="table-wrap"><table class="bands">
-        <thead>
-          <tr>
-            <th>CM Threshold</th>
-            <th style="text-align: right;">Bonus</th>
-            <th style="text-align: right;">Status</th>
-          </tr>
-        </thead>
-        <tbody id="flat-bonus-body"></tbody>
-      </table></div>
-    </div>
+    <div id="milestone-bonus-callout" style="margin-top: 14px;"></div>
 
     <div class="section-gap"></div>
 
@@ -778,7 +765,7 @@ const EMPLOYEE_ID = 'hayley';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v32`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v33`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1517,7 +1504,10 @@ function update() {
 
   // CM bands table — incremental structure, show Band Earn + Cumulative like Daniel
   const cmBody = document.getElementById('cm-bands-body');
-  cmBody.innerHTML = r.cmCalc.breakdown.map((b, i) => {
+  // Filter out the 0% no-commission floor band — that zone is now represented by
+  // the Maintenance Milestone callout above, not by Band 1 of the band table.
+  const visibleBands = r.cmCalc.breakdown.filter(b => b.rate > 0);
+  cmBody.innerHTML = visibleBands.map((b, i) => {
     const rangeTxt = b.max === null ? `${fmtMoney(b.min)}+` : `${fmtMoney(b.min)} – ${fmtMoney(b.max)}`;
     return `<tr class="${b.active ? 'active' : ''}">
       <td class="band-num">${i + 1}</td>
@@ -1528,37 +1518,61 @@ function update() {
     </tr>`;
   }).join('');
 
-  // Flat bonus / Maintenance Milestone table
-  const flatBody = document.getElementById('flat-bonus-body');
-  if (flatBody) {
-    const bonuses = plan.flatBonuses || [];
-    if (!bonuses.length) {
-      flatBody.innerHTML = '<tr><td colspan="3" style="color:var(--muted); padding:10px; font-size:12px;">No milestone bonuses configured.</td></tr>';
-    } else {
-      flatBody.innerHTML = bonuses.map((k) => {
-        const accrued = flatBonusAccrued(scenario.cm, k);
-        const rampFrom = +k.rampFromMetric || 0;
-        const threshold = +k.threshold || 0;
-        const amount = +k.amount || 0;
-        let status;
-        let rowClass = '';
-        if (scenario.cm <= rampFrom) {
-          status = `Below ${fmtMoney(rampFrom)} — $0`;
-        } else if (scenario.cm >= threshold) {
-          status = `Full bonus earned`;
-          rowClass = 'active';
-        } else {
-          const pct = ((scenario.cm - rampFrom) / (threshold - rampFrom)) * 100;
-          status = `Ramping · ${pct.toFixed(0)}% (${fmtMoney(accrued)})`;
-          rowClass = 'active';
+  // Milestone Bonus callout — Tom-style single-box callout with progress bar.
+  // Surfaces plan.flatBonuses with ramp-aware progress (ramps on Hayley's CM metric).
+  const milestone = document.getElementById('milestone-bonus-callout');
+  if (milestone && Array.isArray(plan.flatBonuses) && plan.flatBonuses.length > 0) {
+    milestone.innerHTML = plan.flatBonuses.map(k => {
+      const accrued = flatBonusAccrued(scenario.cm, k);
+      const fullyEarned = accrued >= k.amount - 0.01;
+      const isRamp = !!(k.rampFromMetric && k.rampFromMetric < k.threshold);
+      const rampStart = +k.rampFromMetric || 0;
+      const rampEnd = +k.threshold || 0;
+      const fillFrac = k.amount > 0 ? Math.max(0, Math.min(1, accrued / k.amount)) : 0;
+      const bg = fullyEarned ? 'linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%)' : '#fafaf7';
+      const border = fullyEarned ? '1px solid #6fc792' : '1px solid var(--border)';
+      const colour = fullyEarned ? '#1f5e3c' : (accrued > 0 ? 'var(--ink)' : 'var(--muted)');
+      const icon = fullyEarned ? '✓' : (accrued > 0 ? '⚡' : '🎯');
+      let status;
+      if (isRamp) {
+        if (fullyEarned) status = `Fully unlocked — you crossed ${fmtMoney(rampEnd)} CM.`;
+        else if (scenario.cm <= rampStart) status = `Bonus accrues linearly from ${fmtMoney(rampStart)} → ${fmtMoney(rampEnd)} CM. Currently $0.`;
+        else {
+          const remaining = k.amount - accrued;
+          const toGo = rampEnd - scenario.cm;
+          status = `${fmtMoney(accrued)} of ${fmtMoney(k.amount)} accrued. ${fmtMoney(remaining)} left — grow CM by ${fmtMoney(toGo)} more to fully unlock.`;
         }
-        return `<tr class="${rowClass}">
-          <td>${fmtMoney(rampFrom)} – ${fmtMoney(threshold)}</td>
-          <td class="num">+ ${fmtMoney(amount)}</td>
-          <td class="num">${status}</td>
-        </tr>`;
-      }).join('');
-    }
+      } else {
+        status = fullyEarned ? 'Unlocked at your current scenario' : `Unlocks when CM reaches ${fmtMoney(rampEnd)}`;
+      }
+      const rampHelp = isRamp
+        ? `<span class="help-icon" data-tip="Linear ramp from ${fmtMoney(rampStart)} (you get $0) to ${fmtMoney(rampEnd)} (you get the full ${fmtMoney(k.amount)}). Every dollar of CM between counts — no all-or-nothing cliff." style="cursor: help; margin-left: 6px; font-size: 10px; color: var(--muted); border: 1px solid var(--border); border-radius: 50%; padding: 1px 5px; font-weight: 600; background: #fff;">?</span>`
+        : '';
+      const fillColour = fullyEarned ? '#6fc792' : 'var(--accent)';
+      const progressBar = `
+        <div style="margin-top: 8px;">
+          <div style="height: 6px; background: rgba(0,0,0,0.06); border-radius: 999px; overflow: hidden;">
+            <div style="height: 100%; width: ${(fillFrac * 100).toFixed(1)}%; background: ${fillColour}; border-radius: 999px; transition: width 0.18s ease;"></div>
+          </div>
+          ${isRamp ? `<div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--faint); font-family: var(--mono); margin-top: 3px;"><span>${fmtMoney(rampStart)}</span><span>${fmtMoney(rampEnd)}</span></div>` : ''}
+        </div>`;
+      return `<div style="padding: 12px 16px; background: ${bg}; border: ${border}; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+          <div style="flex: 1;">
+            <div style="font-size: 11px; color: ${colour}; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">${icon} Milestone Bonus${rampHelp}</div>
+            <div style="font-size: 13px; color: var(--ink); margin-top: 2px;">${k.label || ''}</div>
+            <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">${status}</div>
+          </div>
+          <div style="text-align: right; min-width: 100px;">
+            <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: ${colour};">${fmtMoney(accrued)}</div>
+            <div style="font-size: 10px; color: var(--muted); font-family: var(--mono);">of ${fmtMoney(k.amount)} max</div>
+          </div>
+        </div>
+        ${progressBar}
+      </div>`;
+    }).join('');
+  } else if (milestone) {
+    milestone.innerHTML = '';
   }
 
   // KPI tab
