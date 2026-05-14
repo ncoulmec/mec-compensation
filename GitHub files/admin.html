@@ -2231,6 +2231,9 @@ function renderFortnightlyAdmin() {
   // ----- Wire row click + input change + tab navigation -----
   function wireInteractions() {
     const tbody = document.getElementById('fnp-tbody');
+    // Shared flag — set true by the keydown handler when it's moving focus programmatically,
+    // so the blur fired on the OLD input doesn't re-render the body and steal focus from the new one.
+    let _suppressBlurRender = false;
     tbody.querySelectorAll('.fnp-month-row').forEach(row => {
       row.addEventListener('click', (e) => {
         if (e.target.closest('input')) return;
@@ -2270,7 +2273,6 @@ function renderFortnightlyAdmin() {
     function moveToNext(curRep, curIdx, curKind) {
       // Within the same fortnight: GP → Event for same rep, then next rep's GP → Event, etc.
       if (curKind === 'gp') {
-        // Next slot: same rep's Event GP
         return { rep: curRep, idx: curIdx, kind: 'event' };
       }
       // curKind === 'event' → move to next rep's GP in same fortnight, or wrap to next fortnight
@@ -2285,13 +2287,12 @@ function renderFortnightlyAdmin() {
         if (nextMonthMi >= 0) expanded.add(nextMonthMi);
         return { rep: reps[0].id, idx: nextIdx, kind: 'gp', needsRender: true };
       }
-      return null; // End of grid
+      return null;
     }
     function moveToPrev(curRep, curIdx, curKind) {
       if (curKind === 'event') {
         return { rep: curRep, idx: curIdx, kind: 'gp' };
       }
-      // curKind === 'gp' → previous rep's Event, or wrap to previous fortnight's last rep's Event
       const repIdx = reps.findIndex(r => r.id === curRep);
       if (repIdx > 0) {
         return { rep: reps[repIdx - 1].id, idx: curIdx, kind: 'event' };
@@ -2313,7 +2314,14 @@ function renderFortnightlyAdmin() {
         const n = parseFloat(raw);
         matrix[rep][idx] = isFinite(n) ? n : 0;
       };
-      inp.addEventListener('blur', () => { commit(); renderTotals(); renderBody(); renderAudit(); });
+      inp.addEventListener('blur', () => {
+        commit();
+        renderTotals();
+        renderAudit();
+        // Only refresh the body when this blur was caused by a regular tap-elsewhere,
+        // NOT by Tab/Enter moving focus to an adjacent cell (that path handles its own render).
+        if (!_suppressBlurRender) renderBody();
+      });
       inp.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') { e.preventDefault(); inp.blur(); return; }
         const isTab = e.key === 'Tab';
@@ -2325,18 +2333,23 @@ function renderFortnightlyAdmin() {
         const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
         const target = (isTab && e.shiftKey) ? moveToPrev(curRep, curIdx, kind) : moveToNext(curRep, curIdx, kind);
         if (!target) {
+          // End of the grid — let blur fire naturally with full re-render
           renderTotals(); renderBody(); renderAudit();
           inp.blur();
           return;
         }
-        // Re-render only when we need to (crossing fortnight boundary so the row is visible)
+        // Suppress the blur-triggered renderBody on the OLD input so it doesn't destroy our new focus.
+        _suppressBlurRender = true;
         if (target.needsRender) {
+          // Crossing a fortnight boundary — body MUST re-render to show the next row's inputs
           renderTotals(); renderBody(); renderAudit();
         } else {
-          // Light refresh so totals reflect the committed value, but keep focus moving fast
           renderTotals(); renderAudit();
         }
         focusInput(target.rep, target.idx, target.kind);
+        // Reset on next microtask — by then the blur from the OLD input has already fired
+        // (and was suppressed). Subsequent unrelated blurs will then re-render normally.
+        Promise.resolve().then(() => { _suppressBlurRender = false; });
       });
     }
     tbody.querySelectorAll('.fnp-input').forEach(inp => wireGridInput(inp, gpMatrix, 'gp'));
