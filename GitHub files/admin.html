@@ -2257,8 +2257,54 @@ function renderFortnightlyAdmin() {
         } catch (e) { /* clipboard blocked — selection is still useful */ }
       });
     });
-    // Generic input wiring used for both GP Received and Event GP inputs
-    function wireGridInput(inp, matrix, selector) {
+    // Generic input wiring — Tab/Enter flows across GP → Event GP → next rep's GP → ...
+    // The sequence within a single fortnight: rep0.GP → rep0.Event → rep1.GP → rep1.Event → ...
+    // After the last rep's Event GP, advance to the next fortnight's first rep (auto-expanding month).
+    // Shift+Tab walks backward through the same sequence.
+    function focusInput(repId, idx, kind) {
+      const sel = kind === 'event' ? '.fnp-event-input' : '.fnp-input';
+      const el = document.querySelector(`${sel}[data-rep="${repId}"][data-idx="${idx}"]`);
+      if (el) { el.focus(); el.select && el.select(); }
+      return !!el;
+    }
+    function moveToNext(curRep, curIdx, curKind) {
+      // Within the same fortnight: GP → Event for same rep, then next rep's GP → Event, etc.
+      if (curKind === 'gp') {
+        // Next slot: same rep's Event GP
+        return { rep: curRep, idx: curIdx, kind: 'event' };
+      }
+      // curKind === 'event' → move to next rep's GP in same fortnight, or wrap to next fortnight
+      const repIdx = reps.findIndex(r => r.id === curRep);
+      if (repIdx < reps.length - 1) {
+        return { rep: reps[repIdx + 1].id, idx: curIdx, kind: 'gp' };
+      }
+      // Last rep's Event GP → first rep's GP of the NEXT fortnight (auto-expand month)
+      if (curIdx < FORTNIGHTS.length - 1) {
+        const nextIdx = curIdx + 1;
+        const nextMonthMi = monthGroups.findIndex(g => g.idxs.includes(nextIdx));
+        if (nextMonthMi >= 0) expanded.add(nextMonthMi);
+        return { rep: reps[0].id, idx: nextIdx, kind: 'gp', needsRender: true };
+      }
+      return null; // End of grid
+    }
+    function moveToPrev(curRep, curIdx, curKind) {
+      if (curKind === 'event') {
+        return { rep: curRep, idx: curIdx, kind: 'gp' };
+      }
+      // curKind === 'gp' → previous rep's Event, or wrap to previous fortnight's last rep's Event
+      const repIdx = reps.findIndex(r => r.id === curRep);
+      if (repIdx > 0) {
+        return { rep: reps[repIdx - 1].id, idx: curIdx, kind: 'event' };
+      }
+      if (curIdx > 0) {
+        const prevIdx = curIdx - 1;
+        const prevMonthMi = monthGroups.findIndex(g => g.idxs.includes(prevIdx));
+        if (prevMonthMi >= 0) expanded.add(prevMonthMi);
+        return { rep: reps[reps.length - 1].id, idx: prevIdx, kind: 'event', needsRender: true };
+      }
+      return null;
+    }
+    function wireGridInput(inp, matrix, kind) {
       inp.addEventListener('focus', (e) => e.target.select());
       const commit = () => {
         const rep = inp.getAttribute('data-rep');
@@ -2270,31 +2316,31 @@ function renderFortnightlyAdmin() {
       inp.addEventListener('blur', () => { commit(); renderTotals(); renderBody(); renderAudit(); });
       inp.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') { e.preventDefault(); inp.blur(); return; }
-        if (e.key !== 'Enter') return;
+        const isTab = e.key === 'Tab';
+        const isEnter = e.key === 'Enter';
+        if (!isTab && !isEnter) return;
         e.preventDefault();
         commit();
         const curRep = inp.getAttribute('data-rep');
         const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
-        const repIdx = reps.findIndex(r => r.id === curRep);
-        if (repIdx < reps.length - 1) {
-          renderTotals(); renderBody(); renderAudit();
-          const nextInp = document.querySelector(selector + `[data-rep="${reps[repIdx + 1].id}"][data-idx="${curIdx}"]`);
-          if (nextInp) { nextInp.focus(); nextInp.select && nextInp.select(); }
-        } else if (curIdx < FORTNIGHTS.length - 1) {
-          const nextIdx = curIdx + 1;
-          const nextMonthMi = monthGroups.findIndex(g => g.idxs.includes(nextIdx));
-          if (nextMonthMi >= 0) expanded.add(nextMonthMi);
-          renderTotals(); renderBody(); renderAudit();
-          const nextInp = document.querySelector(selector + `[data-rep="${reps[0].id}"][data-idx="${nextIdx}"]`);
-          if (nextInp) { nextInp.focus(); nextInp.select && nextInp.select(); }
-        } else {
+        const target = (isTab && e.shiftKey) ? moveToPrev(curRep, curIdx, kind) : moveToNext(curRep, curIdx, kind);
+        if (!target) {
           renderTotals(); renderBody(); renderAudit();
           inp.blur();
+          return;
         }
+        // Re-render only when we need to (crossing fortnight boundary so the row is visible)
+        if (target.needsRender) {
+          renderTotals(); renderBody(); renderAudit();
+        } else {
+          // Light refresh so totals reflect the committed value, but keep focus moving fast
+          renderTotals(); renderAudit();
+        }
+        focusInput(target.rep, target.idx, target.kind);
       });
     }
-    tbody.querySelectorAll('.fnp-input').forEach(inp => wireGridInput(inp, gpMatrix, '.fnp-input'));
-    tbody.querySelectorAll('.fnp-event-input').forEach(inp => wireGridInput(inp, eventMatrix, '.fnp-event-input'));
+    tbody.querySelectorAll('.fnp-input').forEach(inp => wireGridInput(inp, gpMatrix, 'gp'));
+    tbody.querySelectorAll('.fnp-event-input').forEach(inp => wireGridInput(inp, eventMatrix, 'event'));
   }
 
   // ----- Year-End Audit per rep — now audits BOTH GP Received and Event GP -----
