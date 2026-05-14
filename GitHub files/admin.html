@@ -323,15 +323,6 @@
         </div>
       </div>
 
-      <!-- Quarter-end reminder strip — always visible so admin staff don't forget the quarterly cycle -->
-      <div class="card" style="margin-bottom: 14px; padding: 12px 16px; background: #f6f8fc; border: 1px solid #cdd9e8; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-        <span style="font-size: 18px;">⚑</span>
-        <div style="flex: 1; min-width: 220px;">
-          <div style="font-size: 12px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em;">Quarter-end cycles also trigger Quarterly Payroll</div>
-          <div style="font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.5;">Three fortnights this year land on a quarter close — <strong>Sep 2026</strong>, <strong>Dec 2026</strong>, <strong>Mar 2027</strong> (gold ⚑ badge on those month rows below). When you run one of those, also fill in Hayley / Tom / Michael's quarterly commission.</div>
-        </div>
-        <button type="button" id="fnp-goto-quarterly" style="font-size: 12px; font-weight: 600; padding: 7px 14px; border: 1px solid var(--navy); background: var(--navy); color: #fff; border-radius: 6px; cursor: pointer; white-space: nowrap;">📈 Open Quarterly Payroll →</button>
-      </div>
 
       <div class="card" style="margin-bottom: 14px;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
@@ -670,7 +661,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v27';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v28';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -828,9 +819,6 @@ function signOut() {
   document.querySelectorAll('.admin-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => activateAdminTab(btn.dataset.adminTab));
   });
-  // "Open Quarterly Payroll →" jump-link inside the Fortnightly tab's quarter-end reminder strip
-  const gotoQ = document.getElementById('fnp-goto-quarterly');
-  if (gotoQ) gotoQ.addEventListener('click', () => activateAdminTab('quarterly'));
 }
 
 // Body-level tooltip for .um-tooltip elements — escapes the overflow:auto containers
@@ -2065,6 +2053,16 @@ function renderFortnightlyAdmin() {
     else monthGroups.push({ month: fn.month, idxs: [i] });
   });
 
+  // First pay cycle AFTER each quarter close — keyed by FORTNIGHTS index. The inline
+  // banner is injected before the month group whose first fortnight is this index, so
+  // payroll staff are prompted to run Quarterly Payroll on the same run.
+  const QUARTER_CLOSE_PROMPTS = {
+    2:  { label: 'Q4 FY26', closed: '30 Jun 2026', paid: '13 Jul 2026' },
+    8:  { label: 'Q1 FY27', closed: '30 Sep 2026', paid: '5 Oct 2026' },
+    16: { label: 'Q2 FY27', closed: '31 Dec 2026', paid: '11 Jan 2027' },
+    22: { label: 'Q3 FY27', closed: '31 Mar 2027', paid: '5 Apr 2027' }
+  };
+
   // Expanded state — start collapsed (months hidden)
   const expanded = new Set();
 
@@ -2170,19 +2168,28 @@ function renderFortnightlyAdmin() {
       let monthRowGP = 0;
       reps.forEach(r => { monthRowGP += monthGpByRep[r.id]; });
 
-      // Quarter-end months — Sep / Dec / Mar — get a gold ⚑ badge reminding admin staff
-      // that the quarterly payroll cycle also fires for Hayley / Tom / Michael.
-      const QUARTER_END_MONTHS = ['Sep 2026', 'Dec 2026', 'Mar 2027'];
-      const isQuarterEnd = QUARTER_END_MONTHS.includes(mg.month);
-      const qEndBadge = isQuarterEnd
-        ? '<span style="font-size: 9px; padding: 1px 5px; background: #fff8e1; color: #6a4a00; border: 1px solid #d4b85a; border-radius: 3px; margin-left: 6px; font-weight: 700;" title="Quarter close — also run the Quarterly Payroll tab for Hayley, Tom & Michael">⚑ QUARTER-END</span>'
-        : '';
+      // Quarter-close prompt — injected as a full-width banner BEFORE the month group
+      // whose first fortnight is the first pay cycle after a quarter close. This is
+      // where payroll staff are prompted to also run the Quarterly Payroll tab.
+      const qPrompt = QUARTER_CLOSE_PROMPTS[mg.idxs[0]];
+      if (qPrompt) {
+        h += `<tr class="fnp-qclose-row">
+          <td colspan="${reps.length + 2}" style="padding: 0; background: #fff;">
+            <div style="margin: 12px 8px; padding: 12px 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-left: 3px solid var(--navy); border-radius: 6px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 280px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--navy);">⚑ ${esc(qPrompt.label)} closed ${esc(qPrompt.closed)} — first pay cycle of the new quarter</div>
+                <div style="font-size: 11px; color: var(--muted); margin-top: 3px;">This fortnight (paid ${esc(qPrompt.paid)}) is the first run after quarter close. Also process the quarterly commission for Hayley, Tom &amp; Michael.</div>
+              </div>
+              <button class="fnp-goto-quarterly" style="padding: 7px 14px; background: var(--navy); color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;">📈 Open Quarterly Payroll →</button>
+            </div>
+          </td>
+        </tr>`;
+      }
       h += `<tr class="fnp-month-row" data-mi="${mi}" style="cursor: pointer; font-weight: 600; ${groupBg}">
         <td style="padding: 8px 10px; position: sticky; left: 0; ${groupBg} z-index: 2; border-bottom: 1px solid #ecebe5;">
           <span class="fnp-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span>
           ${esc(mg.month)} · ${mg.idxs.length} fortnight${mg.idxs.length === 1 ? '' : 's'}
           ${hasCrossing ? '<span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 6px;">CROSSING</span>' : ''}
-          ${qEndBadge}
         </td>`;
       reps.forEach(r => {
         const gp = monthGpByRep[r.id];
@@ -2295,6 +2302,14 @@ function renderFortnightlyAdmin() {
         const mi = parseInt(row.getAttribute('data-mi'), 10);
         if (expanded.has(mi)) expanded.delete(mi); else expanded.add(mi);
         renderBody();
+      });
+    });
+    // Inline "Open Quarterly Payroll →" buttons in the quarter-close banners
+    tbody.querySelectorAll('.fnp-goto-quarterly').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const qTab = document.querySelector('.admin-tab-btn[data-admin-tab="quarterly"]');
+        if (qTab) qTab.click();
       });
     });
     // Copy-to-clipboard for bonus/super read-only inputs
@@ -3108,6 +3123,12 @@ function renderQuarterlyAdmin() {
   // Quarterly-cohort plans + their metric labels
   const QTP_PLAN_IDS = ['gm', 'hybrid_rev_senior', 'hybrid_rev'];
   const QTP_METRIC = { gm: 'CM', hybrid_rev_senior: 'Performance Revenue', hybrid_rev: 'Performance Revenue' };
+  // Where to pull each person's quarter-end actuals from (same sources as their own dashboards)
+  const QTP_DATA_SOURCE = {
+    gm:                { url: 'https://reporting.xero.com/!!w0P0/v1/Run/15016844?isCustom=True', label: 'Xero — CM report' },
+    hybrid_rev_senior: { url: 'https://crm.zoho.com/crm/org657079535/tab/CustomModule3/2877869000001224372/canvas/2877869000056971016', label: 'Zoho — Performance Revenue' },
+    hybrid_rev:        { url: 'https://crm.zoho.com/crm/org657079535/tab/CustomModule3/2877869000071356498/canvas/2877869000056971016', label: 'Zoho — Performance Revenue' }
+  };
   const cohort = (data.employees || []).filter(e => QTP_PLAN_IDS.includes(e.planType) && !e.placeholder).map(e => {
     const plan = data.planTypes[e.planType] || {};
     return {
@@ -3116,6 +3137,7 @@ function renderQuarterlyAdmin() {
       fullName: e.name,
       planType: e.planType,
       metricName: QTP_METRIC[e.planType] || 'Metric',
+      dataSource: QTP_DATA_SOURCE[e.planType] || null,
       bands: plan.cmBands || plan.bands || [],
       flatBonuses: Array.isArray(plan.flatBonuses) ? plan.flatBonuses : [],
       payoutPct: plan.payoutPercentage != null ? plan.payoutPercentage : 0.75
@@ -3204,9 +3226,13 @@ function renderQuarterlyAdmin() {
     let h = `<tr style="background: #fafaf7;">
       <th style="text-align: left; padding: 8px 12px; border-bottom: 2px solid #d3d1c7; min-width: 160px;">Quarter</th>`;
     cohort.forEach(c => {
+      const srcBtn = c.dataSource
+        ? `<div style="margin-top: 5px;"><a href="${esc(c.dataSource.url)}" target="_blank" rel="noopener" style="display: inline-block; padding: 3px 8px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 4px; font-size: 9px; font-weight: 600; color: var(--navy); text-decoration: none; white-space: nowrap;" title="Open ${esc(c.dataSource.label)} to pull ${esc(c.name)}'s quarter-end actuals">↗ ${esc(c.dataSource.label)}</a></div>`
+        : '';
       h += `<th style="text-align: right; padding: 8px 12px; border-bottom: 2px solid #d3d1c7; min-width: 170px; white-space: nowrap;">
         ${esc(c.name)}
         <div style="font-size: 9px; color: var(--faint); font-weight: 400; text-transform: none; letter-spacing: 0;">${esc(c.metricName)}</div>
+        ${srcBtn}
       </th>`;
     });
     document.getElementById('qtp-thead').innerHTML = h;
