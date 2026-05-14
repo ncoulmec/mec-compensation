@@ -170,6 +170,14 @@
   table.quarterly td.input-cell input { font-family: var(--mono); font-size: 13px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; text-align: right; width: 100%; background: #fff; }
   table.quarterly td.input-cell input:focus { outline: none; border-color: var(--navy); }
   table.quarterly tr.totals td { background: var(--navy); color: #fff; font-weight: 700; font-size: 14px; padding: 14px 10px; border-bottom: none; }
+  /* Override .qtr's navy text colour on the totals row — should be white, not navy-on-navy */
+  table.quarterly tr.totals td.qtr { color: #fff; }
+  /* Rounded bottom corners so the navy bar visually anchors as a self-contained summary */
+  table.quarterly tr.totals td:first-child { border-bottom-left-radius: 8px; }
+  table.quarterly tr.totals td:last-child { border-bottom-right-radius: 8px; }
+  /* Drop the last data row's bottom border so the navy bar flows straight into it without a hairline gap */
+  table.quarterly tbody tr:not(.totals):last-of-type td { border-bottom: 1px solid var(--border); }
+  table.quarterly tbody tr.totals + tr { display: none; }
   table.quarterly tr.totals td.num { color: #fff; }
   table.quarterly tr.totals td.qtr { color: #fff; font-weight: 700; }
 
@@ -679,7 +687,7 @@
   </section>
 </main>
 
-<!-- Floating Quick-Adjust card (sticky bottom-right) — CM slider only -->
+<!-- Floating Quick-Adjust card (sticky bottom-right) — CM slider only · minimisable -->
 <style>
   .gp-floater {
     position: fixed; bottom: 18px; right: 18px;
@@ -688,6 +696,12 @@
     padding: 12px 18px; z-index: 90;
     min-width: 360px; max-width: 92vw;
   }
+  .gp-floater-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .gp-floater-head .title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .gp-floater-head .actions { display: flex; gap: 4px; align-items: center; }
+  .gp-floater-iconbtn { width: 26px; height: 26px; padding: 0; border: 1px solid var(--border); background: #fff; border-radius: 6px; font-size: 13px; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: all 0.12s; }
+  .gp-floater-iconbtn:hover { background: #fafaf7; color: var(--ink); border-color: var(--muted); }
+  .gp-floater-iconbtn:active { transform: scale(0.96); }
   .gp-floater-row { display: grid; grid-template-columns: 90px 1fr 110px; gap: 12px; align-items: center; padding: 6px 0; }
   .gp-floater-row + .gp-floater-row { border-top: 1px dashed var(--border); }
   .gp-floater .label-mini { font-size: 12px; color: var(--muted); font-weight: 500; line-height: 1.2; }
@@ -699,21 +713,37 @@
   .gp-floater-footer.dark { background: var(--ink); }
   .gp-floater-footer.dark .ftr-label { color: rgba(255,255,255,0.75); }
   .gp-floater-footer.dark .ftr-value { color: #fff; }
+  /* Minimised state — collapses to just the header strip */
+  .gp-floater.minimised { width: auto; min-width: 0; padding: 6px 10px; }
+  .gp-floater.minimised .gp-floater-body { display: none; }
+  .gp-floater.minimised .gp-floater-head { margin-bottom: 0; }
+  .gp-floater.minimised #hf-minimise-btn { display: none; }
+  .gp-floater #hf-maximise-btn { display: none; }
+  .gp-floater.minimised #hf-maximise-btn { display: inline-flex; }
   @media (max-width: 600px) { .gp-floater { left: 14px; right: 14px; min-width: 0; } }
 </style>
 <div class="gp-floater" id="hayley-floater" style="display: none;">
-  <div class="gp-floater-row">
-    <div class="label-mini">Contribution<br>Margin</div>
-    <input type="range" id="cm-floater-slider" min="900000" max="1600000" step="10000">
-    <div class="value" id="cm-floater-value">—</div>
+  <div class="gp-floater-head">
+    <span class="title">Quick adjust</span>
+    <div class="actions">
+      <button class="gp-floater-iconbtn" id="hf-minimise-btn" title="Minimise" aria-label="Minimise">▾</button>
+      <button class="gp-floater-iconbtn" id="hf-maximise-btn" title="Expand" aria-label="Expand">▴</button>
+    </div>
   </div>
-  <div class="gp-floater-footer">
-    <span class="ftr-label">Est. Commission @ Scenario</span>
-    <span><span class="ftr-value" id="hayley-comm-v">—</span></span>
-  </div>
-  <div class="gp-floater-footer dark">
-    <span class="ftr-label">Est. Total Package @ Scenario</span>
-    <span class="ftr-value" id="hayley-total-v">—</span>
+  <div class="gp-floater-body">
+    <div class="gp-floater-row">
+      <div class="label-mini">Contribution<br>Margin</div>
+      <input type="range" id="cm-floater-slider" min="900000" max="1600000" step="10000">
+      <div class="value" id="cm-floater-value">—</div>
+    </div>
+    <div class="gp-floater-footer">
+      <span class="ftr-label">Est. Commission @ Scenario</span>
+      <span><span class="ftr-value" id="hayley-comm-v">—</span></span>
+    </div>
+    <div class="gp-floater-footer dark">
+      <span class="ftr-label">Est. Total Package @ Scenario</span>
+      <span class="ftr-value" id="hayley-total-v">—</span>
+    </div>
   </div>
 </div>
 
@@ -783,7 +813,7 @@ const EMPLOYEE_ID = 'hayley';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v36`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v38`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1016,29 +1046,23 @@ async function load() {
     plan = data.planTypes[emp.planType];
     if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
 
-    const baseline = (emp.actuals && Array.isArray(emp.actuals.quarterlyCMNP)) ? emp.actuals.quarterlyCMNP : defaultQuarters();
-    actualsQuarters = baseline.map(q => {
-      // Auto-pull from MEC Overview P&L when a matching quarter label exists
-      const pl = lookupPLQuarter(q.plLabel || q.quarter);
+    // Seed quarterly grid: localStorage edits win → otherwise last year's same-quarter CM from the
+    // company P&L → otherwise 0. This means on first load Hayley sees what we ACTUALLY hit last year
+    // as a baseline scenario, not blank cells.
+    let savedActuals = null;
+    try { savedActuals = JSON.parse(localStorage.getItem(ACTUALS_LS_KEY) || 'null'); } catch (e) {}
+    actualsQuarters = defaultQuarters().map((q, i) => {
+      const ly = lookupLastYearQuarter(q.quarter);
+      const lyCM = ly ? ly.cm : 0;
+      const savedCM = (savedActuals && savedActuals[i] && +savedActuals[i].cm > 0) ? +savedActuals[i].cm : 0;
       return {
         quarter: q.quarter,
-        cm: pl ? pl.cm : (+q.cm || 0),
-        np: pl ? pl.np : (+q.np || 0),
-        autoFromPL: !!pl,
+        cm: savedCM > 0 ? savedCM : lyCM,
+        np: 0,
+        autoFromPL: false,
+        seededFromLY: savedCM <= 0 && lyCM > 0,
       };
     });
-    // localStorage overrides apply only to NON-auto quarters (P&L data is source of truth when present)
-    try {
-      const saved = JSON.parse(localStorage.getItem(ACTUALS_LS_KEY) || 'null');
-      if (saved && Array.isArray(saved) && saved.length === actualsQuarters.length) {
-        actualsQuarters = actualsQuarters.map((q, i) => q.autoFromPL ? q : ({
-          quarter: q.quarter,
-          cm: +saved[i].cm || 0,
-          np: +saved[i].np || 0,
-          autoFromPL: false,
-        }));
-      }
-    } catch (e) {}
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('emp-name').textContent = emp.name;
@@ -1126,6 +1150,31 @@ function wireInputs() {
     cmSlider.addEventListener('input', syncCmFloat);
     cmInput.addEventListener('input', syncCmFloat);
     syncCmFloat();
+
+    // Minimise / maximise toggle — persists user's preference in localStorage
+    const FL_MIN_KEY = 'hayley-floater-minimised-v1';
+    const minBtn = document.getElementById('hf-minimise-btn');
+    const maxBtn = document.getElementById('hf-maximise-btn');
+    // Restore prior state
+    try {
+      if (localStorage.getItem(FL_MIN_KEY) === '1') floater.classList.add('minimised');
+    } catch (e) {}
+    if (minBtn) minBtn.addEventListener('click', () => {
+      floater.classList.add('minimised');
+      try { localStorage.setItem(FL_MIN_KEY, '1'); } catch (e) {}
+    });
+    if (maxBtn) maxBtn.addEventListener('click', () => {
+      floater.classList.remove('minimised');
+      try { localStorage.setItem(FL_MIN_KEY, '0'); } catch (e) {}
+    });
+    // Click the header title (when minimised) to expand
+    const headTitle = floater.querySelector('.gp-floater-head .title');
+    if (headTitle) headTitle.addEventListener('click', () => {
+      if (floater.classList.contains('minimised')) {
+        floater.classList.remove('minimised');
+        try { localStorage.setItem(FL_MIN_KEY, '0'); } catch (e) {}
+      }
+    });
   }
 
   const syncMoney = (slider, input, field) => {
@@ -1270,16 +1319,17 @@ function lookupLastYearQuarter(label) {
 function renderQuarterlyGrid() {
   const tbody = document.getElementById('quarterly-body');
   const rows = actualsQuarters.map((q, i) => {
-    const auto = q.autoFromPL;
-    const lockChip = auto ? `<span style="font-size:10px; color:var(--accent); font-weight:600; margin-left:4px;" title="Auto-pulled from MEC Group P&amp;L — read-only here, edit on the Overview's P&amp;L tab">🔗 P&amp;L</span>` : '';
-    const inputAttrs = auto ? 'disabled style="background:#f5faf7; color:var(--muted); cursor:not-allowed;"' : '';
     const lastYear = lookupLastYearQuarter(q.quarter);
     const lyCM = lastYear ? lastYear.cm : null;
     const lyCMText = lyCM != null ? fmtMoney(lyCM) : '—';
+    // Subtle "seeded from last year" chip — vanishes once user actually edits the cell
+    const seedChip = q.seededFromLY
+      ? `<span style="font-size:9px; color:var(--muted); font-weight:500; margin-left:6px; padding: 1px 5px; border: 1px solid var(--border); border-radius: 3px; background: #fafaf7;" title="Default scenario — seeded from last year's actual CM. Edit to model your own forecast.">LY seed</span>`
+      : '';
     return `
-    <tr data-qtr-idx="${i}"${auto ? ' class="auto-pl"' : ''}>
-      <td class="qtr">${q.quarter}${lockChip}</td>
-      <td class="input-cell"><input type="text" inputmode="numeric" data-field="cm" data-idx="${i}" value="${q.cm ? fmtNum(q.cm) : ''}" placeholder="0" ${inputAttrs}></td>
+    <tr data-qtr-idx="${i}">
+      <td class="qtr">${q.quarter}${seedChip}</td>
+      <td class="input-cell"><input type="text" inputmode="numeric" data-field="cm" data-idx="${i}" value="${q.cm ? fmtNum(q.cm) : ''}" placeholder="0"></td>
       <td class="num" style="background:#fafaf7; color:var(--muted);">${lyCMText}</td>
       <td class="num" data-cell="annual">—</td>
       <td class="num plus" data-cell="qpayout">—</td>
@@ -1305,6 +1355,12 @@ function renderQuarterlyGrid() {
       const field = inp.dataset.field;
       const val = parseNum(inp.value);
       actualsQuarters[idx][field] = val;
+      // User has touched this cell — no longer a passive LY seed (hide chip without re-rendering to preserve focus)
+      if (actualsQuarters[idx].seededFromLY) {
+        actualsQuarters[idx].seededFromLY = false;
+        const chip = inp.closest('tr')?.querySelector('.qtr span');
+        if (chip) chip.remove();
+      }
       const caret = inp.selectionStart;
       const digitsBefore = (inp.value.slice(0, caret).match(/\d/g) || []).length;
       inp.value = val ? fmtNum(val) : '';
