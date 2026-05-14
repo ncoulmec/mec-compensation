@@ -2688,6 +2688,8 @@ const fmtMoney = (n) => {
 };
 const fmtPct = (n, d = 1) => (n * 100).toFixed(d) + '%';
 const fmtNum = (n) => Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 });
+// Global HTML-escape helper (escapes single quotes too, for data-tip='...' attributes)
+const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const parseNum = (s) => { const c = String(s).replace(/[^0-9.-]/g, ''); return c === '' ? 0 : +c; };
 
 
