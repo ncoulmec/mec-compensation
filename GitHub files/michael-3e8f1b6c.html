@@ -1169,19 +1169,28 @@
 
     <div class="card">
       <h2 id="payout-heading">Quarterly Payout Schedule</h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 18px;">Enter actual revenue per quarter on the Overview tab — the data syncs across both tabs.</p>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 14px;">Based on your last 365 days of revenue, calculated each quarter and divided by 4. Enter your TTM revenue on the <strong>Overview</strong> tab — the figures below sync across both tabs.</p>
       <div class="quarter-grid" id="payouts-quarter-grid"></div>
-      <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px;">
-        <span style="color: var(--muted);">Total annual performance revenue</span>
-        <span id="q-total-revenue-p">—</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px; font-weight: 600;">
-        <span>Total paid out (75% each quarter)</span>
+      <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px; font-weight: 600;">
+        <span style="color: var(--muted); font-weight: 500;">Total commission paid across all 4 quarters</span>
         <span id="q-total-paid-p">—</span>
       </div>
-      <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px; color: var(--muted);">
-        <span>Year-end reconciliation (25%)</span>
+      <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; color: var(--muted); margin-top: 2px;" id="q-holdback-row-p">
+        <span>Year-end reconciliation (if payout % &lt; 100)</span>
         <span id="q-total-heldback-p">—</span>
+      </div>
+      <div id="annual-trueup-card-p" style="display: none; margin-top: 18px; padding: 14px 18px; background: linear-gradient(135deg, #e6f7ee 0%, #c8efd9 100%); border: 1px solid #6fc792; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div>
+            <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🎯 Annual True-Up</div>
+            <div style="font-size: 12px; color: var(--ink); margin-top: 4px;" id="trueup-explainer-p">If you finish the year above your quarterly run-rate, this true-up tops you up to the full annual commission entitlement.</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: #1f5e3c; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Catch-up payment</div>
+            <div style="font-family: var(--mono); font-size: 22px; font-weight: 700; color: #1f5e3c;" id="trueup-amount-p">—</div>
+            <div style="font-size: 10px; color: var(--muted); font-family: var(--mono);" id="trueup-detail-p">&nbsp;</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1407,7 +1416,7 @@ const EMPLOYEE_ID = 'michael';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v24`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v25`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -2596,50 +2605,54 @@ function updateQuarterlyDisplay(r) {
     const el = document.getElementById(id);
     if (el) el.textContent = fmtMoney(totalPaidAllQuarters);
   });
-  const heldRow = document.getElementById('q-holdback-row');
-  if (heldRow) heldRow.style.display = holdbackPct > 0 ? 'flex' : 'none';
-  const heldEl = document.getElementById('q-total-heldback');
-  if (heldEl) heldEl.textContent = fmtMoney(totalHeld);
+  ['q-holdback-row', 'q-holdback-row-p'].forEach(id => {
+    const row = document.getElementById(id);
+    if (row) row.style.display = holdbackPct > 0 ? 'flex' : 'none';
+  });
+  ['q-total-heldback', 'q-total-heldback-p'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = fmtMoney(totalHeld);
+  });
 
   // === ANNUAL TRUE-UP ===
-  // If Michael finishes the year at higher TTM than his quarterly run-rate suggests,
-  // pay the difference. Same shape as Tom's true-up.
-  const trueupCard = document.getElementById('annual-trueup-card');
-  if (trueupCard) {
-    const allEntered = scenario.quarters.every(q => q != null && q > 0);
-    if (allEntered) {
-      const finalTTM = scenario.quarters[scenario.quarters.length - 1];
-      const { total: finalBand } = calcBandCommission(finalTTM, plan.bands);
-      const finalProd = (plan.includeProduction ? (plan.productionPct || 0) : 0) * finalTTM;
-      const annualEntitlement = (finalBand + finalProd) * r.effectiveKpi;
-      const annualEntitlementAtPayoutPct = annualEntitlement * payoutPct;
-      const trueup = Math.max(0, annualEntitlementAtPayoutPct - totalPaidAllQuarters);
-      trueupCard.style.display = 'block';
-      document.getElementById('trueup-amount').textContent = fmtMoney(trueup);
-      const trueupDetail = document.getElementById('trueup-detail');
-      const trueupExplainer = document.getElementById('trueup-explainer');
-      if (trueup > 0) {
-        trueupDetail.innerHTML = `Annual entitlement <strong>${fmtMoney(annualEntitlementAtPayoutPct)}</strong> − paid <strong>${fmtMoney(totalPaidAllQuarters)}</strong>`;
-        trueupExplainer.textContent = `You finished above your quarterly run-rate — this catches you up to the full annual commission earned at your final TTM of ${fmtMoney(finalTTM)}.`;
-      } else {
-        trueupDetail.innerHTML = `Annual entitlement <strong>${fmtMoney(annualEntitlementAtPayoutPct)}</strong> already covered by quarterly payouts.`;
-        trueupExplainer.textContent = `No top-up needed — your quarterly payouts already meet or exceed the annual entitlement at your final TTM.`;
-      }
+  // If Michael finishes the year at higher TTM than his quarterly run-rate suggests, pay the difference.
+  // Mirrored on Overview (no suffix) and Payouts/Super (-p suffix) tabs.
+  const trueupCardIds = ['annual-trueup-card', 'annual-trueup-card-p'];
+  const allEntered = scenario.quarters.every(q => q != null && q > 0);
+  let trueupVals = { amount: '—', detail: 'Available once all 4 quarters are entered', explainer: `Catches you up if you finish the year ahead of your quarterly run-rate. Pays the gap between full annual commission (at Q4 TTM) and the sum of Q1–Q4 payouts.` };
+  if (allEntered) {
+    const finalTTM = scenario.quarters[scenario.quarters.length - 1];
+    const { total: finalBand } = calcBandCommission(finalTTM, plan.bands);
+    const finalProd = (plan.includeProduction ? (plan.productionPct || 0) : 0) * finalTTM;
+    const annualEntitlement = (finalBand + finalProd) * r.effectiveKpi;
+    const annualEntitlementAtPayoutPct = annualEntitlement * payoutPct;
+    const trueup = Math.max(0, annualEntitlementAtPayoutPct - totalPaidAllQuarters);
+    if (trueup > 0) {
+      trueupVals = {
+        amount: fmtMoney(trueup),
+        detail: `Annual entitlement <strong>${fmtMoney(annualEntitlementAtPayoutPct)}</strong> − paid <strong>${fmtMoney(totalPaidAllQuarters)}</strong>`,
+        explainer: `You finished above your quarterly run-rate — this catches you up to the full annual commission earned at your final TTM of ${fmtMoney(finalTTM)}.`
+      };
     } else {
-      trueupCard.style.display = 'block';
-      document.getElementById('trueup-amount').textContent = '—';
-      document.getElementById('trueup-detail').textContent = 'Available once all 4 quarters are entered';
-      document.getElementById('trueup-explainer').textContent = `Catches you up if you finish the year ahead of your quarterly run-rate. Pays the gap between full annual commission (at Q4 TTM) and the sum of Q1–Q4 payouts.`;
+      trueupVals = {
+        amount: fmtMoney(0),
+        detail: `Annual entitlement <strong>${fmtMoney(annualEntitlementAtPayoutPct)}</strong> already covered by quarterly payouts.`,
+        explainer: `No top-up needed — your quarterly payouts already meet or exceed the annual entitlement at your final TTM.`
+      };
     }
   }
-
-  const heldElP = document.getElementById('q-total-heldback-p');
-  if (heldElP) heldElP.textContent = fmtMoney(totalHeld);
-
-  // Revenue summary on Payouts tab
-  const revTotal = anyEntered ? scenario.quarters.reduce((s, q) => s + (+q || 0), 0) : scenario.revenue;
-  const rp = document.getElementById('q-total-revenue-p');
-  if (rp) rp.textContent = anyEntered ? `(sum of entries: ${fmtMoney(revTotal)})` : fmtMoney(scenario.revenue);
+  trueupCardIds.forEach(cardId => {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    card.style.display = 'block';
+    const suffix = cardId.endsWith('-p') ? '-p' : '';
+    const amtEl = document.getElementById('trueup-amount' + suffix);
+    const detEl = document.getElementById('trueup-detail' + suffix);
+    const expEl = document.getElementById('trueup-explainer' + suffix);
+    if (amtEl) amtEl.textContent = trueupVals.amount;
+    if (detEl) detEl.innerHTML = trueupVals.detail;
+    if (expEl) expEl.textContent = trueupVals.explainer;
+  });
 }
 
 // Project completion is a self-tracking estimate stored in localStorage per project.

@@ -361,7 +361,7 @@
       <div class="card" style="margin-bottom: 14px; padding: 16px 20px; background: #f6f8fc; border-left: 4px solid var(--navy);">
         <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">📈 Quarterly payroll cycle</div>
         <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.55;">
-          Hayley, Tom &amp; Michael are paid on a <strong>quarterly</strong> cadence (75% paid each quarter, 25% reconciled at year-end). Enter each quarter's metric — <strong>Contribution Margin</strong> for Hayley, <strong>Performance Revenue</strong> for Tom &amp; Michael — and the system annualises (YTD × 4 ÷ quarters entered), applies the bands + milestone, and shows the 75% pro-rata payout. Run this <strong>once per quarter close</strong>, alongside the matching fortnightly cycle.
+          Hayley, Tom &amp; Michael are paid on a <strong>quarterly</strong> cadence. <strong>Hayley:</strong> enter each quarter's CM — system annualises (YTD × 4 ÷ quarters entered), applies CM bands + milestone, and shows the 75% pro-rata payout (25% reconciled at year-end). <strong>Tom &amp; Michael:</strong> enter their <strong>last 365 days (TTM) performance revenue</strong> each quarter — commission is calculated on that TTM, then divided by 4 for the quarter's payout (100% paid each quarter, no holdback). A year-end catch-up tops them up if their final TTM is higher than the quarterly run-rate. Run this <strong>once per quarter close</strong>, alongside the matching fortnightly cycle.
         </div>
       </div>
 
@@ -661,7 +661,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v28';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v30';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -794,7 +794,7 @@ function signOut() {
   try { sessionStorage.clear(); } catch(e) {}
   try {
     Object.keys(localStorage).forEach(k => {
-      if (k === 'mec-admin-master-v3' || k.startsWith('dashboard-')) {
+      if (k === ADMIN_CACHE_KEY || k.startsWith('mec-admin-master-') || k.startsWith('dashboard-')) {
         localStorage.removeItem(k);
       }
     });
@@ -1967,26 +1967,36 @@ function renderFortnightlyAdmin() {
     const first = full.split(' ')[0];
     return has20 ? `${first} 2.0` : first;
   }
-  const reps = (data.employees || []).filter(e => SALES_PLAN_IDS.includes(e.planType) && !e.placeholder).map(e => ({
-    id: e.id,
-    name: shortName(e.name, e.id),
-    fullName: e.name,
-    planType: e.planType
-  }));
+  // Each rep carries their OWN bands + production rate, pulled from data.planTypes
+  // for their plan. This ensures hybrid_gp (Evie / Evie 2.0) uses its finer band
+  // structure rather than the gp_bands ladder. Bands are normalised to sorted
+  // [threshold, rate] pairs.
+  const reps = (data.employees || []).filter(e => SALES_PLAN_IDS.includes(e.planType) && !e.placeholder).map(e => {
+    const plan = (data.planTypes && data.planTypes[e.planType]) || {};
+    const bands = Array.isArray(plan.bands) && plan.bands.length
+      ? plan.bands.map(b => [Number(b.threshold) || 0, Number(b.rate) || 0]).sort((a, b) => a[0] - b[0])
+      : [[0, 0]];
+    const prodRate = typeof plan.productionPct === 'number' ? plan.productionPct : 0.01;
+    return {
+      id: e.id,
+      name: shortName(e.name, e.id),
+      fullName: e.name,
+      planType: e.planType,
+      bands,
+      prodRate
+    };
+  });
   if (reps.length === 0) { document.getElementById('fnp-tbody').innerHTML = '<tr><td>No sales reps found.</td></tr>'; return; }
+  const repById = {};
+  reps.forEach(r => { repById[r.id] = r; });
 
-  // Bands — match sales-rep plan (gp_bands)
-  const BANDS = [
-    [0, 0.04], [100000, 0.04], [200000, 0.04],
-    [300000, 0.09], [400000, 0.12], [450000, 0.13],
-    [500000, 0.14], [550000, 0.16]
-  ];
-  function cumBandComm(ytd) {
+  // Cumulative incremental band commission for a given YTD GP against a rep's bands.
+  function cumBandComm(ytd, bands) {
     if (ytd <= 0) return 0;
     let total = 0;
-    for (let i = 0; i < BANDS.length; i++) {
-      const [start, rate] = BANDS[i];
-      const end = (i + 1 < BANDS.length) ? BANDS[i + 1][0] : Infinity;
+    for (let i = 0; i < bands.length; i++) {
+      const [start, rate] = bands[i];
+      const end = (i + 1 < bands.length) ? bands[i + 1][0] : Infinity;
       if (ytd <= start) break;
       const top = Math.min(ytd, end);
       total += (top - start) * rate;
@@ -1994,10 +2004,10 @@ function renderFortnightlyAdmin() {
     }
     return total;
   }
-  function marginalRate(ytd) {
-    let rate = BANDS[0][1];
-    for (let i = 0; i < BANDS.length; i++) {
-      if (ytd > BANDS[i][0]) rate = BANDS[i][1];
+  function marginalRate(ytd, bands) {
+    let rate = bands[0][1];
+    for (let i = 0; i < bands.length; i++) {
+      if (ytd > bands[i][0]) rate = bands[i][1];
     }
     return rate;
   }
@@ -2032,17 +2042,46 @@ function renderFortnightlyAdmin() {
     { period: '17 May – 30 May 2027', paid: '31 May 2027', month: 'May 2027' }
   ];
 
-  // Per-rep × per-fortnight matrices (GP Received + Event GP). All start blank.
+  // Per-rep × per-fortnight matrices (GP Received + Event GP).
+  // Hydrated from each employee's persisted `fortnightly` record (see ensureFortnightly).
   const gpMatrix = {};
   const eventMatrix = {};
   const auditActuals = {};        // GP Received full-year totals (rep -> string)
   const auditEventActuals = {};   // Event GP full-year totals (rep -> string)
-  const PROD_RATE = 0.01;          // 1% of Event GP, inc super (matches all sales plans)
+  const PROD_RATE = 0.01;          // fallback only; per-rep prodRate comes from data.planTypes
+
+  // Identifies which fortnight schedule the stored figures belong to. When the
+  // schedule rolls to a new financial year, a mismatched id flags stale data.
+  const SCHEDULE_ID = 'FY2026-27';
+
+  // Ensure an employee has a normalised `fortnightly` record and return it.
+  // Shape: { scheduleId, gp:[26], event:[26], auditGP:'', auditEvent:'' }.
+  // Created lazily so no rebuild of the encrypted blobs is required — the existing
+  // Save-to-GitHub flow writes this straight into data.json (the master blob).
+  function ensureFortnightly(emp) {
+    if (!emp.fortnightly || typeof emp.fortnightly !== 'object') emp.fortnightly = {};
+    const f = emp.fortnightly;
+    if (!Array.isArray(f.gp)) f.gp = [];
+    if (!Array.isArray(f.event)) f.event = [];
+    f.gp.length = FORTNIGHTS.length;
+    f.event.length = FORTNIGHTS.length;
+    for (let i = 0; i < FORTNIGHTS.length; i++) {
+      if (typeof f.gp[i] !== 'number' || !isFinite(f.gp[i])) f.gp[i] = 0;
+      if (typeof f.event[i] !== 'number' || !isFinite(f.event[i])) f.event[i] = 0;
+    }
+    f.auditGP = (f.auditGP == null) ? '' : String(f.auditGP);
+    f.auditEvent = (f.auditEvent == null) ? '' : String(f.auditEvent);
+    f.scheduleId = SCHEDULE_ID;
+    return f;
+  }
+
   reps.forEach(r => {
-    gpMatrix[r.id] = new Array(FORTNIGHTS.length).fill(0);
-    eventMatrix[r.id] = new Array(FORTNIGHTS.length).fill(0);
-    auditActuals[r.id] = '';
-    auditEventActuals[r.id] = '';
+    const emp = (data.employees || []).find(e => e.id === r.id);
+    const f = emp ? ensureFortnightly(emp) : { gp: new Array(FORTNIGHTS.length).fill(0), event: new Array(FORTNIGHTS.length).fill(0), auditGP: '', auditEvent: '' };
+    gpMatrix[r.id] = f.gp.slice();
+    eventMatrix[r.id] = f.event.slice();
+    auditActuals[r.id] = f.auditGP || '';
+    auditEventActuals[r.id] = f.auditEvent || '';
   });
 
   // Group fortnights by month
@@ -2074,6 +2113,9 @@ function renderFortnightlyAdmin() {
   function computeRepRows(repId) {
     const gp = gpMatrix[repId];
     const ev = eventMatrix[repId];
+    const rep = repById[repId];
+    const bands = rep ? rep.bands : [[0, 0]];
+    const prodRate = rep ? rep.prodRate : PROD_RATE;
     let ytd = 0, cumPay = 0, cumProd = 0, cumEv = 0;
     const rows = [];
     for (let i = 0; i < FORTNIGHTS.length; i++) {
@@ -2081,12 +2123,12 @@ function renderFortnightlyAdmin() {
       const e = ev[i] || 0;
       const prevYtd = ytd;
       ytd = prevYtd + g;
-      const properPay = cumBandComm(ytd) - cumBandComm(prevYtd);
-      const endRate = marginalRate(ytd);
-      const startRate = marginalRate(prevYtd);
+      const properPay = cumBandComm(ytd, bands) - cumBandComm(prevYtd, bands);
+      const endRate = marginalRate(ytd, bands);
+      const startRate = marginalRate(prevYtd, bands);
       const naivePay = g * endRate;
       const tuAdj = properPay - naivePay;
-      const prodComm = e * PROD_RATE;
+      const prodComm = e * prodRate;
       cumPay += properPay;
       cumProd += prodComm;
       cumEv += e;
@@ -2382,7 +2424,15 @@ function renderFortnightlyAdmin() {
         const idx = parseInt(inp.getAttribute('data-idx'), 10);
         const raw = inp.value.replace(/[^0-9.\-]/g, '');
         const n = parseFloat(raw);
-        matrix[rep][idx] = isFinite(n) ? n : 0;
+        const val = isFinite(n) ? n : 0;
+        matrix[rep][idx] = val;
+        // Persist into the employee record so Save-to-GitHub picks it up.
+        const emp = (data.employees || []).find(e => e.id === rep);
+        if (emp) {
+          const f = ensureFortnightly(emp);
+          (kind === 'event' ? f.event : f.gp)[idx] = val;
+          if (typeof setDirty === 'function') setDirty();
+        }
       };
       inp.addEventListener('blur', () => {
         commit();
@@ -2476,10 +2526,22 @@ function renderFortnightlyAdmin() {
     body.innerHTML = h;
     // Wire audit inputs (Event GP audit added)
     body.querySelectorAll('.fnp-audit-event-input').forEach(inp => {
-      inp.addEventListener('input', () => { auditEventActuals[inp.getAttribute('data-rep')] = inp.value; renderAudit(); });
+      inp.addEventListener('input', () => {
+        const rep = inp.getAttribute('data-rep');
+        auditEventActuals[rep] = inp.value;
+        const emp = (data.employees || []).find(e => e.id === rep);
+        if (emp) { ensureFortnightly(emp).auditEvent = inp.value; if (typeof setDirty === 'function') setDirty(); }
+        renderAudit();
+      });
     });
     body.querySelectorAll('.fnp-audit-input').forEach(inp => {
-      inp.addEventListener('input', () => { auditActuals[inp.getAttribute('data-rep')] = inp.value; renderAudit(); });
+      inp.addEventListener('input', () => {
+        const rep = inp.getAttribute('data-rep');
+        auditActuals[rep] = inp.value;
+        const emp = (data.employees || []).find(e => e.id === rep);
+        if (emp) { ensureFortnightly(emp).auditGP = inp.value; if (typeof setDirty === 'function') setDirty(); }
+        renderAudit();
+      });
     });
   }
 
@@ -3131,16 +3193,20 @@ function renderQuarterlyAdmin() {
   };
   const cohort = (data.employees || []).filter(e => QTP_PLAN_IDS.includes(e.planType) && !e.placeholder).map(e => {
     const plan = data.planTypes[e.planType] || {};
+    // TTM plans (Tom/Michael): input is the last-365-days revenue, payout = annual / 4.
+    // YTD plans (Hayley): input is that quarter's CM, system annualises by YTD pace.
+    const isTTM = (e.planType === 'hybrid_rev' || e.planType === 'hybrid_rev_senior');
     return {
       id: e.id,
       name: e.name.split(' ')[0],
       fullName: e.name,
       planType: e.planType,
+      isTTM,
       metricName: QTP_METRIC[e.planType] || 'Metric',
       dataSource: QTP_DATA_SOURCE[e.planType] || null,
       bands: plan.cmBands || plan.bands || [],
       flatBonuses: Array.isArray(plan.flatBonuses) ? plan.flatBonuses : [],
-      payoutPct: plan.payoutPercentage != null ? plan.payoutPercentage : 0.75
+      payoutPct: plan.payoutPercentage != null ? plan.payoutPercentage : 1.0
     };
   });
   if (cohort.length === 0) { document.getElementById('qtp-tbody').innerHTML = '<tr><td>No quarterly-cohort employees found.</td></tr>'; return; }
@@ -3192,32 +3258,52 @@ function renderQuarterlyAdmin() {
     return total;
   }
 
-  // Compute per-quarter rows for one employee: annualise YTD pace, apply bands+milestone, 75% pro-rata
+  // Compute per-quarter rows for one employee.
+  // TTM plans (Tom/Michael): each quarter input IS the TTM (last 365 days). Annual comm = bands(TTM) + bonus(TTM); quarterly payout = annual / 4 × payoutPct (no YTD pacing).
+  // YTD plans (Hayley): each quarter input is that quarter's CM. Annualise via YTD × 4 ÷ quartersEntered; payout is cumulative pro-rata of annual × payoutPct.
   function computeEmpQuarters(c) {
     let ytd = 0, quartersEntered = 0, cumPaid = 0;
     const rows = [];
     for (let i = 0; i < QUARTERS.length; i++) {
       const qVal = qMatrix[c.id][i] || 0;
       if (qVal <= 0) {
-        rows.push({ idx: i, metric: 0, ytd, annualised: 0, annualComm: 0, payout: 0 });
+        rows.push({ idx: i, metric: 0, ytd: c.isTTM ? 0 : ytd, annualised: 0, annualComm: 0, payout: 0 });
         continue;
       }
-      ytd += qVal;
-      quartersEntered++;
-      const annualised = ytd * (4 / quartersEntered);
-      const annualComm = bandComm(annualised, c.bands) + flatBonus(annualised, c.flatBonuses);
-      const cumPayable = annualComm * c.payoutPct * (quartersEntered / 4);
-      const payout = Math.max(0, cumPayable - cumPaid);
-      cumPaid += payout;
-      rows.push({ idx: i, metric: qVal, ytd, annualised, annualComm, payout });
+      if (c.isTTM) {
+        // TTM model — qVal IS the annualised figure
+        quartersEntered++;
+        const annualised = qVal;
+        const annualComm = bandComm(annualised, c.bands) + flatBonus(annualised, c.flatBonuses);
+        const payout = annualComm / 4 * c.payoutPct;
+        cumPaid += payout;
+        rows.push({ idx: i, metric: qVal, ytd: qVal, annualised, annualComm, payout });
+      } else {
+        // YTD-pace model
+        ytd += qVal;
+        quartersEntered++;
+        const annualised = ytd * (4 / quartersEntered);
+        const annualComm = bandComm(annualised, c.bands) + flatBonus(annualised, c.flatBonuses);
+        const cumPayable = annualComm * c.payoutPct * (quartersEntered / 4);
+        const payout = Math.max(0, cumPayable - cumPaid);
+        cumPaid += payout;
+        rows.push({ idx: i, metric: qVal, ytd, annualised, annualComm, payout });
+      }
     }
     const last = [...rows].reverse().find(r => r.metric > 0);
+    // Catch-up (TTM only): if final-TTM's full annual entitlement > sum of quarterly payouts, the difference is the year-end true-up.
+    const trueUp = (c.isTTM && last)
+      ? Math.max(0, last.annualComm * c.payoutPct - cumPaid)
+      : 0;
     return {
       rows,
-      ytdMetric: ytd,
+      ytdMetric: c.isTTM ? (last ? last.metric : 0) : ytd, // for TTM, "ytdMetric" is the latest TTM (= annual rev)
+      latestTTM: c.isTTM ? (last ? last.metric : 0) : 0,
       annualComm: last ? last.annualComm : 0,
       totalPayout: cumPaid,
-      holdback: last ? last.annualComm * (1 - c.payoutPct) * (quartersEntered / 4) : 0
+      trueUp,
+      // Holdback only meaningful for plans with payoutPct < 1 (Hayley today)
+      holdback: (!c.isTTM && last && c.payoutPct < 1) ? last.annualComm * (1 - c.payoutPct) * (quartersEntered / 4) : 0
     };
   }
 
@@ -3243,10 +3329,16 @@ function renderQuarterlyAdmin() {
     let h = '';
     cohort.forEach(c => {
       const t = computeEmpQuarters(c);
+      const metricLabel = c.isTTM
+        ? `Latest TTM ${esc(c.metricName)}`
+        : `YTD ${esc(c.metricName)}`;
+      const subline = c.isTTM
+        ? `${_fmt(t.totalPayout)} paid` + (t.trueUp > 0 ? ` · ${_fmt(t.trueUp)} year-end catch-up` : '')
+        : `${_fmt(t.totalPayout)} paid` + (t.holdback > 0 ? ` · ${_fmt(t.holdback)} holdback` : '');
       h += `<div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
         <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">${esc(c.name)}</div>
-        <div style="font-size: 15px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 4px;">${_fmt(t.ytdMetric)} <span style="font-size: 9px; color: var(--faint); font-weight: 400;">YTD ${esc(c.metricName)}</span></div>
-        <div style="font-size: 12px; font-family: var(--mono); color: var(--muted); margin-top: 2px;">${_fmt(t.totalPayout)} paid · ${_fmt(t.holdback)} holdback</div>
+        <div style="font-size: 15px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 4px;">${_fmt(t.ytdMetric)} <span style="font-size: 9px; color: var(--faint); font-weight: 400;">${metricLabel}</span></div>
+        <div style="font-size: 12px; font-family: var(--mono); color: var(--muted); margin-top: 2px;">${subline}</div>
       </div>`;
     });
     document.getElementById('qtp-totals').innerHTML = h;
@@ -3268,8 +3360,11 @@ function renderQuarterlyAdmin() {
         const incSuper = row.payout;
         const exSuper = incSuper / (1 + SUPER_RATE);
         const superAmt = incSuper - exSuper;
+        const payoutPctTxt = (c.payoutPct * 100).toFixed(0);
         const tip = row.metric > 0
-          ? `${esc(c.fullName)} · ${esc(q.label)}\n${esc(c.metricName)} this quarter: ${_fmt(row.metric)}\nYTD: ${_fmt(row.ytd)} · Annualised: ${_fmt(row.annualised)}\nAnnual commission projection: ${_fmt(row.annualComm)}\nQuarterly payout (75% pro-rata): ${_fmt(incSuper)}\n  · Bonus ex super: ${_fmt(exSuper)}\n  · Super (12%): ${_fmt(superAmt)}`
+          ? (c.isTTM
+              ? `${esc(c.fullName)} · ${esc(q.label)}\nTTM ${esc(c.metricName)} (last 365 days): ${_fmt(row.metric)}\nAnnual commission at this TTM: ${_fmt(row.annualComm)}\nQuarterly payout (annual ÷ 4): ${_fmt(incSuper)}\n  · Bonus ex super: ${_fmt(exSuper)}\n  · Super (12%): ${_fmt(superAmt)}`
+              : `${esc(c.fullName)} · ${esc(q.label)}\n${esc(c.metricName)} this quarter: ${_fmt(row.metric)}\nYTD: ${_fmt(row.ytd)} · Annualised: ${_fmt(row.annualised)}\nAnnual commission projection: ${_fmt(row.annualComm)}\nQuarterly payout (${payoutPctTxt}% pro-rata): ${_fmt(incSuper)}\n  · Bonus ex super: ${_fmt(exSuper)}\n  · Super (12%): ${_fmt(superAmt)}`)
           : `${esc(c.fullName)} · ${esc(q.label)}\nNo ${esc(c.metricName)} entered yet.`;
         const copyVals = incSuper > 0
           ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px;">
@@ -3283,7 +3378,7 @@ function renderQuarterlyAdmin() {
               ? `<div style="font-size: 10px; color: var(--muted); margin-top: 3px; font-family: var(--mono); text-align: right;">annualised ${_fmt(row.annualised)} · $0 payout</div>`
               : `<div style="font-size: 10px; color: var(--faint); margin-top: 3px; font-family: var(--mono); text-align: right;">—</div>`);
         h += `<td class="qtp-cell" data-tip="${esc(tip)}" style="padding: 6px 8px; border-bottom: 1px solid #f4f3ed; vertical-align: top;">
-          <input type="text" class="qtp-input" data-emp="${esc(c.id)}" data-idx="${qi}" value="${row.metric ? row.metric.toLocaleString() : ''}" placeholder="${esc(c.metricName)}" inputmode="decimal" style="width: 100%; padding: 4px 6px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink);">
+          <input type="text" class="qtp-input" data-emp="${esc(c.id)}" data-idx="${qi}" value="${row.metric ? row.metric.toLocaleString() : ''}" placeholder="${c.isTTM ? 'TTM ' + esc(c.metricName) : esc(c.metricName)}" inputmode="decimal" style="width: 100%; padding: 4px 6px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink);">
           ${copyVals}
         </td>`;
       });
@@ -3296,10 +3391,18 @@ function renderQuarterlyAdmin() {
       <td style="padding: 10px 12px;">Year Total</td>`;
     cohort.forEach(c => {
       const t = computeEmpQuarters(c);
+      const payoutPctTxt = (c.payoutPct * 100).toFixed(0);
+      const headlineLabel = c.isTTM ? `Latest TTM ${esc(c.metricName)}` : esc(c.metricName);
+      const paidLine = c.isTTM
+        ? `${_fmt(t.totalPayout)} paid (annual ÷ 4 per quarter)`
+        : `${_fmt(t.totalPayout)} paid (${payoutPctTxt}% pro-rata)`;
+      const tailLine = c.isTTM
+        ? (t.trueUp > 0 ? `${_fmt(t.trueUp)} year-end catch-up` : `<span style="color: var(--faint);">no catch-up needed</span>`)
+        : (t.holdback > 0 ? `${_fmt(t.holdback)} holdback (${(100 - c.payoutPct * 100).toFixed(0)}%)` : `<span style="color: var(--faint);">no holdback</span>`);
       footHtml += `<td style="text-align: right; padding: 10px 12px; font-family: var(--mono); font-size: 13px;">
-        ${_fmt(t.ytdMetric)} <span style="font-size: 9px; color: var(--faint); font-weight: 400;">${esc(c.metricName)}</span>
-        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 3px;">${_fmt(t.totalPayout)} paid (75%)</div>
-        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 1px;">${_fmt(t.holdback)} holdback (25%)</div>
+        ${_fmt(t.ytdMetric)} <span style="font-size: 9px; color: var(--faint); font-weight: 400;">${headlineLabel}</span>
+        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 3px;">${paidLine}</div>
+        <div style="font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 1px;">${tailLine}</div>
       </td>`;
     });
     footHtml += `</tr>`;
@@ -3391,18 +3494,22 @@ function renderQuarterlyAdmin() {
     let h = '<table style="width: 100%; border-collapse: collapse;"><thead><tr style="background: #fafaf7; border-bottom: 1px solid #d3d1c7;">';
     h += '<th style="text-align: left; padding: 8px 10px; font-size: 11px;">Person</th>';
     h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Metric</th>';
-    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Sum of 4 quarters</th>';
+    h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">From admin entries</th>';
     h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Full-year (source of truth)</th>';
     h += '<th style="text-align: right; padding: 8px 10px; font-size: 11px;">Variance</th>';
     h += '<th style="text-align: center; padding: 8px 10px; font-size: 11px;">Verdict</th>';
     h += '</tr></thead><tbody>';
     cohort.forEach(c => {
       const t = computeEmpQuarters(c);
-      const v = varCell(c.id, t.ytdMetric);
+      // For TTM employees, the "from admin entries" reference is the latest TTM (= annual rev).
+      // For YTD employees (Hayley), it's the sum of 4 quarters (= YTD CM).
+      const adminFigure = c.isTTM ? t.latestTTM : t.ytdMetric;
+      const v = varCell(c.id, adminFigure);
+      const adminLabel = c.isTTM ? 'Latest TTM (= annual)' : 'Sum of 4 quarters';
       h += `<tr style="border-bottom: 1px solid #f4f3ed;">
-        <td style="padding: 8px 10px; font-weight: 600;">${esc(c.fullName)}</td>
+        <td style="padding: 8px 10px; font-weight: 600;">${esc(c.fullName)}<div style="font-size: 9px; color: var(--faint); font-weight: 400; text-transform: uppercase; letter-spacing: 0.04em;">${adminLabel}</div></td>
         <td style="text-align: right; padding: 8px 10px; font-size: 11px; color: var(--muted);">${esc(c.metricName)}</td>
-        <td style="text-align: right; padding: 8px 10px; font-family: var(--mono);">${t.ytdMetric > 0 ? _fmt(t.ytdMetric) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td style="text-align: right; padding: 8px 10px; font-family: var(--mono);">${adminFigure > 0 ? _fmt(adminFigure) : '<span style="color: var(--faint);">—</span>'}</td>
         <td style="text-align: right; padding: 8px 10px;"><input type="text" class="qtp-audit-input" data-emp="${esc(c.id)}" value="${esc(qAuditActuals[c.id])}" placeholder="e.g. 1,100,000" inputmode="decimal" style="width: 140px; padding: 5px 8px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px;"></td>
         <td style="text-align: right; padding: 8px 10px; font-family: var(--mono); color: ${v.color};">${v.variance}</td>
         <td style="text-align: center; padding: 8px 10px; font-size: 12px;">${v.verdict}</td>
