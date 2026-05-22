@@ -677,7 +677,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v32';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v33';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -1561,7 +1561,26 @@ function encodeBase64Utf8(str) {
   return btoa(binary);
 }
 
+// Save serializer — prevents two saves (e.g. two pay runs confirmed in quick
+// succession) from racing on GitHub's ref API and losing one. If a save is requested
+// while one is running, we flag it and run exactly one more pass afterwards, which
+// re-encrypts the LATEST in-memory data (so all pending edits are captured).
+let _saveInFlight = false;
+let _savePending = false;
 async function saveToGitHub() {
+  if (_saveInFlight) { _savePending = true; showToast('saving', 'Save queued — finishing the current one first…', 0); return; }
+  _saveInFlight = true;
+  try {
+    do {
+      _savePending = false;
+      await _doSaveToGitHub();
+    } while (_savePending);
+  } finally {
+    _saveInFlight = false;
+  }
+}
+
+async function _doSaveToGitHub() {
   const s = getGhSettings();
   if (!s || !s.pat) {
     openGhModal();

@@ -49,7 +49,7 @@
   table.monthly td.input-cell input { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
 
   header.top { background: var(--navy); color: #fff; padding: 32px 32px 28px; }
-  .top-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .top-inner { max-width: 1480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
   header.top h1 { margin: 0 0 6px; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
   header.top .sub { margin: 0; font-size: 13px; color: #b8c7d8; font-family: var(--mono); }
   .role-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; }
@@ -207,12 +207,12 @@
   }
 
   nav.tabs { background: #fff; border-bottom: 1px solid var(--border); padding: 0 32px; overflow-x: auto; overflow-y: hidden; }
-  .tabs-inner { max-width: 1200px; margin: 0 auto; display: flex; gap: 4px; }
+  .tabs-inner { max-width: 1480px; margin: 0 auto; display: flex; gap: 4px; }
   .tab-btn { background: none; border: none; padding: 16px 22px; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
   .tab-btn:hover { color: var(--ink); }
   .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 600; }
 
-  main { max-width: 1200px; margin: 0 auto; padding: 28px 32px 60px; }
+  main { max-width: 1480px; margin: 0 auto; padding: 28px 32px 60px; }
   .panel { display: none; }
   .panel.active { display: block; }
 
@@ -1306,9 +1306,9 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
         <div>
           <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. <strong>Edit the GP Received cells</strong> to model your year — hover the totals or any row for the breakdown.</p>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. Once payroll confirms a fortnight it appears <strong>locked and marked ✓ PAID</strong> — that's your actual paid figure, with the exact <strong>Bonus</strong> and <strong>Super</strong> amounts (right-hand columns) that go into Xero. Fortnights not yet confirmed stay <strong>editable so you can model your year</strong> — hover the totals or any row for the breakdown.</p>
         </div>
-        <span style="font-size: 11px; color: var(--navy); font-family: var(--mono); font-weight: 600;">26 fortnights · Jun 2026 – May 2027</span>
+        <div id="fn-year-switch" style="display: flex; align-items: center; gap: 8px;"></div>
       </div>
 
       <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
@@ -1317,15 +1317,17 @@
         <table class="monthly" id="fortnightly-table" style="width: 100%;">
           <thead>
             <tr>
-              <th style="text-align: left;">Period</th>
-              <th class="num" style="width: 100px;">GP Received <span class="fn-tip" data-tip="<strong>Editable</strong> — type any value to model the fortnight. Pull these figures from the Zoho Payments report once your fortnight closes. Live recalc as you type.">?</span></th>
-              <th class="num" style="width: 90px;">YTD GP</th>
-              <th class="num" style="width: 90px;">Band Rate <span class="fn-tip" data-tip="The marginal rate the <strong>last dollar of YTD GP</strong> earned at — i.e. what band the rep ended the fortnight in.">?</span></th>
-              <th class="num" style="width: 110px;">GP Comm <small>(inc. super)</small></th>
-              <th class="num" style="width: 80px;">TU Adj <span class="fn-tip" data-tip="<strong>True-Up Adjustment</strong> — corrects pay when a single fortnight straddles a band threshold mid-fortnight.<br><br><strong>Important:</strong> The sales rep plan is flat 4% on the first $300k of YTD GP — so TU won't trigger until your YTD crosses $300k. That's when bands start increasing (9% at $300k, 12% at $400k, 13% at $450k, 14% at $500k, 16% at $550k+).<br><br>Hover any TU value for breakdown.">?</span></th>
-              <th class="num" style="width: 100px; border-left: 2px solid #ecebe5;">Event GP <span class="fn-tip" data-tip="<strong>Editable</strong> — total GP <em>produced</em> (events delivered) in this fortnight. Drives the 1% production commission below. Every sales role generates some production GP — log it here as the event closes out.">?</span></th>
-              <th class="num" style="width: 100px;">Prod Comm <small>(inc. super)</small> <span class="fn-tip" data-tip="Production commission — <strong>1% of Event GP</strong>. Paid alongside GP commission each fortnight, no band math (flat rate). Inclusive of super.">?</span></th>
-              <th class="num" style="width: 110px;">Cumulative <span class="fn-tip" data-tip="Running total of GP Comm + Production Comm — what's been paid year-to-date.">?</span></th>
+              <th rowspan="2" style="text-align: left; width: 150px; vertical-align: bottom;">Pay date</th>
+              <th rowspan="2" class="num" style="width: 110px; vertical-align: bottom;">GP received <span class="fn-tip" data-tip="<strong>Editable</strong> for fortnights not yet confirmed — type any value to model your year. Pull these from the Zoho Payments report once a fortnight closes. Confirmed fortnights are locked to your actual paid figure.">?</span></th>
+              <th rowspan="2" class="num" style="width: 100px; vertical-align: bottom;">Event GP <span class="fn-tip" data-tip="<strong>Editable</strong> — GP <em>produced</em> (events delivered) this fortnight. Drives the 1% production commission.">?</span></th>
+              <th rowspan="2" class="num" style="width: 70px; vertical-align: bottom;">Band <span class="fn-tip" data-tip="The marginal rate the last dollar of your year-to-date GP earned at.">?</span></th>
+              <th colspan="2" class="num" style="border-left: 2px solid #d3d1c7; border-bottom: 1px solid #ecebe5; text-align: center; padding-bottom: 4px;">→ Xero Payroll <span class="fn-tip" data-tip="These two numbers go straight onto your payslip in Xero — the <strong>Bonus</strong> line (ex super) and the <strong>Super</strong> line (12%). Check them against your payslip. Hover either cell for the GP-commission / production / true-up breakdown.">?</span></th>
+              <th rowspan="2" class="num" style="width: 105px; border-left: 2px solid #d3d1c7; vertical-align: bottom;">Total this pay <span class="fn-tip" data-tip="Bonus + Super for this fortnight — the full amount that hits your bank account plus super fund.">?</span></th>
+              <th rowspan="2" class="num" style="width: 110px; vertical-align: bottom;">Paid to date <span class="fn-tip" data-tip="Running total of every fortnight's Total this pay, year-to-date.">?</span></th>
+            </tr>
+            <tr>
+              <th class="num" style="width: 95px; border-left: 2px solid #d3d1c7;">Bonus <small>(ex super)</small></th>
+              <th class="num" style="width: 90px;">Super <small>(12%)</small></th>
             </tr>
           </thead>
           <tbody id="fortnightly-body"></tbody>
@@ -1732,16 +1734,29 @@ function _readCachedData() {
     if (!raw) return null;
     const obj = JSON.parse(raw);
     if (!obj.expires || obj.expires < Date.now()) return null;
-    return obj.data;
+    return obj; // { data, expires, fp }
   } catch (e) { return null; }
 }
 
-function _writeCachedData(data) {
+function _writeCachedData(data, fp) {
   try {
     localStorage.setItem(PIN_CACHE_KEY, JSON.stringify({
-      data, expires: Date.now() + PIN_CACHE_TTL_MS
+      data, fp: fp || '', expires: Date.now() + PIN_CACHE_TTL_MS
     }));
   } catch (e) {}
+}
+
+// Cheap fingerprint of the encrypted blob. The ciphertext + IV are freshly random on
+// every re-encrypt, so this value changes whenever payroll saves new data — letting us
+// detect that the cached (decrypted) copy is stale and must be re-fetched.
+function _blobFingerprint(enc) {
+  try {
+    const d = (enc && enc.data) || {};
+    const s = (d.ct || '') + '|' + (d.iv || '');
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+    return String(h >>> 0);
+  } catch (e) { return ''; }
 }
 
 function _clearCache() {
@@ -1756,11 +1771,14 @@ async function _fetchEncrypted() {
 
 // Returns the decrypted data object, prompting for PIN if no valid cache exists.
 async function unlockDashboard() {
-  // Try cache first
-  const cached = _readCachedData();
-  if (cached) return cached;
-  // Otherwise prompt
+  // Always fetch the latest encrypted blob first so we can detect whether payroll
+  // pushed new data since this browser last decrypted. The fingerprint changes on
+  // every save, so stale caches are caught instead of being shown for up to 30 days.
   const encrypted = await _fetchEncrypted();
+  const fp = _blobFingerprint(encrypted);
+  const cached = _readCachedData();
+  if (cached && cached.fp === fp) return cached.data; // nothing changed → use cache, no prompt
+  // First visit, expired cache, OR the data changed → prompt to decrypt the new blob.
   return new Promise((resolve, reject) => {
     const overlay = document.getElementById('pin-gate');
     overlay.style.display = 'flex';
@@ -1820,7 +1838,7 @@ async function unlockDashboard() {
       loadEl.textContent = 'Decrypting…';
       try {
         const data = await decryptWithPassword(encrypted, password, usingMaster);
-        _writeCachedData(data);
+        _writeCachedData(data, fp);
         loadEl.textContent = '';
         overlay.style.display = 'none';
         resolve(data);
@@ -1929,6 +1947,12 @@ async function load() {
 
     // Per-employee scenario defaults from data.json (e.g., Evie starts at $175k not $300k)
     applyScenarioDefaults();
+
+    // Push payroll-confirmed fortnights into the fortnightly widget (locked "paid" rows)
+    // and align its bands with the rep's actual plan.
+    if (typeof window.__hydrateFortnightlyFromData === 'function') {
+      window.__hydrateFortnightlyFromData(emp, plan);
+    }
 
     // Wire the per-employee Zoho actual-data button (Sales reps only)
     if (emp.zohoDataUrl) {
@@ -4323,7 +4347,7 @@ function renderBreakdown(r) {
 
   // Bands match the current sales-rep plan (gp_bands).
   // Each band slice: [thresholdStart, marginalRate]
-  const BANDS = [
+  let BANDS = [
     [0,       0.04],
     [50000,   0.04],
     [100000,  0.04],
@@ -4360,42 +4384,51 @@ function renderBreakdown(r) {
     return rate;
   }
 
-  // 26 fortnights: first pay Mon 15 Jun 2026 → final pay Mon 31 May 2027.
-  // Period = 14-day window ending the Sunday BEFORE pay date.
-  // Pay date determines which month the fortnight belongs to.
-  const FORTNIGHTS = [
-    { period: '1 Jun – 14 Jun 2026',  paid: '15 Jun 2026', month: 'Jun 2026' },
-    { period: '15 Jun – 28 Jun 2026', paid: '29 Jun 2026', month: 'Jun 2026' },
-    { period: '29 Jun – 12 Jul 2026', paid: '13 Jul 2026', month: 'Jul 2026' },
-    { period: '13 Jul – 26 Jul 2026', paid: '27 Jul 2026', month: 'Jul 2026' },
-    { period: '27 Jul – 9 Aug 2026',  paid: '10 Aug 2026', month: 'Aug 2026' },
-    { period: '10 Aug – 23 Aug 2026', paid: '24 Aug 2026', month: 'Aug 2026' },
-    { period: '24 Aug – 6 Sep 2026',  paid: '7 Sep 2026',  month: 'Sep 2026' },
-    { period: '7 Sep – 20 Sep 2026',  paid: '21 Sep 2026', month: 'Sep 2026' },
-    { period: '21 Sep – 4 Oct 2026',  paid: '5 Oct 2026',  month: 'Oct 2026' },
-    { period: '5 Oct – 18 Oct 2026',  paid: '19 Oct 2026', month: 'Oct 2026' },
-    { period: '19 Oct – 1 Nov 2026',  paid: '2 Nov 2026',  month: 'Nov 2026' },
-    { period: '2 Nov – 15 Nov 2026',  paid: '16 Nov 2026', month: 'Nov 2026' },
-    { period: '16 Nov – 29 Nov 2026', paid: '30 Nov 2026', month: 'Nov 2026' },
-    { period: '30 Nov – 13 Dec 2026', paid: '14 Dec 2026', month: 'Dec 2026' },
-    { period: '14 Dec – 27 Dec 2026', paid: '28 Dec 2026', month: 'Dec 2026' },
-    { period: '28 Dec – 10 Jan 2027', paid: '11 Jan 2027', month: 'Jan 2027' },
-    { period: '11 Jan – 24 Jan 2027', paid: '25 Jan 2027', month: 'Jan 2027' },
-    { period: '25 Jan – 7 Feb 2027',  paid: '8 Feb 2027',  month: 'Feb 2027' },
-    { period: '8 Feb – 21 Feb 2027',  paid: '22 Feb 2027', month: 'Feb 2027' },
-    { period: '22 Feb – 7 Mar 2027',  paid: '8 Mar 2027',  month: 'Mar 2027' },
-    { period: '8 Mar – 21 Mar 2027',  paid: '22 Mar 2027', month: 'Mar 2027' },
-    { period: '22 Mar – 4 Apr 2027',  paid: '5 Apr 2027',  month: 'Apr 2027' },
-    { period: '5 Apr – 18 Apr 2027',  paid: '19 Apr 2027', month: 'Apr 2027' },
-    { period: '19 Apr – 2 May 2027',  paid: '3 May 2027',  month: 'May 2027' },
-    { period: '3 May – 16 May 2027',  paid: '17 May 2027', month: 'May 2027' },
-    { period: '17 May – 30 May 2027', paid: '31 May 2027', month: 'May 2027' }
-  ];
+  // Fortnight schedule — GENERATED from a single anchor so it never needs annual edits.
+  // Anchor: first fortnight worked 1–14 Jun 2026, paid 15 Jun 2026. Each fortnight is
+  // 14 days; pay date = period end + 1 day. Index 0 is always 15 Jun 2026, so this stays
+  // backward-compatible with stored data. We generate 12 "years" of 26 fortnights each.
+  const FN_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const BLOCK_SIZE = 26;
+  const NUM_BLOCKS = 12;
+  function _fnFull(d) { return `${d.getUTCDate()} ${FN_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`; }
+  function _fnShort(d) { return `${d.getUTCDate()} ${FN_MONTHS[d.getUTCMonth()]}`; }
+  function buildFortnights(count) {
+    const MS = 86400000;
+    let start = new Date(Date.UTC(2026, 5, 1)); // 1 Jun 2026
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const end = new Date(start.getTime() + 13 * MS);
+      const paid = new Date(start.getTime() + 14 * MS);
+      const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+      out.push({
+        period: `${sameYear ? _fnShort(start) : _fnFull(start)} – ${_fnFull(end)}`,
+        paid: _fnFull(paid),
+        paidMs: paid.getTime(),
+        month: `${FN_MONTHS[paid.getUTCMonth()]} ${paid.getUTCFullYear()}`
+      });
+      start = new Date(start.getTime() + 14 * MS);
+    }
+    return out;
+  }
+  const FORTNIGHTS = buildFortnights(BLOCK_SIZE * NUM_BLOCKS); // 312 fortnights ≈ 12 years
+  // Which 26-fortnight "year" is on screen. Default to the year containing today.
+  let activeBlock = 0;
+  (function () {
+    const now = Date.now();
+    for (let b = 0; b < NUM_BLOCKS; b++) {
+      if (FORTNIGHTS[b * BLOCK_SIZE + BLOCK_SIZE - 1].paidMs >= now) { activeBlock = b; break; }
+    }
+  })();
 
-  // Per-fortnight GP — starts BLANK (0). User edits via inline inputs.
+  // Per-fortnight GP — starts BLANK (0). User edits via inline inputs (for unconfirmed
+  // fortnights, this is the rep's own modelling). Confirmed fortnights are overwritten
+  // with the admin-entered actuals and locked — see __hydrateFortnightlyFromData.
   const gpValues = new Array(FORTNIGHTS.length).fill(0);
   // Parallel array for Event GP Produced (drives 1% production commission).
   const eventGpValues = new Array(FORTNIGHTS.length).fill(0);
+  // True for fortnights that payroll has confirmed & saved — shown locked as "paid".
+  const confirmedArr = new Array(FORTNIGHTS.length).fill(false);
   // Production commission rate — flat 1% of Event GP, inc super (matches all sales plans).
   const PROD_RATE = 0.01;
 
@@ -4586,8 +4619,30 @@ function renderBreakdown(r) {
     return body;
   }
 
+  // Year switcher — pick which 26-fortnight "year" is on screen (◀ / dropdown / ▶).
+  function renderYearSwitch() {
+    const el = document.getElementById('fn-year-switch');
+    if (!el) return;
+    const label = (b) => `${FORTNIGHTS[b * BLOCK_SIZE].month} – ${FORTNIGHTS[b * BLOCK_SIZE + BLOCK_SIZE - 1].month}`;
+    let opts = '';
+    for (let b = 0; b < NUM_BLOCKS; b++) opts += `<option value="${b}" ${b === activeBlock ? 'selected' : ''}>${label(b)}</option>`;
+    const navBtn = 'width:28px;height:28px;border:1px solid #d3d1c7;background:#fff;border-radius:6px;cursor:pointer;font-size:12px;color:var(--ink);';
+    el.innerHTML =
+      `<button type="button" id="fn-year-prev" ${activeBlock <= 0 ? 'disabled' : ''} style="${navBtn}${activeBlock <= 0 ? 'opacity:.4;cursor:not-allowed;' : ''}">◀</button>`
+      + `<select id="fn-year-sel" title="Choose which pay year to view" style="padding:5px 8px;border:1px solid #d3d1c7;border-radius:6px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;">${opts}</select>`
+      + `<button type="button" id="fn-year-next" ${activeBlock >= NUM_BLOCKS - 1 ? 'disabled' : ''} style="${navBtn}${activeBlock >= NUM_BLOCKS - 1 ? 'opacity:.4;cursor:not-allowed;' : ''}">▶</button>`
+      + `<span style="font-size:11px;color:var(--faint);font-family:var(--mono);">${BLOCK_SIZE} fortnights</span>`;
+    const prev = document.getElementById('fn-year-prev');
+    const next = document.getElementById('fn-year-next');
+    const sel = document.getElementById('fn-year-sel');
+    if (prev) prev.onclick = () => { if (activeBlock > 0) { activeBlock--; render(); } };
+    if (next) next.onclick = () => { if (activeBlock < NUM_BLOCKS - 1) { activeBlock++; render(); } };
+    if (sel) sel.onchange = () => { activeBlock = parseInt(sel.value, 10) || 0; render(); };
+  }
+
   // -------- Main render: re-runs every time a GP / Event GP cell changes --------
   function render() {
+    renderYearSwitch();
     // Compute per-fortnight rows. Two parallel cash streams:
     //   • GP commission — banded math against YTD GP Received (with TU on crossings)
     //   • Production commission — flat 1% × Event GP Produced this fortnight
@@ -4597,7 +4652,9 @@ function renderBreakdown(r) {
     let cumProd = 0;      // cumulative production commission
     let cumEventGp = 0;   // cumulative Event GP (for tooltips)
     const rows = [];
-    FORTNIGHTS.forEach((fn, i) => {
+    const bStart = activeBlock * BLOCK_SIZE;
+    FORTNIGHTS.slice(bStart, bStart + BLOCK_SIZE).forEach((fn, pos) => {
+      const i = bStart + pos;
       const gp = gpValues[i] || 0;
       const eventGp = eventGpValues[i] || 0;
       const prevYtd = ytd;
@@ -4620,13 +4677,18 @@ function renderBreakdown(r) {
         prodComm,
         cumPay, cumProd, cumEventGp,
         cumTotal: cumPay + cumProd,
-        crossed
+        crossed,
+        confirmed: confirmedArr[i] === true,
+        posInBlock: pos
       });
     });
 
     // Totals strip with ? tooltips
     const totalGP = rows[rows.length - 1].ytd;
     const totalPay = rows[rows.length - 1].cumPay;
+    const totalProd = rows[rows.length - 1].cumProd;
+    const totalAll = totalPay + totalProd;
+    const totalEventGp = rows[rows.length - 1].cumEventGp;
     const crossingCount = rows.filter(r => r.crossed).length;
     const avgRate = totalGP > 0 ? totalPay / totalGP : 0;
     const yearGpTip = `<div style="font-weight: 700; margin-bottom: 4px;">Year-to-date GP received</div><div>Sum of every fortnight's GP Received entry above. Updates live as you edit.</div>`;
@@ -4665,7 +4727,7 @@ function renderBreakdown(r) {
       </div>
       <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
         <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">Year Pay (inc. super) <span class="fn-tip" data-tip='${esc(yearPayTip)}'>?</span></div>
-        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 2px;">${_fmt(totalPay)}</div>
+        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 2px;">${_fmt(totalAll)}</div>
       </div>
       <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
         <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">Effective Rate <span class="fn-tip" data-tip='${esc(effRateTip)}'>?</span></div>
@@ -4729,94 +4791,78 @@ function renderBreakdown(r) {
       const lastCumEx = lastCumTotal / 1.12;
       const lastCumSuper = lastCumTotal - lastCumEx;
       const _breakdown = (ex, sup) => `<div style="font-size: 9px; color: var(--muted); margin-top: 2px; font-family: var(--mono); font-weight: 400;">${_fmt(ex)} bonus + ${_fmt(sup)} super</div>`;
+      const groupTotalInc = groupPay + groupProd;
+      const groupBonus = groupPayEx + groupProdEx;
+      const groupSuper = groupPaySuper + groupProdSuper;
+      const anyConf = group.rows.some(r => r.confirmed);
       html += `
         <tr class="fn-month-row" data-group="${gi}" data-open="${isOpen ? '1' : '0'}" data-tip='${esc(mTip)}' style="cursor: pointer; font-weight: 600; ${groupBg}">
-          <td><span class="fn-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span> ${group.month}${hasCrossing ? ' <span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 4px;">CROSSING</span>' : ''}</td>
+          <td><span class="fn-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span> ${group.month}${anyConf ? ' <span style="font-size: 9px; padding: 1px 5px; background: #eaf5ec; color: #1e6624; border-radius: 3px; margin-left: 4px;">✓ PAID</span>' : ''}${hasCrossing ? ' <span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 4px;">CROSSING</span>' : ''}</td>
           <td class="num">${groupGP > 0 ? _fmt(groupGP) : '<span style="color: var(--faint);">—</span>'}</td>
-          <td class="num" style="color: var(--muted);">${_fmt(lastYtd)}</td>
+          <td class="num">${groupEventGp > 0 ? _fmt(groupEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num">${monthBandCellHtml}</td>
-          <td class="num">${groupPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(monthPayTip)}'>${_fmt(groupPay)}</span>${_breakdown(groupPayEx, groupPaySuper)}` : '<span style="color: var(--faint);">—</span>'}</td>
-          <td class="num">${groupTuPill}</td>
-          <td class="num" style="${SEP}">${groupEventGp > 0 ? _fmt(groupEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
-          <td class="num">${groupProd > 0 ? `${_fmt(groupProd)}${_breakdown(groupProdEx, groupProdSuper)}` : '<span style="color: var(--faint);">—</span>'}</td>
-          <td class="num" style="color: var(--muted);">${_fmt(lastCumTotal)}${lastCumTotal > 0 ? _breakdown(lastCumEx, lastCumSuper) : ''}</td>
+          <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${groupTotalInc > 0 ? _fmt(groupBonus) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+          <td class="num" style="color: var(--navy); font-weight: 700;">${groupTotalInc > 0 ? _fmt(groupSuper) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+          <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${groupTotalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(monthPayTip)}'>${_fmt(groupTotalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+          <td class="num" style="color: var(--muted);">${_fmt(lastCumTotal)}</td>
         </tr>
       `;
 
       group.rows.forEach(r => {
         idxToGroup[r.idx] = gi;
-        const tuText = Math.abs(r.tuAdj) < 0.5 ? '—' : _fmtSigned(r.tuAdj);
-        const tuPill = Math.abs(r.tuAdj) < 0.5
-          ? `<span class="fn-tu-pill dim">—</span>`
-          : `<span class="fn-tu-pill live" data-tip='${esc(tuTipHtml(r))}'>${tuText}</span>`;
-        const rowBg = r.crossed ? 'background: #fffbeb;' : '';
+        const isConf = r.confirmed;
+        const lockAttr = isConf ? 'readonly title="Confirmed by payroll — your actual paid figure"' : '';
+        const lockStyle = isConf ? 'background:#eaf5ec; border-color:#bfe0c6; color:#1e6624; cursor:default;' : '';
         const displayStyle = isOpen ? '' : 'display: none;';
+        const rowBg = isConf ? 'background: #f3faf4;' : (r.crossed ? 'background: #fffbeb;' : '');
         const rBandCellHtml = bandCellHtml(r);
-        const rPayTip = payCellTipHtml(r);
-        const prodTip = r.prodComm > 0
-          ? `<div style="font-weight: 700; margin-bottom: 4px;">Production commission</div><div>Event GP this fortnight: <code>${_fmt(r.eventGp)}</code></div><div>× 1% = <code>${_fmt(r.prodComm)}</code></div><div style="margin-top: 4px; color: #aaa; font-size: 11px;">Flat 1% on Event GP Produced (no band math). Inclusive of super.</div>`
-          : `<div>No Event GP entered for this fortnight.</div>`;
-        // Per-fortnight ex-super / super breakdown lines
-        const rGpEx = r.properPay / 1.12;
-        const rGpSup = r.properPay - rGpEx;
-        const rProdEx = r.prodComm / 1.12;
-        const rProdSup = r.prodComm - rProdEx;
-        const rCumEx = r.cumTotal / 1.12;
-        const rCumSup = r.cumTotal - rCumEx;
-        const _bk = (ex, sup) => `<div style="font-size: 9px; color: var(--muted); margin-top: 2px; font-family: var(--mono); font-weight: 400;">${_fmt(ex)} bonus + ${_fmt(sup)} super</div>`;
+        const totalInc = r.properPay + r.prodComm;
+        const bonus = totalInc / (1 + SUPER_RATE);
+        const superAmt = totalInc - bonus;
+        // One breakdown tooltip, reused on the Bonus / Super / Total cells.
+        const bd = `<div style="font-weight:700;margin-bottom:4px;">${esc(r.paid)} — how this pay is made up</div>`
+          + `<div>GP commission: <code>${_fmt(r.properPay)}</code> <span style="color:#aaa;">(inc super)</span></div>`
+          + `<div>Production commission: <code>${_fmt(r.prodComm)}</code> <span style="color:#aaa;">(1% of Event GP)</span></div>`
+          + (Math.abs(r.tuAdj) > 0.5 ? `<div>True-up: <code>${_fmtSigned(r.tuAdj)}</code> <span style="color:#aaa;">(band crossing)</span></div>` : '')
+          + `<hr><div>Bonus (ex super): <code>${_fmt(bonus)}</code></div>`
+          + `<div>+ Super (12%): <code>${_fmt(superAmt)}</code></div>`
+          + `<div><strong>Total this pay: ${_fmt(totalInc)}</strong></div>`
+          + (isConf ? `<hr><div style="color:#9be7a8;">✓ Confirmed by payroll — this is your actual paid figure.</div>` : '');
+        const periodTip = `<div style="font-weight:700;margin-bottom:4px;">Fortnight ${r.posInBlock + 1} of ${BLOCK_SIZE}</div><div>Period worked: <code>${esc(r.period)}</code></div><div>Paid on: <code>${esc(r.paid)}</code></div>`;
         html += `
           <tr class="fn-detail-row fn-detail-${gi}" style="${displayStyle} ${rowBg}">
-            <td style="padding-left: 24px; color: var(--muted); font-family: var(--mono); font-size: 11px;">
-              <span data-tip='${esc(`<div style="font-weight:700;margin-bottom:4px;">Fortnight ${r.idx + 1} of 26</div><div>Period covered: <code>${esc(r.period)}</code></div><div>Paid on: <code>${esc(r.paid)}</code></div>`)}' style="cursor: help; border-bottom: 1px dotted var(--faint);">${r.period}</span>
+            <td style="white-space: nowrap; padding-left: 18px;" data-tip='${esc(periodTip)}'>
+              <div style="font-family: var(--mono); font-weight: 600; color: var(--ink);">${esc(r.paid)}</div>
+              <div style="font-family: var(--mono); font-size: 10px; color: var(--faint);">${esc(r.period)}</div>
             </td>
-            <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
-            <td class="num" style="color: var(--muted);">${_fmt(r.ytd)}</td>
+            <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
+            <td class="num"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
             <td class="num">${rBandCellHtml}</td>
-            <td class="num">${r.properPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(rPayTip)}'>${_fmt(r.properPay)}</span>${_bk(rGpEx, rGpSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
-            <td class="num">${tuPill}</td>
-            <td class="num" style="${SEP}"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
-            <td class="num">${r.prodComm > 0 ? `<span class="fn-pay-cell" data-tip='${esc(prodTip)}'>${_fmt(r.prodComm)}</span>${_bk(rProdEx, rProdSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
-            <td class="num" style="color: var(--muted);">${_fmt(r.cumTotal)}${r.cumTotal > 0 ? _bk(rCumEx, rCumSup) : ''}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="font-size:9px; color:#1e6624; font-weight:700; margin-top:1px;">✓ PAID</div>' : ''}</td>
+            <td class="num" style="color: var(--navy); font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt(superAmt)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt(totalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+            <td class="num" style="color: var(--muted);">${_fmt(r.cumTotal)}</td>
           </tr>
         `;
       });
     });
     tbody.innerHTML = html;
 
-    // Footer — band cell: end-of-year band as main, effective rate as small pill
-    const totalTu = rows.reduce((s, r) => s + r.tuAdj, 0);
-    const totalEventGp = rows.reduce((s, r) => s + r.eventGp, 0);
-    const totalProd = rows.reduce((s, r) => s + r.prodComm, 0);
-    const totalAll = totalPay + totalProd;
-    const totalPayTip = payAggTipHtml('Total FY27 GP pay', totalPay);
-    const totalCumTip = payAggTipHtml('Total FY27 pay (GP + Production)', totalAll);
+    // Footer — year totals
+    const totalCumTip = payAggTipHtml('Year total pay (Bonus + Super)', totalAll);
     const endBand = totalGP > 0 ? marginalRate(totalGP) : 0;
-    const endBandPct = (endBand * 100).toFixed(0) + '%';
-    const effRatePct = (avgRate * 100).toFixed(1) + '%';
-    const yearEndTip = `<div style="font-weight: 700; margin-bottom: 4px;">Year-end band</div><div>The band the <strong>last dollar of the year</strong> earned at. The single highest band the rep tapped into across the full year.</div>`;
-    const yearEffTip = `<div style="font-weight: 700; margin-bottom: 4px;">Effective rate (blended)</div><div>Total pay ÷ total GP — the blended average rate across every band touched this year.</div>`;
-    const bandFooterHtml = totalGP > 0
-      ? `<span class="fn-pace-main" data-tip='${esc(yearEndTip)}'>${endBandPct}</span><span class="fn-ytd-pill" data-tip='${esc(yearEffTip)}'>Eff ${effRatePct}</span>`
-      : `<span style="color: var(--faint);">—</span>`;
-    // Year-total breakdowns
-    const totalPayEx = totalPay / 1.12;
-    const totalPaySup = totalPay - totalPayEx;
-    const totalProdEx = totalProd / 1.12;
-    const totalProdSup = totalProd - totalProdEx;
-    const totalAllEx = totalAll / 1.12;
-    const totalAllSup = totalAll - totalAllEx;
-    const _bkFoot = (ex, sup) => `<div style="font-size: 10px; color: var(--muted); margin-top: 3px; font-family: var(--mono); font-weight: 500;">${_fmt(ex)} bonus + ${_fmt(sup)} super</div>`;
+    const totalBonus = totalAll / (1 + SUPER_RATE);
+    const totalSuper = totalAll - totalBonus;
     tfoot.innerHTML = `
       <tr style="font-weight: 700; border-top: 2px solid #d3d1c7; background: #f6f8fc;">
-        <td>Total FY27</td>
+        <td>Year total</td>
         <td class="num">${totalGP > 0 ? _fmt(totalGP) : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num" style="color: var(--muted);">—</td>
-        <td class="num">${bandFooterHtml}</td>
-        <td class="num">${totalPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalPayTip)}'>${_fmt(totalPay)}</span>${_bkFoot(totalPayEx, totalPaySup)}` : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num">${Math.abs(totalTu) < 0.5 ? '<span class="fn-tu-pill dim">—</span>' : '<span class="fn-tu-pill live">' + _fmtSigned(totalTu) + '</span>'}</td>
-        <td class="num" style="${SEP}">${totalEventGp > 0 ? _fmt(totalEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num">${totalProd > 0 ? `${_fmt(totalProd)}${_bkFoot(totalProdEx, totalProdSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num">${totalAll > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalCumTip)}'>${_fmt(totalAll)}</span>${_bkFoot(totalAllEx, totalAllSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num">${totalEventGp > 0 ? _fmt(totalEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num">${totalGP > 0 ? (endBand * 100).toFixed(0) + '%' : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624;">${totalAll > 0 ? _fmt(totalBonus) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="color: var(--navy);">${totalAll > 0 ? _fmt(totalSuper) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="border-left: 2px solid #d3d1c7;">${totalAll > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalCumTip)}'>${_fmt(totalAll)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="color: var(--muted);">${_fmt(totalAll)}</td>
       </tr>
     `;
 
@@ -4863,7 +4909,7 @@ function renderBreakdown(r) {
         if (e.key === 'Escape') { e.preventDefault(); inp.blur(); return; }
         const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
         if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
-          if (curIdx < FORTNIGHTS.length - 1) {
+          if (curIdx < bStart + BLOCK_SIZE - 1) {
             e.preventDefault();
             commit();
             const nextIdx = curIdx + 1;
@@ -4878,7 +4924,7 @@ function renderBreakdown(r) {
             inp.blur();
           }
         } else if (e.key === 'Tab' && e.shiftKey) {
-          if (curIdx > 0) {
+          if (curIdx > bStart) {
             e.preventDefault();
             commit();
             const prevIdx = curIdx - 1;
@@ -5172,9 +5218,36 @@ function renderBreakdown(r) {
     });
   }
 
-  // Initial render (all-blank)
+  // Initial render (all-blank — replaced once data unlocks)
   render();
   renderTrailing();
+
+  // ---- Bridge hook: payroll-confirmed fortnights flow in here after unlock. ----
+  // Called by the load flow once `emp`/`plan` are available. Replaces the fallback
+  // bands with the rep's real plan bands, then loads each CONFIRMED fortnight's
+  // admin-entered figures and locks them as the rep's actual paid amounts.
+  // Unconfirmed fortnights are left untouched so the rep can keep modelling.
+  window.__hydrateFortnightlyFromData = function (empRec, planRec) {
+    try {
+      if (planRec && Array.isArray(planRec.bands) && planRec.bands.length) {
+        BANDS = planRec.bands
+          .map(b => [Number(b.threshold) || 0, Number(b.rate) || 0])
+          .sort((a, b) => a[0] - b[0]);
+      }
+      const f = empRec && empRec.fortnightly;
+      if (f && Array.isArray(f.confirmed)) {
+        for (let i = 0; i < FORTNIGHTS.length; i++) {
+          if (f.confirmed[i] === true) {
+            confirmedArr[i] = true;
+            gpValues[i] = (Array.isArray(f.gp) && typeof f.gp[i] === 'number') ? f.gp[i] : 0;
+            eventGpValues[i] = (Array.isArray(f.event) && typeof f.event[i] === 'number') ? f.event[i] : 0;
+          }
+        }
+      }
+      render();
+      renderTrailing();
+    } catch (e) { /* non-fatal — widget keeps working as a model */ }
+  };
 })();
 
 load();
