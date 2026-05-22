@@ -484,10 +484,27 @@
   <div class="save-bar-left">
     <span class="gh-conn">GitHub: <span id="gh-status">not connected</span></span>
     <button class="btn-link" id="gh-config-btn" title="Connect to GitHub or change the saved token. You normally only need this once.">Configure GitHub</button>
+    <button class="btn-link" id="verify-push-btn" title="Re-read each employee's published dashboard data and confirm your confirmed pay runs actually landed.">✓ Verify reached dashboards</button>
   </div>
   <div class="save-bar-right">
     <span class="unsaved-badge" id="save-status">● Unsaved changes — click Save</span>
     <button class="btn primary btn-save" id="save-gh-btn">☁ Save to GitHub</button>
+  </div>
+</div>
+
+<!-- Verify-push results modal -->
+<div class="modal-backdrop" id="verify-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:300; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:10px; padding:24px 28px; max-width:560px; width:92%; max-height:80vh; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <h2 style="margin:0; font-size:18px;">Did it reach the dashboards?</h2>
+      <button id="verify-close" style="border:none; background:none; font-size:22px; cursor:pointer; color:var(--muted); line-height:1;">×</button>
+    </div>
+    <p style="font-size:12px; color:var(--muted); margin:0 0 14px;">Re-reads each rep's published data and checks your <strong>confirmed</strong> pay runs actually landed. If you just saved, give GitHub ~60 seconds to publish, then re-check.</p>
+    <div id="verify-results"></div>
+    <div style="margin-top:16px; display:flex; justify-content:flex-end; gap:10px;">
+      <button id="verify-recheck" class="btn" style="padding:9px 16px;">Re-check</button>
+      <button id="verify-done" class="btn primary" style="padding:9px 16px;">Done</button>
+    </div>
   </div>
 </div>
 
