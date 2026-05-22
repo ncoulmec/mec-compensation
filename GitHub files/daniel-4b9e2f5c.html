@@ -1283,8 +1283,8 @@
   <section class="panel" id="panel-payouts">
     <!-- payout-banner removed — payout cadence is implied by the fortnightly preview below. -->
 
-    <details class="super-card" style="margin-bottom: 14px;">
-      <summary style="cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 4px 0; user-select: none;">▸ Detailed breakdown — base, commission &amp; super</summary>
+    <details class="super-card" id="detailed-breakdown-card" style="margin-bottom: 14px;">
+      <summary style="cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 4px 0; user-select: none;">Detailed breakdown — base, commission &amp; super</summary>
       <div style="margin-top: 12px;">
         <div class="super-line"><span>Base salary (ex-super)</span><span id="spr-base">—</span></div>
         <div class="super-line"><span>+ GP Commission (ex-super portion)</span><span id="spr-comm" class="plus-line">—</span></div>
@@ -1306,6 +1306,8 @@
         </div>
         <div id="fn-year-switch" style="display: flex; align-items: center; gap: 8px;"></div>
       </div>
+
+      <div id="fn-latest-hero" style="margin: 14px 0;"></div>
 
       <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
 
@@ -1411,7 +1413,7 @@
 
       <!-- Collapsible monthly breakdown -->
       <details id="trailing-details" style="margin-top: 8px;">
-        <summary style="cursor: pointer; font-weight: 600; color: var(--muted); padding: 6px 0; font-size: 12px;">▸ Show monthly breakdown</summary>
+        <summary style="cursor: pointer; font-weight: 600; color: var(--muted); padding: 6px 0; font-size: 12px;">Show monthly breakdown</summary>
         <div style="overflow-x: auto; margin-top: 10px;">
           <table class="monthly" id="trailing-table" style="width: 100%;">
             <thead>
@@ -1590,7 +1592,7 @@ const EMPLOYEE_ID = 'daniel';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v35`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v36`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -3671,13 +3673,18 @@ function renderOTECard() {
       </div>
     </div>
     <details style="margin-top: 10px;">
-      <summary style="cursor: pointer; font-size: 11px; color: var(--muted); padding: 4px 0; font-family: var(--mono); user-select: none;">▸ Pay mix philosophy — why the plan is moving toward more variable</summary>
+      <summary style="cursor: pointer; font-size: 11px; color: var(--muted); padding: 4px 0; font-family: var(--mono); user-select: none;">Pay mix philosophy — why the plan is moving toward more variable</summary>
       <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6; margin-top: 6px;">
         Historically most MEC roles sat at roughly <strong>${philosophy?.legacyMix || '85:15'}</strong> or even <strong>${philosophy?.legacyMixOlder || '90:10'}</strong> base-to-variable — comfortable, predictable, but with limited upside. The plan you're looking at nudges us toward <strong>${philosophy?.futureGoal || '75:25'}</strong> over the next few years — gradually putting more of your earnings inside your control. Not a flip-of-the-switch change, more a steady walk in that direction. Bigger ceiling, more reward for stretching.
       </div>
     </details>
   `;
   wrap.insertBefore(card, wrap.firstChild);
+
+  // Declutter: move the "Detailed breakdown" explainer to the BOTTOM of the tab so the
+  // fortnightly payout (the daily-use tool) sits directly under the headline + latest pay.
+  const db = document.getElementById('detailed-breakdown-card');
+  if (db) wrap.appendChild(db);
 
   // Wire Set to Target button — snaps floater + main GP slider to target
   if (snapTo) {
@@ -4347,6 +4354,37 @@ function renderBreakdown(r) {
     if (sel) sel.onchange = () => { activeBlock = parseInt(sel.value, 10) || 0; render(); };
   }
 
+  // "Your latest pay" hero — the most recent CONFIRMED fortnight in the year on screen
+  // shown large; if none confirmed yet, a friendly placeholder.
+  function renderLatestHero(rows) {
+    const el = document.getElementById('fn-latest-hero');
+    if (!el) return;
+    let r = null;
+    for (let i = rows.length - 1; i >= 0; i--) { if (rows[i].confirmed) { r = rows[i]; break; } }
+    if (!r) {
+      el.innerHTML = `<div style="background:#fafaf7; border:1px dashed #d3d1c7; border-radius:10px; padding:16px 20px; color:var(--muted); font-size:13px;">
+        <strong style="color:var(--ink);">No pay confirmed yet for this year.</strong> Once payroll locks your first fortnight, your latest paid <strong>Bonus</strong> and <strong>Super</strong> will appear here. You can model upcoming fortnights in the table below.</div>`;
+      return;
+    }
+    const totalInc = r.properPay + r.prodComm;
+    const bonus = totalInc / (1 + SUPER_RATE);
+    const superAmt = totalInc - bonus;
+    const big = (label, val, color) => `<div style="flex:1; min-width:130px;"><div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:700;">${label}</div><div style="font-family:var(--mono); font-size:26px; font-weight:800; color:${color}; margin-top:2px;">${val}</div></div>`;
+    el.innerHTML = `
+      <div style="background: linear-gradient(135deg,#f1f7f2 0%,#fff 60%); border:1px solid #bfe0c6; border-radius:10px; padding:16px 20px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+          <div style="font-size:13px; font-weight:800; color:#1e6624; text-transform:uppercase; letter-spacing:0.05em;">Your latest pay</div>
+          <span style="font-size:11px; font-weight:700; color:#1e6624; background:#eaf5ec; padding:3px 9px; border-radius:999px;">✓ PAID</span>
+          <div style="font-family:var(--mono); font-size:12px; color:var(--muted);">paid ${esc(r.paid)}</div>
+        </div>
+        <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end;">
+          ${big('Bonus → Xero', _fmt(bonus), '#1e6624')}
+          ${big('Super → Xero', _fmt(superAmt), 'var(--navy)')}
+          ${big('Total this pay', _fmt(totalInc), 'var(--ink)')}
+        </div>
+      </div>`;
+  }
+
   // -------- Main render: re-runs every time a GP / Event GP cell changes --------
   function render() {
     renderYearSwitch();
@@ -4501,10 +4539,14 @@ function renderBreakdown(r) {
       const groupTotalInc = groupPay + groupProd;
       const groupBonus = groupPayEx + groupProdEx;
       const groupSuper = groupPaySuper + groupProdSuper;
-      const anyConf = group.rows.some(r => r.confirmed);
+      const allConf = group.rows.every(r => r.confirmed);
+      const someConf = group.rows.some(r => r.confirmed);
+      const monthPaidPill = allConf
+        ? ' <span style="font-size: 9px; padding: 1px 5px; background: #eaf5ec; color: #1e6624; border-radius: 3px; margin-left: 4px;">✓ PAID</span>'
+        : (someConf ? ' <span style="font-size: 9px; padding: 1px 5px; background: #fdf6e3; color: #8a6a00; border-radius: 3px; margin-left: 4px;">PART PAID</span>' : '');
       html += `
         <tr class="fn-month-row" data-group="${gi}" data-open="${isOpen ? '1' : '0'}" data-tip='${esc(mTip)}' style="cursor: pointer; font-weight: 600; ${groupBg}">
-          <td><span class="fn-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span> ${group.month}${anyConf ? ' <span style="font-size: 9px; padding: 1px 5px; background: #eaf5ec; color: #1e6624; border-radius: 3px; margin-left: 4px;">✓ PAID</span>' : ''}${hasCrossing ? ' <span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 4px;">CROSSING</span>' : ''}</td>
+          <td><span class="fn-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span> ${group.month}${monthPaidPill}${hasCrossing ? ' <span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 4px;">CROSSING</span>' : ''}</td>
           <td class="num">${groupGP > 0 ? _fmt(groupGP) : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num">${groupEventGp > 0 ? _fmt(groupEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num">${monthBandCellHtml}</td>
@@ -4528,6 +4570,8 @@ function renderBreakdown(r) {
         const superAmt = totalInc - bonus;
         // One breakdown tooltip, reused on the Bonus / Super / Total cells.
         const bd = `<div style="font-weight:700;margin-bottom:4px;">${esc(r.paid)} — how this pay is made up</div>`
+          + `<div>GP received: <code>${_fmt(r.gp)}</code> · Event GP: <code>${_fmt(r.eventGp)}</code></div>`
+          + `<hr>`
           + `<div>GP commission: <code>${_fmt(r.properPay)}</code> <span style="color:#aaa;">(inc super)</span></div>`
           + `<div>Production commission: <code>${_fmt(r.prodComm)}</code> <span style="color:#aaa;">(1% of Event GP)</span></div>`
           + (Math.abs(r.tuAdj) > 0.5 ? `<div>True-up: <code>${_fmtSigned(r.tuAdj)}</code> <span style="color:#aaa;">(band crossing)</span></div>` : '')
@@ -4651,6 +4695,9 @@ function renderBreakdown(r) {
     tbody.querySelectorAll('.fn-event-input').forEach(inp => {
       inp.classList.add('fn-gp-input');
     });
+
+    // "Your latest pay" hero card above the table
+    renderLatestHero(rows);
 
     // Update audit feature live
     updateAudit(totalGP, totalEventGp);
