@@ -1590,7 +1590,7 @@ const EMPLOYEE_ID = 'daniel';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v34`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v35`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1643,16 +1643,29 @@ function _readCachedData() {
     if (!raw) return null;
     const obj = JSON.parse(raw);
     if (!obj.expires || obj.expires < Date.now()) return null;
-    return obj.data;
+    return obj; // { data, expires, fp }
   } catch (e) { return null; }
 }
 
-function _writeCachedData(data) {
+function _writeCachedData(data, fp) {
   try {
     localStorage.setItem(PIN_CACHE_KEY, JSON.stringify({
-      data, expires: Date.now() + PIN_CACHE_TTL_MS
+      data, fp: fp || '', expires: Date.now() + PIN_CACHE_TTL_MS
     }));
   } catch (e) {}
+}
+
+// Cheap fingerprint of the encrypted blob. The ciphertext + IV are freshly random on
+// every re-encrypt, so this value changes whenever payroll saves new data — letting us
+// detect that the cached (decrypted) copy is stale and must be re-fetched.
+function _blobFingerprint(enc) {
+  try {
+    const d = (enc && enc.data) || {};
+    const s = (d.ct || '') + '|' + (d.iv || '');
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+    return String(h >>> 0);
+  } catch (e) { return ''; }
 }
 
 function _clearCache() {
@@ -1667,11 +1680,14 @@ async function _fetchEncrypted() {
 
 // Returns the decrypted data object, prompting for PIN if no valid cache exists.
 async function unlockDashboard() {
-  // Try cache first
-  const cached = _readCachedData();
-  if (cached) return cached;
-  // Otherwise prompt
+  // Always fetch the latest encrypted blob first so we can detect whether payroll
+  // pushed new data since this browser last decrypted. The fingerprint changes on
+  // every save, so stale caches are caught instead of being shown for up to 30 days.
   const encrypted = await _fetchEncrypted();
+  const fp = _blobFingerprint(encrypted);
+  const cached = _readCachedData();
+  if (cached && cached.fp === fp) return cached.data; // nothing changed → use cache, no prompt
+  // First visit, expired cache, OR the data changed → prompt to decrypt the new blob.
   return new Promise((resolve, reject) => {
     const overlay = document.getElementById('pin-gate');
     overlay.style.display = 'flex';
@@ -1731,7 +1747,7 @@ async function unlockDashboard() {
       loadEl.textContent = 'Decrypting…';
       try {
         const data = await decryptWithPassword(encrypted, password, usingMaster);
-        _writeCachedData(data);
+        _writeCachedData(data, fp);
         loadEl.textContent = '';
         overlay.style.display = 'none';
         resolve(data);
