@@ -1302,7 +1302,7 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
         <div>
           <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. <strong>Edit the GP Received cells</strong> to model your year — hover the totals or any row for the breakdown.</p>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. Once payroll confirms a fortnight it appears <strong>locked and marked ✓ PAID</strong> — that's your actual paid figure, with the exact <strong>Bonus</strong> and <strong>Super</strong> amounts (right-hand columns) that go into Xero. Fortnights not yet confirmed stay <strong>editable so you can model your year</strong> — hover the totals or any row for the breakdown.</p>
         </div>
         <span style="font-size: 11px; color: var(--navy); font-family: var(--mono); font-weight: 600;">26 fortnights · Jun 2026 – May 2027</span>
       </div>
@@ -1322,6 +1322,8 @@
               <th class="num" style="width: 100px; border-left: 2px solid #ecebe5;">Event GP <span class="fn-tip" data-tip="<strong>Editable</strong> — total GP <em>produced</em> (events delivered) in this fortnight. Drives the 1% production commission below. Every sales role generates some production GP — log it here as the event closes out.">?</span></th>
               <th class="num" style="width: 100px;">Prod Comm <small>(inc. super)</small> <span class="fn-tip" data-tip="Production commission — <strong>1% of Event GP</strong>. Paid alongside GP commission each fortnight, no band math (flat rate). Inclusive of super.">?</span></th>
               <th class="num" style="width: 110px;">Cumulative <span class="fn-tip" data-tip="Running total of GP Comm + Production Comm — what's been paid year-to-date.">?</span></th>
+              <th class="num" style="width: 95px; border-left: 2px solid #ecebe5;">Bonus → Xero <span class="fn-tip" data-tip="The exact <strong>ex-super</strong> figure (GP commission + production commission) that goes into your Xero <em>Bonus</em> line for this fortnight. This is what you can check against your payslip.">?</span></th>
+              <th class="num" style="width: 95px;">Super → Xero <span class="fn-tip" data-tip="The <strong>super</strong> figure (12%) that goes into your Xero <em>super contribution</em> line for this fortnight. Bonus + Super = your total pay for the fortnight.">?</span></th>
             </tr>
           </thead>
           <tbody id="fortnightly-body"></tbody>
@@ -1588,7 +1590,7 @@ const EMPLOYEE_ID = 'daniel';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v32`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v33`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -1836,6 +1838,12 @@ async function load() {
 
     // Per-employee scenario defaults from data.json (e.g., Evie starts at $175k not $300k)
     applyScenarioDefaults();
+
+    // Push payroll-confirmed fortnights into the fortnightly widget (locked "paid" rows)
+    // and align its bands with the rep's actual plan.
+    if (typeof window.__hydrateFortnightlyFromData === 'function') {
+      window.__hydrateFortnightlyFromData(emp, plan);
+    }
 
     // Wire the per-employee Zoho actual-data button (Sales reps only)
     if (emp.zohoDataUrl) {
@@ -4028,9 +4036,11 @@ function renderBreakdown(r) {
     if (t.getAttribute('data-tip')) hideTip();
   }, true);
 
-  // Bands match the current sales-rep plan (gp_bands).
+  // Bands match the current sales-rep plan (gp_bands). Used as a fallback only —
+  // once the dashboard unlocks, __hydrateFortnightlyFromData replaces these with the
+  // rep's actual bands from data.planTypes so they can never drift out of sync.
   // Each band slice: [thresholdStart, marginalRate]
-  const BANDS = [
+  let BANDS = [
     [0,       0.04],
     [100000,  0.04],
     [200000,  0.04],
@@ -4097,10 +4107,14 @@ function renderBreakdown(r) {
     { period: '17 May – 30 May 2027', paid: '31 May 2027', month: 'May 2027' }
   ];
 
-  // Per-fortnight GP — starts BLANK (0). User edits via inline inputs.
+  // Per-fortnight GP — starts BLANK (0). User edits via inline inputs (for unconfirmed
+  // fortnights, this is the rep's own modelling). Confirmed fortnights are overwritten
+  // with the admin-entered actuals and locked — see __hydrateFortnightlyFromData.
   const gpValues = new Array(FORTNIGHTS.length).fill(0);
   // Parallel array for Event GP Produced (drives 1% production commission).
   const eventGpValues = new Array(FORTNIGHTS.length).fill(0);
+  // True for fortnights that payroll has confirmed & saved — shown locked as "paid".
+  const confirmedArr = new Array(FORTNIGHTS.length).fill(false);
   // Production commission rate — flat 1% of Event GP, inc super (matches all sales plans).
   const PROD_RATE = 0.01;
 
@@ -4445,11 +4459,16 @@ function renderBreakdown(r) {
           <td class="num" style="${SEP}">${groupEventGp > 0 ? _fmt(groupEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num">${groupProd > 0 ? `${_fmt(groupProd)}${_breakdown(groupProdEx, groupProdSuper)}` : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num" style="color: var(--muted);">${_fmt(lastCumTotal)}${lastCumTotal > 0 ? _breakdown(lastCumEx, lastCumSuper) : ''}</td>
+          <td class="num" style="border-left: 2px solid #ecebe5; font-weight: 700; color: #1e6624;">${(groupPay + groupProd) > 0 ? _fmt(groupPayEx + groupProdEx) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+          <td class="num" style="font-weight: 700; color: var(--navy);">${(groupPay + groupProd) > 0 ? _fmt(groupPaySuper + groupProdSuper) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
         </tr>
       `;
 
       group.rows.forEach(r => {
         idxToGroup[r.idx] = gi;
+        const isConf = confirmedArr[r.idx] === true;
+        const lockAttr = isConf ? 'readonly title="Confirmed by payroll — this is your actual paid figure"' : '';
+        const lockStyle = isConf ? 'background:#eaf5ec; border-color:#bfe0c6; color:#1e6624; cursor:default;' : '';
         const tuText = Math.abs(r.tuAdj) < 0.5 ? '—' : _fmtSigned(r.tuAdj);
         const tuPill = Math.abs(r.tuAdj) < 0.5
           ? `<span class="fn-tu-pill dim">—</span>`
@@ -4474,14 +4493,16 @@ function renderBreakdown(r) {
             <td style="padding-left: 24px; color: var(--muted); font-family: var(--mono); font-size: 11px;">
               <span data-tip='${esc(`<div style="font-weight:700;margin-bottom:4px;">Fortnight ${r.idx + 1} of 26</div><div>Period covered: <code>${esc(r.period)}</code></div><div>Paid on: <code>${esc(r.paid)}</code></div>`)}' style="cursor: help; border-bottom: 1px dotted var(--faint);">${r.period}</span>
             </td>
-            <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
+            <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
             <td class="num" style="color: var(--muted);">${_fmt(r.ytd)}</td>
             <td class="num">${rBandCellHtml}</td>
             <td class="num">${r.properPay > 0 ? `<span class="fn-pay-cell" data-tip='${esc(rPayTip)}'>${_fmt(r.properPay)}</span>${_bk(rGpEx, rGpSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
             <td class="num">${tuPill}</td>
-            <td class="num" style="${SEP}"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal"></td>
+            <td class="num" style="${SEP}"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
             <td class="num">${r.prodComm > 0 ? `<span class="fn-pay-cell" data-tip='${esc(prodTip)}'>${_fmt(r.prodComm)}</span>${_bk(rProdEx, rProdSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
             <td class="num" style="color: var(--muted);">${_fmt(r.cumTotal)}${r.cumTotal > 0 ? _bk(rCumEx, rCumSup) : ''}</td>
+            <td class="num" style="border-left: 2px solid #ecebe5; font-weight: 700; color: #1e6624;">${(r.properPay + r.prodComm) > 0 ? _fmt(rGpEx + rProdEx) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="font-size:9px; color:#1e6624; font-weight:700; margin-top:2px;">✓ PAID</div>' : ''}</td>
+            <td class="num" style="font-weight: 700; color: var(--navy);">${(r.properPay + r.prodComm) > 0 ? _fmt(rGpSup + rProdSup) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
           </tr>
         `;
       });
@@ -4522,6 +4543,8 @@ function renderBreakdown(r) {
         <td class="num" style="${SEP}">${totalEventGp > 0 ? _fmt(totalEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num">${totalProd > 0 ? `${_fmt(totalProd)}${_bkFoot(totalProdEx, totalProdSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num">${totalAll > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalCumTip)}'>${_fmt(totalAll)}</span>${_bkFoot(totalAllEx, totalAllSup)}` : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="border-left: 2px solid #ecebe5; color: #1e6624;">${totalAll > 0 ? _fmt(totalAllEx) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="color: var(--navy);">${totalAll > 0 ? _fmt(totalAllSup) : '<span style="color: var(--faint);">—</span>'}</td>
       </tr>
     `;
 
@@ -4877,9 +4900,36 @@ function renderBreakdown(r) {
     });
   }
 
-  // Initial render (all-blank)
+  // Initial render (all-blank — replaced once data unlocks)
   render();
   renderTrailing();
+
+  // ---- Bridge hook: payroll-confirmed fortnights flow in here after unlock. ----
+  // Called by the load flow once `emp`/`plan` are available. Replaces the fallback
+  // bands with the rep's real plan bands, then loads each CONFIRMED fortnight's
+  // admin-entered figures and locks them as the rep's actual paid amounts.
+  // Unconfirmed fortnights are left untouched so the rep can keep modelling.
+  window.__hydrateFortnightlyFromData = function (empRec, planRec) {
+    try {
+      if (planRec && Array.isArray(planRec.bands) && planRec.bands.length) {
+        BANDS = planRec.bands
+          .map(b => [Number(b.threshold) || 0, Number(b.rate) || 0])
+          .sort((a, b) => a[0] - b[0]);
+      }
+      const f = empRec && empRec.fortnightly;
+      if (f && Array.isArray(f.confirmed)) {
+        for (let i = 0; i < FORTNIGHTS.length; i++) {
+          if (f.confirmed[i] === true) {
+            confirmedArr[i] = true;
+            gpValues[i] = (Array.isArray(f.gp) && typeof f.gp[i] === 'number') ? f.gp[i] : 0;
+            eventGpValues[i] = (Array.isArray(f.event) && typeof f.event[i] === 'number') ? f.event[i] : 0;
+          }
+        }
+      }
+      render();
+      renderTrailing();
+    } catch (e) { /* non-fatal — widget keeps working as a model */ }
+  };
 })();
 
 load();

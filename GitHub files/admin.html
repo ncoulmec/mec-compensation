@@ -155,9 +155,18 @@
   .kpi-card .sub { margin-top: 4px; font-size: 11px; color: var(--faint); font-family: var(--mono); }
 
   /* Save bar */
-  .save-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border); padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; gap: 16px; z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.04); }
-  .save-bar .status { font-size: 13px; color: var(--muted); }
-  .save-bar .status.dirty { color: var(--warn); font-weight: 600; }
+  .save-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border); padding: 12px 32px; display: flex; justify-content: space-between; align-items: center; gap: 16px; z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.04); }
+  .save-bar-left { display: flex; align-items: center; gap: 14px; }
+  .save-bar-right { display: flex; align-items: center; gap: 16px; }
+  .gh-conn { font-size: 12px; color: var(--faint); }
+  /* Configure GitHub demoted to a quiet text link — only needed to connect/change the token */
+  .btn-link { background: none; border: none; color: var(--muted); font-size: 12px; text-decoration: underline; cursor: pointer; padding: 4px 2px; font-family: inherit; }
+  .btn-link:hover { color: var(--ink); }
+  /* Prominent red "unsaved changes" badge, sits right next to Save and only shows when dirty */
+  .unsaved-badge { display: none; align-items: center; gap: 7px; font-size: 14px; font-weight: 700; color: #fff; background: #c0392b; padding: 8px 16px; border-radius: 999px; box-shadow: 0 1px 5px rgba(192,57,43,0.35); white-space: nowrap; }
+  .unsaved-badge.show { display: inline-flex; }
+  .btn-save { font-size: 15px; padding: 12px 24px; }
+  .btn.primary.attention { box-shadow: 0 0 0 3px rgba(192,57,43,0.25); }
   .btn { padding: 10px 18px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
   .btn.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
   .btn.primary:hover { background: #132a42; }
@@ -317,16 +326,20 @@
     <!-- ========== FORTNIGHTLY PAYROLL VIEW (ACTIVE) ========== -->
     <div class="admin-panel active" id="admin-panel-fortnightly">
       <div class="card" style="margin-bottom: 14px; padding: 16px 20px; background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
-        <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">📅 Active payroll cycle</div>
+        <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">📅 How to run a payday</div>
         <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.55;">
-          Fortnights as rows, reps as columns. Each cell = <strong>GP received</strong> for that fortnight; pay is computed live using cumulative band math. Two values per cell — <strong>ex super</strong> (paste into the Xero <em>bonus</em> field) and <strong>super</strong> (paste into the Xero <em>super contribution</em> field). First pay date: <strong>Mon 15 Jun 2026</strong>.
+          For each pay run below: enter every rep's <strong>GP received</strong> (and Event GP) for the fortnight, copy the <strong>Bonus</strong> and <strong>Super</strong> figures into Xero, then click <strong>Confirm &amp; Save</strong>. Confirming locks the fortnight, saves it, and shows each person their paid amount on their own dashboard. First pay date: <strong>Mon 15 Jun 2026</strong>.
         </div>
       </div>
 
+      <!-- ========== PAY RUN — focused single-fortnight entry ========== -->
+      <div class="card" id="fnp-payrun-card" style="margin-bottom: 14px;">
+        <div id="fnp-payrun"></div>
+      </div>
 
       <div class="card" style="margin-bottom: 14px;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-          <h2 style="margin: 0;">Fortnightly Payroll · Single-Screen Entry</h2>
+          <h2 style="margin: 0;">Year Overview <span style="font-size: 12px; font-weight: 500; color: var(--muted);">· read-only · enter figures in the pay run above</span></h2>
           <div style="display: flex; gap: 8px; align-items: center;">
             <button type="button" id="fnp-collapse-all" style="font-size: 11px; padding: 4px 10px; border: 1px solid #d3d1c7; background: #fff; color: var(--ink); border-radius: 4px; cursor: pointer;">Collapse all months</button>
             <button type="button" id="fnp-expand-all" style="font-size: 11px; padding: 4px 10px; border: 1px solid #d3d1c7; background: #fff; color: var(--ink); border-radius: 4px; cursor: pointer;">Expand all months</button>
@@ -343,7 +356,7 @@
           </table>
         </div>
 
-        <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Click any month header row to expand its fortnights · Months containing a band crossing are highlighted gold · Hover any cell for context · Tab/Enter inside an input jumps to the next fortnight (across reps within a fortnight first).</p>
+        <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">▸ Click any month header row to expand its fortnights · Confirmed fortnights show a green ✓ · Months containing a band crossing are highlighted gold · Hover any cell for context · To change figures, use the pay run panel above.</p>
       </div>
 
       <!-- ============================================================
@@ -468,10 +481,13 @@
 </main>
 
 <div class="save-bar">
-  <div class="status" id="save-status">GitHub: <span id="gh-status">not connected</span></div>
-  <div style="display: flex; gap: 10px;">
-    <button class="btn" id="gh-config-btn">Configure GitHub</button>
-    <button class="btn primary" id="save-gh-btn">☁ Save to GitHub</button>
+  <div class="save-bar-left">
+    <span class="gh-conn">GitHub: <span id="gh-status">not connected</span></span>
+    <button class="btn-link" id="gh-config-btn" title="Connect to GitHub or change the saved token. You normally only need this once.">Configure GitHub</button>
+  </div>
+  <div class="save-bar-right">
+    <span class="unsaved-badge" id="save-status">● Unsaved changes — click Save</span>
+    <button class="btn primary btn-save" id="save-gh-btn">☁ Save to GitHub</button>
   </div>
 </div>
 
@@ -661,7 +677,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v30';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v32';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -1075,10 +1091,10 @@ function renderYTD(emp) {
 
 function setDirty(v = true) {
   dirty = v;
-  $('#save-status').classList.toggle('dirty', v);
-  $('#save-status').innerHTML = v
-    ? '● Unsaved changes'
-    : 'GitHub: <span id="gh-status">' + (getGhSettings()?.pat ? 'connected' : 'not connected') + '</span>';
+  const badge = $('#save-status');
+  if (badge) badge.classList.toggle('show', v);
+  const saveBtn = $('#save-gh-btn');
+  if (saveBtn) saveBtn.classList.toggle('attention', v);
 }
 
 /* ============================================================
@@ -2063,16 +2079,33 @@ function renderFortnightlyAdmin() {
     const f = emp.fortnightly;
     if (!Array.isArray(f.gp)) f.gp = [];
     if (!Array.isArray(f.event)) f.event = [];
+    if (!Array.isArray(f.confirmed)) f.confirmed = [];
     f.gp.length = FORTNIGHTS.length;
     f.event.length = FORTNIGHTS.length;
+    f.confirmed.length = FORTNIGHTS.length;
     for (let i = 0; i < FORTNIGHTS.length; i++) {
       if (typeof f.gp[i] !== 'number' || !isFinite(f.gp[i])) f.gp[i] = 0;
       if (typeof f.event[i] !== 'number' || !isFinite(f.event[i])) f.event[i] = 0;
+      f.confirmed[i] = (f.confirmed[i] === true);
     }
     f.auditGP = (f.auditGP == null) ? '' : String(f.auditGP);
     f.auditEvent = (f.auditEvent == null) ? '' : String(f.auditEvent);
     f.scheduleId = SCHEDULE_ID;
     return f;
+  }
+  // A fortnight is "confirmed" when every active rep's record marks it confirmed.
+  function isFortnightConfirmed(idx) {
+    return reps.every(r => {
+      const emp = (data.employees || []).find(e => e.id === r.id);
+      return emp && ensureFortnightly(emp).confirmed[idx] === true;
+    });
+  }
+  // Set/clear the confirmed flag for a fortnight across all active reps.
+  function setFortnightConfirmed(idx, val) {
+    reps.forEach(r => {
+      const emp = (data.employees || []).find(e => e.id === r.id);
+      if (emp) ensureFortnightly(emp).confirmed[idx] = !!val;
+    });
   }
 
   reps.forEach(r => {
@@ -2142,6 +2175,185 @@ function renderFortnightlyAdmin() {
     const last = rows[rows.length - 1];
     const crossings = rows.filter(r => r.crossed).length;
     return { rows, totalGP: last.ytd, totalEv: last.cumEv, totalPay: last.cumPay, totalProd: last.cumProd, totalAll: last.cumTotal, crossings };
+  }
+
+  // =====================================================================
+  // PAY RUN — focused single-fortnight entry (the primary entry surface)
+  // =====================================================================
+  let payrunIdx = null;
+  const SUPER_DIV = 1 + ((data.globals && +data.globals.superRate) || 0.12);
+
+  function defaultPayrunIdx() {
+    for (let i = 0; i < FORTNIGHTS.length; i++) { if (!isFortnightConfirmed(i)) return i; }
+    return FORTNIGHTS.length - 1;
+  }
+
+  // Figures for one rep in one fortnight, reusing the cumulative band math.
+  function payrunFigures(repId, idx) {
+    const row = computeRepRows(repId)[idx];
+    const incSuper = row.properPay + row.prodComm;
+    const exSuper = incSuper / SUPER_DIV;
+    const superAmt = incSuper - exSuper;
+    return { row, incSuper, exSuper, superAmt };
+  }
+
+  const _btnNav = 'width:34px;height:34px;border:1px solid #d3d1c7;background:#fff;border-radius:6px;cursor:pointer;font-size:14px;color:var(--ink);';
+
+  function renderPayRun() {
+    if (payrunIdx == null) payrunIdx = defaultPayrunIdx();
+    const idx = payrunIdx;
+    const fn = FORTNIGHTS[idx];
+    const confirmed = isFortnightConfirmed(idx);
+    const wrap = document.getElementById('fnp-payrun');
+    if (!wrap) return;
+
+    const opts = FORTNIGHTS.map((f, i) => `<option value="${i}" ${i === idx ? 'selected' : ''}>${esc(f.paid)}${isFortnightConfirmed(i) ? ' ✓' : ''}</option>`).join('');
+
+    let h = `<div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button type="button" id="pr-prev" ${idx <= 0 ? 'disabled' : ''} style="${_btnNav}${idx <= 0 ? 'opacity:.4;cursor:not-allowed;' : ''}">◀</button>
+        <div>
+          <div style="font-size:18px; font-weight:800; color:var(--ink);">Pay run · paid ${esc(fn.paid)}</div>
+          <div style="font-size:12px; color:var(--muted); font-family:var(--mono);">${esc(fn.period)} · fortnight ${idx + 1} of ${FORTNIGHTS.length}</div>
+        </div>
+        <button type="button" id="pr-next" ${idx >= FORTNIGHTS.length - 1 ? 'disabled' : ''} style="${_btnNav}${idx >= FORTNIGHTS.length - 1 ? 'opacity:.4;cursor:not-allowed;' : ''}">▶</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <select id="pr-jump" style="padding:6px 8px; border:1px solid #d3d1c7; border-radius:6px; font-family:var(--mono); font-size:12px;">${opts}</select>
+        ${confirmed
+          ? '<span style="font-size:12px; font-weight:700; color:#1e6624; background:#eaf5ec; padding:6px 12px; border-radius:999px;">✓ Confirmed &amp; saved</span>'
+          : '<span style="font-size:12px; font-weight:700; color:#8a6a00; background:#fdf6e3; padding:6px 12px; border-radius:999px;">● Not yet confirmed</span>'}
+      </div>
+    </div>`;
+
+    // Column headers for the rep list
+    h += `<div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap:10px; padding:0 4px 6px; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); font-weight:700;">
+      <div>Rep</div><div style="text-align:right;">GP received</div><div style="text-align:right;">Event GP</div>
+      <div style="text-align:right;">Bonus → Xero</div><div style="text-align:right;">Super → Xero</div>
+    </div>`;
+
+    let teamBonus = 0, teamSuper = 0;
+    reps.forEach(r => {
+      const f = payrunFigures(r.id, idx);
+      teamBonus += f.exSuper; teamSuper += f.superAmt;
+      const lock = confirmed ? 'readonly tabindex="-1"' : '';
+      const lockStyle = confirmed ? 'background:#f4f3ed; color:var(--muted); cursor:not-allowed;' : 'background:#fff;';
+      h += `<div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap:10px; align-items:center; padding:10px 4px; border-top:1px solid #f0efe9;">
+        <div>
+          <div style="font-weight:700; color:var(--ink);">${esc(r.fullName)}</div>
+          <div style="font-size:10px; color:var(--faint); font-family:var(--mono);">${esc(r.planType)} · YTD <span id="pr-ytd-${esc(r.id)}">${_fmt(f.row.ytd)}</span> · <span id="pr-rate-${esc(r.id)}">${(f.row.endRate * 100).toFixed(0)}%</span></div>
+        </div>
+        <div style="text-align:right;">
+          <input type="text" id="pr-gp-${esc(r.id)}" data-rep="${esc(r.id)}" data-kind="gp" inputmode="decimal" ${lock} value="${f.row.gp ? f.row.gp.toLocaleString() : ''}" placeholder="0" style="width:100%; padding:9px 10px; border:1px solid #d3d1c7; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; ${lockStyle}">
+        </div>
+        <div style="text-align:right;">
+          <input type="text" id="pr-ev-${esc(r.id)}" data-rep="${esc(r.id)}" data-kind="event" inputmode="decimal" ${lock} value="${f.row.eventGp ? f.row.eventGp.toLocaleString() : ''}" placeholder="0" style="width:100%; padding:9px 10px; border:1px solid #d3d1c7; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; ${lockStyle}">
+        </div>
+        <div style="text-align:right;">
+          <input type="text" class="pr-copy" id="pr-bonus-${esc(r.id)}" readonly value="${Math.round(f.exSuper).toLocaleString()}" title="Bonus ex super — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #c3e4d0; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;">
+        </div>
+        <div style="text-align:right;">
+          <input type="text" class="pr-copy" id="pr-super-${esc(r.id)}" readonly value="${Math.round(f.superAmt).toLocaleString()}" title="Super (12%) — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #cdd9e8; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:var(--navy); background:#eef4fa; cursor:pointer;">
+        </div>
+      </div>`;
+    });
+
+    // Team total + action button
+    h += `<div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap:10px; align-items:center; padding:12px 4px 4px; border-top:2px solid #d3d1c7; font-weight:800;">
+      <div style="color:var(--ink);">Team total</div>
+      <div></div><div></div>
+      <div style="text-align:right; font-family:var(--mono); color:#1e6624;" id="pr-team-bonus">${_fmt(teamBonus)}</div>
+      <div style="text-align:right; font-family:var(--mono); color:var(--navy);" id="pr-team-super">${_fmt(teamSuper)}</div>
+    </div>`;
+
+    h += `<div style="margin-top:16px; display:flex; justify-content:flex-end; gap:10px; align-items:center;">
+      ${confirmed
+        ? `<span style="font-size:12px; color:var(--muted);">Locked. Unlock if you need to correct a figure.</span>
+           <button type="button" id="pr-unlock" style="padding:10px 18px; border:1px solid #d3d1c7; background:#fff; color:var(--ink); border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">🔓 Unlock to edit</button>`
+        : `<span style="font-size:12px; color:var(--muted);">Entered everything &amp; copied into Xero? Lock it in:</span>
+           <button type="button" id="pr-confirm" style="padding:11px 22px; border:none; background:#1e6624; color:#fff; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer;">✓ Confirm &amp; Save this pay run</button>`}
+    </div>`;
+
+    wrap.innerHTML = h;
+    wirePayRun(idx, confirmed);
+  }
+
+  // Lightweight recompute of just the displayed figures (keeps input focus).
+  function refreshPayrunComputed(idx) {
+    let teamBonus = 0, teamSuper = 0;
+    reps.forEach(r => {
+      const f = payrunFigures(r.id, idx);
+      teamBonus += f.exSuper; teamSuper += f.superAmt;
+      const set = (id, v) => { const el = document.getElementById(id); if (el) { if (el.tagName === 'INPUT') el.value = v; else el.textContent = v; } };
+      set(`pr-ytd-${r.id}`, _fmt(f.row.ytd));
+      set(`pr-rate-${r.id}`, (f.row.endRate * 100).toFixed(0) + '%');
+      set(`pr-bonus-${r.id}`, Math.round(f.exSuper).toLocaleString());
+      set(`pr-super-${r.id}`, Math.round(f.superAmt).toLocaleString());
+    });
+    const tb = document.getElementById('pr-team-bonus'); if (tb) tb.textContent = _fmt(teamBonus);
+    const ts = document.getElementById('pr-team-super'); if (ts) ts.textContent = _fmt(teamSuper);
+  }
+
+  function wirePayRun(idx, confirmed) {
+    const prev = document.getElementById('pr-prev');
+    const next = document.getElementById('pr-next');
+    const jump = document.getElementById('pr-jump');
+    if (prev) prev.addEventListener('click', () => { if (payrunIdx > 0) { payrunIdx--; renderPayRun(); } });
+    if (next) next.addEventListener('click', () => { if (payrunIdx < FORTNIGHTS.length - 1) { payrunIdx++; renderPayRun(); } });
+    if (jump) jump.addEventListener('change', () => { payrunIdx = parseInt(jump.value, 10) || 0; renderPayRun(); });
+
+    // Copy-to-clipboard on bonus/super
+    document.querySelectorAll('#fnp-payrun .pr-copy').forEach(inp => {
+      inp.addEventListener('click', async () => {
+        try {
+          inp.select();
+          if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(inp.value);
+          else document.execCommand('copy');
+          const bg = inp.style.background; inp.style.background = '#d4edda';
+          setTimeout(() => { inp.style.background = bg; }, 400);
+        } catch (e) {}
+      });
+    });
+
+    if (!confirmed) {
+      document.querySelectorAll('#fnp-payrun input[data-rep]').forEach(inp => {
+        const rep = inp.getAttribute('data-rep');
+        const kind = inp.getAttribute('data-kind');
+        const matrix = kind === 'event' ? eventMatrix : gpMatrix;
+        const persist = () => {
+          const raw = inp.value.replace(/[^0-9.\-]/g, '');
+          const n = parseFloat(raw);
+          const val = isFinite(n) ? n : 0;
+          matrix[rep][idx] = val;
+          const emp = (data.employees || []).find(e => e.id === rep);
+          if (emp) { (kind === 'event' ? ensureFortnightly(emp).event : ensureFortnightly(emp).gp)[idx] = val; if (typeof setDirty === 'function') setDirty(); }
+        };
+        inp.addEventListener('focus', () => inp.select());
+        inp.addEventListener('input', () => { persist(); refreshPayrunComputed(idx); });
+        inp.addEventListener('blur', () => { persist(); renderTotals(); renderBody(); renderAudit(); });
+      });
+      const cbtn = document.getElementById('pr-confirm');
+      if (cbtn) cbtn.addEventListener('click', () => confirmAndSavePayrun(idx));
+    } else {
+      const ubtn = document.getElementById('pr-unlock');
+      if (ubtn) ubtn.addEventListener('click', () => {
+        if (!confirm('Unlock this pay run for editing? You will need to Confirm & Save it again afterwards.')) return;
+        setFortnightConfirmed(idx, false);
+        if (typeof setDirty === 'function') setDirty();
+        renderPayRun(); renderBody(); renderTotals();
+      });
+    }
+  }
+
+  async function confirmAndSavePayrun(idx) {
+    const fn = FORTNIGHTS[idx];
+    if (!confirm(`Confirm the pay run paid ${fn.paid}?\n\nThis locks the figures and pushes each rep's paid amount to their own dashboard.`)) return;
+    setFortnightConfirmed(idx, true);
+    if (typeof setDirty === 'function') setDirty();
+    renderPayRun(); renderBody(); renderTotals();
+    if (typeof saveToGitHub === 'function') {
+      await saveToGitHub();   // Confirm = auto-save (per setup decision)
+    }
   }
 
   // ----- Render header -----
@@ -2284,15 +2496,16 @@ function renderFortnightlyAdmin() {
                ${prodInc > 0 ? `<div style="font-size: 9px; color: var(--muted); margin-top: 3px; text-align: right; font-family: var(--mono);">incl. <strong>+${_fmt(prodInc)}</strong> prod</div>` : ''}
                ${tuStr ? `<div style="font-size: 9px; color: ${tuColor}; margin-top: 2px; text-align: right; font-family: var(--mono);">⚡ TU ${tuStr}</div>` : ''}`
             : `<div style="font-size: 10px; color: var(--faint); margin-top: 3px; font-family: var(--mono); text-align: right;">—</div>`;
+          const isConf = isFortnightConfirmed(fi);
           return `<td class="fnp-cell" data-rep="${esc(r.id)}" data-idx="${fi}" data-tip="${esc(tip)}" style="padding: 5px 6px; border-bottom: 1px solid #f4f3ed; vertical-align: top; min-width: 160px; ${cellBg}">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px;">
               <div>
-                <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; margin-bottom: 1px;">GP</div>
-                <input type="text" class="fnp-input" data-rep="${esc(r.id)}" data-idx="${fi}" value="${row.gp ? row.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" style="width: 100%; padding: 3px 5px; border: 1px solid #d3d1c7; border-radius: 3px; background: #fff; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--ink);">
+                <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; margin-bottom: 1px;">GP ${isConf ? '<span style="color:#1e6624;">✓</span>' : ''}</div>
+                <div style="padding: 3px 5px; border: 1px solid #ecebe5; border-radius: 3px; background: #faf9f5; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--ink); min-height: 19px;">${row.gp ? row.gp.toLocaleString() : '<span style="color:var(--faint);">—</span>'}</div>
               </div>
               <div>
                 <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; margin-bottom: 1px;">Event GP</div>
-                <input type="text" class="fnp-event-input" data-rep="${esc(r.id)}" data-idx="${fi}" value="${row.eventGp ? row.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" style="width: 100%; padding: 3px 5px; border: 1px solid #d3d1c7; border-radius: 3px; background: #fff; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--ink);">
+                <div style="padding: 3px 5px; border: 1px solid #ecebe5; border-radius: 3px; background: #faf9f5; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--ink); min-height: 19px;">${row.eventGp ? row.eventGp.toLocaleString() : '<span style="color:var(--faint);">—</span>'}</div>
               </div>
             </div>
             ${copyVals}
@@ -2556,6 +2769,7 @@ function renderFortnightlyAdmin() {
   });
 
   // Initial render
+  renderPayRun();
   renderHeader();
   renderTotals();
   renderBody();
