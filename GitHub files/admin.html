@@ -695,7 +695,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v38';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v39';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -3778,9 +3778,9 @@ function renderQuarterlyAdmin() {
         const copyVals = incSuper > 0
           ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px;">
                <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Bonus</div>
-                 <input type="text" class="qtp-copy-bonus" tabindex="-1" readonly value="${Math.round(exSuper).toLocaleString()}" title="Bonus ex super — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #f6f8fc; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;"></div>
+                 <input type="text" class="qtp-copy-bonus" tabindex="-1" readonly value="${Math.round(exSuper).toLocaleString()}" title="Bonus ex super — click to copy" style="width: 100%; padding: 6px 9px; border: 1px solid #c3e4d0; border-radius: 6px; background: #f5faf7; text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 600; color: #1e6624; cursor: pointer;"></div>
                <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Super</div>
-                 <input type="text" class="qtp-copy-super" tabindex="-1" readonly value="${Math.round(superAmt).toLocaleString()}" title="Super (12%) — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;"></div>
+                 <input type="text" class="qtp-copy-super" tabindex="-1" readonly value="${Math.round(superAmt).toLocaleString()}" title="Super (12%) — click to copy" style="width: 100%; padding: 6px 9px; border: 1px solid #cdd9e8; border-radius: 6px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer;"></div>
              </div>
              <div style="font-size: 9px; color: var(--muted); margin-top: 3px; text-align: right; font-family: var(--mono);">annualised ${_fmt(row.annualised)}</div>`
           : (row.metric > 0
@@ -3788,7 +3788,7 @@ function renderQuarterlyAdmin() {
               : `<div style="font-size: 10px; color: var(--faint); margin-top: 3px; font-family: var(--mono); text-align: right;">—</div>`);
         const qLock = isQuarterConfirmed(qi);
         h += `<td class="qtp-cell" data-tip="${esc(tip)}" style="padding: 6px 8px; border-bottom: 1px solid #f4f3ed; vertical-align: top;">
-          <input type="text" class="qtp-input" data-emp="${esc(c.id)}" data-idx="${qi}" value="${row.metric ? row.metric.toLocaleString() : ''}" placeholder="${c.isTTM ? 'TTM ' + esc(c.metricName) : esc(c.metricName)}" inputmode="decimal" ${qLock ? 'readonly tabindex="-1" title="Confirmed — unlock the quarter to edit"' : ''} style="width: 100%; padding: 4px 6px; border: 1px solid ${qLock ? '#bfe0c6' : '#d3d1c7'}; border-radius: 4px; background: ${qLock ? '#eaf5ec' : '#fff'}; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink);">
+          <input type="text" class="qtp-input" data-emp="${esc(c.id)}" data-idx="${qi}" value="${row.metric ? row.metric.toLocaleString() : ''}" placeholder="${c.isTTM ? 'TTM ' + esc(c.metricName) : esc(c.metricName)}" inputmode="decimal" ${qLock ? 'readonly tabindex="-1" title="Confirmed — unlock the quarter to edit"' : ''} style="width: 100%; padding: 11px 13px; border: 1.5px solid ${qLock ? '#bfe0c6' : '#d3d1c7'}; border-radius: 8px; background: ${qLock ? '#eaf5ec' : '#fff'}; text-align: right; font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--ink); box-sizing: border-box;">
           ${copyVals}
         </td>`;
       });

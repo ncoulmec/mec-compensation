@@ -1422,7 +1422,7 @@ const EMPLOYEE_ID = 'tom';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v27`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v28`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -2321,21 +2321,18 @@ function update() {
 function renderPayrollLockedCard() {
   const wrap = document.getElementById('payroll-locked-card');
   if (!wrap) return;
-  const ap = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
-  const QUARTER_ENDS = ['Mar', 'Jun', 'Sep', 'Dec'];
-  const isQEnd = (label) => label && QUARTER_ENDS.includes(label.trim().slice(0, 3));
+  const QLABELS = ['Apr–Jun 2026', 'Jul–Sep 2026', 'Oct–Dec 2026', 'Jan–Mar 2027'];
+  const q = (emp.quarterly && Array.isArray(emp.quarterly.confirmed)) ? emp.quarterly : null;
+  const confIdx = [];
+  if (q) for (let i = 0; i < 4; i++) { if (q.confirmed[i] === true) confIdx.push(i); }
 
-  const rows = ap
-    .map((p, i) => ({ i, p, qEnd: isQEnd(p.month) }))
-    .filter(x => x.qEnd && x.p.performanceRev != null && x.p.performanceRev !== '');
-
-  if (!rows.length) {
+  if (!confIdx.length) {
     wrap.innerHTML = `
       <div class="card" style="background: #fafaf7; border: 1px dashed var(--border); margin-bottom: 18px; padding: 14px 18px;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
           <div>
             <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">🔒 Payroll-Locked Quarters</div>
-            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Awaiting payroll entry — your actual quarterly performance revenue will appear here once Hayley enters it. Until then, the slider above is your scenario tool.</div>
+            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Awaiting payroll — your confirmed quarterly performance revenue will appear here once it's locked in. Until then, the slider above is your scenario tool.</div>
           </div>
           <div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">0 of 4 quarters</div>
         </div>
@@ -2344,37 +2341,41 @@ function renderPayrollLockedCard() {
   }
 
   const sr = (data.globals && data.globals.superRate) || 0.12;
+  const payoutPct = plan.payoutPercentage != null ? plan.payoutPercentage : 1.0;
   const planRef = data.planTypes[emp.planType];
-  let totalPay = 0;
+  let totBonus = 0, totSuper = 0;
 
-  const rowsHtml = rows.map(({ p }) => {
-    const pr = +p.performanceRev || 0;
-    let inc = 0;
+  const rowsHtml = confIdx.map(i => {
+    const pr = +(q.values || [])[i] || 0;
+    let annual = 0;
     if (planRef && Array.isArray(planRef.bands)) {
       const sorted = [...planRef.bands].sort((a, b) => a.threshold - b.threshold);
       for (let bi = 0; bi < sorted.length; bi++) {
         const b = sorted[bi];
         const next = bi + 1 < sorted.length ? sorted[bi + 1].threshold : Infinity;
-        inc += Math.max(0, Math.min(pr, next) - b.threshold) * b.rate;
+        annual += Math.max(0, Math.min(pr, next) - b.threshold) * b.rate;
       }
-      // Inline cliff/ramp logic (in case milestoneAccrued helper not defined here)
       if (Array.isArray(planRef.flatBonuses)) {
         planRef.flatBonuses.forEach(k => {
           const t = +k.threshold || 0;
           const rf = +k.rampFromRevenue || null;
           if (rf && rf < t) {
-            if (pr <= rf) {} else if (pr >= t) inc += k.amount;
-            else inc += k.amount * (pr - rf) / (t - rf);
-          } else if (pr >= t) inc += k.amount;
+            if (pr <= rf) {} else if (pr >= t) annual += k.amount;
+            else annual += k.amount * (pr - rf) / (t - rf);
+          } else if (pr >= t) annual += k.amount;
         });
       }
     }
-    const ex = inc / (1 + sr);
-    totalPay += ex;
+    const payout = annual / 4 * payoutPct;
+    const ex = payout / (1 + sr);
+    const sup = payout - ex;
+    totBonus += ex; totSuper += sup;
     return `<tr>
-      <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${p.month}</td>
+      <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${QLABELS[i]}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${fmtMoney(pr)}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(ex)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--navy);">${fmtMoney(sup)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney(ex + sup)}</td>
     </tr>`;
   }).join('');
 
@@ -2383,24 +2384,27 @@ function renderPayrollLockedCard() {
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 8px;">
         <div>
           <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🔒 Payroll-Locked Quarters</div>
-          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quarterly actuals entered by payroll. These figures are locked — your slider above is for modelling future quarters only.</div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quarterly actuals confirmed by payroll. These figures are locked — your slider above is for modelling future quarters only.</div>
         </div>
-        <div style="font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;">${rows.length} of 4 quarters</div>
+        <div style="font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;">${confIdx.length} of 4 quarters</div>
       </div>
       <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;">
         <thead>
           <tr style="border-bottom: 2px solid var(--border);">
             <th style="text-align: left; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Quarter ending</th>
-            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Performance Revenue</th>
-            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Pay (ex super)</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Perf. revenue</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Bonus → Xero</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">+ Super</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Total</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
         <tfoot>
           <tr style="border-top: 2px solid var(--ink);">
-            <td style="padding: 8px 10px; font-weight: 700;">YTD Total Paid</td>
-            <td></td>
-            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney(totalPay)}</td>
+            <td style="padding: 8px 10px; font-weight: 700;" colspan="2">YTD total paid</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney(totBonus)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--navy);">${fmtMoney(totSuper)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney(totBonus + totSuper)}</td>
           </tr>
         </tfoot>
       </table>
@@ -2457,7 +2461,12 @@ function updateQuarterlyDisplay(r) {
       if (isConf) {
         const ex = quarterlyPayout / (1 + (g.superRate || 0.12));
         const sup = quarterlyPayout - ex;
-        el.innerHTML = `${fmtMoney(quarterlyPayout)} <span style="font-size:9px;color:#1e6624;font-weight:700;">✓ PAID</span><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">Bonus ${fmtMoney(ex)} · Super ${fmtMoney(sup)}</div>`;
+        el.innerHTML = `<div style="text-align:right;font-size:11px;font-weight:700;color:#1e6624;">✓ PAID</div>
+          <div style="margin-top:3px;font-size:11px;font-family:var(--mono);line-height:1.55;">
+            <div style="display:flex;justify-content:space-between;gap:8px;"><span style="color:var(--muted);">Bonus → Xero</span><span style="color:#1e6624;font-weight:600;">${fmtMoney(ex)}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;"><span style="color:var(--muted);">+ Super (12%)</span><span style="color:var(--navy);font-weight:600;">${fmtMoney(sup)}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #cfe6d5;margin-top:2px;padding-top:2px;"><span style="font-weight:600;">Total this pay</span><span style="font-weight:700;">${fmtMoney(quarterlyPayout)}</span></div>
+          </div>`;
       } else {
         el.textContent = ttmRev == null ? `${fmtMoney(quarterlyPayout)} (projected)` : fmtMoney(quarterlyPayout);
       }
@@ -2505,9 +2514,11 @@ function updateQuarterlyDisplay(r) {
     const annualEntitlementAtPayoutPct = annualEntitlement * payoutPct;
     const trueup = Math.max(0, annualEntitlementAtPayoutPct - totalPaidAllQuarters);
     if (trueup > 0) {
+      const tuEx = trueup / (1 + (g.superRate || 0.12));
+      const tuSup = trueup - tuEx;
       trueupVals = {
         amount: fmtMoney(trueup),
-        detail: `Annual entitlement <strong>${fmtMoney(annualEntitlementAtPayoutPct)}</strong> − paid <strong>${fmtMoney(totalPaidAllQuarters)}</strong>`,
+        detail: `<span style="color:#1e6624;">Bonus → Xero (ex super) <strong>${fmtMoney(tuEx)}</strong></span> · <span style="color:var(--navy);">+ Super (12%) <strong>${fmtMoney(tuSup)}</strong></span><br><span style="color:var(--muted);">Annual entitlement ${fmtMoney(annualEntitlementAtPayoutPct)} − paid ${fmtMoney(totalPaidAllQuarters)}</span>`,
         explainer: `You finished above your quarterly run-rate — this catches you up to the full annual commission earned at your final TTM of ${fmtMoney(finalTTM)}.`
       };
     } else {
