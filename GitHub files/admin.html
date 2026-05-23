@@ -693,6 +693,44 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 }
 
 // =========================================================================
+// OFF-REPO ENCRYPTED BACKUP (automatic, on every save)
+// A copy of the full encrypted dataset is written to /backups at the REPO ROOT —
+// outside the "GitHub files" folder that gets re-uploaded — so re-uploading can
+// never clobber the last good data. Still AES-256-GCM encrypted with the master
+// password. Base-salary figures are stripped (kept in employment contracts and
+// re-entered on a restore); the volatile GP / quarterly figures are preserved.
+// =========================================================================
+const BACKUP_KEEP = 10;        // dated snapshots to retain (newest N)
+const BACKUP_DIR = 'backups';  // repo-root folder, sibling of "GitHub files"
+
+// Keys that reveal an individual's base salary (or let it be derived). Removed
+// from the backup wherever they appear in the data tree.
+const BACKUP_STRIP_KEYS = [
+  'baseSalary', 'previousBaseSalary', 'baseSuperOnBase', 'baseInclSuper',
+  'baseMixPct', 'variableMixPct', 'otePackage'
+];
+
+// Deep clone that drops every base-salary key.
+function _stripBaseSalaries(value) {
+  if (Array.isArray(value)) return value.map(_stripBaseSalaries);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (BACKUP_STRIP_KEYS.includes(k)) continue;
+      out[k] = _stripBaseSalaries(v);
+    }
+    return out;
+  }
+  return value;
+}
+
+// Full data minus base salaries, master-encrypted (PINs retained for restore).
+async function _buildBackupPayload(fullData, pins, master) {
+  const scrubbed = _stripBaseSalaries(fullData);
+  return await encryptMasterFile(scrubbed, pins, master);
+}
+
+// =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
 const ADMIN_CACHE_KEY = 'mec-admin-master-v39';
@@ -1686,6 +1724,49 @@ async function _doSaveToGitHub() {
       type: 'blob',
       sha
     }));
+
+    // --- Off-repo encrypted backup (same commit, best-effort) ---
+    // Writes to /backups at the repo root so re-uploading "GitHub files" can't
+    // overwrite it. Base salaries stripped; still master-encrypted.
+    let backupOk = false;
+    try {
+      const backupPayload = await _buildBackupPayload(fullData, pins, master);
+      const bRes = await fetch(`${baseUrl}/git/blobs`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ content: JSON.stringify(backupPayload), encoding: 'utf-8' })
+      });
+      if (!bRes.ok) throw new Error(`backup blob HTTP ${bRes.status}`);
+      const backupSha = (await bRes.json()).sha;
+
+      const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+      const datedName = `master-backup-${stamp}.enc.json`;
+
+      // Always-current copy + this run's dated snapshot (one blob, two paths).
+      treeItems.push({ path: `${BACKUP_DIR}/latest.enc.json`, mode: '100644', type: 'blob', sha: backupSha });
+      treeItems.push({ path: `${BACKUP_DIR}/${datedName}`, mode: '100644', type: 'blob', sha: backupSha });
+
+      // Prune: keep only the newest BACKUP_KEEP dated snapshots.
+      try {
+        const listRes = await fetch(`${baseUrl}/contents/${BACKUP_DIR}?ref=${s.branch}`, { headers });
+        if (listRes.ok) {
+          const existing = (await listRes.json())
+            .filter(f => /^master-backup-.*\.enc\.json$/.test(f.name) && f.name !== datedName)
+            .map(f => f.name)
+            .sort(); // ISO stamps sort chronologically
+          const keepFromExisting = Math.max(0, BACKUP_KEEP - 1); // leave room for the new one
+          const toDelete = existing.slice(0, Math.max(0, existing.length - keepFromExisting));
+          for (const name of toDelete) {
+            treeItems.push({ path: `${BACKUP_DIR}/${name}`, mode: '100644', type: 'blob', sha: null });
+          }
+        }
+      } catch (_) { /* prune is best-effort */ }
+
+      backupOk = true;
+    } catch (bErr) {
+      console.warn('Off-repo backup step skipped:', bErr);
+    }
+
     const treeRes = await fetch(`${baseUrl}/git/trees`, {
       method: 'POST',
       headers,
@@ -1727,7 +1808,9 @@ async function _doSaveToGitHub() {
     _writeAdminCache(master, data, _blobFingerprint(files['master.enc.json']));
     if (typeof original !== 'undefined') original = clone(data);
     if (typeof setDirty === 'function') setDirty(false);
-    showToast('success', '✓ Saved. Encrypted blobs pushed in one commit. GitHub Pages will refresh in ~30-60s.');
+    showToast('success', backupOk
+      ? '✓ Saved. Encrypted blobs pushed + off-repo backup updated in one commit. GitHub Pages will refresh in ~30-60s.'
+      : '✓ Saved. Encrypted blobs pushed (backup step skipped — your data is safe). GitHub Pages will refresh in ~30-60s.');
   } catch (err) {
     showToast('error', `Save failed: ${err.message}`, 8000);
   } finally {
