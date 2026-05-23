@@ -813,7 +813,7 @@ const EMPLOYEE_ID = 'hayley';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v39`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v41`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -866,16 +866,26 @@ function _readCachedData() {
     if (!raw) return null;
     const obj = JSON.parse(raw);
     if (!obj.expires || obj.expires < Date.now()) return null;
-    return obj.data;
+    return obj; // { data, expires, fp }
   } catch (e) { return null; }
 }
 
-function _writeCachedData(data) {
+function _writeCachedData(data, fp) {
   try {
     localStorage.setItem(PIN_CACHE_KEY, JSON.stringify({
-      data, expires: Date.now() + PIN_CACHE_TTL_MS
+      data, fp: fp || '', expires: Date.now() + PIN_CACHE_TTL_MS
     }));
   } catch (e) {}
+}
+
+function _blobFingerprint(enc) {
+  try {
+    const d = (enc && enc.data) || {};
+    const s = (d.ct || '') + '|' + (d.iv || '');
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+    return String(h >>> 0);
+  } catch (e) { return ''; }
 }
 
 function _clearCache() {
@@ -890,11 +900,12 @@ async function _fetchEncrypted() {
 
 // Returns the decrypted data object, prompting for PIN if no valid cache exists.
 async function unlockDashboard() {
-  // Try cache first
-  const cached = _readCachedData();
-  if (cached) return cached;
-  // Otherwise prompt
+  // Always fetch the latest blob first so we detect when payroll changed the data
+  // (otherwise a 30-day cache hides newly-confirmed quarterly pay).
   const encrypted = await _fetchEncrypted();
+  const fp = _blobFingerprint(encrypted);
+  const cached = _readCachedData();
+  if (cached && cached.fp === fp) return cached.data; // unchanged → use cache, no re-prompt
   return new Promise((resolve, reject) => {
     const overlay = document.getElementById('pin-gate');
     overlay.style.display = 'flex';
@@ -954,7 +965,7 @@ async function unlockDashboard() {
       loadEl.textContent = 'Decrypting…';
       try {
         const data = await decryptWithPassword(encrypted, password, usingMaster);
-        _writeCachedData(data);
+        _writeCachedData(data, fp);
         loadEl.textContent = '';
         overlay.style.display = 'none';
         resolve(data);
@@ -1037,6 +1048,9 @@ document.getElementById('panel-overview').classList.add('active');
   });
 })();
 
+// Part C bridge: which quarters payroll has confirmed (locks them as actual paid).
+let quarterConfirmed = [false, false, false, false];
+
 async function load() {
   try {
     // v40: data is now encrypted per employee + decrypted via PIN gate
@@ -1071,6 +1085,18 @@ async function load() {
     // Persist seeded defaults so subsequent reloads see them as actual inputs (and Hayley can clear/edit at will)
     if (shouldSeed && actualsQuarters.some(q => q.seededFromLY)) {
       try { localStorage.setItem(ACTUALS_LS_KEY, JSON.stringify(actualsQuarters)); } catch (e) {}
+    }
+
+    // Payroll-confirmed quarters → seed the admin's CM into the grid + lock as "paid".
+    // Index aligns with the admin Quarterly Payroll tab (Apr–Jun 2026 → Jan–Mar 2027).
+    if (emp.quarterly && Array.isArray(emp.quarterly.confirmed) && Array.isArray(actualsQuarters)) {
+      for (let i = 0; i < 4 && i < actualsQuarters.length; i++) {
+        if (emp.quarterly.confirmed[i] === true) {
+          quarterConfirmed[i] = true;
+          const v = (emp.quarterly.values || [])[i];
+          if (typeof v === 'number' && isFinite(v)) { actualsQuarters[i].cm = v; actualsQuarters[i].seededFromLY = false; }
+        }
+      }
     }
 
     document.getElementById('loading').style.display = 'none';
@@ -1335,10 +1361,11 @@ function renderQuarterlyGrid() {
     const seedChip = q.seededFromLY
       ? `<span style="font-size:9px; color:var(--muted); font-weight:500; margin-left:6px; padding: 1px 5px; border: 1px solid var(--border); border-radius: 3px; background: #fafaf7;" title="Default scenario — seeded from last year's actual CM. Edit to model your own forecast.">LY seed</span>`
       : '';
+    const conf = quarterConfirmed[i];
     return `
     <tr data-qtr-idx="${i}">
-      <td class="qtr">${q.quarter}${seedChip}</td>
-      <td class="input-cell"><input type="text" inputmode="numeric" data-field="cm" data-idx="${i}" value="${q.cm ? fmtNum(q.cm) : ''}" placeholder="0"></td>
+      <td class="qtr">${q.quarter}${conf ? ' <span style="font-size:9px;padding:1px 5px;background:#eaf5ec;color:#1e6624;border-radius:3px;">✓ PAID</span>' : seedChip}</td>
+      <td class="input-cell"><input type="text" inputmode="numeric" data-field="cm" data-idx="${i}" value="${q.cm ? fmtNum(q.cm) : ''}" placeholder="0" ${conf ? 'readonly title="Confirmed by payroll — your actual paid figure" style="background:#eaf5ec;border-color:#bfe0c6;"' : ''}></td>
       <td class="num" style="color:var(--muted);">${lyCMText}</td>
       <td class="num" data-cell="annual">—</td>
       <td class="num plus" data-cell="qpayout">—</td>
@@ -1389,15 +1416,12 @@ function renderQuarterlyGrid() {
 function renderPayrollLockedCard() {
   const wrap = document.getElementById('payroll-locked-card');
   if (!wrap) return;
-  const ap = (emp.actualPayouts && Array.isArray(emp.actualPayouts)) ? emp.actualPayouts : [];
-  const QUARTER_ENDS = ['Mar', 'Jun', 'Sep', 'Dec'];
-  const isQEnd = (label) => label && QUARTER_ENDS.includes(label.trim().slice(0, 3));
+  const QLABELS = ['Apr–Jun 2026', 'Jul–Sep 2026', 'Oct–Dec 2026', 'Jan–Mar 2027'];
+  const q = (emp.quarterly && Array.isArray(emp.quarterly.confirmed)) ? emp.quarterly : null;
+  const confIdx = [];
+  if (q) for (let i = 0; i < 4; i++) { if (q.confirmed[i] === true) confIdx.push(i); }
 
-  const rows = ap
-    .map((p, i) => ({ i, p, qEnd: isQEnd(p.month) }))
-    .filter(x => x.qEnd && (x.p.quarterlyCM != null && x.p.quarterlyCM !== ''));
-
-  if (!rows.length) {
+  if (!confIdx.length) {
     wrap.innerHTML = `
       <div class="card" style="background: #fafaf7; border: 1px dashed var(--border); margin-bottom: 18px; padding: 14px 18px;">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
@@ -1411,48 +1435,20 @@ function renderPayrollLockedCard() {
     return;
   }
 
-  // Compute the actual payout for each quarter using the same band + flat bonus logic as Hayley's plan.
   const sr = (data.globals && data.globals.superRate) || 0.12;
-  const planRef = data.planTypes[emp.planType];
+  // Use the YTD-pace payout from the main grid compute — the same model the admin paid on
+  // (cmBands + flat bonuses, annualised by YTD pace, 75% pro-rata). actualsQuarters has
+  // already been seeded with the confirmed CM, so payRows[i] reflects the actual paid amount.
+  const payRows = (typeof computeQuarterlyPayouts === 'function') ? (computeQuarterlyPayouts().rows || []) : [];
   let totalPay = 0;
 
-  const calcQ = (cm) => {
-    if (!planRef) return 0;
-    let inc = 0;
-    if (Array.isArray(planRef.cmBands) && cm > 0) {
-      const sorted = [...planRef.cmBands].sort((a, b) => a.threshold - b.threshold);
-      for (let i = 0; i < sorted.length; i++) {
-        const b = sorted[i];
-        const t = b.threshold / 4;
-        const next = i + 1 < sorted.length ? sorted[i + 1].threshold / 4 : Infinity;
-        inc += Math.max(0, Math.min(cm, next) - t) * b.rate;
-      }
-    }
-    if (Array.isArray(planRef.flatBonuses)) {
-      // Scale ramp/threshold down to quarterly proportions for this single-quarter calc.
-      planRef.flatBonuses.forEach(k => {
-        const amount = +k.amount || 0;
-        const threshold = (+k.threshold || 0) / 4;
-        const rampFrom = k.rampFromMetric != null ? (+k.rampFromMetric / 4) : null;
-        if (rampFrom != null && rampFrom < threshold) {
-          if (cm <= rampFrom) return;
-          if (cm >= threshold) { inc += amount; return; }
-          inc += amount * (cm - rampFrom) / (threshold - rampFrom);
-        } else if (cm >= threshold) {
-          inc += amount;
-        }
-      });
-    }
-    return inc;
-  };
-
-  const rowsHtml = rows.map(({ p }) => {
-    const cm = +p.quarterlyCM || 0;
-    const inc = calcQ(cm);
+  const rowsHtml = confIdx.map(i => {
+    const cm = +(q.values || [])[i] || 0;
+    const inc = (payRows[i] && typeof payRows[i].quarterlyPayout === 'number') ? payRows[i].quarterlyPayout : 0;
     const ex = inc / (1 + sr);
     totalPay += ex;
     return `<tr>
-      <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${p.month}</td>
+      <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${QLABELS[i]}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${cm > 0 ? fmtMoney(cm) : '—'}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(ex)}</td>
     </tr>`;
@@ -1465,7 +1461,7 @@ function renderPayrollLockedCard() {
           <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🔒 Payroll-Locked Quarters</div>
           <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quarterly CM actuals entered by payroll. These are locked — your scenario inputs above are for modelling future quarters only.</div>
         </div>
-        <div style="font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;">${rows.length} of 4 quarters</div>
+        <div style="font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;">${confIdx.length} of 4 quarters</div>
       </div>
       <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;">
         <thead>

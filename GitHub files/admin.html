@@ -485,6 +485,7 @@
     <span class="gh-conn">GitHub: <span id="gh-status">not connected</span></span>
     <button class="btn-link" id="gh-config-btn" title="Connect to GitHub or change the saved token. You normally only need this once.">Configure GitHub</button>
     <button class="btn-link" id="verify-push-btn" title="Re-read each employee's published dashboard data and confirm your confirmed pay runs actually landed.">✓ Verify reached dashboards</button>
+    <button class="btn-link" id="download-backup-btn" title="Save a complete plaintext backup of all compensation data to your computer (no Terminal needed).">⬇ Download backup</button>
   </div>
   <div class="save-bar-right">
     <span class="unsaved-badge" id="save-status">● Unsaved changes — click Save</span>
@@ -694,7 +695,7 @@ async function buildAllEncryptedFiles(fullData, pins, master) {
 // =========================================================================
 // MASTER PASSWORD GATE — admin tools
 // =========================================================================
-const ADMIN_CACHE_KEY = 'mec-admin-master-v34';
+const ADMIN_CACHE_KEY = 'mec-admin-master-v38';
 const ADMIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MASTER_ENCRYPTED_URL = './encrypted/master.enc.json';
 
@@ -710,28 +711,31 @@ function _readAdminCache() {
     return obj;
   } catch (e) { return null; }
 }
-function _writeAdminCache(masterPassword, decrypted) {
+function _writeAdminCache(masterPassword, decrypted, fp) {
   try {
     localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify({
-      master: masterPassword, data: decrypted, expires: Date.now() + ADMIN_CACHE_TTL_MS
+      master: masterPassword, data: decrypted, fp: fp || '', expires: Date.now() + ADMIN_CACHE_TTL_MS
     }));
   } catch (e) {}
 }
 function _clearAdminCache() {
   try { localStorage.removeItem(ADMIN_CACHE_KEY); } catch (e) {}
 }
+// Fingerprint of the master blob — changes on every save, so a stale 30-day cache is
+// detected and re-decrypted instead of shown (matters once Hayley also uses admin).
+function _blobFingerprint(enc) {
+  try {
+    const d = (enc && enc.data) || {};
+    const s = (d.ct || '') + '|' + (d.iv || '');
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+    return String(h >>> 0);
+  } catch (e) { return ''; }
+}
 
 async function unlockAdmin() {
-  const cached = _readAdminCache();
-  if (cached) {
-    _adminMasterPassword = cached.master;
-    // Refresh the encrypted file so future saves use the latest base
-    try {
-      const r = await fetch(MASTER_ENCRYPTED_URL + '?' + Date.now());
-      if (r.ok) _adminEncryptedMasterFile = await r.json();
-    } catch (e) {}
-    return cached.data;
-  }
+  // Always fetch the latest master blob first so we can tell if the data changed
+  // since this browser last decrypted (otherwise a 30-day cache hides new saves).
   let r;
   try {
     r = await fetch(MASTER_ENCRYPTED_URL + '?' + Date.now());
@@ -743,6 +747,12 @@ async function unlockAdmin() {
     _adminEncryptedMasterFile = await r.json();
   } catch (e) {
     throw new Error(`encrypted/master.enc.json is not valid JSON: ${e.message}`);
+  }
+  const fp = _blobFingerprint(_adminEncryptedMasterFile);
+  const cached = _readAdminCache();
+  if (cached && cached.fp === fp) {
+    _adminMasterPassword = cached.master;
+    return cached.data; // unchanged → use cache, no master-password re-prompt
   }
   return new Promise((resolve, reject) => {
     const overlay = document.getElementById('pw-gate');
@@ -763,7 +773,7 @@ async function unlockAdmin() {
       try {
         const decrypted = await decryptMasterFile(_adminEncryptedMasterFile, pw);
         _adminMasterPassword = pw;
-        _writeAdminCache(pw, decrypted);
+        _writeAdminCache(pw, decrypted, fp);
         loadEl.textContent = '';
         overlay.style.display = 'none';
         resolve(decrypted);
@@ -1711,8 +1721,10 @@ async function _doSaveToGitHub() {
       throw new Error(msg);
     }
 
-    // Refresh in-memory cache so subsequent saves don't re-bake stale state
-    _writeAdminCache(master, data);
+    // Refresh in-memory cache so subsequent saves don't re-bake stale state.
+    // Use the just-pushed master blob's fingerprint so this browser (which just saved)
+    // isn't prompted to re-enter the master password on its next load.
+    _writeAdminCache(master, data, _blobFingerprint(files['master.enc.json']));
     if (typeof original !== 'undefined') original = clone(data);
     if (typeof setDirty === 'function') setDirty(false);
     showToast('success', '✓ Saved. Encrypted blobs pushed in one commit. GitHub Pages will refresh in ~30-60s.');
@@ -1804,6 +1816,37 @@ async function verifyPush() {
   if (byId('verify-close')) byId('verify-close').addEventListener('click', close);
   if (byId('verify-done')) byId('verify-done').addEventListener('click', close);
 })();
+
+/* ============================================================
+   DOWNLOAD BACKUP — one-click plaintext data.json backup, no Terminal.
+   Saves the in-memory decrypted data (minus the embedded PINs, which live
+   in passwords.json) to a dated file on the user's computer.
+   ============================================================ */
+function downloadBackup() {
+  const master = (typeof getAdminMasterPassword === 'function') ? getAdminMasterPassword() : null;
+  if (!master) { showToast('error', 'Unlock with the master password first.'); return; }
+  if (!data) { showToast('error', 'No data loaded yet.'); return; }
+  try {
+    const clone = JSON.parse(JSON.stringify(data));
+    delete clone._pinsForAdminUse; // PINs stay in passwords.json, not in the data backup
+    const blob = new Blob([JSON.stringify(clone, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    a.href = url;
+    a.download = `mec-data-backup-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    showToast('success', '✓ Backup saved to your computer.');
+  } catch (e) {
+    showToast('error', 'Backup failed: ' + (e.message || e));
+  }
+}
+if (document.getElementById('download-backup-btn')) {
+  document.getElementById('download-backup-btn').addEventListener('click', downloadBackup);
+}
 
 /* ============================================================
    TEAM POOL ADMIN — quarterly actuals entry
@@ -2366,10 +2409,10 @@ function renderFortnightlyAdmin() {
           <input type="text" id="pr-ev-${esc(r.id)}" data-rep="${esc(r.id)}" data-kind="event" inputmode="decimal" ${lock} value="${f.row.eventGp ? f.row.eventGp.toLocaleString() : ''}" placeholder="0" style="width:100%; padding:9px 10px; border:1px solid #d3d1c7; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; ${lockStyle}">
         </div>
         <div style="text-align:right;">
-          <input type="text" class="pr-copy" id="pr-bonus-${esc(r.id)}" readonly value="${Math.round(f.exSuper).toLocaleString()}" title="Bonus ex super — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #c3e4d0; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;">
+          <input type="text" class="pr-copy" tabindex="-1" id="pr-bonus-${esc(r.id)}" readonly value="${Math.round(f.exSuper).toLocaleString()}" title="Bonus ex super — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #c3e4d0; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;">
         </div>
         <div style="text-align:right;">
-          <input type="text" class="pr-copy" id="pr-super-${esc(r.id)}" readonly value="${Math.round(f.superAmt).toLocaleString()}" title="Super (12%) — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #cdd9e8; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:var(--navy); background:#eef4fa; cursor:pointer;">
+          <input type="text" class="pr-copy" tabindex="-1" id="pr-super-${esc(r.id)}" readonly value="${Math.round(f.superAmt).toLocaleString()}" title="Super (12%) — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #cdd9e8; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:var(--navy); background:#eef4fa; cursor:pointer;">
         </div>
       </div>`;
     });
@@ -3541,18 +3584,49 @@ function renderQuarterlyAdmin() {
   });
   if (cohort.length === 0) { document.getElementById('qtp-tbody').innerHTML = '<tr><td>No quarterly-cohort employees found.</td></tr>'; return; }
 
-  // FY27 quarters
+  // Quarters aligned to the dashboards + the fortnightly quarter-close prompts.
+  // Index order MUST match the dashboards (Apr→Mar) so the bridge maps 1:1.
   const QUARTERS = [
-    { id: 'Q1', label: 'Q1 FY27', period: 'Jul – Sep 2026' },
-    { id: 'Q2', label: 'Q2 FY27', period: 'Oct – Dec 2026' },
-    { id: 'Q3', label: 'Q3 FY27', period: 'Jan – Mar 2027' },
-    { id: 'Q4', label: 'Q4 FY27', period: 'Apr – Jun 2027' }
+    { id: 'Q4FY26', label: 'Q4 FY26', period: 'Apr – Jun 2026' },
+    { id: 'Q1FY27', label: 'Q1 FY27', period: 'Jul – Sep 2026' },
+    { id: 'Q2FY27', label: 'Q2 FY27', period: 'Oct – Dec 2026' },
+    { id: 'Q3FY27', label: 'Q3 FY27', period: 'Jan – Mar 2027' }
   ];
 
-  // Per-employee × per-quarter metric values + audit actuals. Start blank.
+  // Persisted quarterly entries live on emp.quarterly { scheduleId, values[4], confirmed[4], audit }.
+  // Created lazily; saved through the normal Save-to-GitHub flow (rides in the master blob).
+  const Q_SCHEDULE_ID = 'FY27';
+  function ensureQuarterly(emp) {
+    if (!emp.quarterly || typeof emp.quarterly !== 'object') emp.quarterly = {};
+    const q = emp.quarterly;
+    if (!Array.isArray(q.values)) q.values = [];
+    if (!Array.isArray(q.confirmed)) q.confirmed = [];
+    q.values.length = QUARTERS.length;
+    q.confirmed.length = QUARTERS.length;
+    for (let i = 0; i < QUARTERS.length; i++) {
+      if (typeof q.values[i] !== 'number' || !isFinite(q.values[i])) q.values[i] = 0;
+      q.confirmed[i] = (q.confirmed[i] === true);
+    }
+    q.audit = (q.audit == null) ? '' : String(q.audit);
+    q.scheduleId = Q_SCHEDULE_ID;
+    return q;
+  }
+  function isQuarterConfirmed(idx) {
+    return cohort.every(c => { const e = (data.employees || []).find(x => x.id === c.id); return e && ensureQuarterly(e).confirmed[idx] === true; });
+  }
+  function setQuarterConfirmed(idx, val) {
+    cohort.forEach(c => { const e = (data.employees || []).find(x => x.id === c.id); if (e) ensureQuarterly(e).confirmed[idx] = !!val; });
+  }
+
+  // Per-employee × per-quarter metric values + audit actuals. Hydrated from emp.quarterly.
   const qMatrix = {};
   const qAuditActuals = {};
-  cohort.forEach(c => { qMatrix[c.id] = new Array(QUARTERS.length).fill(0); qAuditActuals[c.id] = ''; });
+  cohort.forEach(c => {
+    const e = (data.employees || []).find(x => x.id === c.id);
+    const q = e ? ensureQuarterly(e) : { values: new Array(QUARTERS.length).fill(0), audit: '' };
+    qMatrix[c.id] = q.values.slice();
+    qAuditActuals[c.id] = q.audit || '';
+  });
 
   const SUPER_RATE = 0.12;
   const _fmt = (n) => '$' + Math.round(n).toLocaleString();
@@ -3680,10 +3754,15 @@ function renderQuarterlyAdmin() {
     cohort.forEach(c => { empRows[c.id] = computeEmpQuarters(c); });
     let h = '';
     QUARTERS.forEach((q, qi) => {
+      const qConf = isQuarterConfirmed(qi);
+      const qBtn = qConf
+        ? `<button type="button" class="qtp-unlock" data-q="${qi}" style="font-size:10px; padding:3px 8px; border:1px solid #d3d1c7; background:#fff; border-radius:4px; cursor:pointer;">🔓 Unlock</button>`
+        : `<button type="button" class="qtp-confirm" data-q="${qi}" style="font-size:10px; padding:4px 9px; border:none; background:#1e6624; color:#fff; border-radius:4px; cursor:pointer; font-weight:600;">✓ Confirm &amp; Save</button>`;
       h += `<tr>
         <td style="padding: 8px 12px; border-bottom: 1px solid #f4f3ed; font-weight: 600;">
-          <div>${esc(q.label)}</div>
+          <div>${esc(q.label)} ${qConf ? '<span style="font-size:9px; padding:1px 5px; background:#eaf5ec; color:#1e6624; border-radius:3px; margin-left:4px;">✓ PAID</span>' : ''}</div>
           <div style="font-size: 10px; color: var(--faint); font-family: var(--mono); font-weight: 400;">${esc(q.period)}</div>
+          <div style="margin-top: 6px;">${qBtn}</div>
         </td>`;
       cohort.forEach(c => {
         const row = empRows[c.id].rows[qi];
@@ -3699,16 +3778,17 @@ function renderQuarterlyAdmin() {
         const copyVals = incSuper > 0
           ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px;">
                <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Bonus</div>
-                 <input type="text" class="qtp-copy-bonus" readonly value="${Math.round(exSuper).toLocaleString()}" title="Bonus ex super — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #f6f8fc; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;"></div>
+                 <input type="text" class="qtp-copy-bonus" tabindex="-1" readonly value="${Math.round(exSuper).toLocaleString()}" title="Bonus ex super — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #f6f8fc; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;"></div>
                <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Super</div>
-                 <input type="text" class="qtp-copy-super" readonly value="${Math.round(superAmt).toLocaleString()}" title="Super (12%) — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;"></div>
+                 <input type="text" class="qtp-copy-super" tabindex="-1" readonly value="${Math.round(superAmt).toLocaleString()}" title="Super (12%) — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;"></div>
              </div>
              <div style="font-size: 9px; color: var(--muted); margin-top: 3px; text-align: right; font-family: var(--mono);">annualised ${_fmt(row.annualised)}</div>`
           : (row.metric > 0
               ? `<div style="font-size: 10px; color: var(--muted); margin-top: 3px; font-family: var(--mono); text-align: right;">annualised ${_fmt(row.annualised)} · $0 payout</div>`
               : `<div style="font-size: 10px; color: var(--faint); margin-top: 3px; font-family: var(--mono); text-align: right;">—</div>`);
+        const qLock = isQuarterConfirmed(qi);
         h += `<td class="qtp-cell" data-tip="${esc(tip)}" style="padding: 6px 8px; border-bottom: 1px solid #f4f3ed; vertical-align: top;">
-          <input type="text" class="qtp-input" data-emp="${esc(c.id)}" data-idx="${qi}" value="${row.metric ? row.metric.toLocaleString() : ''}" placeholder="${c.isTTM ? 'TTM ' + esc(c.metricName) : esc(c.metricName)}" inputmode="decimal" style="width: 100%; padding: 4px 6px; border: 1px solid #d3d1c7; border-radius: 4px; background: #fff; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink);">
+          <input type="text" class="qtp-input" data-emp="${esc(c.id)}" data-idx="${qi}" value="${row.metric ? row.metric.toLocaleString() : ''}" placeholder="${c.isTTM ? 'TTM ' + esc(c.metricName) : esc(c.metricName)}" inputmode="decimal" ${qLock ? 'readonly tabindex="-1" title="Confirmed — unlock the quarter to edit"' : ''} style="width: 100%; padding: 4px 6px; border: 1px solid ${qLock ? '#bfe0c6' : '#d3d1c7'}; border-radius: 4px; background: ${qLock ? '#eaf5ec' : '#fff'}; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink);">
           ${copyVals}
         </td>`;
       });
@@ -3741,9 +3821,27 @@ function renderQuarterlyAdmin() {
     wireQtp();
   }
 
+  // Confirm a quarter → lock all three people for that quarter, then auto-save to GitHub.
+  async function confirmAndSaveQuarter(qi) {
+    const q = QUARTERS[qi];
+    if (!confirm(`Confirm the ${q.label} quarterly pay (${q.period})?\n\nThis locks the figures and pushes each person's paid amount to their own dashboard.`)) return;
+    setQuarterConfirmed(qi, true);
+    if (typeof setDirty === 'function') setDirty();
+    renderTotals(); renderBody(); renderAudit();
+    if (typeof saveToGitHub === 'function') await saveToGitHub();
+  }
+  function unlockQuarter(qi) {
+    if (!confirm('Unlock this quarter for editing? You will need to Confirm & Save it again afterwards.')) return;
+    setQuarterConfirmed(qi, false);
+    if (typeof setDirty === 'function') setDirty();
+    renderTotals(); renderBody(); renderAudit();
+  }
+
   // ----- Interactions: copy buttons + Tab/Enter navigation -----
   function wireQtp() {
     const tbody = document.getElementById('qtp-tbody');
+    tbody.querySelectorAll('.qtp-confirm').forEach(b => b.addEventListener('click', () => confirmAndSaveQuarter(parseInt(b.getAttribute('data-q'), 10))));
+    tbody.querySelectorAll('.qtp-unlock').forEach(b => b.addEventListener('click', () => unlockQuarter(parseInt(b.getAttribute('data-q'), 10))));
     tbody.querySelectorAll('.qtp-copy-bonus, .qtp-copy-super').forEach(inp => {
       inp.addEventListener('click', async () => {
         try {
@@ -3781,7 +3879,10 @@ function renderQuarterlyAdmin() {
         const idx = parseInt(inp.getAttribute('data-idx'), 10);
         const raw = inp.value.replace(/[^0-9.\-]/g, '');
         const n = parseFloat(raw);
-        qMatrix[emp][idx] = isFinite(n) ? n : 0;
+        const val = isFinite(n) ? n : 0;
+        qMatrix[emp][idx] = val;
+        const e = (data.employees || []).find(x => x.id === emp);
+        if (e) { ensureQuarterly(e).values[idx] = val; if (typeof setDirty === 'function') setDirty(); }
       };
       inp.addEventListener('blur', () => {
         commit();
