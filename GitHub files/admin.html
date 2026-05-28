@@ -2484,6 +2484,7 @@ function renderFortnightlyAdmin() {
         <div>
           <div style="font-weight:700; color:var(--ink);">${esc(r.fullName)}</div>
           <div style="font-size:10px; color:var(--faint); font-family:var(--mono);">${esc(r.planType)} · YTD <span id="pr-ytd-${esc(r.id)}">${_fmt(f.row.ytd)}</span> · <span id="pr-rate-${esc(r.id)}">${(f.row.endRate * 100).toFixed(0)}%</span></div>
+          <button type="button" class="pr-xero-note" data-rep="${esc(r.id)}" tabindex="-1" title="Copy this fortnight's GP note to paste into the Xero payslip" style="margin-top:6px; padding:4px 10px; border:1px solid #cdd9e8; background:#eef4fa; color:var(--navy); border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">📋 Copy Xero note</button>
         </div>
         <div style="text-align:right;">
           <input type="text" id="pr-gp-${esc(r.id)}" data-rep="${esc(r.id)}" data-kind="gp" inputmode="decimal" ${lock} value="${f.row.gp ? f.row.gp.toLocaleString() : ''}" placeholder="0" style="width:100%; padding:9px 10px; border:1px solid #d3d1c7; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; ${lockStyle}">
@@ -2554,6 +2555,39 @@ function renderFortnightlyAdmin() {
           const bg = inp.style.background; inp.style.background = '#d4edda';
           setTimeout(() => { inp.style.background = bg; }, 400);
         } catch (e) {}
+      });
+    });
+
+    // Copy a formatted Xero payslip note per rep — reads live GP / Event GP from the row.
+    const _copyText = async (text) => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; }
+      } catch (e) {}
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand('copy'); ta.remove(); return ok;
+      } catch (e) { return false; }
+    };
+    document.querySelectorAll('#fnp-payrun .pr-xero-note').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const rep = btn.getAttribute('data-rep');
+        const numFrom = (id) => {
+          const el = document.getElementById(id);
+          const n = parseFloat((el ? el.value : '').replace(/[^0-9.\-]/g, ''));
+          return isFinite(n) ? n : 0;
+        };
+        const money = (v) => '$' + Math.round(v).toLocaleString();
+        const gp = numFrom(`pr-gp-${rep}`);
+        const ev = numFrom(`pr-ev-${rep}`);
+        const period = FORTNIGHTS[idx].period;
+        const note = `[${period}]: GP Received = ${money(gp)} + Event GP ${money(ev)}`;
+        const ok = await _copyText(note);
+        const orig = btn.innerHTML;
+        btn.innerHTML = ok ? '✓ Copied' : '⚠ Copy failed';
+        const obg = btn.style.background; btn.style.background = ok ? '#d4edda' : '#fdecea';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.background = obg; }, 1100);
       });
     });
 
