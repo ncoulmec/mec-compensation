@@ -1316,12 +1316,23 @@
 
       <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
       <div id="cum-chart-wrap" style="background:#fff; border:1px solid #ecebe5; border-radius:6px; padding:12px 14px 16px; margin: 0 0 14px;">
-        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:10px;">
           <div style="font-size:11px; color: var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700;">Cumulative pay through the year</div>
-          <div style="font-size:11px; color: var(--faint);"><span style="display:inline-block; width:10px; height:2px; background:#1e6624; vertical-align:middle; margin-right:4px;"></span>Cash paid &nbsp;·&nbsp; <span style="display:inline-block; width:10px; height:2px; background:#c2410c; vertical-align:middle; margin-right:4px; border-top:1.5px dashed #c2410c;"></span>Pace entitlement</div>
+          <div style="display:flex; gap:16px; align-items:center; font-size:11px;">
+            <div style="display:flex; align-items:center; gap:7px;">
+              <svg width="28" height="8" style="flex-shrink:0;"><line x1="0" y1="4" x2="28" y2="4" stroke="#1e6624" stroke-width="2.5"/></svg>
+              <span style="color:var(--ink);"><strong style="color:#1e6624;">Cash paid</strong> · already in your bank</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:7px;">
+              <svg width="28" height="8" style="flex-shrink:0;"><line x1="0" y1="4" x2="28" y2="4" stroke="#c2410c" stroke-width="2" stroke-dasharray="5,3"/></svg>
+              <span style="color:var(--ink);"><strong style="color:#c2410c;">Pace entitlement</strong> · owed if year stopped now</span>
+            </div>
+          </div>
         </div>
         <div style="position:relative; height: 220px;"><canvas id="cum-chart-canvas"></canvas></div>
-        <div style="font-size:11px; color: var(--muted); margin-top:6px;">Solid line = $ actually paid to you so far. Dashed line = what you'd be owed if the year stopped right now at your current pace. When solid is above dashed, you have a <strong>true-up balance owed</strong> — your next pay pauses at $0 until pace catches up.</div>
+        <div style="font-size:11px; color: var(--muted); margin-top:8px; line-height:1.5;">
+          When the <strong style="color:#1e6624;">green line</strong> sits above the <strong style="color:#c2410c;">dashed orange line</strong>, you're holding a <strong style="color:#c2410c;">true-up balance</strong> — that gap is the amount that will be deducted from your next fortnights' pay before pay resumes. Hover any point to see the exact gap.
+        </div>
       </div>
 
       <div style="overflow-x: auto;">
@@ -1330,8 +1341,8 @@
             <tr>
               <th rowspan="2" style="text-align: left; width: 150px; vertical-align: bottom;">Pay date</th>
               <th rowspan="2" class="num" style="width: 110px; vertical-align: bottom;">GP received <span class="fn-tip" data-tip="<strong>Editable</strong> for fortnights not yet confirmed — type any value to model your year. Pull these from the Zoho Payments report once a fortnight closes. Confirmed fortnights are locked to your actual paid figure.">?</span></th>
-              <th rowspan="2" class="num" style="width: 100px; vertical-align: bottom;">Event GP <span class="fn-tip" data-tip="<strong>Editable</strong> — GP <em>produced</em> (events delivered) this fortnight. Drives the 1% production commission.">?</span></th>
-              <th rowspan="2" class="num" style="width: 70px; vertical-align: bottom;">Band <span class="fn-tip" data-tip="The marginal rate the last dollar of your year-to-date GP earned at.">?</span></th>
+              <th rowspan="2" class="num" style="width: 70px; vertical-align: bottom;">Band <span class="fn-tip" data-tip="The pace-based rate this fortnight's pay is calculated at. Sits alongside GP received because it applies to GP received — not Event GP, which is its own flat 1% stream.">?</span></th>
+              <th rowspan="2" class="num" style="width: 100px; vertical-align: bottom; border-left: 2px solid #d3d1c7;">Event GP <span class="fn-tip" data-tip="<strong>Editable</strong> — GP <em>produced</em> (events delivered) this fortnight. Drives the 1% production commission. This is a <strong>separate flat 1%</strong> calculation — not part of the band-rate flow.">?</span></th>
               <th colspan="2" class="num" style="border-left: 2px solid #d3d1c7; border-bottom: 1px solid #ecebe5; text-align: center; padding-bottom: 4px;">→ Xero Payroll <span class="fn-tip" data-tip="These two numbers go straight onto your payslip in Xero — the <strong>Bonus</strong> line (ex super) and the <strong>Super</strong> line (12%). Check them against your payslip. Hover either cell for the GP-commission / production / true-up breakdown.">?</span></th>
               <th rowspan="2" class="num" style="width: 105px; border-left: 2px solid #d3d1c7; vertical-align: bottom;">Total this pay <span class="fn-tip" data-tip="Bonus + Super for this fortnight — the full amount that hits your bank account plus super fund.">?</span></th>
               <th rowspan="2" class="num" style="width: 110px; vertical-align: bottom;">Paid to date <span class="fn-tip" data-tip="Running total of every fortnight's Total this pay, year-to-date.">?</span></th>
@@ -4495,27 +4506,74 @@ function renderBreakdown(r) {
       <div><strong>Total (inc super): ${_fmt(pay)}</strong></div>`;
   }
 
-  // ---------- Band Rate column tooltip — current + pace ----------
+  // ---------- Band Rate tooltip — pace-aware breakdown + band ladder ----------
+  function bandLadderHtml(annualised, paceComm) {
+    if (annualised <= 0) return '';
+    let html = `<div style="margin-top:8px; padding:8px 9px; background:rgba(255,255,255,0.06); border-radius:4px;">
+      <div style="font-size:10px; color:#bbb; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:6px;">Where your pace lands across the bands</div>`;
+    for (let i = 0; i < BANDS.length; i++) {
+      const lo = BANDS[i][0];
+      const rate = BANDS[i][1];
+      const hi = i+1 < BANDS.length ? BANDS[i+1][0] : (annualised + 50000);
+      if (annualised <= lo) break;
+      const inBand = Math.min(annualised, hi) - lo;
+      const nextLo = i+1 < BANDS.length ? BANDS[i+1][0] : (lo + Math.max(hi - lo, 50000));
+      const bandWidth = nextLo - lo;
+      const fillPct = Math.max(2, Math.min(100, inBand / bandWidth * 100));
+      const bandComm = inBand * rate;
+      const isCurrent = annualised < (i+1 < BANDS.length ? BANDS[i+1][0] : Infinity);
+      // colour ramp by rate
+      const color = rate <= 0.05 ? '#5d8a45'
+                  : rate <= 0.08 ? '#3a8a5d'
+                  : rate <= 0.11 ? '#a89540'
+                  : rate <= 0.14 ? '#d49340'
+                  : '#c2410c';
+      const hiLabel = i+1 < BANDS.length ? ('$' + (BANDS[i+1][0]/1000).toFixed(0) + 'k') : '∞';
+      html += `<div style="display:grid; grid-template-columns: 88px 1fr 64px; align-items:center; gap:6px; margin:3px 0; font-size:10px; line-height:1.4;">
+        <div style="color:#bbb; font-family:monospace;">$${(lo/1000).toFixed(0)}k–${hiLabel}</div>
+        <div style="height:14px; background:rgba(255,255,255,0.08); border-radius:2px; position:relative; overflow:hidden;">
+          <div style="position:absolute; left:0; top:0; bottom:0; width:${fillPct}%; background:${color}; ${isCurrent ? 'box-shadow: inset -2px 0 0 #fff;' : ''}"></div>
+          <div style="position:absolute; left:5px; right:5px; top:0; bottom:0; display:flex; align-items:center; justify-content:flex-end; color:#fff; font-size:9px; font-weight:700; line-height:1;">${(rate*100).toFixed(0)}%${isCurrent ? ' &#9664;' : ''}</div>
+        </div>
+        <div style="text-align:right; font-family:monospace; color:${isCurrent ? '#fff' : '#bbb'}; font-weight:${isCurrent ? '700' : '500'};">$${Math.round(bandComm).toLocaleString()}</div>
+      </div>`;
+    }
+    html += `<div style="display:grid; grid-template-columns: 88px 1fr 64px; gap:6px; margin-top:6px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
+      <div></div>
+      <div style="text-align:right; color:#fff; font-weight:600;">Total at pace:</div>
+      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">$${Math.round(paceComm).toLocaleString()}</div>
+    </div></div>`;
+    return html;
+  }
+
   function bandRateTipHtml(r) {
-    const curPct = (r.endRate * 100).toFixed(0) + '%';
-    const annualised = pace(r.ytd, r.idx);
+    const annualised = (r.pace != null) ? r.pace : pace(r.ytd, r.idx);
+    if (annualised <= 0 || r.ytd <= 0) {
+      return `<div style="font-weight:700; margin-bottom:4px;">Pace-based pay — how it works</div>
+        <div>You're paid each fortnight based on your <em>pace</em>: your year-to-date GP × (26 ÷ fortnights elapsed). The higher your pace, the higher the band rate you're paid at.</div>
+        <div style="margin-top:6px; color:#aaa; font-size:11px;">Add GP for a fortnight to see your pace projection and band breakdown.</div>`;
+    }
     const paceRate = marginalRate(annualised);
     const pacePct = (paceRate * 100).toFixed(0) + '%';
-    if (annualised <= 0) {
-      return `<div style="font-weight: 700; margin-bottom: 4px;">Current band rate</div>
-        <div>Marginal rate the <strong>last dollar of YTD GP</strong> earned at.</div>
-        <div style="margin-top: 6px; color: #aaa; font-size: 11px;">Add GP for a fortnight to see your pace projection.</div>`;
-    }
     const paceComm = cumBandComm(annualised);
     const paceEff = annualised > 0 ? paceComm / annualised : 0;
-    return `<div style="font-weight: 700; margin-bottom: 4px;">Current band · Pace projection</div>
-      <div>Currently in the <code>${curPct}</code> band (YTD GP = <code>${_fmt(r.ytd)}</code>).</div>
-      <hr>
-      <div><strong>At this pace:</strong></div>
-      <div>Annualised GP = <code>${_fmt(annualised)}</code> <span style="color: #aaa;">(YTD × 26 ÷ ${r.idx + 1})</span></div>
-      <div>You'd finish the year in the <code>${pacePct}</code> band.</div>
-      <div>Projected year commission: <code>${_fmt(paceComm)}</code> <span style="color: #aaa;">(${(paceEff*100).toFixed(1)}% effective)</span></div>
-      <div style="margin-top: 6px; color: #aaa; font-size: 11px;">Pace is volatile early in the year — one strong fortnight inflates the projection. By fortnight 13+ it stabilises.</div>`;
+    const thisFnPay = r.properPay || 0;
+    const thisFnRate = r.gp > 0 ? thisFnPay / r.gp : 0;
+    const tub = r.trueUpBalance || 0;
+    const tuRow = tub > 0.5
+      ? `<div style="margin-top:7px; padding:6px 9px; background:rgba(194,65,12,0.18); border-left:2px solid #c2410c; border-radius:3px; font-size:11px;"><strong>True-up balance:</strong> <code>${_fmt(tub)}</code> owed back — you're ahead of pace. Next pay pauses at $0 until pace catches up.</div>`
+      : '';
+    return `<div style="font-weight:700; margin-bottom:4px;">This pay · Pace projection</div>
+      <div>GP this fortnight: <code>${_fmt(r.gp)}</code></div>
+      <div>Pay this fortnight: <code>${_fmt(thisFnPay)}</code>${r.gp > 0 ? ' <span style="color:#aaa;">(' + (thisFnRate*100).toFixed(1) + '% of GP)</span>' : ''}</div>
+      <hr style="border-color:rgba(255,255,255,0.18); margin:6px 0;">
+      <div><strong>Why this rate?</strong></div>
+      <div>YTD GP so far: <code>${_fmt(r.ytd)}</code></div>
+      <div>Annualised pace: <code>${_fmt(annualised)}</code> <span style="color:#aaa;">(YTD × 26 ÷ ${r.idx + 1})</span></div>
+      <div>Projected year commission at pace: <code>${_fmt(paceComm)}</code> <span style="color:#aaa;">(${(paceEff*100).toFixed(1)}% effective)</span></div>
+      ${bandLadderHtml(annualised, paceComm)}
+      ${tuRow}
+      <div style="margin-top:7px; color:#aaa; font-size:11px;">Pace is volatile early in the year — one strong fortnight inflates the projection. By fortnight 13+ it stabilises.</div>`;
   }
 
   // ---------- Pace pill (small badge alongside band rate) ----------
@@ -4693,7 +4751,7 @@ function renderBreakdown(r) {
     const canvas = document.getElementById('cum-chart-canvas');
     if (!canvas || typeof Chart === 'undefined') return;
     const ctx = canvas.getContext('2d');
-    const labels = rows.map((_,i) => String(i+1));
+    const labels = rows.map(r => (r.paid || '').split(' ').slice(0,2).join(' '));
     // Cumulative CASH PAID = GP commission cumulative + production cumulative (= total this pay running).
     const cumCash = rows.map(r => (r.cumPay || 0) + (r.cumProd || 0));
     // Cumulative entitlement at pace (GP commission only — production isn't paced) + cumulative prod
@@ -4726,23 +4784,39 @@ function renderBreakdown(r) {
           legend: { display: false },
           tooltip: {
             mode: 'index', intersect: false,
+            padding: 10,
+            titleFont: { size: 12, weight: 'bold' },
+            bodyFont: { size: 11 },
+            footerFont: { size: 12, weight: 'bold' },
+            footerMarginTop: 8,
+            footerColor: '#ffd29b',
             callbacks: {
-              title: items => 'Fortnight ' + items[0].label,
-              label: c => c.dataset.label + ': $' + Math.round(c.parsed.y).toLocaleString(),
+              title: items => 'Pay date: ' + items[0].label,
+              label: c => '  ' + c.dataset.label + ': $' + Math.round(c.parsed.y).toLocaleString(),
               footer: items => {
                 if (items.length < 2) return '';
                 const cash = items.find(x => x.dataset.label.startsWith('Cash'))?.parsed.y;
                 const ent  = items.find(x => x.dataset.label.startsWith('Pace'))?.parsed.y;
                 if (cash == null || ent == null) return '';
                 const d = cash - ent;
-                return d > 0.5 ? 'True-up balance owed: $' + Math.round(d).toLocaleString()
-                              : (d < -0.5 ? 'Owed to you next pay: $' + Math.round(-d).toLocaleString() : 'All caught up');
+                if (d > 0.5) {
+                  return ['', '⚠ TRUE-UP BALANCE OWED: $' + Math.round(d).toLocaleString(),
+                    'Your next ~$' + Math.round(d).toLocaleString() + ' of pay will go',
+                    'to clearing this — not paid out — before',
+                    'pay resumes at your live pace.'];
+                }
+                if (d < -0.5) {
+                  return ['', '↑ OWED TO YOU NEXT FORTNIGHT: $' + Math.round(-d).toLocaleString(),
+                    'Your pace has caught up — this is the',
+                    'cash that will be released to you.'];
+                }
+                return ['', '✓ All caught up — pay reflects your full pace.'];
               }
             }
           }
         },
         scales: {
-          x: { title: { display: true, text: 'Fortnight #' }, grid: { display: false } },
+          x: { title: { display: true, text: 'Pay date' }, grid: { display: false }, ticks: { maxRotation: 50, minRotation: 50, autoSkip: true, maxTicksLimit: 14, font: { size: 10 } } },
           y: { title: { display: true, text: '$ cumulative (inc super)' }, beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() } }
         }
       }
@@ -4924,8 +4998,8 @@ function renderBreakdown(r) {
         <tr class="fn-month-row" data-group="${gi}" data-open="${isOpen ? '1' : '0'}" data-tip='${esc(mTip)}' style="cursor: pointer; font-weight: 600; ${groupBg}">
           <td><span class="fn-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span> ${group.month}${monthPaidPill}${hasCrossing ? ' <span style="font-size: 9px; padding: 1px 4px; background: #fff3cd; color: #6a4a00; border-radius: 3px; margin-left: 4px;">CROSSING</span>' : ''}</td>
           <td class="num">${groupGP > 0 ? _fmt(groupGP) : '<span style="color: var(--faint);">—</span>'}</td>
-          <td class="num">${groupEventGp > 0 ? _fmt(groupEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num">${monthBandCellHtml}</td>
+          <td class="num" style="border-left: 2px solid #d3d1c7;">${groupEventGp > 0 ? _fmt(groupEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${groupTotalInc > 0 ? _fmt(groupBonus) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
           <td class="num" style="color: var(--navy); font-weight: 700;">${groupTotalInc > 0 ? _fmt(groupSuper) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
           <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${groupTotalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(monthPayTip)}'>${_fmt(groupTotalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
@@ -4963,8 +5037,8 @@ function renderBreakdown(r) {
               <div style="font-family: var(--mono); font-size: 10px; color: var(--faint);">${esc(r.period)}</div>
             </td>
             <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
-            <td class="num"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
             <td class="num">${rBandCellHtml}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7;"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
             <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="font-size:9px; color:#1e6624; font-weight:700; margin-top:1px;">✓ PAID</div>' : ''}</td>
             <td class="num" style="color: var(--navy); font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt(superAmt)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
             <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt(totalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
