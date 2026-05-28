@@ -2398,16 +2398,23 @@ function renderFortnightlyAdmin() {
       const e = ev[i] || 0;
       const prevYtd = ytd;
       ytd = prevYtd + g;
-      const properPay = cumBandComm(ytd, bands) - cumBandComm(prevYtd, bands);
-      const endRate = marginalRate(ytd, bands);
-      const startRate = marginalRate(prevYtd, bands);
-      const naivePay = g * endRate;
-      const tuAdj = properPay - naivePay;
+      // PACE + ROLLING TRUE-UP + FLOOR-AT-$0 (replaces cumulative annual marginal).
+      // cumPay monotonic; trueUpBalance ≥ 0 = cash owed back relative to current pace.
+      const n = i + 1;
+      const pace = n > 0 ? ytd * 26 / n : 0;
+      const entitlement = pace > 0 ? cumBandComm(pace, bands) * n / 26 : 0;
+      const rawDelta = entitlement - cumPay;
+      const properPay = Math.max(0, rawDelta);
+      const endRate = marginalRate(pace, bands);
+      const startRate = endRate;
+      const naivePay = properPay;
+      const tuAdj = 0;
       const prodComm = e * prodRate;
       cumPay += properPay;
+      const trueUpBalance = cumPay - entitlement;
       cumProd += prodComm;
       cumEv += e;
-      rows.push({ idx: i, gp: g, eventGp: e, ytd, prevYtd, properPay, naivePay, tuAdj, endRate, startRate, prodComm, cumPay, cumProd, cumEv, cumTotal: cumPay + cumProd, crossed: Math.abs(tuAdj) > 0.5 });
+      rows.push({ idx: i, gp: g, eventGp: e, ytd, prevYtd, properPay, naivePay, tuAdj, endRate, startRate, pace, entitlement, trueUpBalance, prodComm, cumPay, cumProd, cumEv, cumTotal: cumPay + cumProd, crossed: false });
     }
     return rows;
   }

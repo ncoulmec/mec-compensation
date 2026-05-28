@@ -638,6 +638,7 @@
   .pin-gate-loading { font-size: 12px; color: var(--muted, #666); margin-top: 8px; min-height: 16px; }
 
   </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
 <body>
 <div class="pin-gate-overlay" id="pin-gate" style="display: none;">
@@ -1310,6 +1311,14 @@
       <div id="fn-latest-hero" style="margin: 14px 0;"></div>
 
       <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
+      <div id="cum-chart-wrap" style="background:#fff; border:1px solid #ecebe5; border-radius:6px; padding:12px 14px 16px; margin: 0 0 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+          <div style="font-size:11px; color: var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700;">Cumulative pay through the year</div>
+          <div style="font-size:11px; color: var(--faint);"><span style="display:inline-block; width:10px; height:2px; background:#1e6624; vertical-align:middle; margin-right:4px;"></span>Cash paid &nbsp;·&nbsp; <span style="display:inline-block; width:10px; height:2px; background:#c2410c; vertical-align:middle; margin-right:4px; border-top:1.5px dashed #c2410c;"></span>Pace entitlement</div>
+        </div>
+        <div style="position:relative; height: 220px;"><canvas id="cum-chart-canvas"></canvas></div>
+        <div style="font-size:11px; color: var(--muted); margin-top:6px;">Solid line = $ actually paid to you so far. Dashed line = what you'd be owed if the year stopped right now at your current pace. When solid is above dashed, you have a <strong>true-up balance owed</strong> — your next pay pauses at $0 until pace catches up.</div>
+      </div>
 
       <div style="overflow-x: auto;">
         <table class="monthly" id="fortnightly-table" style="width: 100%;">
@@ -1592,7 +1601,7 @@ const EMPLOYEE_ID = 'dane';
 // PIN GATE + DECRYPTION (v40)
 // Each dashboard fetches an encrypted file and decrypts it with PIN or master password.
 // =========================================================================
-const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v36`;
+const PIN_CACHE_KEY = `dashboard-${EMPLOYEE_ID}-decrypted-v37-pace`;
 const PIN_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const ENCRYPTED_URL = `./encrypted/${EMPLOYEE_ID}.enc.json`;
 
@@ -4381,6 +4390,68 @@ function renderBreakdown(r) {
       </div>`;
   }
 
+  // -------- Cumulative pay chart (pace-model transparency) --------
+  let _cumChart = null;
+  function renderCumChart(rows) {
+    const canvas = document.getElementById('cum-chart-canvas');
+    if (!canvas || typeof Chart === 'undefined') return;
+    const ctx = canvas.getContext('2d');
+    const labels = rows.map((_,i) => String(i+1));
+    // Cumulative CASH PAID = GP commission cumulative + production cumulative (= total this pay running).
+    const cumCash = rows.map(r => (r.cumPay || 0) + (r.cumProd || 0));
+    // Cumulative entitlement at pace (GP commission only — production isn't paced) + cumulative prod
+    // We want a visually meaningful "where you'd stand if year stopped" line:
+    let entRunning = 0, prodRunning = 0;
+    const entLine = rows.map(r => {
+      // r.entitlement is cumulative GP-commission entitlement up to this fortnight at current pace.
+      prodRunning += (r.prodComm || 0);
+      return (r.entitlement || 0) + prodRunning;
+    });
+    if (_cumChart) {
+      _cumChart.data.labels = labels;
+      _cumChart.data.datasets[0].data = cumCash;
+      _cumChart.data.datasets[1].data = entLine;
+      _cumChart.update('none');
+      return;
+    }
+    _cumChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Cash paid (in your bank)', data: cumCash, borderColor: '#1e6624', backgroundColor: 'rgba(30,102,36,0.08)', borderWidth: 2.5, tension: 0.25, pointRadius: 0, pointHoverRadius: 4, fill: false },
+          { label: 'Pace entitlement (if year stopped now)', data: entLine, borderColor: '#c2410c', borderDash: [5,4], borderWidth: 1.8, tension: 0.25, pointRadius: 0, pointHoverRadius: 4, fill: false }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            mode: 'index', intersect: false,
+            callbacks: {
+              title: items => 'Fortnight ' + items[0].label,
+              label: c => c.dataset.label + ': $' + Math.round(c.parsed.y).toLocaleString(),
+              footer: items => {
+                if (items.length < 2) return '';
+                const cash = items.find(x => x.dataset.label.startsWith('Cash'))?.parsed.y;
+                const ent  = items.find(x => x.dataset.label.startsWith('Pace'))?.parsed.y;
+                if (cash == null || ent == null) return '';
+                const d = cash - ent;
+                return d > 0.5 ? 'True-up balance owed: $' + Math.round(d).toLocaleString()
+                              : (d < -0.5 ? 'Owed to you next pay: $' + Math.round(-d).toLocaleString() : 'All caught up');
+              }
+            }
+          }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Fortnight #' }, grid: { display: false } },
+          y: { title: { display: true, text: '$ cumulative (inc super)' }, beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() } }
+        }
+      }
+    });
+  }
+
   // -------- Main render: re-runs every time a GP / Event GP cell changes --------
   function render() {
     renderYearSwitch();
@@ -4400,13 +4471,20 @@ function renderBreakdown(r) {
       const eventGp = eventGpValues[i] || 0;
       const prevYtd = ytd;
       ytd = prevYtd + gp;
-      const properPay = cumBandComm(ytd) - cumBandComm(prevYtd);
-      const endRate = marginalRate(ytd);
-      const startRate = marginalRate(prevYtd);
-      const naivePay = gp * endRate;
-      const tuAdj = properPay - naivePay;
+      // PACE + ROLLING TRUE-UP + FLOOR-AT-$0 (replaces cumulative annual marginal).
+      // cumPay is monotonic; trueUpBalance ≥ 0 = cash owed back relative to current pace.
+      const n = pos + 1;
+      const pace = n > 0 ? ytd * 26 / n : 0;
+      const entitlement = pace > 0 ? cumBandComm(pace) * n / 26 : 0;
+      const rawDelta = entitlement - cumPay;
+      const properPay = Math.max(0, rawDelta);
+      const endRate = marginalRate(pace);
+      const startRate = endRate;
+      const naivePay = properPay;
+      const tuAdj = 0;
       const prodComm = eventGp * PROD_RATE;
       cumPay += properPay;
+      const trueUpBalance = cumPay - entitlement;
       cumProd += prodComm;
       cumEventGp += eventGp;
       const crossed = Math.abs(tuAdj) > 0.5;
@@ -4414,7 +4492,7 @@ function renderBreakdown(r) {
         ...fn, idx: i, gp, eventGp,
         ytd, prevYtd,
         properPay, naivePay, tuAdj,
-        endRate, startRate,
+        endRate, startRate, pace, entitlement, trueUpBalance,
         prodComm,
         cumPay, cumProd, cumEventGp,
         cumTotal: cumPay + cumProd,
@@ -4430,7 +4508,8 @@ function renderBreakdown(r) {
     const totalProd = rows[rows.length - 1].cumProd;
     const totalAll = totalPay + totalProd;
     const totalEventGp = rows[rows.length - 1].cumEventGp;
-    const crossingCount = rows.filter(r => r.crossed).length;
+    const lastRow = rows[rows.length - 1];
+    const trueUpBalance = lastRow && lastRow.trueUpBalance != null ? lastRow.trueUpBalance : 0;
     const avgRate = totalGP > 0 ? totalPay / totalGP : 0;
     const yearGpTip = `<div style="font-weight: 700; margin-bottom: 4px;">Year-to-date GP received</div><div>Sum of every fortnight's GP Received entry above. Updates live as you edit.</div>`;
     const yearPayTip = payAggTipHtml('Year Pay', totalPay);
@@ -4448,18 +4527,19 @@ function renderBreakdown(r) {
       <div>· Total commission: <code>$21,000</code></div>
       <div>· Effective rate: <code>$21,000 ÷ $400,000 = 5.25%</code></div>
       <div style="margin-top: 6px; font-size: 11px; color: #aaa;">The higher your GP, the higher your effective rate climbs — each new dollar earns at a higher band.</div>`;
-    // Band Crossings — REWORDED for clarity with a concrete example
-    const crossingTip = `<div style="font-weight: 700; margin-bottom: 4px;">What is a Band Crossing?</div>
-      <div>It's a fortnight where your YTD GP <strong>crosses a band threshold</strong> partway through.</div>
+    // True-up Balance — what the rep owes back relative to current pace
+    const trueUpTip = `<div style="font-weight: 700; margin-bottom: 4px;">What is a True-up Balance?</div>
+      <div>It tracks <strong>any pay you've received that's ahead of your current pace</strong>. When a strong fortnight projects a high annual run-rate, you get paid that higher rate. If pace slows after, this balance is what you "owe back" — and your next pay pauses at <strong>$0</strong> until your pace catches up to the cash already in your bank.</div>
       <hr>
-      <div style="font-weight: 600; margin-bottom: 3px;">Concrete example:</div>
-      <div>You start a fortnight with YTD = <code>$295k</code> (in the 4% band).</div>
-      <div>You earn another <code>$15k</code> that fortnight, ending YTD at <code>$310k</code> (now in the 9% band).</div>
-      <div>That fortnight crossed the <code>$300k</code> threshold — so the first <code>$5k</code> of your $15k was earned at 4%, the next <code>$10k</code> at 9%.</div>
+      <div style="font-weight: 600; margin-bottom: 3px;">Example:</div>
+      <div>You sell $20k in fortnight 1 → pace says you'll do $520k/year → you get paid $1,742.</div>
+      <div>Fortnight 2 you sell $5k → pace drops to $325k → you've been "overpaid" $185 at the new pace.</div>
+      <div>Your true-up balance shows <code>$185</code>. The next ~$185 of entitlement nets against it instead of paying out, then you're back to live pay.</div>
       <hr>
-      <div style="font-weight: 600; margin-bottom: 3px;">Why it matters:</div>
-      <div>On a crossing fortnight, the simple <code>gp × current rate</code> formula gets the pay wrong. The True-Up (TU) column adjusts so you're paid <strong>exactly</strong> what you earned across both bands.</div>
-      <div style="margin-top: 6px; font-size: 11px; color: #aaa;">Typical year: 3–5 crossings (one per band entered). Every other fortnight pays cleanly at your current rate — no TU adjustment.</div>`;
+      <div style="font-weight: 600; margin-bottom: 3px;">Why it exists:</div>
+      <div>It's the safety mechanism that lets us pay you the <em>higher</em> rate during strong months without giving you cash you'd have to give back later.</div>
+      <div style="margin-top: 6px; font-size: 11px; color: #aaa;">At year end, this clears to $0 — your annual pay equals what you've earned across all your bands.</div>`
+    const crossingTip = trueUpTip; // legacy alias
 
     totals.innerHTML = `
       <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
@@ -4475,10 +4555,13 @@ function renderBreakdown(r) {
         <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 2px;">${(avgRate*100).toFixed(1)}%</div>
       </div>
       <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
-        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">Band Crossings <span class="fn-tip" data-tip='${esc(crossingTip)}'>?</span></div>
-        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: ${crossingCount > 0 ? 'var(--navy)' : 'var(--ink)'}; margin-top: 2px;">${crossingCount}</div>
+        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">True-up Balance <span class="fn-tip" data-tip='${esc(trueUpTip)}'>?</span></div>
+        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: ${trueUpBalance > 0.5 ? '#c2410c' : 'var(--ink)'}; margin-top: 2px;">${trueUpBalance > 0.5 ? _fmt(trueUpBalance) : '<span style="color: var(--faint);">All caught up</span>'}</div>
       </div>
     `;
+
+    // Pace-model cumulative chart (cash paid vs pace entitlement).
+    try { renderCumChart(rows); } catch(e) { console.warn('cum chart skipped', e); }
 
     // Group by month preserving order
     const byMonth = [];
