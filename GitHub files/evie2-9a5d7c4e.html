@@ -4508,9 +4508,18 @@ function renderBreakdown(r) {
 
   // ---------- Band Rate tooltip — TWO band ladders: this-fortnight slice + year projection ----------
   // ladder takes the dollar total to decompose; per-band slice = (inBand × rate) × (total / annualComm).
-  function bandLadderHtml(annualised, totalToShow, paceComm, headingLabel) {
+  // scaleDivisor: pass 26 for fortnight-scale threshold labels (top ladder), 1 for annual (bottom ladder).
+  function bandLadderHtml(annualised, totalToShow, paceComm, headingLabel, scaleDivisor) {
     if (annualised <= 0 || paceComm <= 0) return '';
+    const sd = scaleDivisor || 1;
     const ratio = totalToShow / paceComm;
+    const fmtThresh = (v) => {
+      const x = v / sd;
+      if (x === 0) return '$0';
+      if (x < 1000) return '$' + Math.round(x).toLocaleString();
+      if (x < 10000) return '$' + (x/1000).toFixed(1) + 'k';
+      return '$' + Math.round(x/1000) + 'k';
+    };
     let html = `<div style="margin-top:8px; padding:9px 11px; background:rgba(255,255,255,0.06); border-radius:5px;">
       <div style="font-size:10px; color:#ffd29b; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:7px;">${headingLabel}</div>`;
     for (let i = 0; i < BANDS.length; i++) {
@@ -4529,9 +4538,9 @@ function renderBreakdown(r) {
                   : rate <= 0.11 ? '#a89540'
                   : rate <= 0.14 ? '#d49340'
                   : '#c2410c';
-      const hiLabel = i+1 < BANDS.length ? ('$' + (BANDS[i+1][0]/1000).toFixed(0) + 'k') : '∞';
-      html += `<div style="display:grid; grid-template-columns: 100px 1fr 70px; align-items:center; gap:7px; margin:3px 0; font-size:10px; line-height:1.4;">
-        <div style="color:#cfcfcf; font-family:monospace;">$${(lo/1000).toFixed(0)}k–${hiLabel}</div>
+      const hiLabel = i+1 < BANDS.length ? fmtThresh(BANDS[i+1][0]) : '∞';
+      html += `<div style="display:grid; grid-template-columns: 110px 1fr 70px; align-items:center; gap:7px; margin:3px 0; font-size:10px; line-height:1.4;">
+        <div style="color:#cfcfcf; font-family:monospace;">${fmtThresh(lo)}–${hiLabel}</div>
         <div style="height:14px; background:rgba(255,255,255,0.08); border-radius:2px; position:relative; overflow:hidden;">
           <div style="position:absolute; left:0; top:0; bottom:0; width:${fillPct}%; background:${color}; ${isCurrent ? 'box-shadow: inset -2px 0 0 #fff;' : ''}"></div>
           <div style="position:absolute; left:5px; right:5px; top:0; bottom:0; display:flex; align-items:center; justify-content:flex-end; color:#fff; font-size:9px; font-weight:700; line-height:1;">${(rate*100).toFixed(0)}%${isCurrent ? ' &#9664;' : ''}</div>
@@ -4539,11 +4548,12 @@ function renderBreakdown(r) {
         <div style="text-align:right; font-family:monospace; color:${isCurrent ? '#fff' : '#cfcfcf'}; font-weight:${isCurrent ? '700' : '500'};">$${Math.round(bandSlice).toLocaleString()}</div>
       </div>`;
     }
-    html += `<div style="display:grid; grid-template-columns: 100px 1fr 70px; gap:7px; margin-top:7px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
+    html += `<div style="display:grid; grid-template-columns: 110px 1fr 70px; gap:7px; margin-top:7px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
       <div></div>
       <div style="text-align:right; color:#fff; font-weight:600;">Total:</div>
       <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">$${Math.round(totalToShow).toLocaleString()}</div>
-    </div></div>`;
+    </div>
+    ${sd > 1 ? '<div style="margin-top:6px; font-size:9px; color:#aaa; text-align:right;">Per-fortnight bands = annual bands ÷ 26.</div>' : ''}</div>`;
     return html;
   }
 
@@ -4561,6 +4571,13 @@ function renderBreakdown(r) {
     const thisFnTotal = thisFnGpPay + thisFnProdPay;
     const eventGp = r.eventGp || 0;
     const tub = r.trueUpBalance || 0;
+    // ex-super reconciliation (matches what the row displays in the Bonus column → Xero)
+    const SR = (typeof SUPER_RATE !== 'undefined') ? SUPER_RATE : 0.12;
+    const sup = 1 + SR;
+    const gpEx = thisFnGpPay / sup;
+    const prodEx = thisFnProdPay / sup;
+    const bonusEx = thisFnTotal / sup;
+    const superAmt = thisFnTotal - bonusEx;
     const tuRow = tub > 0.5
       ? `<div style="margin-top:8px; padding:7px 10px; background:rgba(194,65,12,0.18); border-left:3px solid #c2410c; border-radius:4px; font-size:11px;"><strong>True-up balance:</strong> <code>${_fmt(tub)}</code> owed back — you're ahead of pace. Next pay pauses at $0 until pace catches up.</div>`
       : '';
@@ -4570,14 +4587,19 @@ function renderBreakdown(r) {
 
       <div style="font-size:10px; color:#ffd29b; text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin-bottom:5px;">━━ This fortnight (${esc(r.paid)}) ━━</div>
       <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45;">
-        <div>GP received:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.gp)}</code></div>
-        <div>Event GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(eventGp)}</code></div>
-        <div style="font-weight:700; margin-top:4px;">Total this pay (inc super):</div><div style="font-family:monospace; text-align:right; font-weight:700; margin-top:4px;"><code>${_fmt(thisFnTotal)}</code></div>
-        <div style="font-size:10px; color:#cfcfcf; padding-left:10px;">↳ from GP band commission:</div><div style="font-family:monospace; text-align:right; color:#cfcfcf; font-size:10px;"><code>${_fmt(thisFnGpPay)}</code></div>
-        <div style="font-size:10px; color:#cfcfcf; padding-left:10px;">↳ from event production (1% × Event GP):</div><div style="font-family:monospace; text-align:right; color:#cfcfcf; font-size:10px;"><code>${_fmt(thisFnProdPay)}</code></div>
+        <div style="color:#cfcfcf;">GP received:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.gp)}</code></div>
+        <div style="color:#cfcfcf;">Event GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(eventGp)}</code></div>
+        <div style="margin-top:6px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.12); color:#1e9c4b; font-weight:600;">Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-weight:700; margin-top:6px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.12);"><code>${_fmt(bonusEx)}</code></div>
+        <div style="color:#7eb3d8;">+ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8;"><code>${_fmt(superAmt)}</code></div>
+        <div style="font-weight:700; padding-top:4px; border-top:1px solid rgba(255,255,255,0.10); margin-top:3px;">= Total this pay (inc super):</div><div style="font-family:monospace; text-align:right; font-weight:700; padding-top:4px; border-top:1px solid rgba(255,255,255,0.10); margin-top:3px;"><code>${_fmt(thisFnTotal)}</code></div>
+      </div>
+      <div style="margin-top:6px; padding:6px 9px; background:rgba(255,255,255,0.04); border-radius:4px; font-size:10px; color:#cfcfcf; line-height:1.5;">
+        <strong style="color:#fff;">How the $${Math.round(thisFnTotal).toLocaleString()} total breaks down by source</strong> (inc super):<br>
+        · GP band commission: <code>${_fmt(thisFnGpPay)}</code> inc super  <span style="color:#aaa;">(= $${_fmt(gpEx).slice(1)} ex super in your Bonus)</span><br>
+        · Event production (1% × Event GP): <code>${_fmt(thisFnProdPay)}</code> inc super  <span style="color:#aaa;">(= $${_fmt(prodEx).slice(1)} ex super in your Bonus)</span>
       </div>
 
-      ${bandLadderHtml(annualised, thisFnGpPay, paceComm, fnSliceLabel)}
+      ${bandLadderHtml(annualised, thisFnGpPay, paceComm, fnSliceLabel, 26)}
 
       ${tuRow}
 
@@ -4592,10 +4614,10 @@ function renderBreakdown(r) {
         <div style="font-size:10px; color:#aaa; grid-column: 1 / -1; padding-left:10px;">↳ ${(paceEff*100).toFixed(1)}% effective rate on $${Math.round(annualised/1000).toLocaleString()}k annual GP</div>
       </div>
 
-      ${bandLadderHtml(annualised, paceComm, paceComm, yrSliceLabel)}
+      ${bandLadderHtml(annualised, paceComm, paceComm, yrSliceLabel, 1)}
 
       <div style="margin-top:8px; padding:7px 10px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:10px; color:#cfcfcf; line-height:1.5;">
-        <strong style="color:#fff;">How they connect:</strong> this fortnight's <strong style="color:#fff;">$${Math.round(thisFnGpPay).toLocaleString()}</strong> GP band pay is a <strong style="color:#fff;">slice</strong> of the projected annual <strong style="color:#fff;">$${Math.round(paceComm).toLocaleString()}</strong>. At a steady pace, each fortnight pays roughly 1/26 of the year. Both ladders show the same band breakdown — top one is scaled to this fortnight, bottom to the full year.
+        <strong style="color:#fff;">How they connect:</strong> this fortnight's <strong style="color:#fff;">$${Math.round(thisFnGpPay).toLocaleString()}</strong> GP band pay is the per-fortnight slice of the projected annual <strong style="color:#fff;">$${Math.round(paceComm).toLocaleString()}</strong>. Top ladder shows it scaled to fortnight bands (= annual bands ÷ 26); bottom shows the full year.
       </div>
 
       <div style="margin-top:7px; color:#aaa; font-size:11px;">Pace is volatile early in the year — one strong fortnight inflates the projection. By fortnight 13+ it stabilises.</div>`;
@@ -4904,8 +4926,13 @@ function renderBreakdown(r) {
     const totalProd = rows[rows.length - 1].cumProd;
     const totalAll = totalPay + totalProd;
     const totalEventGp = rows[rows.length - 1].cumEventGp;
-    const lastRow = rows[rows.length - 1];
-    const trueUpBalance = lastRow && lastRow.trueUpBalance != null ? lastRow.trueUpBalance : 0;
+    // True-up balance shown at the LAST ENTERED fortnight (most recent with GP or confirmed),
+    // not the final row of the year (which would project forward assuming $0 GP for remaining fortnights).
+    let lastEnteredRow = null;
+    for (let i = rows.length - 1; i >= 0; i--) {
+      if ((rows[i].gp || 0) > 0 || rows[i].confirmed) { lastEnteredRow = rows[i]; break; }
+    }
+    const trueUpBalance = lastEnteredRow && lastEnteredRow.trueUpBalance != null ? lastEnteredRow.trueUpBalance : 0;
     const avgRate = totalGP > 0 ? totalPay / totalGP : 0;
     const yearGpTip = `<div style="font-weight: 700; margin-bottom: 4px;">Year-to-date GP received</div><div>Sum of every fortnight's GP Received entry above. Updates live as you edit.</div>`;
     const yearPayTip = payAggTipHtml('Year Pay', totalPay);
