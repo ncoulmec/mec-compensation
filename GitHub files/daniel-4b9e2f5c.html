@@ -3994,7 +3994,7 @@ function renderBreakdown(r) {
       'background: #1a1a1a', 'color: #fafaf7', 'padding: 10px 12px',
       'border-radius: 6px', 'border: 1px solid #2a2a2a',
       'box-shadow: 0 6px 20px rgba(0,0,0,0.25)',
-      'max-width: 360px', 'font-size: 12px', 'line-height: 1.45',
+      'max-width: 560px', 'font-size: 12px', 'line-height: 1.45',
       'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       'opacity: 0', 'transition: opacity 0.08s ease',
       'display: none'
@@ -4213,11 +4213,13 @@ function renderBreakdown(r) {
       <div><strong>Total (inc super): ${_fmt(pay)}</strong></div>`;
   }
 
-  // ---------- Band Rate tooltip — pace-aware breakdown + band ladder ----------
-  function bandLadderHtml(annualised, paceComm) {
-    if (annualised <= 0) return '';
-    let html = `<div style="margin-top:8px; padding:8px 9px; background:rgba(255,255,255,0.06); border-radius:4px;">
-      <div style="font-size:10px; color:#bbb; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:6px;">Where your pace lands across the bands</div>`;
+  // ---------- Band Rate tooltip — TWO band ladders: this-fortnight slice + year projection ----------
+  // ladder takes the dollar total to decompose; per-band slice = (inBand × rate) × (total / annualComm).
+  function bandLadderHtml(annualised, totalToShow, paceComm, headingLabel) {
+    if (annualised <= 0 || paceComm <= 0) return '';
+    const ratio = totalToShow / paceComm;
+    let html = `<div style="margin-top:8px; padding:9px 11px; background:rgba(255,255,255,0.06); border-radius:5px;">
+      <div style="font-size:10px; color:#ffd29b; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:7px;">${headingLabel}</div>`;
     for (let i = 0; i < BANDS.length; i++) {
       const lo = BANDS[i][0];
       const rate = BANDS[i][1];
@@ -4227,28 +4229,27 @@ function renderBreakdown(r) {
       const nextLo = i+1 < BANDS.length ? BANDS[i+1][0] : (lo + Math.max(hi - lo, 50000));
       const bandWidth = nextLo - lo;
       const fillPct = Math.max(2, Math.min(100, inBand / bandWidth * 100));
-      const bandComm = inBand * rate;
+      const bandSlice = inBand * rate * ratio;
       const isCurrent = annualised < (i+1 < BANDS.length ? BANDS[i+1][0] : Infinity);
-      // colour ramp by rate
       const color = rate <= 0.05 ? '#5d8a45'
                   : rate <= 0.08 ? '#3a8a5d'
                   : rate <= 0.11 ? '#a89540'
                   : rate <= 0.14 ? '#d49340'
                   : '#c2410c';
       const hiLabel = i+1 < BANDS.length ? ('$' + (BANDS[i+1][0]/1000).toFixed(0) + 'k') : '∞';
-      html += `<div style="display:grid; grid-template-columns: 88px 1fr 64px; align-items:center; gap:6px; margin:3px 0; font-size:10px; line-height:1.4;">
-        <div style="color:#bbb; font-family:monospace;">$${(lo/1000).toFixed(0)}k–${hiLabel}</div>
+      html += `<div style="display:grid; grid-template-columns: 100px 1fr 70px; align-items:center; gap:7px; margin:3px 0; font-size:10px; line-height:1.4;">
+        <div style="color:#cfcfcf; font-family:monospace;">$${(lo/1000).toFixed(0)}k–${hiLabel}</div>
         <div style="height:14px; background:rgba(255,255,255,0.08); border-radius:2px; position:relative; overflow:hidden;">
           <div style="position:absolute; left:0; top:0; bottom:0; width:${fillPct}%; background:${color}; ${isCurrent ? 'box-shadow: inset -2px 0 0 #fff;' : ''}"></div>
           <div style="position:absolute; left:5px; right:5px; top:0; bottom:0; display:flex; align-items:center; justify-content:flex-end; color:#fff; font-size:9px; font-weight:700; line-height:1;">${(rate*100).toFixed(0)}%${isCurrent ? ' &#9664;' : ''}</div>
         </div>
-        <div style="text-align:right; font-family:monospace; color:${isCurrent ? '#fff' : '#bbb'}; font-weight:${isCurrent ? '700' : '500'};">$${Math.round(bandComm).toLocaleString()}</div>
+        <div style="text-align:right; font-family:monospace; color:${isCurrent ? '#fff' : '#cfcfcf'}; font-weight:${isCurrent ? '700' : '500'};">$${Math.round(bandSlice).toLocaleString()}</div>
       </div>`;
     }
-    html += `<div style="display:grid; grid-template-columns: 88px 1fr 64px; gap:6px; margin-top:6px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
+    html += `<div style="display:grid; grid-template-columns: 100px 1fr 70px; gap:7px; margin-top:7px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
       <div></div>
-      <div style="text-align:right; color:#fff; font-weight:600;">Total at pace:</div>
-      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">$${Math.round(paceComm).toLocaleString()}</div>
+      <div style="text-align:right; color:#fff; font-weight:600;">Total:</div>
+      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">$${Math.round(totalToShow).toLocaleString()}</div>
     </div></div>`;
     return html;
   }
@@ -4256,30 +4257,54 @@ function renderBreakdown(r) {
   function bandRateTipHtml(r) {
     const annualised = (r.pace != null) ? r.pace : pace(r.ytd, r.idx);
     if (annualised <= 0 || r.ytd <= 0) {
-      return `<div style="font-weight:700; margin-bottom:4px;">Pace-based pay — how it works</div>
-        <div>You're paid each fortnight based on your <em>pace</em>: your year-to-date GP × (26 ÷ fortnights elapsed). The higher your pace, the higher the band rate you're paid at.</div>
-        <div style="margin-top:6px; color:#aaa; font-size:11px;">Add GP for a fortnight to see your pace projection and band breakdown.</div>`;
+      return `<div style="font-weight:800; margin-bottom:6px; font-size:13px;">Pace-based pay — how it works</div>
+        <div style="font-size:11px; line-height:1.5;">You're paid each fortnight based on your <em>pace</em>: your year-to-date GP × (26 ÷ fortnights elapsed). The higher your pace, the higher the band rate you're paid at.</div>
+        <div style="margin-top:6px; color:#aaa; font-size:11px;">Enter GP for a fortnight to see your pace projection and band breakdown.</div>`;
     }
-    const paceRate = marginalRate(annualised);
-    const pacePct = (paceRate * 100).toFixed(0) + '%';
     const paceComm = cumBandComm(annualised);
     const paceEff = annualised > 0 ? paceComm / annualised : 0;
-    const thisFnPay = r.properPay || 0;
-    const thisFnRate = r.gp > 0 ? thisFnPay / r.gp : 0;
+    const thisFnGpPay = r.properPay || 0;
+    const thisFnProdPay = r.prodComm || 0;
+    const thisFnTotal = thisFnGpPay + thisFnProdPay;
+    const eventGp = r.eventGp || 0;
     const tub = r.trueUpBalance || 0;
     const tuRow = tub > 0.5
-      ? `<div style="margin-top:7px; padding:6px 9px; background:rgba(194,65,12,0.18); border-left:2px solid #c2410c; border-radius:3px; font-size:11px;"><strong>True-up balance:</strong> <code>${_fmt(tub)}</code> owed back — you're ahead of pace. Next pay pauses at $0 until pace catches up.</div>`
+      ? `<div style="margin-top:8px; padding:7px 10px; background:rgba(194,65,12,0.18); border-left:3px solid #c2410c; border-radius:4px; font-size:11px;"><strong>True-up balance:</strong> <code>${_fmt(tub)}</code> owed back — you're ahead of pace. Next pay pauses at $0 until pace catches up.</div>`
       : '';
-    return `<div style="font-weight:700; margin-bottom:4px;">This pay · Pace projection</div>
-      <div>GP this fortnight: <code>${_fmt(r.gp)}</code></div>
-      <div>Pay this fortnight: <code>${_fmt(thisFnPay)}</code>${r.gp > 0 ? ' <span style="color:#aaa;">(' + (thisFnRate*100).toFixed(1) + '% of GP)</span>' : ''}</div>
-      <hr style="border-color:rgba(255,255,255,0.18); margin:6px 0;">
-      <div><strong>Why this rate?</strong></div>
-      <div>YTD GP so far: <code>${_fmt(r.ytd)}</code></div>
-      <div>Annualised pace: <code>${_fmt(annualised)}</code> <span style="color:#aaa;">(YTD × 26 ÷ ${r.idx + 1})</span></div>
-      <div>Projected year commission at pace: <code>${_fmt(paceComm)}</code> <span style="color:#aaa;">(${(paceEff*100).toFixed(1)}% effective)</span></div>
-      ${bandLadderHtml(annualised, paceComm)}
+    const fnSliceLabel = `Where this fortnight's $${Math.round(thisFnGpPay).toLocaleString()} GP band pay came from`;
+    const yrSliceLabel = `Where your $${Math.round(paceComm).toLocaleString()} projected ANNUAL commission lands`;
+    return `<div style="font-weight:800; margin-bottom:8px; font-size:13px;">This pay · Pace projection</div>
+
+      <div style="font-size:10px; color:#ffd29b; text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin-bottom:5px;">━━ This fortnight (${esc(r.paid)}) ━━</div>
+      <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45;">
+        <div>GP received:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.gp)}</code></div>
+        <div>Event GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(eventGp)}</code></div>
+        <div style="font-weight:700; margin-top:4px;">Total this pay (inc super):</div><div style="font-family:monospace; text-align:right; font-weight:700; margin-top:4px;"><code>${_fmt(thisFnTotal)}</code></div>
+        <div style="font-size:10px; color:#cfcfcf; padding-left:10px;">↳ from GP band commission:</div><div style="font-family:monospace; text-align:right; color:#cfcfcf; font-size:10px;"><code>${_fmt(thisFnGpPay)}</code></div>
+        <div style="font-size:10px; color:#cfcfcf; padding-left:10px;">↳ from event production (1% × Event GP):</div><div style="font-family:monospace; text-align:right; color:#cfcfcf; font-size:10px;"><code>${_fmt(thisFnProdPay)}</code></div>
+      </div>
+
+      ${bandLadderHtml(annualised, thisFnGpPay, paceComm, fnSliceLabel)}
+
       ${tuRow}
+
+      <hr style="border-color:rgba(255,255,255,0.18); margin:11px 0 9px;">
+
+      <div style="font-size:10px; color:#ffd29b; text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin-bottom:5px;">━━ Why this rate? (full-year context) ━━</div>
+      <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45;">
+        <div>YTD GP so far:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.ytd)}</code></div>
+        <div>Annualised pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(annualised)}</code></div>
+        <div style="font-size:10px; color:#aaa; grid-column: 1 / -1; padding-left:10px;">↳ YTD × 26 ÷ ${r.idx + 1} fortnight${r.idx === 0 ? '' : 's'} elapsed</div>
+        <div>Projected ANNUAL commission at pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(paceComm)}</code></div>
+        <div style="font-size:10px; color:#aaa; grid-column: 1 / -1; padding-left:10px;">↳ ${(paceEff*100).toFixed(1)}% effective rate on $${Math.round(annualised/1000).toLocaleString()}k annual GP</div>
+      </div>
+
+      ${bandLadderHtml(annualised, paceComm, paceComm, yrSliceLabel)}
+
+      <div style="margin-top:8px; padding:7px 10px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:10px; color:#cfcfcf; line-height:1.5;">
+        <strong style="color:#fff;">How they connect:</strong> this fortnight's <strong style="color:#fff;">$${Math.round(thisFnGpPay).toLocaleString()}</strong> GP band pay is a <strong style="color:#fff;">slice</strong> of the projected annual <strong style="color:#fff;">$${Math.round(paceComm).toLocaleString()}</strong>. At a steady pace, each fortnight pays roughly 1/26 of the year. Both ladders show the same band breakdown — top one is scaled to this fortnight, bottom to the full year.
+      </div>
+
       <div style="margin-top:7px; color:#aaa; font-size:11px;">Pace is volatile early in the year — one strong fortnight inflates the projection. By fortnight 13+ it stabilises.</div>`;
   }
 
