@@ -639,6 +639,15 @@
 
   </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  .beta-trigger.has-active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 600; }
+  .beta-arrow { transition: transform 0.15s ease; }
+  .beta-trigger.menu-open .beta-arrow { transform: rotate(180deg); }
+  .beta-item { display: block; width: 100%; text-align: left; padding: 9px 12px; border: none; background: none; cursor: pointer; font-family: inherit; font-size: 14px; color: var(--ink); border-radius: 5px; transition: background 0.1s; }
+  .beta-item:hover { background: #f8f7f1; }
+  .beta-item.current { background: #eef4fa; color: var(--navy); font-weight: 600; }
+  .beta-item-pill { font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+</style>
 </head>
 <body>
 <div class="pin-gate-overlay" id="pin-gate" style="display: none;">
@@ -729,8 +738,13 @@
     <button class="tab-btn" data-tab="payouts">Payouts &amp; Super</button>
     <button class="tab-btn" data-tab="faq">FAQ</button>
     <button class="tab-btn" data-tab="howitworks">How This Works</button>
-    <button class="tab-btn" data-tab="kpi">KPIs <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
-    <button class="tab-btn" data-tab="pool">🤝 Team Pool <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></button>
+    <div class="beta-tabs-wrap" style="position: relative; display: inline-block;">
+      <button class="tab-btn beta-trigger" id="beta-trigger" type="button" style="display: inline-flex; align-items: center; gap: 4px;">🚧 Next Comp Restructure <span style="font-size: 9px; padding: 1px 5px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 4px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span><span class="beta-arrow" style="font-size: 10px; margin-left: 2px;">▾</span></button>
+      <div class="beta-menu" id="beta-menu" role="menu" style="display: none; position: absolute; top: 100%; right: 0; background: #fff; border: 1px solid #d3d1c7; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); padding: 4px; min-width: 220px; z-index: 50; margin-top: 4px;">
+      <button class="beta-item" data-beta-tab="kpi" type="button">KPIs <span class="beta-item-pill">Beta</span></button>
+      <button class="beta-item" data-beta-tab="pool" type="button">🤝 Team Pool <span class="beta-item-pill">Beta</span></button>
+      </div>
+    </div>
   </div>
 </nav>
 </div>
@@ -1843,6 +1857,49 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 document.getElementById('panel-overview').classList.add('active');
+
+// --- Beta-tabs dropdown wiring ---
+(function(){
+  const trigger = document.getElementById('beta-trigger');
+  const menu = document.getElementById('beta-menu');
+  if (!trigger || !menu) return;
+  const items = menu.querySelectorAll('.beta-item');
+  // Hide items whose panel doesn't exist on this dashboard (e.g., residencies on non-Evie reps)
+  items.forEach(it => {
+    const t = it.getAttribute('data-beta-tab');
+    if (!document.getElementById('panel-' + t)) it.style.display = 'none';
+  });
+  const closeMenu = () => { menu.style.display = 'none'; trigger.classList.remove('menu-open'); };
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = menu.style.display !== 'none';
+    menu.style.display = open ? 'none' : 'block';
+    trigger.classList.toggle('menu-open', !open);
+  });
+  items.forEach(it => {
+    it.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const t = it.getAttribute('data-beta-tab');
+      closeMenu();
+      // Replicate the existing tab-btn switch
+      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      const panel = document.getElementById('panel-' + t);
+      if (panel) panel.classList.add('active');
+      trigger.classList.add('active'); trigger.classList.add('has-active');
+      menu.querySelectorAll('.beta-item').forEach(i => i.classList.remove('current'));
+      it.classList.add('current');
+    });
+  });
+  // Clear dropdown 'active' look when a regular tab is clicked
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b === trigger) return;
+    b.addEventListener('click', () => { trigger.classList.remove('active'); trigger.classList.remove('has-active'); menu.querySelectorAll('.beta-item').forEach(i => i.classList.remove('current')); });
+  });
+  document.addEventListener('click', (e) => {
+    if (!menu.contains(e.target) && e.target !== trigger) closeMenu();
+  });
+})();
 
 // --- Key Terms modal: Esc to close, click outside to close ---
 (function(){
@@ -4209,22 +4266,81 @@ function renderBreakdown(r) {
       <div><strong>Total (inc super): ${_fmt(pay)}</strong></div>`;
   }
 
-  // ---------- Band Rate tooltip — TWO band ladders: this-fortnight slice + year projection ----------
-  // ladder takes the dollar total to decompose; per-band slice = (inBand × rate) × (total / annualComm).
-  // scaleDivisor: pass 26 for fortnight-scale threshold labels (top ladder), 1 for annual (bottom ladder).
-  function bandLadderHtml(annualised, totalToShow, paceComm, headingLabel, scaleDivisor) {
-    if (annualised <= 0 || paceComm <= 0) return '';
-    const sd = scaleDivisor || 1;
-    const ratio = totalToShow / paceComm;
-    const fmtThresh = (v) => {
-      const x = v / sd;
-      if (x === 0) return '$0';
-      if (x < 1000) return '$' + Math.round(x).toLocaleString();
-      if (x < 10000) return '$' + (x/1000).toFixed(1) + 'k';
-      return '$' + Math.round(x/1000) + 'k';
-    };
+  // ---------- Band Rate tooltip — fortnight-band decomp + year ladder + pace-adjust reconciliation ----------
+  // Decompose this fortnight's GP across "fortnight-scale" bands (annual bands ÷ 26).
+  // Returns { rows: [{lo, hi, rate, contrib, isCurrent, color}], total }
+  function fnBandsDecomp(gp) {
+    const out = { rows: [], total: 0 };
+    if (gp <= 0) return out;
+    for (let i = 0; i < BANDS.length; i++) {
+      const lo = BANDS[i][0] / 26;
+      const rate = BANDS[i][1];
+      const hi = (i+1 < BANDS.length ? BANDS[i+1][0] : Infinity) / 26;
+      if (gp <= lo) break;
+      const inBand = Math.min(gp, hi) - lo;
+      const contrib = inBand * rate;
+      const isCurrent = gp < hi;
+      const color = rate <= 0.05 ? '#5d8a45'
+                  : rate <= 0.08 ? '#3a8a5d'
+                  : rate <= 0.11 ? '#a89540'
+                  : rate <= 0.14 ? '#d49340'
+                  : '#c2410c';
+      out.rows.push({ lo, hi, rate, inBand, contrib, isCurrent, color });
+      out.total += contrib;
+    }
+    return out;
+  }
+
+  function fmtThreshK(v) {
+    if (v === 0) return '$0';
+    if (v < 1000) return '$' + Math.round(v).toLocaleString();
+    if (v < 10000) return '$' + (v/1000).toFixed(1) + 'k';
+    return '$' + Math.round(v/1000) + 'k';
+  }
+
+  function ladderRowHtml(loLabel, hiLabel, rate, fillPct, color, isCurrent, contribLabel, contribColor, contribWeight) {
+    return `<div style="display:grid; grid-template-columns: 112px 1fr 76px; align-items:center; gap:7px; margin:3px 0; font-size:10px; line-height:1.4;">
+      <div style="color:#cfcfcf; font-family:monospace;">${loLabel}–${hiLabel}</div>
+      <div style="height:14px; background:rgba(255,255,255,0.08); border-radius:2px; position:relative; overflow:hidden;">
+        <div style="position:absolute; left:0; top:0; bottom:0; width:${fillPct}%; background:${color}; ${isCurrent ? 'box-shadow: inset -2px 0 0 #fff;' : ''}"></div>
+        <div style="position:absolute; left:5px; right:5px; top:0; bottom:0; display:flex; align-items:center; justify-content:flex-end; color:#fff; font-size:9px; font-weight:700; line-height:1;">${(rate*100).toFixed(0)}%${isCurrent ? ' &#9664;' : ''}</div>
+      </div>
+      <div style="text-align:right; font-family:monospace; color:${contribColor}; font-weight:${contribWeight};">${contribLabel}</div>
+    </div>`;
+  }
+
+  // Top ladder: decomposes THIS FORTNIGHT'S $X of GP using fortnight-scale bands (annual ÷ 26).
+  // Each band's $ contribution is shown directly (no ratio scaling). Total = fortnight_comm(gp).
+  function fnBandLadderHtml(gp, heading) {
+    const d = fnBandsDecomp(gp);
+    if (d.rows.length === 0) return '';
     let html = `<div style="margin-top:8px; padding:9px 11px; background:rgba(255,255,255,0.06); border-radius:5px;">
-      <div style="font-size:10px; color:#ffd29b; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:7px;">${headingLabel}</div>`;
+      <div style="font-size:10px; color:#9eddb5; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:7px;">${heading}</div>`;
+    d.rows.forEach((r, i) => {
+      const nextLoFn = (i+1 < BANDS.length) ? (BANDS[i+1][0] / 26) : (r.lo + Math.max(r.hi - r.lo, 2000));
+      const bandWidth = nextLoFn - r.lo;
+      const fillPct = Math.max(2, Math.min(100, r.inBand / bandWidth * 100));
+      const loLabel = fmtThreshK(r.lo);
+      const hiLabel = (i+1 < BANDS.length) ? fmtThreshK(BANDS[i+1][0] / 26) : '∞';
+      html += ladderRowHtml(loLabel, hiLabel, r.rate, fillPct, r.color, r.isCurrent,
+        '$' + Math.round(r.contrib).toLocaleString(),
+        r.isCurrent ? '#fff' : '#cfcfcf',
+        r.isCurrent ? '700' : '500');
+    });
+    html += `<div style="display:grid; grid-template-columns: 112px 1fr 76px; gap:7px; margin-top:7px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
+      <div></div>
+      <div style="text-align:right; color:#fff; font-weight:600;">Earn at fortnight bands:</div>
+      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">$${Math.round(d.total).toLocaleString()}</div>
+    </div>
+    <div style="margin-top:6px; font-size:9px; color:#aaa; text-align:right;">Per-fortnight bands = annual bands ÷ 26.</div></div>`;
+    return html;
+  }
+
+  // Year ladder: decomposes the projected ANNUAL commission at pace, full-year ranges.
+  function yearBandLadderHtml(annualised, paceComm, heading) {
+    if (annualised <= 0 || paceComm <= 0) return '';
+    let html = `<div style="margin-top:8px; padding:9px 11px; background:rgba(255,255,255,0.06); border-radius:5px;">
+      <div style="font-size:10px; color:#87b8d8; text-transform:uppercase; letter-spacing:.05em; font-weight:700; margin-bottom:7px;">${heading}</div>`;
     for (let i = 0; i < BANDS.length; i++) {
       const lo = BANDS[i][0];
       const rate = BANDS[i][1];
@@ -4234,30 +4350,30 @@ function renderBreakdown(r) {
       const nextLo = i+1 < BANDS.length ? BANDS[i+1][0] : (lo + Math.max(hi - lo, 50000));
       const bandWidth = nextLo - lo;
       const fillPct = Math.max(2, Math.min(100, inBand / bandWidth * 100));
-      const bandSlice = inBand * rate * ratio;
+      const contrib = inBand * rate;
       const isCurrent = annualised < (i+1 < BANDS.length ? BANDS[i+1][0] : Infinity);
       const color = rate <= 0.05 ? '#5d8a45'
                   : rate <= 0.08 ? '#3a8a5d'
                   : rate <= 0.11 ? '#a89540'
                   : rate <= 0.14 ? '#d49340'
                   : '#c2410c';
-      const hiLabel = i+1 < BANDS.length ? fmtThresh(BANDS[i+1][0]) : '∞';
-      html += `<div style="display:grid; grid-template-columns: 110px 1fr 70px; align-items:center; gap:7px; margin:3px 0; font-size:10px; line-height:1.4;">
-        <div style="color:#cfcfcf; font-family:monospace;">${fmtThresh(lo)}–${hiLabel}</div>
-        <div style="height:14px; background:rgba(255,255,255,0.08); border-radius:2px; position:relative; overflow:hidden;">
-          <div style="position:absolute; left:0; top:0; bottom:0; width:${fillPct}%; background:${color}; ${isCurrent ? 'box-shadow: inset -2px 0 0 #fff;' : ''}"></div>
-          <div style="position:absolute; left:5px; right:5px; top:0; bottom:0; display:flex; align-items:center; justify-content:flex-end; color:#fff; font-size:9px; font-weight:700; line-height:1;">${(rate*100).toFixed(0)}%${isCurrent ? ' &#9664;' : ''}</div>
-        </div>
-        <div style="text-align:right; font-family:monospace; color:${isCurrent ? '#fff' : '#cfcfcf'}; font-weight:${isCurrent ? '700' : '500'};">$${Math.round(bandSlice).toLocaleString()}</div>
-      </div>`;
+      const hiLabel = (i+1 < BANDS.length) ? fmtThreshK(BANDS[i+1][0]) : '∞';
+      html += ladderRowHtml(fmtThreshK(lo), hiLabel, rate, fillPct, color, isCurrent,
+        '$' + Math.round(contrib).toLocaleString(),
+        isCurrent ? '#fff' : '#cfcfcf',
+        isCurrent ? '700' : '500');
     }
-    html += `<div style="display:grid; grid-template-columns: 110px 1fr 70px; gap:7px; margin-top:7px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
+    html += `<div style="display:grid; grid-template-columns: 112px 1fr 76px; gap:7px; margin-top:7px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
       <div></div>
-      <div style="text-align:right; color:#fff; font-weight:600;">Total:</div>
-      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">$${Math.round(totalToShow).toLocaleString()}</div>
-    </div>
-    ${sd > 1 ? '<div style="margin-top:6px; font-size:9px; color:#aaa; text-align:right;">Per-fortnight bands = annual bands ÷ 26.</div>' : ''}</div>`;
+      <div style="text-align:right; color:#fff; font-weight:600;">Projected annual total:</div>
+      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">$${Math.round(paceComm).toLocaleString()}</div>
+    </div></div>`;
     return html;
+  }
+
+  // Legacy alias kept in case any other code path references it (unused after this refactor).
+  function bandLadderHtml(annualised, totalToShow, paceComm, headingLabel, scaleDivisor) {
+    return yearBandLadderHtml(annualised, paceComm, headingLabel);
   }
 
   function bandRateTipHtml(r) {
@@ -4269,61 +4385,100 @@ function renderBreakdown(r) {
     }
     const paceComm = cumBandComm(annualised);
     const paceEff = annualised > 0 ? paceComm / annualised : 0;
-    const thisFnGpPay = r.properPay || 0;
-    const thisFnProdPay = r.prodComm || 0;
+    const thisFnGpPay = r.properPay || 0;          // actual GP-band commission paid (after floor-at-zero)
+    const thisFnProdPay = r.prodComm || 0;          // production (event GP × 1%)
     const thisFnTotal = thisFnGpPay + thisFnProdPay;
     const eventGp = r.eventGp || 0;
     const tub = r.trueUpBalance || 0;
-    // ex-super reconciliation (matches what the row displays in the Bonus column → Xero)
+    // What this fortnight's GP would earn at fortnight band rates (= annual_comm(26g)/26).
+    const wouldEarnGp = fnBandsDecomp(r.gp).total;
+    const wouldEarnTotal = wouldEarnGp + thisFnProdPay;   // production is unaffected by pace
+    // Pace adjustment for the GP-band portion only (production isn't paced).
+    const paceAdjust = wouldEarnGp - thisFnGpPay;  // >0 = held back to balance; <0 = released catch-up
     const SR = (typeof SUPER_RATE !== 'undefined') ? SUPER_RATE : 0.12;
     const sup = 1 + SR;
-    const gpEx = thisFnGpPay / sup;
-    const prodEx = thisFnProdPay / sup;
     const bonusEx = thisFnTotal / sup;
     const superAmt = thisFnTotal - bonusEx;
-    const tuRow = tub > 0.5
-      ? `<div style="margin-top:8px; padding:7px 10px; background:rgba(194,65,12,0.18); border-left:3px solid #c2410c; border-radius:4px; font-size:11px;"><strong>True-up balance:</strong> <code>${_fmt(tub)}</code> owed back — you're ahead of pace. Next pay pauses at $0 until pace catches up.</div>`
+
+    // === Section 1: THIS FORTNIGHT ===
+    const fnHeader = `<div style="background:#1e6624; color:#fff; padding:6px 11px; border-radius:5px; font-size:11px; font-weight:700; margin:0 0 9px; letter-spacing:.04em;">━━ THIS FORTNIGHT · ${esc(r.paid).toUpperCase()} ━━</div>`;
+
+    const fnInputs = `<div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45; margin-bottom:6px;">
+      <div style="color:#cfcfcf;">GP received:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.gp)}</code></div>
+      <div style="color:#cfcfcf;">Event GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(eventGp)}</code></div>
+    </div>`;
+
+    const fnLadder = r.gp > 0
+      ? fnBandLadderHtml(r.gp, `Where your ${fmtThreshK(r.gp)} of GP lands across fortnight-scale bands`)
       : '';
-    const fnSliceLabel = `Where this fortnight's $${Math.round(thisFnGpPay).toLocaleString()} GP band pay came from`;
-    const yrSliceLabel = `Where your $${Math.round(paceComm).toLocaleString()} projected ANNUAL commission lands`;
-    return `<div style="font-weight:800; margin-bottom:8px; font-size:13px;">This pay · Pace projection</div>
 
-      <div style="font-size:10px; color:#ffd29b; text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin-bottom:5px;">━━ This fortnight (${esc(r.paid)}) ━━</div>
-      <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45;">
-        <div style="color:#cfcfcf;">GP received:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.gp)}</code></div>
-        <div style="color:#cfcfcf;">Event GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(eventGp)}</code></div>
-        <div style="margin-top:6px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.12); color:#1e9c4b; font-weight:600;">Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-weight:700; margin-top:6px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.12);"><code>${_fmt(bonusEx)}</code></div>
-        <div style="color:#7eb3d8;">+ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8;"><code>${_fmt(superAmt)}</code></div>
-        <div style="font-weight:700; padding-top:4px; border-top:1px solid rgba(255,255,255,0.10); margin-top:3px;">= Total this pay (inc super):</div><div style="font-family:monospace; text-align:right; font-weight:700; padding-top:4px; border-top:1px solid rgba(255,255,255,0.10); margin-top:3px;"><code>${_fmt(thisFnTotal)}</code></div>
-      </div>
-      <div style="margin-top:6px; padding:6px 9px; background:rgba(255,255,255,0.04); border-radius:4px; font-size:10px; color:#cfcfcf; line-height:1.5;">
-        <strong style="color:#fff;">How the $${Math.round(thisFnTotal).toLocaleString()} total breaks down by source</strong> (inc super):<br>
-        · GP band commission: <code>${_fmt(thisFnGpPay)}</code> inc super  <span style="color:#aaa;">(= $${_fmt(gpEx).slice(1)} ex super in your Bonus)</span><br>
-        · Event production (1% × Event GP): <code>${_fmt(thisFnProdPay)}</code> inc super  <span style="color:#aaa;">(= $${_fmt(prodEx).slice(1)} ex super in your Bonus)</span>
-      </div>
+    // Reconciliation block — shows would-have-earned + pace adjustment + net
+    let reconcile = '';
+    if (paceAdjust > 0.5) {
+      // Held back due to true-up (pace says you're ahead of cumulative entitlement)
+      reconcile = `<div style="margin-top:9px; padding:10px 12px; background:rgba(255,255,255,0.05); border-radius:5px;">
+        <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:4px; font-size:11px; line-height:1.45;">
+          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(wouldEarnGp).toLocaleString()}</code></div>
+          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
+          <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px; margin-top:2px;">= ${fmtThreshK(wouldEarnTotal)} you would have been paid this fortnight</div>
+          <div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Pace true-up deduction:</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−$${Math.round(paceAdjust).toLocaleString()}</code></div>
+          <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">Held back — your pace dropped, so this earn nets against prior overpay instead of paying out.</div>
+          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
+          <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${Math.round(bonusEx).toLocaleString()}</code></div>
+          <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${Math.round(superAmt).toLocaleString()}</code></div>
+        </div>
+      </div>`;
+    } else if (paceAdjust < -0.5) {
+      // Pace catch-up: pay > fortnight-band-earn (releasing held-back amount)
+      const release = -paceAdjust;
+      reconcile = `<div style="margin-top:9px; padding:10px 12px; background:rgba(255,255,255,0.05); border-radius:5px;">
+        <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:4px; font-size:11px; line-height:1.45;">
+          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(wouldEarnGp).toLocaleString()}</code></div>
+          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production:</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
+          <div style="color:#9eddb5; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">+ Pace catch-up release:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>+$${Math.round(release).toLocaleString()}</code></div>
+          <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">Releasing prior held-back amount because pace has caught up.</div>
+          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
+          <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${Math.round(bonusEx).toLocaleString()}</code></div>
+          <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${Math.round(superAmt).toLocaleString()}</code></div>
+        </div>
+      </div>`;
+    } else {
+      // Steady state (or no GP): no adjustment, simple totals
+      reconcile = `<div style="margin-top:9px; padding:10px 12px; background:rgba(255,255,255,0.05); border-radius:5px;">
+        <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:4px; font-size:11px; line-height:1.45;">
+          <div style="color:#9eddb5;">GP band commission (inc super):</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(thisFnGpPay).toLocaleString()}</code></div>
+          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
+          <div style="color:#fff; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
+          <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${Math.round(bonusEx).toLocaleString()}</code></div>
+          <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${Math.round(superAmt).toLocaleString()}</code></div>
+        </div>
+      </div>`;
+    }
 
-      ${bandLadderHtml(annualised, thisFnGpPay, paceComm, fnSliceLabel, 26)}
+    const tuStatus = tub > 0.5
+      ? `<div style="margin-top:9px; padding:8px 11px; background:rgba(194,65,12,0.18); border-left:3px solid #c2410c; border-radius:4px; font-size:11px;"><strong>True-up balance after this fortnight: <code>${_fmt(tub)}</code> owed back.</strong><br><span style="color:#ffd29b;">Pay resumes once your pace catches up — the next ~${_fmt(tub)} of earn nets against this balance before payouts restart.</span></div>`
+      : '';
 
-      ${tuRow}
+    // === Section 2: WHY THIS RATE (full year context) ===
+    const yrHeader = `<div style="background:#2b4d75; color:#fff; padding:6px 11px; border-radius:5px; font-size:11px; font-weight:700; margin:14px 0 9px; letter-spacing:.04em;">━━ WHY THIS RATE? · FULL-YEAR CONTEXT ━━</div>`;
 
-      <hr style="border-color:rgba(255,255,255,0.18); margin:11px 0 9px;">
+    const yrInputs = `<div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45;">
+      <div>YTD GP so far:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.ytd)}</code></div>
+      <div>Annualised pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(annualised)}</code></div>
+      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ YTD × 26 ÷ ${r.idx + 1} fortnight${r.idx === 0 ? '' : 's'} elapsed</div>
+      <div>Projected ANNUAL commission at pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(paceComm)}</code></div>
+      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ ${(paceEff*100).toFixed(1)}% effective rate on ${fmtThreshK(annualised)} annual GP</div>
+    </div>`;
 
-      <div style="font-size:10px; color:#ffd29b; text-transform:uppercase; letter-spacing:.06em; font-weight:700; margin-bottom:5px;">━━ Why this rate? (full-year context) ━━</div>
-      <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45;">
-        <div>YTD GP so far:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.ytd)}</code></div>
-        <div>Annualised pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(annualised)}</code></div>
-        <div style="font-size:10px; color:#aaa; grid-column: 1 / -1; padding-left:10px;">↳ YTD × 26 ÷ ${r.idx + 1} fortnight${r.idx === 0 ? '' : 's'} elapsed</div>
-        <div>Projected ANNUAL commission at pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(paceComm)}</code></div>
-        <div style="font-size:10px; color:#aaa; grid-column: 1 / -1; padding-left:10px;">↳ ${(paceEff*100).toFixed(1)}% effective rate on $${Math.round(annualised/1000).toLocaleString()}k annual GP</div>
-      </div>
+    const yrLadder = yearBandLadderHtml(annualised, paceComm, `Where the ${fmtThreshK(paceComm)} projected annual commission lands`);
 
-      ${bandLadderHtml(annualised, paceComm, paceComm, yrSliceLabel, 1)}
+    const connect = `<div style="margin-top:9px; padding:8px 11px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:10px; color:#cfcfcf; line-height:1.5;">
+      <strong style="color:#fff;">How the two views connect:</strong> the top ladder shows how <em>this fortnight's GP</em> crosses bands at fortnight scale. The bottom shows how your <em>annual pace</em> lands across the full-year bands. At steady pace (sell roughly the same GP each fortnight), the top ladder × 26 fortnights = the bottom ladder.
+    </div>`;
 
-      <div style="margin-top:8px; padding:7px 10px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:10px; color:#cfcfcf; line-height:1.5;">
-        <strong style="color:#fff;">How they connect:</strong> this fortnight's <strong style="color:#fff;">$${Math.round(thisFnGpPay).toLocaleString()}</strong> GP band pay is the per-fortnight slice of the projected annual <strong style="color:#fff;">$${Math.round(paceComm).toLocaleString()}</strong>. Top ladder shows it scaled to fortnight bands (= annual bands ÷ 26); bottom shows the full year.
-      </div>
+    const footer = `<div style="margin-top:8px; color:#aaa; font-size:11px;">Pace is volatile early in the year — one strong fortnight inflates the projection. By fortnight 13+ it stabilises.</div>`;
 
-      <div style="margin-top:7px; color:#aaa; font-size:11px;">Pace is volatile early in the year — one strong fortnight inflates the projection. By fortnight 13+ it stabilises.</div>`;
+    return `<div style="font-weight:800; margin-bottom:10px; font-size:14px;">This pay · Pace projection</div>${fnHeader}${fnInputs}${fnLadder}${reconcile}${tuStatus}${yrHeader}${yrInputs}${yrLadder}${connect}${footer}`;
   }
 
   // ---------- Pace pill (small badge alongside band rate) ----------
@@ -4663,7 +4818,7 @@ function renderBreakdown(r) {
       <div>Your true-up balance shows <code>$185</code>. The next ~$185 of entitlement nets against it instead of paying out, then you're back to live pay.</div>
       <hr>
       <div style="font-weight: 600; margin-bottom: 3px;">Why it exists:</div>
-      <div>It's the safety mechanism that lets us pay you the <em>higher</em> rate during strong months without giving you cash you'd have to give back later.</div>
+      <div>It lets us pay you the <em>higher</em> rate the moment your pace earns it — during a strong fortnight — instead of making you wait until year-end to see that money. The trade-off: if your pace cools off afterwards, the next pay or two pause at $0 to balance things out. The cash already in your bank stays in your bank — we never claw it back.</div>
       <div style="margin-top: 6px; font-size: 11px; color: #aaa;">At year end, this clears to $0 — your annual pay equals what you've earned across all your bands.</div>`
     const crossingTip = trueUpTip; // legacy alias
 
@@ -4849,9 +5004,13 @@ function renderBreakdown(r) {
       if (caret) caret.style.transform = 'rotate(90deg)';
     }
 
-    // Generic input wiring — used for both GP Received and Event GP inputs.
-    // `targetArr` is the array to mutate on commit; `selector` finds same-column inputs.
-    function wireFortnightInput(inp, targetArr, selector) {
+    // Generic input wiring for GP & Event GP inputs.
+    // Tab order: GP -> Event (same fortnight) -> next fortnight's GP (auto-expand month) -> next Event -> ...
+    // Enter still advances same-column next fortnight (legacy behaviour, useful for fast GP entry).
+    function wireFortnightInput(inp, targetArr, kind) {
+      const otherKind = kind === 'gp' ? 'event' : 'gp';
+      const sameSel = '.fn-' + kind + '-input';
+      const otherSel = '.fn-' + otherKind + '-input';
       inp.addEventListener('click', (e) => e.stopPropagation()); // don't toggle row
       inp.addEventListener('focus', (e) => e.target.select());
       const commit = () => {
@@ -4860,41 +5019,43 @@ function renderBreakdown(r) {
         const n = parseFloat(raw);
         targetArr[idx] = isFinite(n) ? n : 0;
       };
+      const focusInput = (sel, idx) => {
+        const g = idxToGroup[idx];
+        if (g != null) ensureGroupOpen(g);
+        render();
+        const el = tbody.querySelector(sel + '[data-idx="' + idx + '"]');
+        if (el) { el.focus(); el.select && el.select(); }
+      };
       inp.addEventListener('blur', () => { commit(); render(); });
       inp.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') { e.preventDefault(); inp.blur(); return; }
         const curIdx = parseInt(inp.getAttribute('data-idx'), 10);
-        if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
-          if (curIdx < bStart + BLOCK_SIZE - 1) {
-            e.preventDefault();
-            commit();
-            const nextIdx = curIdx + 1;
-            const nextGroup = idxToGroup[nextIdx];
-            ensureGroupOpen(nextGroup);
-            render();
-            const nextInput = tbody.querySelector(selector + '[data-idx="' + nextIdx + '"]');
-            if (nextInput) { nextInput.focus(); nextInput.select && nextInput.select(); }
-          } else if (e.key === 'Enter') {
-            e.preventDefault();
-            render();
-            inp.blur();
+        if (e.key === 'Tab' && !e.shiftKey) {
+          e.preventDefault(); commit();
+          if (kind === 'gp') {
+            focusInput(otherSel, curIdx);                      // GP -> Event same fortnight
+          } else if (curIdx < bStart + BLOCK_SIZE - 1) {
+            focusInput(otherSel, curIdx + 1);                  // Event -> next fortnight's GP
           }
         } else if (e.key === 'Tab' && e.shiftKey) {
-          if (curIdx > bStart) {
-            e.preventDefault();
-            commit();
-            const prevIdx = curIdx - 1;
-            const prevGroup = idxToGroup[prevIdx];
-            ensureGroupOpen(prevGroup);
-            render();
-            const prevInput = tbody.querySelector(selector + '[data-idx="' + prevIdx + '"]');
-            if (prevInput) { prevInput.focus(); prevInput.select && prevInput.select(); }
+          e.preventDefault(); commit();
+          if (kind === 'event') {
+            focusInput(otherSel, curIdx);                      // Event <- GP same fortnight
+          } else if (curIdx > bStart) {
+            focusInput(otherSel, curIdx - 1);                  // GP <- prev fortnight's Event
+          }
+        } else if (e.key === 'Enter') {
+          if (curIdx < bStart + BLOCK_SIZE - 1) {
+            e.preventDefault(); commit();
+            focusInput(sameSel, curIdx + 1);                   // Enter advances same column
+          } else {
+            e.preventDefault(); render(); inp.blur();
           }
         }
       });
     }
-    tbody.querySelectorAll('.fn-gp-input').forEach(inp => wireFortnightInput(inp, gpValues, '.fn-gp-input'));
-    tbody.querySelectorAll('.fn-event-input').forEach(inp => wireFortnightInput(inp, eventGpValues, '.fn-event-input'));
+    tbody.querySelectorAll('.fn-gp-input').forEach(inp => wireFortnightInput(inp, gpValues, 'gp'));
+    tbody.querySelectorAll('.fn-event-input').forEach(inp => wireFortnightInput(inp, eventGpValues, 'event'));
 
     // Apply same styling to Event GP inputs as GP inputs (shared CSS class via JS)
     tbody.querySelectorAll('.fn-event-input').forEach(inp => {
