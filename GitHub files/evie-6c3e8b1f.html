@@ -1939,14 +1939,16 @@ function signOut() {
   location.reload();
 }
 
-// --- Tabs ---
-document.querySelectorAll('.tab-btn').forEach(btn => {
+// --- Tabs ---  (beta-trigger excluded — its click is handled by the dropdown wiring below)
+document.querySelectorAll('.tab-btn:not(.beta-trigger)').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (!btn.dataset.tab) return;
     document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
     btn.classList.add('active');
     btn.setAttribute('aria-current', 'page');
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    const target = document.getElementById('panel-' + btn.dataset.tab);
+    if (target) target.classList.add('active');
   });
 });
 document.getElementById('panel-overview').classList.add('active');
