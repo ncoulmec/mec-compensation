@@ -1953,8 +1953,28 @@ document.querySelectorAll('.tab-btn:not(.beta-trigger)').forEach(btn => {
 });
 document.getElementById('panel-overview').classList.add('active');
 
-// --- Beta-tabs dropdown wiring — event-delegation pattern, can't fail silently ---
+// --- Beta-tabs dropdown wiring — event delegation + menu re-parented to <body> ---
+// nav.tabs has overflow:hidden which clips absolutely-positioned children. Move the menu
+// out of the nav to document.body and position it with fixed coords from the trigger.
 console.log('[beta-dropdown] wiring loaded');
+(function relocateBetaMenu(){
+  const menu = document.getElementById('beta-menu');
+  if (menu && menu.parentNode !== document.body) {
+    document.body.appendChild(menu);
+    menu.style.position = 'fixed';
+  }
+})();
+function positionBetaMenu() {
+  const menu = document.getElementById('beta-menu');
+  const trigger = document.getElementById('beta-trigger');
+  if (!menu || !trigger) return;
+  const r = trigger.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.top = (r.bottom + 4) + 'px';
+  menu.style.left = 'auto';
+  menu.style.right = (window.innerWidth - r.right) + 'px';
+  menu.style.minWidth = '220px';
+}
 document.addEventListener('click', function(e) {
   const menu = document.getElementById('beta-menu');
   if (!menu) return;
@@ -1965,13 +1985,19 @@ document.addEventListener('click', function(e) {
     e.stopPropagation();
     e.preventDefault();
     const isOpen = menu.style.display === 'block';
-    menu.style.display = isOpen ? 'none' : 'block';
-    trigger.classList.toggle('menu-open', !isOpen);
-    // Hide items whose panel doesn't exist on this dashboard (defensive — runs each open)
-    menu.querySelectorAll('.beta-item').forEach(it => {
-      const t = it.getAttribute('data-beta-tab');
-      it.style.display = document.getElementById('panel-' + t) ? '' : 'none';
-    });
+    if (isOpen) {
+      menu.style.display = 'none';
+      trigger.classList.remove('menu-open');
+    } else {
+      // Defensive: refresh which items are visible based on which panels exist on this dashboard
+      menu.querySelectorAll('.beta-item').forEach(it => {
+        const t = it.getAttribute('data-beta-tab');
+        it.style.display = document.getElementById('panel-' + t) ? '' : 'none';
+      });
+      positionBetaMenu();
+      menu.style.display = 'block';
+      trigger.classList.add('menu-open');
+    }
     return;
   }
   // 2. Click on an item -> switch tab + close menu
@@ -2006,6 +2032,15 @@ document.addEventListener('click', function(e){
   if (trig) { trig.classList.remove('active'); trig.classList.remove('has-active'); }
   document.querySelectorAll('.beta-item').forEach(i => i.classList.remove('current'));
 });
+// Keep menu positioned correctly on resize/scroll while it's open
+window.addEventListener('resize', () => {
+  const menu = document.getElementById('beta-menu');
+  if (menu && menu.style.display === 'block') positionBetaMenu();
+});
+window.addEventListener('scroll', () => {
+  const menu = document.getElementById('beta-menu');
+  if (menu && menu.style.display === 'block') positionBetaMenu();
+}, true);
 
 // --- Key Terms modal: Esc to close, click outside to close ---
 (function(){
