@@ -1633,6 +1633,13 @@ function encodeBase64Utf8(str) {
 let _saveInFlight = false;
 let _savePending = false;
 async function saveToGitHub() {
+  // Commit any in-progress edit before serialising the payload. Input fields persist
+  // their value on blur; if the user clicks "Save to GitHub" while still focused inside
+  // a field (or right after typing), the latest value isn't yet in `data`. Blurring
+  // first fires the blur handler synchronously and commits the value.
+  if (document.activeElement && document.activeElement !== document.body && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
   if (_saveInFlight) { _savePending = true; showToast('saving', 'Save queued — finishing the current one first…', 0); return; }
   _saveInFlight = true;
   try {
