@@ -1953,48 +1953,59 @@ document.querySelectorAll('.tab-btn:not(.beta-trigger)').forEach(btn => {
 });
 document.getElementById('panel-overview').classList.add('active');
 
-// --- Beta-tabs dropdown wiring ---
-(function(){
-  const trigger = document.getElementById('beta-trigger');
+// --- Beta-tabs dropdown wiring — event-delegation pattern, can't fail silently ---
+console.log('[beta-dropdown] wiring loaded');
+document.addEventListener('click', function(e) {
   const menu = document.getElementById('beta-menu');
-  if (!trigger || !menu) return;
-  const items = menu.querySelectorAll('.beta-item');
-  // Hide items whose panel doesn't exist on this dashboard (e.g., residencies on non-Evie reps)
-  items.forEach(it => {
-    const t = it.getAttribute('data-beta-tab');
-    if (!document.getElementById('panel-' + t)) it.style.display = 'none';
-  });
-  const closeMenu = () => { menu.style.display = 'none'; trigger.classList.remove('menu-open'); };
-  trigger.addEventListener('click', (e) => {
+  if (!menu) return;
+  const trigger = e.target.closest('#beta-trigger');
+  const item = e.target.closest('.beta-item');
+  // 1. Click on the trigger -> toggle menu
+  if (trigger) {
     e.stopPropagation();
-    const open = menu.style.display !== 'none';
-    menu.style.display = open ? 'none' : 'block';
-    trigger.classList.toggle('menu-open', !open);
-  });
-  items.forEach(it => {
-    it.addEventListener('click', (e) => {
-      e.stopPropagation();
+    e.preventDefault();
+    const isOpen = menu.style.display === 'block';
+    menu.style.display = isOpen ? 'none' : 'block';
+    trigger.classList.toggle('menu-open', !isOpen);
+    // Hide items whose panel doesn't exist on this dashboard (defensive — runs each open)
+    menu.querySelectorAll('.beta-item').forEach(it => {
       const t = it.getAttribute('data-beta-tab');
-      closeMenu();
-      // Replicate the existing tab-btn switch
-      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      const panel = document.getElementById('panel-' + t);
-      if (panel) panel.classList.add('active');
-      trigger.classList.add('active'); trigger.classList.add('has-active');
-      menu.querySelectorAll('.beta-item').forEach(i => i.classList.remove('current'));
-      it.classList.add('current');
+      it.style.display = document.getElementById('panel-' + t) ? '' : 'none';
     });
-  });
-  // Clear dropdown 'active' look when a regular tab is clicked
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    if (b === trigger) return;
-    b.addEventListener('click', () => { trigger.classList.remove('active'); trigger.classList.remove('has-active'); menu.querySelectorAll('.beta-item').forEach(i => i.classList.remove('current')); });
-  });
-  document.addEventListener('click', (e) => {
-    if (!menu.contains(e.target) && e.target !== trigger) closeMenu();
-  });
-})();
+    return;
+  }
+  // 2. Click on an item -> switch tab + close menu
+  if (item) {
+    e.stopPropagation();
+    e.preventDefault();
+    const t = item.getAttribute('data-beta-tab');
+    menu.style.display = 'none';
+    const trig = document.getElementById('beta-trigger');
+    if (trig) trig.classList.remove('menu-open');
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('panel-' + t);
+    if (panel) panel.classList.add('active');
+    if (trig) { trig.classList.add('active'); trig.classList.add('has-active'); }
+    menu.querySelectorAll('.beta-item').forEach(i => i.classList.remove('current'));
+    item.classList.add('current');
+    return;
+  }
+  // 3. Click outside -> close menu if open
+  if (menu.style.display === 'block' && !menu.contains(e.target)) {
+    menu.style.display = 'none';
+    const trig = document.getElementById('beta-trigger');
+    if (trig) trig.classList.remove('menu-open');
+  }
+});
+// Clear dropdown 'active' look whenever a regular tab is clicked
+document.addEventListener('click', function(e){
+  const tab = e.target.closest('.tab-btn:not(.beta-trigger)');
+  if (!tab) return;
+  const trig = document.getElementById('beta-trigger');
+  if (trig) { trig.classList.remove('active'); trig.classList.remove('has-active'); }
+  document.querySelectorAll('.beta-item').forEach(i => i.classList.remove('current'));
+});
 
 // --- Key Terms modal: Esc to close, click outside to close ---
 (function(){
