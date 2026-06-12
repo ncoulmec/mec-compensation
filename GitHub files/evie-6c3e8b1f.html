@@ -1287,10 +1287,47 @@
         <input type="text" inputmode="numeric" id="kpi-calls-input" class="value-input" value="0">
       </div>
 
-      <div class="scenario-row" style="border-bottom: none;">
+      <div class="scenario-row">
         <label>Number of Wines Sent <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(bottles to clients, annual)</span></label>
         <input type="range" id="kpi-wines-slider" min="0" max="200" step="1" value="0">
         <input type="text" inputmode="numeric" id="kpi-wines-input" class="value-input" value="0">
+      </div>
+
+      <div class="scenario-row">
+        <label>Number of Bookings <strong>Confirmed</strong> <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(annual)</span></label>
+        <input type="range" id="kpi-confirmed-slider" min="0" max="600" step="1" value="0">
+        <input type="text" inputmode="numeric" id="kpi-confirmed-input" class="value-input" value="0">
+      </div>
+
+      <div class="scenario-row" style="border-bottom: none; align-items: center;">
+        <label>Conversion Rate <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(Confirmed &divide; Quoted &middot; benchmark <strong>35%</strong>)</span></label>
+        <div style="position: relative; height: 10px; background: #ecebe5; border-radius: 5px;">
+          <div id="kpi-conversion-bar" style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: #c2410c; border-radius: 5px; transition: width 0.2s ease, background 0.2s ease;"></div>
+          <div title="Benchmark 35%" style="position: absolute; left: 35%; top: -4px; bottom: -4px; width: 2px; background: var(--ink); border-radius: 1px;"></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; font-family: var(--mono);">
+          <span id="kpi-conversion-pct" style="font-weight: 700; font-size: 16px; color: var(--ink); min-width: 56px; text-align: right;">0.0%</span>
+          <span id="kpi-conversion-status" style="font-size: 9px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; background: #ecebe5; color: #888;">&mdash;</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="border-left: 3px solid #b8860b; background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); margin-bottom: 22px;">
+      <h3 style="margin: 0 0 6px;">🎯 Total Opportunities Handled <span style="font-size: 10px; padding: 1px 6px; background: #ecebe5; color: #8a6a00; border: 1px solid #d3d1c7; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Beta</span></h3>
+      <p style="font-size: 12px; color: var(--muted); margin: 0 0 16px;">Captures every lead allocated to you, including those that didn't make it to a quote. <strong>Leads Unconverted</strong> are leads you received but never quoted on. <strong>Total Opportunities</strong> = Quotes Sent + Leads Unconverted &mdash; the full top-of-funnel view.</p>
+
+      <div class="scenario-row">
+        <label>Leads Unconverted <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(annual, leads that never made it to a quote)</span></label>
+        <input type="range" id="kpi-unconverted-slider" min="0" max="1000" step="1" value="0">
+        <input type="text" inputmode="numeric" id="kpi-unconverted-input" class="value-input" value="0">
+      </div>
+
+      <div class="scenario-row" style="border-bottom: none; align-items: center;">
+        <label>Total Opportunities <span style="color: var(--faint); font-weight: 400; font-size: 12px;">(= Quotes Sent + Leads Unconverted)</span></label>
+        <div></div>
+        <div style="font-family: var(--mono); font-weight: 700; font-size: 20px; color: var(--ink); text-align: right;">
+          <span id="kpi-total-opps">0</span>
+        </div>
       </div>
     </div>
 
@@ -4755,8 +4792,8 @@ function renderBreakdown(r) {
           <div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Pace true-up deduction:</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−$${Math.round(paceAdjust).toLocaleString()}</code></div>
           <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">Held back — your pace dropped, so this earn nets against prior overpay instead of paying out.</div>
           <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
-          <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${Math.round(bonusEx).toLocaleString()}</code></div>
-          <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${Math.round(superAmt).toLocaleString()}</code></div>
+          <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
+          <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
         </div>
       </div>`;
     } else if (paceAdjust < -0.5) {
@@ -4769,8 +4806,8 @@ function renderBreakdown(r) {
           <div style="color:#9eddb5; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">+ Pace catch-up release:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>+$${Math.round(release).toLocaleString()}</code></div>
           <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">Releasing prior held-back amount because pace has caught up.</div>
           <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
-          <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${Math.round(bonusEx).toLocaleString()}</code></div>
-          <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${Math.round(superAmt).toLocaleString()}</code></div>
+          <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
+          <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
         </div>
       </div>`;
     } else {
@@ -4780,8 +4817,8 @@ function renderBreakdown(r) {
           <div style="color:#9eddb5;">GP band commission (inc super):</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(thisFnGpPay).toLocaleString()}</code></div>
           <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
           <div style="color:#fff; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
-          <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${Math.round(bonusEx).toLocaleString()}</code></div>
-          <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${Math.round(superAmt).toLocaleString()}</code></div>
+          <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
+          <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
         </div>
       </div>`;
     }
@@ -6174,10 +6211,65 @@ function renderTeamPool() {
     slider.addEventListener('input', () => sync(slider.value));
     input.addEventListener('input', () => sync(input.value));
   }
+  // Recompute derived metrics: conversion rate and total opportunities.
+  const BENCHMARK_CONVERSION = 35;   // %
+  function readNum(id) {
+    const el = document.getElementById(id);
+    if (!el) return 0;
+    return Math.max(0, parseInt(String(el.value).replace(/[^\d]/g, '')) || 0);
+  }
+  function recomputeDerivedKpis() {
+    const quotes = readNum('kpi-quotes-input');
+    const confirmed = readNum('kpi-confirmed-input');
+    const unconverted = readNum('kpi-unconverted-input');
+    // --- Conversion Rate ---
+    const rate = quotes > 0 ? (confirmed / quotes) * 100 : 0;
+    const pctEl = document.getElementById('kpi-conversion-pct');
+    const barEl = document.getElementById('kpi-conversion-bar');
+    const statusEl = document.getElementById('kpi-conversion-status');
+    if (pctEl) pctEl.textContent = rate.toFixed(1) + '%';
+    if (barEl) {
+      barEl.style.width = Math.min(rate, 100).toFixed(1) + '%';
+      barEl.style.background = quotes === 0 ? '#ecebe5'
+        : rate >= BENCHMARK_CONVERSION ? '#1e6624'
+        : rate >= BENCHMARK_CONVERSION * 0.7 ? '#d4a017'
+        : '#c2410c';
+    }
+    if (statusEl) {
+      if (quotes === 0) {
+        statusEl.textContent = '\u2014';
+        statusEl.style.background = '#ecebe5'; statusEl.style.color = '#888';
+      } else if (rate >= BENCHMARK_CONVERSION) {
+        statusEl.textContent = 'On benchmark';
+        statusEl.style.background = '#eaf5ec'; statusEl.style.color = '#1e6624';
+      } else if (rate >= BENCHMARK_CONVERSION * 0.7) {
+        statusEl.textContent = 'Below benchmark';
+        statusEl.style.background = '#fdf6e3'; statusEl.style.color = '#8a6a00';
+      } else {
+        statusEl.textContent = 'Well below';
+        statusEl.style.background = '#fdecea'; statusEl.style.color = '#c2410c';
+      }
+    }
+    // --- Total Opportunities ---
+    const totalEl = document.getElementById('kpi-total-opps');
+    if (totalEl) totalEl.textContent = (quotes + unconverted).toLocaleString('en-AU');
+  }
+
   function init() {
     wirePair('quotes', 'kpi-quotes-slider', 'kpi-quotes-input');
     wirePair('calls',  'kpi-calls-slider',  'kpi-calls-input');
     wirePair('wines',  'kpi-wines-slider',  'kpi-wines-input');
+    wirePair('confirmed',   'kpi-confirmed-slider',   'kpi-confirmed-input');
+    wirePair('unconverted', 'kpi-unconverted-slider', 'kpi-unconverted-input');
+    // Hook recompute onto the interlinked inputs so the conversion rate and
+    // total-opps figures update live as the user drags any of the sliders.
+    ['kpi-quotes-input','kpi-quotes-slider',
+     'kpi-confirmed-input','kpi-confirmed-slider',
+     'kpi-unconverted-input','kpi-unconverted-slider'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', recomputeDerivedKpis);
+    });
+    recomputeDerivedKpis();
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

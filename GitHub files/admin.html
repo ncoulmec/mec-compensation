@@ -2388,6 +2388,8 @@ function renderFortnightlyAdmin() {
   const expanded = new Set();
 
   const _fmt = (n) => '$' + Math.round(n).toLocaleString();
+  const _fmt2dp = (n) => (+n).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const _fmt2dpMoney = (n) => '$' + _fmt2dp(n);
   const _fmtSigned = (n) => (n >= 0 ? '+' : '−') + _fmt(Math.abs(n));
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
@@ -2507,10 +2509,10 @@ function renderFortnightlyAdmin() {
           <input type="text" id="pr-ev-${esc(r.id)}" data-rep="${esc(r.id)}" data-kind="event" inputmode="decimal" ${lock} value="${f.row.eventGp ? f.row.eventGp.toLocaleString() : ''}" placeholder="0" style="width:100%; padding:9px 10px; border:1px solid #d3d1c7; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; ${lockStyle}">
         </div>
         <div style="text-align:right;">
-          <input type="text" class="pr-copy" tabindex="-1" id="pr-bonus-${esc(r.id)}" readonly value="${Math.round(f.exSuper).toLocaleString()}" title="Bonus ex super — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #c3e4d0; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;">
+          <input type="text" class="pr-copy" tabindex="-1" id="pr-bonus-${esc(r.id)}" readonly value="${_fmt2dp(f.exSuper)}" title="Bonus ex super — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #c3e4d0; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;">
         </div>
         <div style="text-align:right;">
-          <input type="text" class="pr-copy" tabindex="-1" id="pr-super-${esc(r.id)}" readonly value="${Math.round(f.superAmt).toLocaleString()}" title="Super (12%) — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #cdd9e8; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:var(--navy); background:#eef4fa; cursor:pointer;">
+          <input type="text" class="pr-copy" tabindex="-1" id="pr-super-${esc(r.id)}" readonly value="${_fmt2dp(f.superAmt)}" title="Super (12%) — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #cdd9e8; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:var(--navy); background:#eef4fa; cursor:pointer;">
         </div>
       </div>`;
     });
@@ -2519,8 +2521,8 @@ function renderFortnightlyAdmin() {
     h += `<div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap:10px; align-items:center; padding:12px 4px 4px; border-top:2px solid #d3d1c7; font-weight:800;">
       <div style="color:var(--ink);">Team total</div>
       <div></div><div></div>
-      <div style="text-align:right; font-family:var(--mono); color:#1e6624;" id="pr-team-bonus">${_fmt(teamBonus)}</div>
-      <div style="text-align:right; font-family:var(--mono); color:var(--navy);" id="pr-team-super">${_fmt(teamSuper)}</div>
+      <div style="text-align:right; font-family:var(--mono); color:#1e6624;" id="pr-team-bonus">${_fmt2dpMoney(teamBonus)}</div>
+      <div style="text-align:right; font-family:var(--mono); color:var(--navy);" id="pr-team-super">${_fmt2dpMoney(teamSuper)}</div>
     </div>`;
 
     h += `<div style="margin-top:16px; display:flex; justify-content:flex-end; gap:10px; align-items:center;">
@@ -2544,11 +2546,11 @@ function renderFortnightlyAdmin() {
       const set = (id, v) => { const el = document.getElementById(id); if (el) { if (el.tagName === 'INPUT') el.value = v; else el.textContent = v; } };
       set(`pr-ytd-${r.id}`, _fmt(f.row.ytd));
       set(`pr-rate-${r.id}`, (f.row.endRate * 100).toFixed(0) + '%');
-      set(`pr-bonus-${r.id}`, Math.round(f.exSuper).toLocaleString());
-      set(`pr-super-${r.id}`, Math.round(f.superAmt).toLocaleString());
+      set(`pr-bonus-${r.id}`, _fmt2dp(f.exSuper));
+      set(`pr-super-${r.id}`, _fmt2dp(f.superAmt));
     });
-    const tb = document.getElementById('pr-team-bonus'); if (tb) tb.textContent = _fmt(teamBonus);
-    const ts = document.getElementById('pr-team-super'); if (ts) ts.textContent = _fmt(teamSuper);
+    const tb = document.getElementById('pr-team-bonus'); if (tb) tb.textContent = _fmt2dpMoney(teamBonus);
+    const ts = document.getElementById('pr-team-super'); if (ts) ts.textContent = _fmt2dpMoney(teamSuper);
   }
 
   function wirePayRun(idx, confirmed) {
