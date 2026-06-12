@@ -2651,31 +2651,46 @@ function renderFortnightlyAdmin() {
           const repTotals = body.reps || {};
           const eventTotals = body.eventReps || {};
           let appliedGp = 0, appliedEv = 0, missed = [];
+          // Write-through helper: mirror the input-blur persist() flow exactly.
+          // Without this, the Save payload uses stale data.employees[].fortnightly
+          // values and the pulled numbers never reach GitHub or the rep dashboards.
+          const writeThrough = (repId, kind, val) => {
+            const matrix = kind === 'event' ? eventMatrix : gpMatrix;
+            matrix[repId][idx] = val;
+            const emp = (data.employees || []).find(e => e.id === repId);
+            if (emp) {
+              const slot = kind === 'event' ? ensureFortnightly(emp).event : ensureFortnightly(emp).gp;
+              slot[idx] = val;
+            }
+          };
           reps.forEach(r2 => {
             let gotAny = false;
             if (repTotals[r2.id] != null) {
               const val = +repTotals[r2.id];
-              gpMatrix[r2.id][idx] = val;
+              writeThrough(r2.id, 'gp', val);
               const el = document.getElementById(`pr-gp-${r2.id}`);
               if (el) el.value = val ? val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
               appliedGp++; gotAny = true;
             }
             if (eventTotals[r2.id] != null) {
               const val = +eventTotals[r2.id];
-              eventMatrix[r2.id][idx] = val;
+              writeThrough(r2.id, 'event', val);
               const el = document.getElementById(`pr-ev-${r2.id}`);
               if (el) el.value = val ? val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
               appliedEv++; gotAny = true;
             }
             // Explicitly zero out anyone with no Zoho data so a stale figure doesn't linger
             if (!gotAny) {
-              gpMatrix[r2.id][idx] = 0;
-              eventMatrix[r2.id][idx] = 0;
+              writeThrough(r2.id, 'gp', 0);
+              writeThrough(r2.id, 'event', 0);
               const elGp = document.getElementById(`pr-gp-${r2.id}`); if (elGp) elGp.value = '';
               const elEv = document.getElementById(`pr-ev-${r2.id}`); if (elEv) elEv.value = '';
               missed.push(r2.name);
             }
           });
+          // Mark dirty so the Save button knows to push and the unsaved-changes
+          // indicator shows up — same as the input-blur flow.
+          if (typeof setDirty === 'function') setDirty();
           refreshPayrunComputed(idx);
 
           // Summary
