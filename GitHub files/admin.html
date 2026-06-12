@@ -240,10 +240,11 @@
     background: var(--ink); color: #fff;
     padding: 8px 12px; border-radius: 6px;
     font-size: 11px; font-weight: 400; line-height: 1.5;
-    max-width: 280px; pointer-events: none;
+    max-width: 360px; pointer-events: none;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     opacity: 0; transition: opacity 0.15s ease;
-    text-align: left; font-family: 'DM Sans', sans-serif;
+    text-align: left; font-family: var(--mono);
+    white-space: pre-wrap;
   }
   #um-tooltip-bubble.show { opacity: 1; }
 
@@ -2528,12 +2529,40 @@ function renderFortnightlyAdmin() {
       <div style="text-align:right;">Bonus → Xero</div><div style="text-align:right;">Super → Xero</div>
     </div>`;
 
+    // Build a per-rep math breakdown string for the ⓘ hover tooltip.
+    // Plain text with \n separators — the #um-tooltip-bubble CSS uses
+    // white-space: pre-line so newlines render as line breaks.
+    const _dol = (n) => '$' + (+n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const buildRepBreakdown = (r, f) => {
+      const lines = [];
+      lines.push(`${r.fullName} · paid ${fn.paid}`);
+      lines.push('─────────────────');
+      lines.push(`GP Received: ${_dol(f.row.gp || 0)}`);
+      lines.push(`YTD: $${_fmt0Round(f.row.ytd)} · band ${(f.row.endRate * 100).toFixed(0)}%`);
+      if (f.row.crossed) lines.push(`⚡ Band crossing this fortnight`);
+      lines.push(`GP commission: ${_dol(f.row.properPay)}`);
+      lines.push('');
+      lines.push(`Event GP: ${_dol(f.row.eventGp || 0)}`);
+      lines.push(`Production rate: ${(r.prodRate * 100).toFixed(1)}%`);
+      lines.push(`Production commission: ${_dol(f.row.prodComm)}`);
+      lines.push('');
+      lines.push(`Subtotal (inc super): ${_dol(f.incSuper)}`);
+      lines.push(`÷ 1.12 = ${_dol(f.exSuper)} ← Bonus to Xero`);
+      lines.push(`Super (12%): ${_dol(f.superAmt)}`);
+      return lines.join('\n');
+    };
+    // Helper for the "YTD: $X" display in the breakdown (whole dollars only)
+    function _fmt0Round(n) { return Math.round(+n || 0).toLocaleString(); }
+
     let teamBonus = 0, teamSuper = 0;
+    const teamRows = [];
     reps.forEach(r => {
       const f = payrunFigures(r.id, idx);
       teamBonus += f.exSuper; teamSuper += f.superAmt;
+      teamRows.push({ name: r.name, exSuper: f.exSuper, superAmt: f.superAmt });
       const lock = confirmed ? 'readonly tabindex="-1"' : '';
       const lockStyle = confirmed ? 'background:#f4f3ed; color:var(--muted); cursor:not-allowed;' : 'background:#fff;';
+      const repBreakdown = buildRepBreakdown(r, f);
       h += `<div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap:10px; align-items:center; padding:10px 4px; border-top:1px solid #f0efe9;">
         <div>
           <div style="font-weight:700; color:var(--ink);">${esc(r.fullName)}</div>
@@ -2549,7 +2578,8 @@ function renderFortnightlyAdmin() {
         <div style="text-align:right;">
           <input type="text" id="pr-ev-${esc(r.id)}" data-rep="${esc(r.id)}" data-kind="event" inputmode="decimal" ${lock} value="${f.row.eventGp ? f.row.eventGp.toLocaleString() : ''}" placeholder="0" style="width:100%; padding:9px 10px; border:1px solid #d3d1c7; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; ${lockStyle}">
         </div>
-        <div style="text-align:right;">
+        <div style="text-align:right; position:relative;">
+          <span class="um-tooltip" data-tip="${esc(repBreakdown)}" style="position:absolute; top:-7px; right:-2px; z-index:2;">?</span>
           <input type="text" class="pr-copy" tabindex="-1" id="pr-bonus-${esc(r.id)}" readonly value="${_fmt2dp(f.exSuper)}" title="Bonus ex super — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #c3e4d0; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;">
         </div>
         <div style="text-align:right;">
@@ -2558,9 +2588,24 @@ function renderFortnightlyAdmin() {
       </div>`;
     });
 
+    // Team total breakdown — per-rep contribution to the totals
+    const teamBreakdown = (() => {
+      const lines = [];
+      lines.push(`Team total · paid ${fn.paid}`);
+      lines.push('─────────────────');
+      teamRows.forEach(tr => {
+        lines.push(`${tr.name.padEnd(8, ' ')} bonus ${_dol(tr.exSuper)}  ·  super ${_dol(tr.superAmt)}`);
+      });
+      lines.push('─────────────────');
+      lines.push(`Bonus total: ${_dol(teamBonus)}`);
+      lines.push(`Super total: ${_dol(teamSuper)}`);
+      lines.push(`Combined pay: ${_dol(teamBonus + teamSuper)}`);
+      return lines.join('\n');
+    })();
+
     // Team total + action button
     h += `<div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap:10px; align-items:center; padding:12px 4px 4px; border-top:2px solid #d3d1c7; font-weight:800;">
-      <div style="color:var(--ink);">Team total</div>
+      <div style="color:var(--ink); display:inline-flex; align-items:center; gap:4px;">Team total <span class="um-tooltip" data-tip="${esc(teamBreakdown)}" style="font-weight:400;">?</span></div>
       <div></div><div></div>
       <div style="text-align:right; font-family:var(--mono); color:#1e6624;" id="pr-team-bonus">${_fmt2dpMoney(teamBonus)}</div>
       <div style="text-align:right; font-family:var(--mono); color:var(--navy);" id="pr-team-super">${_fmt2dpMoney(teamSuper)}</div>
