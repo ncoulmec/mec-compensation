@@ -2515,7 +2515,7 @@ function renderFortnightlyAdmin() {
       h += `<div id="pr-pull-row" style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; margin-bottom:14px; background:#f6f3ff; border:1px solid #ddd0f5; border-radius:8px;">
         <div style="font-size:12px; color:var(--ink);">
           <strong style="color:#5a3a8e;">🔄 Pull from Zoho</strong>
-          <span style="color:var(--muted);"> — auto-import GP Received for every rep from the Zoho Payments module (bookings closed on/after 1 Jun 2026 only). Overwrites the GP inputs below.</span>
+          <span style="color:var(--muted);"> — auto-import <strong>GP Received</strong> (Zoho Payments · bookings closed on/after 1 Jun 2026) AND <strong>Event GP</strong> (Zoho Bookings · Fortnight Sort Key matches) for every rep. Overwrites both columns below.</span>
         </div>
         <button type="button" id="pr-pull-zoho" style="padding:8px 16px; border:none; background:#5a3a8e; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Pull from Zoho ↓</button>
       </div>
@@ -2621,15 +2621,15 @@ function renderFortnightlyAdmin() {
         const range = fortnightDates(idx);
         if (!range) { showStatus('err', 'Could not parse fortnight dates.'); return; }
 
-        // Confirm if any GP inputs already have a value
+        // Confirm if any GP or Event GP inputs already have a value
         const existingNonZero = reps.some(r => {
-          const el = document.getElementById(`pr-gp-${r.id}`);
-          if (!el) return false;
-          const n = parseFloat(String(el.value).replace(/[^0-9.\-]/g, ''));
-          return isFinite(n) && n > 0;
+          const elGp = document.getElementById(`pr-gp-${r.id}`);
+          const elEv = document.getElementById(`pr-ev-${r.id}`);
+          const num = (el) => { if (!el) return 0; const n = parseFloat(String(el.value).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : 0; };
+          return num(elGp) > 0 || num(elEv) > 0;
         });
         if (existingNonZero) {
-          const ok = window.confirm(`This will OVERWRITE GP Received for every rep in this fortnight (${range.start} → ${range.end}) with the latest Zoho totals.\n\nProceed?`);
+          const ok = window.confirm(`This will OVERWRITE both GP Received and Event GP for every rep in this fortnight (${range.start} → ${range.end}) with the latest Zoho totals.\n\nProceed?`);
           if (!ok) return;
         }
 
@@ -2638,7 +2638,7 @@ function renderFortnightlyAdmin() {
         pullBtn.textContent = 'Pulling…';
         pullBtn.style.opacity = '0.6';
         pullBtn.style.cursor = 'wait';
-        showStatus('warn', `Querying Zoho for Payments between <strong>${range.start}</strong> and <strong>${range.end}</strong>… this can take 10-20 seconds.`);
+        showStatus('warn', `Querying Zoho for GP Received + Production GP for <strong>${range.start}</strong> → <strong>${range.end}</strong>… this can take 10-20 seconds.`);
 
         try {
           const url = `${ZOHO_PULL_URL}?action=pull-fortnight&key=${encodeURIComponent(ZOHO_PULL_KEY)}&fortnight=${encodeURIComponent(range.start + ':' + range.end)}`;
@@ -2649,15 +2649,30 @@ function renderFortnightlyAdmin() {
             return;
           }
           const repTotals = body.reps || {};
-          let applied = 0, missed = [];
+          const eventTotals = body.eventReps || {};
+          let appliedGp = 0, appliedEv = 0, missed = [];
           reps.forEach(r2 => {
+            let gotAny = false;
             if (repTotals[r2.id] != null) {
               const val = +repTotals[r2.id];
               gpMatrix[r2.id][idx] = val;
               const el = document.getElementById(`pr-gp-${r2.id}`);
               if (el) el.value = val ? val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
-              applied++;
-            } else {
+              appliedGp++; gotAny = true;
+            }
+            if (eventTotals[r2.id] != null) {
+              const val = +eventTotals[r2.id];
+              eventMatrix[r2.id][idx] = val;
+              const el = document.getElementById(`pr-ev-${r2.id}`);
+              if (el) el.value = val ? val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+              appliedEv++; gotAny = true;
+            }
+            // Explicitly zero out anyone with no Zoho data so a stale figure doesn't linger
+            if (!gotAny) {
+              gpMatrix[r2.id][idx] = 0;
+              eventMatrix[r2.id][idx] = 0;
+              const elGp = document.getElementById(`pr-gp-${r2.id}`); if (elGp) elGp.value = '';
+              const elEv = document.getElementById(`pr-ev-${r2.id}`); if (elEv) elEv.value = '';
               missed.push(r2.name);
             }
           });
@@ -2666,16 +2681,27 @@ function renderFortnightlyAdmin() {
           // Summary
           const dollar = (n) => '$' + (+n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           const lines = [];
-          lines.push(`<strong>✓ Pulled ${body.rowCount} Payment record${body.rowCount === 1 ? '' : 's'} · ${dollar(body.grandTotal)} total</strong>`);
-          lines.push(`<div style="margin-top:6px;">Applied to: ${reps.filter(r2 => repTotals[r2.id] != null).map(r2 => `${esc(r2.name)} ${dollar(repTotals[r2.id]||0)}`).join(' · ')}</div>`);
-          if (missed.length) lines.push(`<div style="margin-top:4px; color:#8a6a00;">No Zoho match for: ${missed.map(esc).join(', ')} (left at 0)</div>`);
-          if (body.unmapped && body.unmapped.length) {
-            const unmapStr = body.unmapped.map(u => `${esc(u.ownerName || '(unknown)')} ${dollar(u.amount)}`).join(', ');
-            lines.push(`<div style="margin-top:4px; color:#a4302a;">⚠ Unmapped Zoho owners (not assigned to any rep in dashboard): ${unmapStr}</div>`);
+          lines.push(`<strong>✓ Pulled GP Received ${dollar(body.grandTotal)} (${body.rowCount} payment${body.rowCount === 1 ? '' : 's'}) + Event GP ${dollar(body.eventGrandTotal)} (${body.eventRowCount} booking${body.eventRowCount === 1 ? '' : 's'})</strong>`);
+          const lineFor = (r2) => {
+            const gp = repTotals[r2.id];
+            const ev = eventTotals[r2.id];
+            if (gp == null && ev == null) return null;
+            return `${esc(r2.name)} GP ${dollar(gp || 0)} · Event ${dollar(ev || 0)}`;
+          };
+          const repLines = reps.map(lineFor).filter(Boolean);
+          if (repLines.length) lines.push(`<div style="margin-top:6px;">${repLines.join(' &nbsp;·&nbsp; ')}</div>`);
+          if (missed.length) lines.push(`<div style="margin-top:4px; color:#8a6a00;">No Zoho data for: ${missed.map(esc).join(', ')} (set to 0)</div>`);
+          const allUnmapped = [].concat(body.unmapped || [], body.eventUnmapped || []);
+          if (allUnmapped.length) {
+            // Dedupe by ownerId
+            const seen = {}; const dedup = [];
+            allUnmapped.forEach(u => { const k = u.ownerId || u.ownerName; if (!seen[k]) { seen[k] = true; dedup.push(u); } });
+            const unmapStr = dedup.map(u => `${esc(u.ownerName || '(unknown)')} ${dollar(u.amount)}`).join(', ');
+            lines.push(`<div style="margin-top:4px; color:#a4302a;">⚠ Unmapped Zoho owners (no matching rep): ${unmapStr}</div>`);
           }
           lines.push(`<div style="margin-top:6px; font-size:10px; color:var(--muted);">Don't forget to copy Bonus/Super into Xero, then Confirm &amp; Save.</div>`);
           showStatus('ok', lines.join(''));
-          showToast('success', `✓ Pulled ${applied} rep${applied === 1 ? '' : 's'} from Zoho.`);
+          showToast('success', `✓ Pulled GP + Event GP from Zoho.`);
         } catch (e) {
           showStatus('err', '✗ Pull failed: ' + esc(e.message || String(e)) + '<div style="margin-top:4px; font-size:10px;">Common causes: Apps Script deployment URL wrong, key mismatch, or Zoho session expired (re-auth the script).</div>');
         } finally {
