@@ -4165,6 +4165,7 @@ function renderBreakdown(r) {
     let y = evt.clientY + 14;
     if (x + r.width > window.innerWidth - 8) x = window.innerWidth - r.width - 8;
     if (y + r.height > window.innerHeight - 8) y = evt.clientY - r.height - 10;
+    if (y < 8) y = 8;  // clamp to viewport top so tooltip is never cut off
     tipEl.style.left = x + 'px';
     tipEl.style.top = y + 'px';
   }
@@ -4195,7 +4196,9 @@ function renderBreakdown(r) {
       /* YTD-cumulative band — small grey pill, sits next to the prominent pace rate */
       .fn-ytd-pill { display: inline-block; padding: 0 5px; border-radius: 3px; font-size: 10px; font-family: var(--mono); font-weight: 500; margin-left: 4px; vertical-align: middle; cursor: help; background: #f4f3ed; color: var(--muted); border: 1px solid #d3d1c7; }
       /* Pace rate displayed as the MAIN band number — bold, green if elevated */
-      .fn-pace-main { font-family: var(--mono); font-size: 14px; font-weight: 700; color: #1e6624; }
+      .fn-pace-main { font-family: var(--mono); font-size: 14px; font-weight: 700; color: #1e6624; cursor: help; border-bottom: 1px dotted rgba(26,58,92,0.4); padding-bottom: 1px; }
+      .fn-pace-main:hover { border-bottom-color: var(--navy); border-bottom-style: solid; }
+      .fn-pace-main::after { content: ' ⓘ'; font-size: 10px; opacity: 0.55; vertical-align: super; }
       .fn-pace-main.same { color: var(--ink); font-weight: 600; }
       .fn-pace-main.lower { color: #7a1f1f; }
       .fn-pay-cell { cursor: help; border-bottom: 1px dotted transparent; transition: border-color 0.12s; }
@@ -4309,6 +4312,7 @@ function renderBreakdown(r) {
   const PROD_RATE = 0.01;
 
   const _fmt = (window.fmtMoney || ((n) => '$' + Math.round(n).toLocaleString()));
+  const _fmt2dp = (n) => '$' + (+n).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const _fmtSigned = (n) => (n >= 0 ? '+' : '−') + _fmt(Math.abs(n));
 
   // Super rate (assumes 12% on top of ex-super). Pay values are stored INC super,
@@ -4338,8 +4342,8 @@ function renderBreakdown(r) {
       <div><strong>Total you've earned: ${_fmt(incSuper)}</strong> <span style="color: #aaa;">(inc super)</span></div>
       <hr>
       <div style="font-weight: 600; margin-bottom: 4px;">How this appears in Xero:</div>
-      <div>· "Bonus" line: <code>${_fmt(exSuper)}</code> <span style="color: #aaa;">(ex super)</span></div>
-      <div>· "Super" line: <code>${_fmt(superAmt)}</code> <span style="color: #aaa;">(12% on top)</span></div>
+      <div>· "Bonus" line: <code>${_fmt2dp(exSuper)}</code> <span style="color: #aaa;">(ex super)</span></div>
+      <div>· "Super" line: <code>${_fmt2dp(superAmt)}</code> <span style="color: #aaa;">(12% on top)</span></div>
       <div style="margin-top: 6px; font-size: 11px; color: #aaa;">Xero shows the bonus and super on separate lines. Adding them back together = the total above. Bands are stated inclusive of super so the figure you see here is everything that ends up in your bank + super fund combined.</div>`;
   }
 
@@ -4349,8 +4353,8 @@ function renderBreakdown(r) {
     const exSuper = pay / (1 + SUPER_RATE);
     const superAmt = pay - exSuper;
     return `<div style="font-weight: 700; margin-bottom: 4px;">${esc(label)} — breakdown</div>
-      <div>Ex super: <code>${_fmt(exSuper)}</code></div>
-      <div>+ Super (12%): <code>${_fmt(superAmt)}</code></div>
+      <div>Ex super: <code>${_fmt2dp(exSuper)}</code></div>
+      <div>+ Super (12%): <code>${_fmt2dp(superAmt)}</code></div>
       <hr>
       <div><strong>Total (inc super): ${_fmt(pay)}</strong></div>`;
   }
@@ -4675,8 +4679,8 @@ function renderBreakdown(r) {
     let body = `<div style="font-weight: 700; margin-bottom: 4px;">${esc(group.month)} — ${fns} fortnight${fns === 1 ? '' : 's'}</div>
       <div>GP received: <code>${_fmt(gp)}</code></div>
       <hr>
-      <div>Pay ex super: <code>${_fmt(exSuper)}</code></div>
-      <div>+ Super (12%): <code>${_fmt(superAmt)}</code></div>
+      <div>Pay ex super: <code>${_fmt2dp(exSuper)}</code></div>
+      <div>+ Super (12%): <code>${_fmt2dp(superAmt)}</code></div>
       <div><strong>Pay this month (inc super): ${_fmt(pay)}</strong></div>
       <div>TU adjustment: <code>${tu === 0 ? '$0' : _fmtSigned(tu)}</code></div>`;
     if (crossings > 0) {
@@ -4732,9 +4736,9 @@ function renderBreakdown(r) {
           <div style="font-family:var(--mono); font-size:12px; color:var(--muted);">paid ${esc(r.paid)}</div>
         </div>
         <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end;">
-          ${big('Bonus → Xero', _fmt(bonus), '#1e6624')}
-          ${big('Super → Xero', _fmt(superAmt), 'var(--navy)')}
-          ${big('Total this pay', _fmt(totalInc), 'var(--ink)')}
+          ${big('Bonus → Xero', _fmt2dp(bonus), '#1e6624')}
+          ${big('Super → Xero', _fmt2dp(superAmt), 'var(--navy)')}
+          ${big('Total this pay', _fmt2dp(totalInc), 'var(--ink)')}
         </div>
       </div>`;
   }
@@ -4918,7 +4922,7 @@ function renderBreakdown(r) {
       </div>
       <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
         <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">Year Pay (inc. super) <span class="fn-tip" data-tip='${esc(yearPayTip)}'>?</span></div>
-        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 2px;">${_fmt(totalAll)}</div>
+        <div style="font-size: 18px; font-family: var(--mono); font-weight: 700; color: var(--ink); margin-top: 2px;">${_fmt2dp(totalAll)}</div>
       </div>
       <div style="background: #fff; border: 1px solid #ecebe5; border-radius: 6px; padding: 10px;">
         <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;">Effective Rate <span class="fn-tip" data-tip='${esc(effRateTip)}'>?</span></div>
@@ -4999,10 +5003,10 @@ function renderBreakdown(r) {
           <td class="num">${groupGP > 0 ? _fmt(groupGP) : '<span style="color: var(--faint);">—</span>'}</td>
           <td class="num">${monthBandCellHtml}</td>
           <td class="num" style="border-left: 2px solid #d3d1c7;">${groupEventGp > 0 ? _fmt(groupEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
-          <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${groupTotalInc > 0 ? _fmt(groupBonus) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
-          <td class="num" style="color: var(--navy); font-weight: 700;">${groupTotalInc > 0 ? _fmt(groupSuper) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
-          <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${groupTotalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(monthPayTip)}'>${_fmt(groupTotalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
-          <td class="num" style="color: var(--muted);">${_fmt(lastCumTotal)}</td>
+          <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${groupTotalInc > 0 ? _fmt2dp(groupBonus) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+          <td class="num" style="color: var(--navy); font-weight: 700;">${groupTotalInc > 0 ? _fmt2dp(groupSuper) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+          <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${groupTotalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(monthPayTip)}'>${_fmt2dp(groupTotalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+          <td class="num" style="color: var(--muted);">${_fmt2dp(lastCumTotal)}</td>
         </tr>
       `;
 
@@ -5024,9 +5028,9 @@ function renderBreakdown(r) {
           + `<div>GP commission: <code>${_fmt(r.properPay)}</code> <span style="color:#aaa;">(inc super)</span></div>`
           + `<div>Production commission: <code>${_fmt(r.prodComm)}</code> <span style="color:#aaa;">(1% of Event GP)</span></div>`
           + (Math.abs(r.tuAdj) > 0.5 ? `<div>True-up: <code>${_fmtSigned(r.tuAdj)}</code> <span style="color:#aaa;">(band crossing)</span></div>` : '')
-          + `<hr><div>Bonus (ex super): <code>${_fmt(bonus)}</code></div>`
-          + `<div>+ Super (12%): <code>${_fmt(superAmt)}</code></div>`
-          + `<div><strong>Total this pay: ${_fmt(totalInc)}</strong></div>`
+          + `<hr><div>Bonus (ex super): <code>${_fmt2dp(bonus)}</code></div>`
+          + `<div>+ Super (12%): <code>${_fmt2dp(superAmt)}</code></div>`
+          + `<div><strong>Total this pay: ${_fmt2dp(totalInc)}</strong></div>`
           + (isConf ? `<hr><div style="color:#9be7a8;">✓ Confirmed by payroll — this is your actual paid figure.</div>` : '');
         const periodTip = `<div style="font-weight:700;margin-bottom:4px;">Fortnight ${r.posInBlock + 1} of ${BLOCK_SIZE}</div><div>Period worked: <code>${esc(r.period)}</code></div><div>Paid on: <code>${esc(r.paid)}</code></div>`;
         html += `
@@ -5038,10 +5042,10 @@ function renderBreakdown(r) {
             <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
             <td class="num">${rBandCellHtml}</td>
             <td class="num" style="border-left: 2px solid #d3d1c7;"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
-            <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="font-size:9px; color:#1e6624; font-weight:700; margin-top:1px;">✓ PAID</div>' : ''}</td>
-            <td class="num" style="color: var(--navy); font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt(superAmt)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
-            <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt(totalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
-            <td class="num" style="color: var(--muted);">${_fmt(r.cumTotal)}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt2dp(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="font-size:9px; color:#1e6624; font-weight:700; margin-top:1px;">✓ PAID</div>' : ''}</td>
+            <td class="num" style="color: var(--navy); font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt2dp(superAmt)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt2dp(totalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+            <td class="num" style="color: var(--muted);">${_fmt2dp(r.cumTotal)}</td>
           </tr>
         `;
       });
@@ -5059,10 +5063,10 @@ function renderBreakdown(r) {
         <td class="num">${totalGP > 0 ? _fmt(totalGP) : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num">${totalEventGp > 0 ? _fmt(totalEventGp) : '<span style="color: var(--faint);">—</span>'}</td>
         <td class="num">${totalGP > 0 ? (endBand * 100).toFixed(0) + '%' : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624;">${totalAll > 0 ? _fmt(totalBonus) : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num" style="color: var(--navy);">${totalAll > 0 ? _fmt(totalSuper) : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num" style="border-left: 2px solid #d3d1c7;">${totalAll > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalCumTip)}'>${_fmt(totalAll)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
-        <td class="num" style="color: var(--muted);">${_fmt(totalAll)}</td>
+        <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624;">${totalAll > 0 ? _fmt2dp(totalBonus) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="color: var(--navy);">${totalAll > 0 ? _fmt2dp(totalSuper) : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="border-left: 2px solid #d3d1c7;">${totalAll > 0 ? `<span class="fn-pay-cell" data-tip='${esc(totalCumTip)}'>${_fmt2dp(totalAll)}</span>` : '<span style="color: var(--faint);">—</span>'}</td>
+        <td class="num" style="color: var(--muted);">${_fmt2dp(totalAll)}</td>
       </tr>
     `;
 
