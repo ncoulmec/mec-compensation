@@ -2247,6 +2247,7 @@ function renderFortnightlyAdmin() {
       name: shortName(e.name, e.id),
       fullName: e.name,
       planType: e.planType,
+      dashboardFile: e.dashboardFile || '',
       bands,
       prodRate
     };
@@ -2306,6 +2307,31 @@ function renderFortnightlyAdmin() {
     { period: '3 May – 16 May 2027',  paid: '17 May 2027', month: 'May 2027' },
     { period: '17 May – 30 May 2027', paid: '31 May 2027', month: 'May 2027' }
   ];
+
+  // ─── Apps Script integration: "Pull from Zoho" button calls the
+  // MEC_Payment_Record_Creator web app's pull-fortnight endpoint, which
+  // runs a COQL against Payments (filtered to bookings closed on/after
+  // the new commission cutoff) and returns the GP-Received total per rep.
+  // ──────────────────────────────────────────────────────────────────────
+  const ZOHO_PULL_DEPLOYMENT = 'AKfycbxQ0KETFYKJQXB0-r4IWwgKINeLp_76aaAvZH1qn0m3pK0dZCsbzuEXggQbGgFup7DI0Q';
+  const ZOHO_PULL_KEY = 'mecPayRec5xQ8kT2vNbWj9rL3z';
+  const ZOHO_PULL_URL = `https://script.google.com/macros/s/${ZOHO_PULL_DEPLOYMENT}/exec`;
+
+  // Convert a FORTNIGHTS entry into {start, end} in YYYY-MM-DD form.
+  // Period covers the 14 days ending the day before `paid`, e.g. paid 15 Jun
+  // → period 1 Jun (incl) to 14 Jun (incl).
+  const _MON_TO_NUM = { Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11 };
+  function fortnightDates(idx) {
+    const fn = FORTNIGHTS[idx];
+    if (!fn) return null;
+    const m = String(fn.paid).match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+    if (!m) return null;
+    const paid = new Date(parseInt(m[3], 10), _MON_TO_NUM[m[2]], parseInt(m[1], 10));
+    const end = new Date(paid); end.setDate(end.getDate() - 1);
+    const start = new Date(end); start.setDate(start.getDate() - 13);
+    const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return { start: ymd(start), end: ymd(end) };
+  }
 
   // Per-rep × per-fortnight matrices (GP Received + Event GP).
   // Hydrated from each employee's persisted `fortnightly` record (see ensureFortnightly).
@@ -2484,6 +2510,18 @@ function renderFortnightlyAdmin() {
       </div>
     </div>`;
 
+    // ── Pull from Zoho — one-click import of GP Received per rep for this fortnight ──
+    if (!confirmed) {
+      h += `<div id="pr-pull-row" style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; margin-bottom:14px; background:#f6f3ff; border:1px solid #ddd0f5; border-radius:8px;">
+        <div style="font-size:12px; color:var(--ink);">
+          <strong style="color:#5a3a8e;">🔄 Pull from Zoho</strong>
+          <span style="color:var(--muted);"> — auto-import GP Received for every rep from the Zoho Payments module (bookings closed on/after 1 Jun 2026 only). Overwrites the GP inputs below.</span>
+        </div>
+        <button type="button" id="pr-pull-zoho" style="padding:8px 16px; border:none; background:#5a3a8e; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Pull from Zoho ↓</button>
+      </div>
+      <div id="pr-pull-status" style="display:none; padding:10px 12px; margin-bottom:14px; border-radius:8px; font-size:12px; font-family:var(--mono);"></div>`;
+    }
+
     // Column headers for the rep list
     h += `<div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap:10px; padding:0 4px 6px; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); font-weight:700;">
       <div>Rep</div><div style="text-align:right;">GP received</div><div style="text-align:right;">Event GP</div>
@@ -2500,7 +2538,10 @@ function renderFortnightlyAdmin() {
         <div>
           <div style="font-weight:700; color:var(--ink);">${esc(r.fullName)}</div>
           <div style="font-size:10px; color:var(--faint); font-family:var(--mono);">${esc(r.planType)} · YTD <span id="pr-ytd-${esc(r.id)}">${_fmt(f.row.ytd)}</span> · <span id="pr-rate-${esc(r.id)}">${(f.row.endRate * 100).toFixed(0)}%</span></div>
-          <button type="button" class="pr-xero-note" data-rep="${esc(r.id)}" tabindex="-1" title="Copy this fortnight's GP note to paste into the Xero payslip" style="margin-top:6px; padding:4px 10px; border:1px solid #cdd9e8; background:#eef4fa; color:var(--navy); border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">📋 Copy Xero note</button>
+          <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+            <button type="button" class="pr-xero-note" data-rep="${esc(r.id)}" tabindex="-1" title="Copy this fortnight's GP note to paste into the Xero payslip" style="padding:4px 10px; border:1px solid #cdd9e8; background:#eef4fa; color:var(--navy); border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">📋 Copy Xero note</button>
+            ${r.dashboardFile ? `<a href="${esc(r.dashboardFile)}" target="_blank" rel="noopener" tabindex="-1" title="Open ${esc(r.fullName)}'s dashboard in a new tab — verify the pushed figures" style="padding:4px 10px; border:1px solid #d6c9e8; background:#f3eefa; color:#5a3a8e; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; text-decoration:none;">👤 ${esc(r.name)}'s dashboard ↗</a>` : ''}
+          </div>
         </div>
         <div style="text-align:right;">
           <input type="text" id="pr-gp-${esc(r.id)}" data-rep="${esc(r.id)}" data-kind="gp" inputmode="decimal" ${lock} value="${f.row.gp ? f.row.gp.toLocaleString() : ''}" placeholder="0" style="width:100%; padding:9px 10px; border:1px solid #d3d1c7; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; ${lockStyle}">
@@ -2560,6 +2601,91 @@ function renderFortnightlyAdmin() {
     if (prev) prev.addEventListener('click', () => { if (payrunIdx > 0) { payrunIdx--; renderPayRun(); } });
     if (next) next.addEventListener('click', () => { if (payrunIdx < FORTNIGHTS.length - 1) { payrunIdx++; renderPayRun(); } });
     if (jump) jump.addEventListener('change', () => { payrunIdx = parseInt(jump.value, 10) || 0; renderPayRun(); });
+
+    // Pull from Zoho — hits the Apps Script web app, populates per-rep GP Received
+    const pullBtn = document.getElementById('pr-pull-zoho');
+    if (pullBtn) {
+      pullBtn.addEventListener('click', async () => {
+        const status = document.getElementById('pr-pull-status');
+        const showStatus = (kind, msg) => {
+          if (!status) return;
+          const palette = kind === 'ok'   ? { bg:'#eaf5ec', border:'#bfe0c6', color:'#1e6624' }
+                        : kind === 'warn' ? { bg:'#fdf6e3', border:'#e8d99a', color:'#8a6a00' }
+                        :                   { bg:'#fdecea', border:'#f0c5c0', color:'#a4302a' };
+          status.style.display = 'block';
+          status.style.background = palette.bg;
+          status.style.border = '1px solid ' + palette.border;
+          status.style.color = palette.color;
+          status.innerHTML = msg;
+        };
+        const range = fortnightDates(idx);
+        if (!range) { showStatus('err', 'Could not parse fortnight dates.'); return; }
+
+        // Confirm if any GP inputs already have a value
+        const existingNonZero = reps.some(r => {
+          const el = document.getElementById(`pr-gp-${r.id}`);
+          if (!el) return false;
+          const n = parseFloat(String(el.value).replace(/[^0-9.\-]/g, ''));
+          return isFinite(n) && n > 0;
+        });
+        if (existingNonZero) {
+          const ok = window.confirm(`This will OVERWRITE GP Received for every rep in this fortnight (${range.start} → ${range.end}) with the latest Zoho totals.\n\nProceed?`);
+          if (!ok) return;
+        }
+
+        pullBtn.disabled = true;
+        const origLabel = pullBtn.textContent;
+        pullBtn.textContent = 'Pulling…';
+        pullBtn.style.opacity = '0.6';
+        pullBtn.style.cursor = 'wait';
+        showStatus('warn', `Querying Zoho for Payments between <strong>${range.start}</strong> and <strong>${range.end}</strong>… this can take 10-20 seconds.`);
+
+        try {
+          const url = `${ZOHO_PULL_URL}?action=pull-fortnight&key=${encodeURIComponent(ZOHO_PULL_KEY)}&fortnight=${encodeURIComponent(range.start + ':' + range.end)}`;
+          const r = await fetch(url, { method: 'GET', redirect: 'follow' });
+          const body = await r.json();
+          if (!body || body.ok === false) {
+            showStatus('err', '✗ Pull failed: ' + (body && body.error ? esc(body.error) : 'unknown error'));
+            return;
+          }
+          const repTotals = body.reps || {};
+          let applied = 0, missed = [];
+          reps.forEach(r2 => {
+            if (repTotals[r2.id] != null) {
+              const val = +repTotals[r2.id];
+              gpMatrix[r2.id][idx] = val;
+              const el = document.getElementById(`pr-gp-${r2.id}`);
+              if (el) el.value = val ? val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+              applied++;
+            } else {
+              missed.push(r2.name);
+            }
+          });
+          refreshPayrunComputed(idx);
+
+          // Summary
+          const dollar = (n) => '$' + (+n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          const lines = [];
+          lines.push(`<strong>✓ Pulled ${body.rowCount} Payment record${body.rowCount === 1 ? '' : 's'} · ${dollar(body.grandTotal)} total</strong>`);
+          lines.push(`<div style="margin-top:6px;">Applied to: ${reps.filter(r2 => repTotals[r2.id] != null).map(r2 => `${esc(r2.name)} ${dollar(repTotals[r2.id]||0)}`).join(' · ')}</div>`);
+          if (missed.length) lines.push(`<div style="margin-top:4px; color:#8a6a00;">No Zoho match for: ${missed.map(esc).join(', ')} (left at 0)</div>`);
+          if (body.unmapped && body.unmapped.length) {
+            const unmapStr = body.unmapped.map(u => `${esc(u.ownerName || '(unknown)')} ${dollar(u.amount)}`).join(', ');
+            lines.push(`<div style="margin-top:4px; color:#a4302a;">⚠ Unmapped Zoho owners (not assigned to any rep in dashboard): ${unmapStr}</div>`);
+          }
+          lines.push(`<div style="margin-top:6px; font-size:10px; color:var(--muted);">Don't forget to copy Bonus/Super into Xero, then Confirm &amp; Save.</div>`);
+          showStatus('ok', lines.join(''));
+          showToast('success', `✓ Pulled ${applied} rep${applied === 1 ? '' : 's'} from Zoho.`);
+        } catch (e) {
+          showStatus('err', '✗ Pull failed: ' + esc(e.message || String(e)) + '<div style="margin-top:4px; font-size:10px;">Common causes: Apps Script deployment URL wrong, key mismatch, or Zoho session expired (re-auth the script).</div>');
+        } finally {
+          pullBtn.disabled = false;
+          pullBtn.textContent = origLabel;
+          pullBtn.style.opacity = '';
+          pullBtn.style.cursor = '';
+        }
+      });
+    }
 
     // Copy-to-clipboard on bonus/super
     document.querySelectorAll('#fnp-payrun .pr-copy').forEach(inp => {
@@ -2766,11 +2892,11 @@ function renderFortnightlyAdmin() {
           const totalIncSuper = incSuper + prodInc;
           const totalExSuper = exSuper + prodEx;
           const totalSuperAmt = superAmt + prodSuper;
-          // Round to whole dollars for copy-paste convenience into Xero
-          const bonusRounded = Math.round(totalExSuper);
-          const superRounded = Math.round(totalSuperAmt);
+          // 2dp values so the year overview matches the pay run inputs above (no rounding)
+          const bonus2dp = _fmt2dp(totalExSuper);
+          const super2dp = _fmt2dp(totalSuperAmt);
           const tip = totalIncSuper > 0
-            ? `${esc(r.fullName)} · ${esc(fn.paid)}\nGP Received: ${_fmt(row.gp)} · YTD: ${_fmt(row.ytd)} · Band: ${(row.endRate*100).toFixed(0)}%\nEvent GP: ${_fmt(row.eventGp)}\n———\nGP Comm (inc super): ${_fmt(incSuper)}\nProd Comm (inc super): ${_fmt(prodInc)}\nTotal bonus (ex super): ${_fmt(totalExSuper)}\nTotal super (12%): ${_fmt(totalSuperAmt)}\nTotal pay (inc super): ${_fmt(totalIncSuper)}` + (row.crossed ? `\n⚡ Band crossing · TU ${_fmtSigned(row.tuAdj)}` : '')
+            ? `${esc(r.fullName)} · ${esc(fn.paid)}\nGP Received: ${_fmt(row.gp)} · YTD: ${_fmt(row.ytd)} · Band: ${(row.endRate*100).toFixed(0)}%\nEvent GP: ${_fmt(row.eventGp)}\n———\nGP Comm (inc super): ${_fmt2dp(incSuper)}\nProd Comm (inc super): ${_fmt2dp(prodInc)}\nTotal bonus (ex super): ${_fmt2dp(totalExSuper)}\nTotal super (12%): ${_fmt2dp(totalSuperAmt)}\nTotal pay (inc super): ${_fmt2dp(totalIncSuper)}` + (row.crossed ? `\n⚡ Band crossing · TU ${_fmtSigned(row.tuAdj)}` : '')
             : `${esc(r.fullName)} · ${esc(fn.paid)}\nNo GP / Event GP entered yet.`;
           const cellBg = row.crossed ? 'background: #fffbeb;' : '';
           // Two read-only copy-paste inputs (bonus = ex-super total, super = 12% total). Click to copy.
@@ -2778,14 +2904,14 @@ function renderFortnightlyAdmin() {
             ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px;">
                  <div style="text-align: left;">
                    <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Bonus</div>
-                   <input type="text" class="fnp-copy-bonus" readonly value="${bonusRounded.toLocaleString()}" title="Bonus ex super (GP + Production) — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #c3e4d0; border-radius: 3px; background: #f5faf7; text-align: right; font-family: var(--mono); font-size: 11px; color: #1e6624; cursor: pointer;">
+                   <input type="text" class="fnp-copy-bonus" readonly value="${bonus2dp}" title="Bonus ex super (GP + Production) — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #c3e4d0; border-radius: 3px; background: #f5faf7; text-align: right; font-family: var(--mono); font-size: 11px; color: #1e6624; cursor: pointer;">
                  </div>
                  <div style="text-align: left;">
                    <div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Super</div>
-                   <input type="text" class="fnp-copy-super" readonly value="${superRounded.toLocaleString()}" title="Super (12%) total — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;">
+                   <input type="text" class="fnp-copy-super" readonly value="${super2dp}" title="Super (12%) total — click to copy" style="width: 100%; padding: 2px 4px; border: 1px solid #cdd9e8; border-radius: 3px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--navy); cursor: pointer;">
                  </div>
                </div>
-               ${prodInc > 0 ? `<div style="font-size: 9px; color: var(--muted); margin-top: 3px; text-align: right; font-family: var(--mono);">incl. <strong>+${_fmt(prodInc)}</strong> prod</div>` : ''}
+               ${prodInc > 0 ? `<div style="font-size: 9px; color: var(--muted); margin-top: 3px; text-align: right; font-family: var(--mono);">incl. <strong>+$${_fmt2dp(prodInc)}</strong> prod</div>` : ''}
                ${tuStr ? `<div style="font-size: 9px; color: ${tuColor}; margin-top: 2px; text-align: right; font-family: var(--mono);">⚡ TU ${tuStr}</div>` : ''}`
             : `<div style="font-size: 10px; color: var(--faint); margin-top: 3px; font-family: var(--mono); text-align: right;">—</div>`;
           const isConf = isFortnightConfirmed(fi);
@@ -3707,6 +3833,7 @@ function renderQuarterlyAdmin() {
       name: e.name.split(' ')[0],
       fullName: e.name,
       planType: e.planType,
+      dashboardFile: e.dashboardFile || '',
       isTTM,
       metricName: QTP_METRIC[e.planType] || 'Metric',
       dataSource: QTP_DATA_SOURCE[e.planType] || null,
@@ -3850,12 +3977,15 @@ function renderQuarterlyAdmin() {
       <th style="text-align: left; padding: 8px 12px; border-bottom: 2px solid #d3d1c7; min-width: 160px;">Quarter</th>`;
     cohort.forEach(c => {
       const srcBtn = c.dataSource
-        ? `<div style="margin-top: 5px;"><a href="${esc(c.dataSource.url)}" target="_blank" rel="noopener" style="display: inline-block; padding: 3px 8px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 4px; font-size: 9px; font-weight: 600; color: var(--navy); text-decoration: none; white-space: nowrap;" title="Open ${esc(c.dataSource.label)} to pull ${esc(c.name)}'s quarter-end actuals">↗ ${esc(c.dataSource.label)}</a></div>`
+        ? `<a href="${esc(c.dataSource.url)}" target="_blank" rel="noopener" style="display: inline-block; padding: 3px 8px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 4px; font-size: 9px; font-weight: 600; color: var(--navy); text-decoration: none; white-space: nowrap;" title="Open ${esc(c.dataSource.label)} to pull ${esc(c.name)}'s quarter-end actuals">↗ ${esc(c.dataSource.label)}</a>`
+        : '';
+      const dashLink = c.dashboardFile
+        ? `<a href="${esc(c.dashboardFile)}" target="_blank" rel="noopener" style="display: inline-block; padding: 3px 8px; background: #f3eefa; border: 1px solid #d6c9e8; border-radius: 4px; font-size: 9px; font-weight: 600; color: #5a3a8e; text-decoration: none; white-space: nowrap;" title="Open ${esc(c.fullName)}'s dashboard in a new tab — verify the pushed figures">👤 ${esc(c.name)}'s dashboard ↗</a>`
         : '';
       h += `<th style="text-align: right; padding: 8px 12px; border-bottom: 2px solid #d3d1c7; min-width: 170px; white-space: nowrap;">
         ${esc(c.name)}
         <div style="font-size: 9px; color: var(--faint); font-weight: 400; text-transform: none; letter-spacing: 0;">${esc(c.metricName)}</div>
-        ${srcBtn}
+        ${(srcBtn || dashLink) ? `<div style="margin-top: 5px; display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap;">${srcBtn}${dashLink}</div>` : ''}
       </th>`;
     });
     document.getElementById('qtp-thead').innerHTML = h;
