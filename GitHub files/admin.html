@@ -2801,16 +2801,19 @@ function renderFortnightlyAdmin() {
     document.querySelectorAll('#fnp-payrun .pr-xero-note').forEach(btn => {
       btn.addEventListener('click', async () => {
         const rep = btn.getAttribute('data-rep');
-        const numFrom = (id) => {
-          const el = document.getElementById(id);
-          const n = parseFloat((el ? el.value : '').replace(/[^0-9.\-]/g, ''));
-          return isFinite(n) ? n : 0;
-        };
         const money = (v) => '$' + Math.round(v).toLocaleString();
-        const gp = numFrom(`pr-gp-${rep}`);
-        const ev = numFrom(`pr-ev-${rep}`);
         const period = FORTNIGHTS[idx].period;
-        const note = `[${period}]: GP Received = ${money(gp)} + Event GP ${money(ev)}`;
+        // Rebuild from the band math (not just the GP cells) so the note shows the
+        // commission earned on each stream and matches the Bonus → Xero figure exactly.
+        const f = payrunFigures(rep, idx);
+        const gpAmt = f.row.gp || 0, evAmt = f.row.eventGp || 0;
+        const earned = [];
+        if (gpAmt > 0 || f.row.properPay > 0) earned.push(`${money(f.row.properPay)} on ${money(gpAmt)} GP Received`);
+        if (evAmt > 0 || f.row.prodComm > 0) earned.push(`${money(f.row.prodComm)} on ${money(evAmt)} Event GP Produced`);
+        if (!earned.length) earned.push('$0 GP this fortnight');
+        // Single line (Xero payslip notes don't reliably keep line breaks); the arrow
+        // separates "what you earned" from "how it splits into bank + super".
+        const note = `[${period}]: ${earned.join(' + ')} = ${money(f.incSuper)} → ${money(f.exSuper)} ex super + 12% super = ${money(f.incSuper)}`;
         const ok = await _copyText(note);
         const orig = btn.innerHTML;
         btn.innerHTML = ok ? '✓ Copied' : '⚠ Copy failed';
