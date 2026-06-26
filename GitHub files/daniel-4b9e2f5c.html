@@ -4228,16 +4228,50 @@ function renderBreakdown(r) {
   // once the dashboard unlocks, __hydrateFortnightlyFromData replaces these with the
   // rep's actual bands from data.planTypes so they can never drift out of sync.
   // Each band slice: [thresholdStart, marginalRate]
+    // ===== ⚠ FALLBACK ONLY — NOT THE SOURCE OF TRUTH =====
+  // Live comp bands come from data.json -> planTypes['gp_bands'].bands and are
+  // loaded at runtime via window.__hydrateFortnightlyFromData (BANDS = planRec.bands).
+  // To CHANGE commission, edit data.json, NOT this array. This block is only a
+  // no-data-load safety net. Mirrored from data.json on 2026-06-26.
   let BANDS = [
-    [0,       0.04],
-    [100000,  0.04],
-    [200000,  0.04],
-    [300000,  0.09],
-    [400000,  0.12],
-    [450000,  0.13],
-    [500000,  0.14],
-    [550000,  0.16]
+    [0, 0.04],
+    [100000, 0.04],
+    [200000, 0.04],
+    [300000, 0.09],
+    [400000, 0.12],
+    [450000, 0.13],
+    [500000, 0.14],
+    [550000, 0.16]
   ];
+
+  // Trailing 26-fortnight seed (GP sold per fortnight, OLDEST -> NEWEST), set by
+  // __hydrateFortnightlyFromData from data.json employees[].seedFortnights. Used to
+  // decide which higher bands a rep has genuinely reached (the release gate).
+  // Embedded fallback seed (Daniel / Steer GP sold, OLDEST -> NEWEST), so the
+  // dashboard calculates correctly even before the encrypted data carries it.
+  // Overridden by __hydrate from employees[].seedFortnights when present.
+  let SEED_GP = [13529.09, 18937.5, 5357.5, 2390, 8924.5, 10734.8, 15986.66, 20956.62, 17456.75, 18312, 20666.59, 8909, 18596.55, 10921, 7330, 4730, 21697.6, 13134.5, 14222, 14600, 8600, 14007, 7772.5, 13557, 12852.5, 10122.5];
+
+  // SEEDED PER-BAND RELEASE: pay marginal fortnight-scale bands on this fortnight's GP,
+  // but unlock each band above the floor only once the rep's trailing-12m position has
+  // actually reached that band's ANNUAL threshold. No pace, no carry-forward bank.
+  function seededFortnightPay(gp, position, bnds) {
+    if (gp <= 0 || !bnds || !bnds.length) return { pay: 0, held: 0 };
+    const floor = bnds[0][1];
+    let pay = 0, held = 0;
+    for (let k = 0; k < bnds.length; k++) {
+      const lo = bnds[k][0] / 26;
+      const hi = (k + 1 < bnds.length) ? bnds[k + 1][0] / 26 : Infinity;
+      if (gp <= lo) break;
+      const amt = Math.min(gp, hi) - lo;
+      pay += amt * floor;
+      if (bnds[k][1] > floor) {
+        if (position >= bnds[k][0]) pay += amt * (bnds[k][1] - floor);
+        else held += amt * (bnds[k][1] - floor);
+      }
+    }
+    return { pay: pay, held: held };
+  }
 
   // Cumulative band commission up to a given YTD GP
   function cumBandComm(ytd) {
@@ -4514,8 +4548,8 @@ function renderBreakdown(r) {
           <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(wouldEarnGp).toLocaleString()}</code></div>
           <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
           <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px; margin-top:2px;">= ${fmtThreshK(wouldEarnTotal)} you would have been paid this fortnight</div>
-          <div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Held in your pace bank (releases later):</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−$${Math.round(paceAdjust).toLocaleString()}</code></div>
-          <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">Banked, not lost — this fortnight nudged into the 9% band, but 9% only unlocks once your whole-year pace passes the band line. It's held against your true pace and releases automatically as your pace climbs.</div>
+          <div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Held — next band not yet reached by your 12-month GP:</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−$${Math.round(paceAdjust).toLocaleString()}</code></div>
+          <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">You unlock each higher rate once your last-12-months GP passes that step. You're paid in full for every band your trailing GP has already reached — this small piece sits in the next band up and unlocks when your 12-month GP gets there. Nothing is clawed back later.</div>
           <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
           <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
           <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
@@ -4556,22 +4590,22 @@ function renderBreakdown(r) {
     const yrHeader = `<div style="background:#2b4d75; color:#fff; padding:6px 11px; border-radius:5px; font-size:11px; font-weight:700; margin:14px 0 9px; letter-spacing:.04em;">━━ WHY THIS RATE? · FULL-YEAR CONTEXT ━━</div>`;
 
     const yrInputs = `<div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45;">
-      <div>YTD GP so far:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.ytd)}</code></div>
-      <div>Annualised pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(annualised)}</code></div>
-      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ YTD × 26 ÷ ${r.idx + 1} fortnight${r.idx === 0 ? '' : 's'} elapsed</div>
-      <div>Projected ANNUAL commission at pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(paceComm)}</code></div>
-      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ ${(paceEff*100).toFixed(1)}% effective rate on ${fmtThreshK(annualised)} annual GP</div>
+      <div>GP received this cycle so far:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.ytd)}</code></div>
+      <div>Your trailing 12-month GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(annualised)}</code></div>
+      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ last 12 months — seed (GP sold) rolling into your live GP received. This is what unlocks each band.</div>
+      <div>Commission at this annual level:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(paceComm)}</code></div>
+      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ ${(paceEff*100).toFixed(1)}% effective rate on ${fmtThreshK(annualised)} of annual GP</div>
     </div>`;
 
     const yrLadder = yearBandLadderHtml(annualised, paceComm, `Where the ${fmtThreshK(paceComm)} projected annual commission lands`);
 
     const connect = `<div style="margin-top:9px; padding:8px 11px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:10px; color:#cfcfcf; line-height:1.5;">
-      <strong style="color:#fff;">How the two views connect:</strong> the top ladder shows how <em>this fortnight's GP</em> crosses bands at fortnight scale. The bottom shows how your <em>annual pace</em> lands across the full-year bands. At steady pace (sell roughly the same GP each fortnight), the top ladder × 26 fortnights = the bottom ladder.
+      <strong style="color:#fff;">How the two views connect:</strong> the top ladder shows how <em>this fortnight's GP</em> crosses bands at fortnight scale. The bottom shows where your <em>trailing 12-month GP</em> sits on the full-year bands — that's what unlocks each rate. Sell roughly the same GP each fortnight and the top ladder × 26 fortnights = the bottom ladder.
     </div>`;
 
-    const footer = `<div style="margin-top:8px; color:#aaa; font-size:11px;">Pace is volatile early in the year — one strong fortnight inflates the projection. By fortnight 13+ it stabilises.</div>`;
+    const footer = `<div style="margin-top:8px; color:#aaa; font-size:11px;">Your trailing 12-month GP carries your real history, so your rate reflects proven performance from fortnight one — no waiting for a cold start to build up.</div>`;
 
-    return `<div style="font-weight:800; margin-bottom:10px; font-size:14px;">This pay · Pace projection</div>${fnHeader}${fnInputs}${fnLadder}${reconcile}${tuStatus}${yrHeader}${yrInputs}${yrLadder}${connect}${footer}`;
+    return `<div style="font-weight:800; margin-bottom:10px; font-size:14px;">This pay · Band breakdown</div>${fnHeader}${fnInputs}${fnLadder}${reconcile}${tuStatus}${yrHeader}${yrInputs}${yrLadder}${connect}${footer}`;
   }
 
   // ---------- Pace pill (small badge alongside band rate) ----------
@@ -4840,20 +4874,24 @@ function renderBreakdown(r) {
       const eventGp = eventGpValues[i] || 0;
       const prevYtd = ytd;
       ytd = prevYtd + gp;
-      // PACE + ROLLING TRUE-UP + FLOOR-AT-$0 (replaces cumulative annual marginal).
-      // cumPay is monotonic; trueUpBalance ≥ 0 = cash owed back relative to current pace.
+      // SEEDED PER-BAND RELEASE (replaces cold-start pace true-up).
+      // Trailing-12m position = seed fortnights not yet rolled off + cycle GP to date.
+      // Each higher band unlocks only once that position reaches its annual threshold.
       const n = pos + 1;
-      const pace = n > 0 ? ytd * 26 / n : 0;
-      const entitlement = pace > 0 ? cumBandComm(pace) * n / 26 : 0;
-      const rawDelta = entitlement - cumPay;
-      const properPay = Math.max(0, rawDelta);
-      const endRate = marginalRate(pace);
+      const seedKeep = SEED_GP.slice(i + 1);            // drop (i+1) oldest seed fortnights as the cycle grows
+      const position = seedKeep.reduce((a, b) => a + b, 0) + ytd;
+      const sfp = seededFortnightPay(gp, position, BANDS);
+      const properPay = sfp.pay;
+      const held = sfp.held;                            // band uplift not yet unlocked by trailing position
+      const naivePay = properPay + held;                // full fortnight-band earn (all bands released)
+      const endRate = marginalRate(position);           // rep's true marginal band at their trailing position
       const startRate = endRate;
-      const naivePay = properPay;
+      const pace = position;                            // context panel now shows trailing-12m position, not cold-start pace
+      const entitlement = naivePay;
       const tuAdj = 0;
       const prodComm = eventGp * PROD_RATE;
       cumPay += properPay;
-      const trueUpBalance = cumPay - entitlement;
+      const trueUpBalance = 0;                          // no carry-forward bank in the seeded model
       cumProd += prodComm;
       cumEventGp += eventGp;
       const crossed = Math.abs(tuAdj) > 0.5;
@@ -5446,6 +5484,10 @@ function renderBreakdown(r) {
         BANDS = planRec.bands
           .map(b => [Number(b.threshold) || 0, Number(b.rate) || 0])
           .sort((a, b) => a[0] - b[0]);
+      }
+      // Trailing 26-fortnight seed (GP sold, oldest -> newest) for the band-release gate.
+      if (empRec && Array.isArray(empRec.seedFortnights) && empRec.seedFortnights.length) {
+        SEED_GP = empRec.seedFortnights.map(s => Number(s.gpSold) || 0);
       }
       const f = empRec && empRec.fortnightly;
       if (f && Array.isArray(f.confirmed)) {
