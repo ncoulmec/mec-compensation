@@ -4450,14 +4450,14 @@ function renderBreakdown(r) {
       const loLabel = fmtThreshK(r.lo);
       const hiLabel = (i+1 < BANDS.length) ? fmtThreshK(BANDS[i+1][0] / 26) : '∞';
       html += ladderRowHtml(loLabel, hiLabel, r.rate, fillPct, r.color, r.isCurrent,
-        '$' + Math.round(r.contrib).toLocaleString(),
+        _fmt2dp(r.contrib),
         r.isCurrent ? '#fff' : '#cfcfcf',
         r.isCurrent ? '700' : '500');
     });
     html += `<div style="display:grid; grid-template-columns: 112px 1fr 76px; gap:7px; margin-top:7px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
       <div></div>
       <div style="text-align:right; color:#fff; font-weight:600;">Earn at fortnight bands:</div>
-      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">$${Math.round(d.total).toLocaleString()}</div>
+      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">${_fmt2dp(d.total)}</div>
     </div>
     <div style="margin-top:6px; font-size:9px; color:#aaa; text-align:right;">Per-fortnight bands = annual bands ÷ 26.</div></div>`;
     return html;
@@ -4531,8 +4531,8 @@ function renderBreakdown(r) {
     const fnHeader = `<div style="background:#1e6624; color:#fff; padding:6px 11px; border-radius:5px; font-size:11px; font-weight:700; margin:0 0 9px; letter-spacing:.04em;">━━ THIS FORTNIGHT · ${esc(r.paid).toUpperCase()} ━━</div>`;
 
     const fnInputs = `<div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45; margin-bottom:6px;">
-      <div style="color:#cfcfcf;">GP received:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.gp)}</code></div>
-      <div style="color:#cfcfcf;">Event GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(eventGp)}</code></div>
+      <div style="color:#cfcfcf;">GP received:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt2dp(r.gp)}</code></div>
+      <div style="color:#cfcfcf;">Event GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt2dp(eventGp)}</code></div>
     </div>`;
 
     const fnLadder = r.gp > 0
@@ -4545,12 +4545,12 @@ function renderBreakdown(r) {
       // Held back due to true-up (pace says you're ahead of cumulative entitlement)
       reconcile = `<div style="margin-top:9px; padding:10px 12px; background:rgba(255,255,255,0.05); border-radius:5px;">
         <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:4px; font-size:11px; line-height:1.45;">
-          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(wouldEarnGp).toLocaleString()}</code></div>
-          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
-          <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px; margin-top:2px;">= ${fmtThreshK(wouldEarnTotal)} you would have been paid this fortnight</div>
-          <div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Held — next band not yet reached by your 12-month GP:</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−$${Math.round(paceAdjust).toLocaleString()}</code></div>
+          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>${_fmt2dp(wouldEarnGp)}</code></div>
+          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>${_fmt2dp(thisFnProdPay)}</code></div>
+          <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px; margin-top:2px;">= ${_fmt2dp(wouldEarnTotal)} you would have been paid this fortnight</div>
+          <div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Held — next band not yet reached by your 12-month GP:</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−${_fmt2dp(paceAdjust)}</code></div>
           <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">You unlock each higher rate once your last-12-months GP passes that step. You're paid in full for every band your trailing GP has already reached — this small piece sits in the next band up and unlocks when your 12-month GP gets there. Nothing is clawed back later.</div>
-          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
+          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>${_fmt2dp(thisFnTotal)}</code></div>
           <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
           <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
         </div>
@@ -4560,11 +4560,11 @@ function renderBreakdown(r) {
       const release = -paceAdjust;
       reconcile = `<div style="margin-top:9px; padding:10px 12px; background:rgba(255,255,255,0.05); border-radius:5px;">
         <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:4px; font-size:11px; line-height:1.45;">
-          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(wouldEarnGp).toLocaleString()}</code></div>
-          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production:</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
-          <div style="color:#9eddb5; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">+ Pace catch-up release:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>+$${Math.round(release).toLocaleString()}</code></div>
+          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>${_fmt2dp(wouldEarnGp)}</code></div>
+          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production:</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>${_fmt2dp(thisFnProdPay)}</code></div>
+          <div style="color:#9eddb5; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">+ Pace catch-up release:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>+${_fmt2dp(release)}</code></div>
           <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">Releasing prior held-back amount because pace has caught up.</div>
-          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
+          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>${_fmt2dp(thisFnTotal)}</code></div>
           <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
           <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
         </div>
@@ -4573,9 +4573,9 @@ function renderBreakdown(r) {
       // Steady state (or no GP): no adjustment, simple totals
       reconcile = `<div style="margin-top:9px; padding:10px 12px; background:rgba(255,255,255,0.05); border-radius:5px;">
         <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:4px; font-size:11px; line-height:1.45;">
-          <div style="color:#9eddb5;">GP band commission (inc super):</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(thisFnGpPay).toLocaleString()}</code></div>
-          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
-          <div style="color:#fff; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
+          <div style="color:#9eddb5;">GP band commission (inc super):</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>${_fmt2dp(thisFnGpPay)}</code></div>
+          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>${_fmt2dp(thisFnProdPay)}</code></div>
+          <div style="color:#fff; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);"><code>${_fmt2dp(thisFnTotal)}</code></div>
           <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
           <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
         </div>
