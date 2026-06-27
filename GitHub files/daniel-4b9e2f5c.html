@@ -4639,7 +4639,7 @@ function renderBreakdown(r) {
     const pillHtml = (yearRate > topRate)
       ? `<span class="fn-ytd-pill" data-tip='${esc(yearTip)}'>yr ${yearPct}</span>`
       : '';
-    return `<span class="pm-open pm-band" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})"><span class="fn-pace-main ${cls}">${topPct}</span>${pillHtml}<span class="pm-cue">⊕</span></span>`;
+    return `<span class="pm-open pm-band" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})"><span class="fn-pace-main ${cls}">${topPct}</span>${pillHtml}</span>`;
   }
 
   // ---------- Plan-aware helper: where does the first incremental band kick in? ----------
@@ -5104,7 +5104,7 @@ function renderBreakdown(r) {
             <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
             <td class="num">${rBandCellHtml}</td>
             <td class="num" style="border-left: 2px solid #d3d1c7;"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
-            <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="font-size:9px; color:#1e6624; font-weight:700; margin-top:1px;">✓ PAID</div>' : ''}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700; position: relative;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="position:absolute; left:10px; bottom:2px; font-size:9px; color:#1e6624; font-weight:700; letter-spacing:.03em;">✓ PAID</div>' : ''}</td>
             <td class="num" style="color: var(--navy); font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(superAmt)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
             <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(totalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
             <td class="num" style="color: var(--muted);">${_fmt2dp(r.cumTotal)}</td>
