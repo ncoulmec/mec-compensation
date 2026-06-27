@@ -4256,9 +4256,9 @@ function renderBreakdown(r) {
   // but unlock each band above the floor only once the rep's trailing-12m position has
   // actually reached that band's ANNUAL threshold. No pace, no carry-forward bank.
   function seededFortnightPay(gp, position, bnds) {
-    if (gp <= 0 || !bnds || !bnds.length) return { pay: 0, held: 0 };
+    if (gp <= 0 || !bnds || !bnds.length) return { pay: 0, held: 0, released: {} };
     const floor = bnds[0][1];
-    let pay = 0, held = 0;
+    let pay = 0, held = 0; const released = {};
     for (let k = 0; k < bnds.length; k++) {
       const lo = bnds[k][0] / 26;
       const hi = (k + 1 < bnds.length) ? bnds[k + 1][0] / 26 : Infinity;
@@ -4266,11 +4266,12 @@ function renderBreakdown(r) {
       const amt = Math.min(gp, hi) - lo;
       pay += amt * floor;
       if (bnds[k][1] > floor) {
-        if (position >= bnds[k][0]) pay += amt * (bnds[k][1] - floor);
-        else held += amt * (bnds[k][1] - floor);
+        const u = amt * (bnds[k][1] - floor);
+        if (position >= bnds[k][0]) { pay += u; released[bnds[k][0]] = (released[bnds[k][0]] || 0) + u; }
+        else held += u;
       }
     }
-    return { pay: pay, held: held };
+    return { pay: pay, held: held, released: released };
   }
 
   // Cumulative band commission up to a given YTD GP
@@ -4522,6 +4523,13 @@ function renderBreakdown(r) {
     const wouldEarnTotal = wouldEarnGp + thisFnProdPay;   // production is unaffected by pace
     // Pace adjustment for the GP-band portion only (production isn't paced).
     const paceAdjust = wouldEarnGp - thisFnGpPay;  // >0 = held back to balance; <0 = released catch-up
+    const _heldOnly = r.held || 0;          // band reached this fn but not yet unlocked by trailing (waits)
+    const _trueUp = r.trueUpApplied || 0;   // True-Up recovery: prior overpay recovered from this fortnight
+    // The band whose uplift is being held = the first ANNUAL step the trailing position hasn't reached.
+    const _nextBand = BANDS.find(b => b[0] > annualised);
+    const _nextThr = _nextBand ? _nextBand[0] : null;
+    const _nextRatePct = _nextBand ? +(_nextBand[1] * 100).toFixed(0) : null;
+    const _nextFnThr = _nextThr ? _nextThr / 26 : null;
     const SR = (typeof SUPER_RATE !== 'undefined') ? SUPER_RATE : 0.12;
     const sup = 1 + SR;
     const bonusEx = thisFnTotal / sup;
@@ -4548,8 +4556,10 @@ function renderBreakdown(r) {
           <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>${_fmt2dp(wouldEarnGp)}</code></div>
           <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>${_fmt2dp(thisFnProdPay)}</code></div>
           <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px; margin-top:2px;">= ${_fmt2dp(wouldEarnTotal)} you would have been paid this fortnight</div>
-          <div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Held — next band not yet reached by your 12-month GP:</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−${_fmt2dp(paceAdjust)}</code></div>
-          <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">You unlock each higher rate once your last-12-months GP passes that step. You're paid in full for every band your trailing GP has already reached — this small piece sits in the next band up and unlocks when your 12-month GP gets there. Nothing is clawed back later.</div>
+          ${_heldOnly > 0.5 ? `<div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Held — next band not yet reached by your 12-month GP:</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−${_fmt2dp(_heldOnly)}</code></div>
+          <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">This ${_fmt2dp(_heldOnly)} is the ${_nextRatePct}% rate on the slice of this fortnight above ${_fmt2dp(_nextFnThr)}. The ${_nextRatePct}% band only unlocks once your rolling 12-month GP reaches ${_fmt2dp(_nextThr)} — you're currently at ${_fmt2dp(annualised)}. It waits there until your 12-month GP gets there; nothing already paid is recovered.</div>` : ''}
+          ${_trueUp > 0.5 ? `<div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− True-Up recovery (earlier overpay):</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−${_fmt2dp(_trueUp)}</code></div>
+          <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">Your rolling 12-month GP fell back below a band you'd been paid at, so commission earned at that higher rate is being recovered now. ${r.trueUpBalance > 0.5 ? `${_fmt2dp(r.trueUpBalance)} still to recover from coming fortnights.` : `Balance now cleared.`}</div>` : ''}
           <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>${_fmt2dp(thisFnTotal)}</code></div>
           <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
           <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
@@ -4623,22 +4633,27 @@ function renderBreakdown(r) {
   // ---------- New band-cell renderer (PACE = main, YTD = small pill) ----------
   // r needs: gp, ytd, idx, endRate (YTD-cumulative marginal rate)
   function bandCellHtml(r) {
-    const ytdPct = (r.endRate * 100).toFixed(0) + '%';
-    const ytdTip = `<div style="font-weight: 700; margin-bottom: 4px;">YTD-cumulative band</div><div>The band the <strong>last dollar of YTD GP</strong> earned at. This is the rate dollars are actually being paid at right now. Only ratchets up when cumulative GP crosses a band threshold (e.g. $300k → 9%).</div>`;
+    // MAIN = the highest band this fortnight's GP actually EARNED at (released), at fortnight scale.
+    // PILL = the rep's standing year-band (trailing-12m position) — shown only when it's higher,
+    // i.e. a quiet fortnight didn't reach the rep's overall band.
+    const annualised = (r.pace != null) ? r.pace : pace(r.ytd, r.idx);   // seeded trailing-12m position
+    const yearRate = marginalRate(annualised);
+    const yearPct = (yearRate * 100).toFixed(0) + '%';
+    const yearTip = `<div style="font-weight: 700; margin-bottom: 4px;">Your standing band</div><div>The band your <strong>rolling 12-month GP</strong> sits in — the rate your next dollar earns. Climbs as your trailing GP passes each step.</div>`;
     if (r.gp <= 0 || r.ytd <= 0) {
-      // No GP this period — show YTD as the main number, no pill
-      return `<span class="fn-pace-main same" data-tip='${esc(ytdTip)}'>${ytdPct}</span>`;
+      // No GP this period — show the standing year-band, no pill
+      return `<span class="fn-pace-main same" data-tip='${esc(yearTip)}'>${yearPct}</span>`;
     }
-    const annualised = pace(r.ytd, r.idx);
-    const paceRate = marginalRate(annualised);
-    const pacePct = (paceRate * 100).toFixed(0) + '%';
-    const cls = paceRate > r.endRate ? '' : (paceRate === r.endRate ? 'same' : 'lower');
+    // Highest band actually PAID on this fortnight's GP: reached at fortnight scale AND unlocked by trailing position.
+    let topRate = BANDS[0][1];
+    for (const b of BANDS) { if (r.gp > b[0] / 26 && annualised >= b[0]) topRate = b[1]; }
+    const topPct = (topRate * 100).toFixed(0) + '%';
+    const cls = topRate > BANDS[0][1] ? '' : 'same';
     const paceTip = bandRateTipHtml(r);
-    // Pace = main; YTD = small pill (only if different from pace)
-    const ytdPillHtml = (paceRate === r.endRate)
-      ? ''
-      : `<span class="fn-ytd-pill" data-tip='${esc(ytdTip)}'>YTD ${ytdPct}</span>`;
-    return `<span class="fn-pace-main ${cls}" data-tip='${esc(paceTip)}'>${pacePct}</span>${ytdPillHtml}`;
+    const pillHtml = (yearRate > topRate)
+      ? `<span class="fn-ytd-pill" data-tip='${esc(yearTip)}'>yr ${yearPct}</span>`
+      : '';
+    return `<span class="fn-pace-main ${cls}" data-tip='${esc(paceTip)}'>${topPct}</span>${pillHtml}`;
   }
 
   // ---------- Plan-aware helper: where does the first incremental band kick in? ----------
@@ -4865,6 +4880,8 @@ function renderBreakdown(r) {
     let ytd = 0;
     let cumPay = 0;       // cumulative GP commission only
     let cumProd = 0;      // cumulative production commission
+    let upliftPaid = {};  // True-Up state: cumulative band-uplift paid, per band threshold
+    let clawBal = 0;      // True-Up balance owed back (recovered from future fortnights)
     let cumEventGp = 0;   // cumulative Event GP (for tooltips)
     const rows = [];
     const bStart = activeBlock * BLOCK_SIZE;
@@ -4881,24 +4898,37 @@ function renderBreakdown(r) {
       const seedKeep = SEED_GP.slice(i + 1);            // drop (i+1) oldest seed fortnights as the cycle grows
       const position = seedKeep.reduce((a, b) => a + b, 0) + ytd;
       const sfp = seededFortnightPay(gp, position, BANDS);
-      const properPay = sfp.pay;
+      const grossPay = sfp.pay;                         // Model B pay this fortnight (after the band-release gate)
       const held = sfp.held;                            // band uplift not yet unlocked by trailing position
-      const naivePay = properPay + held;                // full fortnight-band earn (all bands released)
+      // --- BAND-CLOSE TRUE-UP: if the trailing position has fallen BELOW a band the rep was
+      // paid uplift for, that uplift is no longer supported → move it into the True-Up balance,
+      // recovered out of this & future fortnights' pay (down to $0). Steady reps never trigger it.
+      for (let _bi = 0; _bi < BANDS.length; _bi++) {
+        const _thr = BANDS[_bi][0];
+        if (BANDS[_bi][1] > BANDS[0][1] && position < _thr && (upliftPaid[_thr] || 0) > 0) {
+          clawBal += upliftPaid[_thr]; upliftPaid[_thr] = 0;
+        }
+      }
+      const trueUpApplied = Math.min(clawBal, grossPay);   // recovered from this fortnight
+      const properPay = grossPay - trueUpApplied;
+      clawBal -= trueUpApplied;
+      for (const _t in sfp.released) { upliftPaid[_t] = (upliftPaid[_t] || 0) + sfp.released[_t]; }
+      const naivePay = grossPay + held;                 // full fortnight-band earn (all bands released)
       const endRate = marginalRate(position);           // rep's true marginal band at their trailing position
       const startRate = endRate;
-      const pace = position;                            // context panel now shows trailing-12m position, not cold-start pace
+      const pace = position;                            // context panel shows trailing-12m position
       const entitlement = naivePay;
-      const tuAdj = 0;
+      const tuAdj = trueUpApplied;
       const prodComm = eventGp * PROD_RATE;
       cumPay += properPay;
-      const trueUpBalance = 0;                          // no carry-forward bank in the seeded model
+      const trueUpBalance = clawBal;                    // running True-Up balance owed back
       cumProd += prodComm;
       cumEventGp += eventGp;
       const crossed = Math.abs(tuAdj) > 0.5;
       rows.push({
         ...fn, idx: i, gp, eventGp,
         ytd, prevYtd,
-        properPay, naivePay, tuAdj,
+        properPay, naivePay, tuAdj, grossPay, trueUpApplied, held,
         endRate, startRate, pace, entitlement, trueUpBalance,
         prodComm,
         cumPay, cumProd, cumEventGp,
