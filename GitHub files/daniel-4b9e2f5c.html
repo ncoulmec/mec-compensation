@@ -4762,19 +4762,26 @@ function renderBreakdown(r) {
     const totalInc = r.properPay + r.prodComm;
     const bonus = totalInc / (1 + SUPER_RATE);
     const superAmt = totalInc - bonus;
-    const big = (label, val, color) => `<div style="flex:1; min-width:130px;"><div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:700;">${label}</div><div style="font-family:var(--mono); font-size:26px; font-weight:800; color:${color}; margin-top:2px;">${val}</div></div>`;
+    const eff = r.gp > 0 ? r.properPay / r.gp : 0;
+    const effPct = Math.round(eff * 100);
+    const stat = (val, lab) => `<div><div style="font-size:18px; font-weight:700; color:var(--ink); line-height:1.1;">${val}</div><div style="font-size:11px; color:var(--faint); margin-top:2px;">${lab}</div></div>`;
     el.innerHTML = `
-      <div style="background: linear-gradient(135deg,#f1f7f2 0%,#fff 60%); border:1px solid #bfe0c6; border-radius:10px; padding:16px 20px;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
-          <div style="font-size:13px; font-weight:800; color:#1e6624; text-transform:uppercase; letter-spacing:0.05em;">Your latest pay</div>
-          <span style="font-size:11px; font-weight:700; color:#1e6624; background:#eaf5ec; padding:3px 9px; border-radius:999px;">✓ PAID</span>
-          <div style="font-family:var(--mono); font-size:12px; color:var(--muted);">paid ${esc(r.paid)}</div>
+      <div style="background:#fff; border:1px solid #e7e5dd; border-radius:12px; padding:18px 22px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:13px; flex-wrap:wrap;">
+          <span style="font-size:12px; font-weight:700; color:#0f766e; text-transform:uppercase; letter-spacing:0.06em;">Your latest pay</span>
+          <span style="font-size:11px; font-weight:700; color:#0f766e; background:#d1f0e8; padding:3px 10px; border-radius:999px;">✓ paid ${esc(r.paid)}</span>
         </div>
-        <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end;">
-          ${big('Bonus → Xero', _fmt2dp(bonus), '#1e6624')}
-          ${big('Super → Xero', _fmt2dp(superAmt), 'var(--navy)')}
-          ${big('Total this pay', _fmt2dp(totalInc), 'var(--ink)')}
-          <button onclick="window.__pmOpen&&window.__pmOpen(${r.idx})" style="margin-left:auto; align-self:center; background:#0d9488; color:#fff; border:none; border-radius:8px; padding:11px 18px; font-size:14px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:7px; white-space:nowrap;" onmouseover="this.style.background='#0f766e'" onmouseout="this.style.background='#0d9488'">See full breakdown ⊕</button>
+        <div style="display:flex; align-items:flex-end; gap:26px; flex-wrap:wrap;">
+          <div>
+            <div style="font-size:40px; font-weight:800; color:#0f766e; line-height:1;">${_fmt2dp(totalInc)}</div>
+            <div style="font-size:12px; color:var(--muted); margin-top:3px;">total this pay · inc super</div>
+          </div>
+          <div style="display:flex; gap:22px; padding-bottom:3px;">
+            ${stat(_fmt2dp(bonus), 'bonus → bank')}
+            ${stat(_fmt2dp(superAmt), 'super')}
+            ${stat(_fmt(r.gp), 'GP collected · ' + effPct + '%')}
+          </div>
+          <button onclick="window.__pmOpen&&window.__pmOpen(${r.idx})" style="margin-left:auto; align-self:center; background:#0d9488; color:#fff; border:none; border-radius:9px; padding:12px 20px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap;" onmouseover="this.style.background='#0f766e'" onmouseout="this.style.background='#0d9488'">See full breakdown ⊕</button>
         </div>
       </div>`;
   }
