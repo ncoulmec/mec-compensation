@@ -6092,6 +6092,11 @@ function renderTeamPool() {
 .pm-mark{position:absolute;top:-2px;bottom:-2px;width:2px;background:#1f2421}
 .pm-scalex{display:flex;justify-content:space-between;font-size:10px;color:#8b8a83;margin-top:2px}
 .pm-act{background:rgba(13,148,136,.08);color:#0f766e;border-radius:7px;padding:7px 10px;font-size:12px;margin-top:8px;text-align:center}
+.pm-ladhover{position:relative}
+.pm-ladhover .pm-ladder{cursor:help}
+.pm-ladtip{display:none;position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:8px;background:#0f766e;color:#fff;font-size:11px;line-height:1.65;padding:9px 12px;border-radius:8px;width:240px;z-index:10001;box-shadow:0 4px 14px rgba(0,0,0,.22);text-align:left}
+.pm-ladtip b{color:#fff}
+.pm-ladhover:hover .pm-ladtip{display:block}
 .pm-exp-h{font-size:12px;font-weight:600;color:#5f5e5a;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
 .pm-exp-b{font-size:11px;color:#5f5e5a;margin-top:6px;line-height:1.7;padding-left:18px;display:none}
 .pm-exp.open .pm-exp-b{display:block}.pm-exp.open .pm-chev,.pm-tu.open .pm-chev{transform:rotate(90deg)}
@@ -6130,14 +6135,19 @@ function renderTeamPool() {
   function nextB(p,B){for(var i=0;i<B.length;i++)if(B[i][0]>p)return B[i];return null;}
   function annC(g,B){var t=0;for(var i=0;i<B.length;i++){var nx=(i+1<B.length)?B[i+1][0]:Infinity;if(g>B[i][0])t+=(Math.min(g,nx)-B[i][0])*B[i][1];}return t;}
   function decomp(gp,B){var o=[];for(var i=0;i<B.length;i++){var lo=B[i][0]/26,hi=(i+1<B.length)?B[i+1][0]/26:Infinity;if(gp<=lo)break;o.push({lo:lo,hi:hi,rate:B[i][1],amt:Math.min(gp,hi)-lo});}return o;}
-  function ladder(pos,B){var segs=[[0,300000,.04],[300000,400000,.09],[400000,450000,.12],[450000,500000,.13],[500000,550000,.14],[550000,650000,.16]];var h='';segs.forEach(function(s){var w=(s[1]-s[0])/650000*100;var cls=(pos>=s[0]&&pos<s[1])?'cur':(pos>=s[1]?'on':'');h+='<div class="pm-seg '+cls+'" style="width:'+w+'%">'+pc(s[2])+'</div>';});var mk=Math.min(pos/650000*100,100);return '<div class="pm-ladder">'+h+'<div class="pm-mark" style="left:'+mk+'%"></div></div><div class="pm-scalex"><span>$0</span><span>$300k</span><span>$650k</span></div>';}
+  function ladder(pos,B,tip){var segs=[[0,300000,.04],[300000,400000,.09],[400000,450000,.12],[450000,500000,.13],[500000,550000,.14],[550000,650000,.16]];var h='';segs.forEach(function(s){var w=(s[1]-s[0])/650000*100;var cls=(pos>=s[0]&&pos<s[1])?'cur':(pos>=s[1]?'on':'');h+='<div class="pm-seg '+cls+'" style="width:'+w+'%">'+pc(s[2])+'</div>';});var mk=Math.min(pos/650000*100,100);return '<div class="pm-ladhover"><div class="pm-ladder">'+h+'<div class="pm-mark" style="left:'+mk+'%"></div></div><div class="pm-scalex"><span>$0</span><span>$300k</span><span>$650k</span></div>'+(tip?'<div class="pm-ladtip">'+tip+'</div>':'')+'</div>';}
   function build(r,B){
     var M=marg(r.pace||0,B),gpBand=r.properPay||0,prod=r.prodComm||0,total=gpBand+prod,bank=total/(1+PMs()),sup=total-bank;
     var gp=r.gp||0,eventGp=r.eventGp||0,pos=r.pace||0,cur=marg(pos,B),nb=nextB(pos,B),h='';
     h+='<div class="pm-lab">YOUR PAY · '+(r.period||'')+'</div><div class="pm-hero'+(total>0?' green':'')+'">'+m2(total)+'</div><div class="pm-herosub">inc super · lands '+(r.paid||'')+'</div>';
     h+='<div class="pm-streams"><div class="pm-stream"><div class="pm-sv">'+m2(gpBand)+'</div><div class="pm-sk">Sales commission</div><div class="pm-sd">on '+m2(gp)+' GP collected</div><div class="pm-sd">booking owner</div></div><div class="pm-plus">+</div><div class="pm-stream"><div class="pm-sv">'+m2(prod)+'</div><div class="pm-sk">Event production · 1%</div><div class="pm-sd">on '+m0(eventGp)+' GP delivered</div><div class="pm-sd">producer</div></div></div>';
     h+='<div class="pm-split">→ <b>'+m2(bank)+'</b> to your bank &nbsp;·&nbsp; <b>'+m2(sup)+'</b> to super</div>';
-    h+='<div class="pm-sec"><div class="pm-ladhead"><span>Your rate this fortnight</span><span><b>'+pc(cur)+'</b> marginal</span></div>'+ladder(pos,B);
+    var _tIdx=(r.idx!=null?r.idx:0),_tbS=(window.__PMbStart||0),_tSeed=window.__PMseedFns||[],_tGpv=window.__PMgpv||[];
+    var _tRolled=Math.min(_tIdx+1,_tSeed.length),_tKept=_tSeed.slice(_tRolled).reduce(function(a,x){return a+x.gp;},0),_tReal=0;
+    for(var _tk=_tbS;_tk<=_tIdx;_tk++){_tReal+=(_tGpv[_tk]||0);}
+    var _tTot=_tKept+_tReal;
+    var _ladTip='<b>Your trailing 12-month GP</b><br><b style="font-size:13px">'+m0(_tTot)+'</b> — puts you in the <b>'+pc(cur)+'</b> band.<br><span style="opacity:.85">seed (GP sold, last yr) '+m0(_tKept)+' + your GP received '+m0(_tReal)+'</span>';
+    h+='<div class="pm-sec"><div class="pm-ladhead"><span>Your rate this fortnight</span><span><b>'+pc(cur)+'</b> marginal · '+m0(pos)+' trailing</span></div>'+ladder(pos,B,_ladTip);
     if(nb){h+='<div class="pm-act">▲ '+m0(nb[0]-pos)+' more 12-month GP → unlocks <b>'+pc(nb[1])+'</b><div style="font-size:11px;margin-top:2px">≈ '+m0((nb[0]-pos)/26)+'/fortnight above your current pace, sustained</div></div>';}
     else h+='<div class="pm-act">Top band — '+pc(cur)+' on every dollar.</div>';
     h+='</div>';
@@ -6148,8 +6158,9 @@ function renderTeamPool() {
       db+='<div class="pm-amber" style="margin-top:8px;line-height:1.75">Why some is held: your rolling 12-month GP is <b>'+m0(pos)+'</b> — in the <b>'+pc(M)+'</b> band. GP that reaches a higher band still earns your proven <b>'+pc(M)+'</b>; only the <b>premium</b> waits:<table class="pm-tbl" style="margin-top:5px"><tr class="pm-thd2"><td>slice above your band</td><td style="text-align:center">premium held</td><td style="text-align:right">$</td></tr>'+hrows+'<tr class="pm-sumrow2"><td colspan="2">Total held</td><td style="text-align:right">'+m2(r.held)+'</td></tr></table>Unlocks at <b>'+m0(hb[0])+'</b> rolling 12-month GP — you\'re <b>'+m0(hb[0]-pos)+'</b> away.</div>';}
     h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>This fortnight across the bands</div><div class="pm-exp-b">'+db+'</div></div>';
     var bt='<table class="pm-tbl"><tr class="pm-thd"><td>Band</td><td style="text-align:right">From (annual GP)</td><td style="text-align:right">Per fortnight (÷26)</td></tr>';
-    for(var j=0;j<B.length;j++){if(j===0||B[j][1]!==B[j-1][1]){var on=pos>=B[j][0];bt+='<tr><td style="'+(on?'font-weight:600;color:#0f766e':'')+'">'+pc(B[j][1])+(on?' ✓':'')+'</td><td style="text-align:right">'+m0(B[j][0])+'</td><td style="text-align:right">'+(B[j][0]===0?'$0':m0(B[j][0]/26))+'</td></tr>';}}
-    bt+='</table><div class="pm-faint" style="margin-top:5px">✓ = bands your trailing 12-month GP ('+m0(pos)+') has unlocked.</div>';
+    var curIdx=0;for(var ci=0;ci<B.length;ci++){if(pos>=B[ci][0])curIdx=ci;}
+    for(var j=0;j<B.length;j++){if(j===0||B[j][1]!==B[j-1][1]){var on=pos>=B[j][0],here=(j===curIdx);bt+='<tr'+(here?' style="background:rgba(13,148,136,.10)"':'')+'><td style="'+(on?'font-weight:600;color:#0f766e':'')+'">'+pc(B[j][1])+(on?' ✓':'')+(here?' <b>◀ you</b>':'')+'</td><td style="text-align:right'+(here?';font-weight:700':'')+'">'+m0(B[j][0])+'</td><td style="text-align:right">'+(B[j][0]===0?'$0':m0(B[j][0]/26))+'</td></tr>';if(here){bt+='<tr><td colspan="3" style="text-align:right;font-size:11px;color:#0f766e;padding:1px 0 3px"><b>↑ your trailing 12-month GP: '+m0(pos)+'</b></td></tr>';}}}
+    bt+='</table><div class="pm-faint" style="margin-top:5px">✓ = bands your trailing 12-month GP (<b>'+m0(pos)+'</b>) has unlocked.</div>';
     h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>Where each band starts</div><div class="pm-exp-b">'+bt+'</div></div>';
     var comm=annC(pos,B),eff=pos>0?comm/pos:0;
     h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>Why this rate · full-year context</div><div class="pm-exp-b">Your trailing 12-month GP: <b>'+m0(pos)+'</b><br>seed (GP sold) rolling into your live GP received — this is what unlocks each band.<br>Commission at this annual level: <b>'+m0(comm)+'</b> ('+(eff*100).toFixed(1)+'% effective).</div></div>';
@@ -6159,9 +6170,8 @@ function renderTeamPool() {
     for(var rk=bS;rk<=idx;rk++){reals.push({period:(fns[rk]&&fns[rk].period)||('F'+(rk-bS+1)),gp:gpv[rk]||0});}
     var sumKept=keptSeeds.reduce(function(a,x){return a+x.gp;},0),sumReal=reals.reduce(function(a,x){return a+x.gp;},0),tot=sumKept+sumReal;
     var tb2='';
-    if(droppedSeeds.length){tb2+='<div class="pm-faint" style="margin-bottom:7px;line-height:1.6">Once a fortnight is paid on your real <b>GP received</b>, it replaces the oldest <b>GP sold</b> seed from last year. <b>'+droppedSeeds.length+'</b> replaced so far:</div>';
-      tb2+=droppedSeeds.map(function(d,j){var rr=reals[j];return '<div style="font-size:11px;margin-bottom:2px"><s style="color:#8b8a83">'+d.period+' · '+m0(d.gp)+' sold</s> <span style="color:#0f766e">→ '+(rr?rr.period+' · <b>'+m0(rr.gp)+' received</b>':'')+'</span></div>';}).join('');}
-    tb2+='<table class="pm-tbl" style="margin-top:8px"><tr class="pm-thd"><td>Fortnight in your 26-fn window</td><td style="text-align:center">basis</td><td style="text-align:right">GP</td></tr>';
+    tb2+='<div class="pm-faint" style="margin-bottom:7px;line-height:1.6">Each fortnight paid on real <b>GP received</b> rolls off the oldest <b>GP sold</b> seed — your window is always the most recent 26 fortnights:</div>';
+    tb2+='<table class="pm-tbl" style="margin-top:4px"><tr class="pm-thd"><td>Fortnight in your 26-fn window</td><td style="text-align:center">basis</td><td style="text-align:right">GP</td></tr>';
     tb2+=keptSeeds.map(function(s){return '<tr><td>'+s.period+'</td><td style="text-align:center" class="pm-faint">sold · seed</td><td style="text-align:right">'+m0(s.gp)+'</td></tr>';}).join('');
     tb2+=reals.map(function(s){return '<tr><td>'+s.period+'</td><td style="text-align:center;color:#0f766e">received ✓</td><td style="text-align:right"><b>'+m0(s.gp)+'</b></td></tr>';}).join('');
     tb2+='<tr class="pm-sumrow"><td colspan="2">= Trailing 12-month total ('+(keptSeeds.length+reals.length)+' fortnights)</td><td style="text-align:right">'+m0(tot)+'</td></tr></table>';
