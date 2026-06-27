@@ -4654,7 +4654,7 @@ function renderBreakdown(r) {
     const pillHtml = (yearRate > topRate)
       ? `<span class="fn-ytd-pill" data-tip='${esc(yearTip)}'>yr ${yearPct}</span>`
       : '';
-    return `<span class="pm-open" style="cursor:pointer" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})" title="Click for full pay breakdown"><span class="fn-pace-main ${cls}">${topPct}</span>${pillHtml}</span>`;
+    return `<span class="pm-open pm-band" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})"><span class="fn-pace-main ${cls}">${topPct}</span>${pillHtml}<span class="pm-cue">⊕</span></span>`;
   }
 
   // ---------- Plan-aware helper: where does the first incremental band kick in? ----------
@@ -4943,6 +4943,9 @@ function renderBreakdown(r) {
       });
     });
     window.__PMrows = rows; window.__PMbands = BANDS; window.__PMsuper = (typeof SUPER_RATE !== 'undefined' ? SUPER_RATE : 0.12);
+    window.__PMgpv = gpValues; window.__PMfns = FORTNIGHTS; window.__PMbStart = bStart;
+    (function(){ var MS=86400000, anchor=Date.UTC(2026,5,1), N=SEED_GP.length;
+      window.__PMseedFns = SEED_GP.map(function(g,s){ var st=new Date(anchor-(N-s)*14*MS), en=new Date(st.getTime()+13*MS); return { period:(_fnShort(st)+' – '+_fnFull(en)), gp:g }; }); })();
 
     // Totals strip with ? tooltips
     const totalGP = rows[rows.length - 1].ytd;
@@ -5115,9 +5118,9 @@ function renderBreakdown(r) {
             <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
             <td class="num">${rBandCellHtml}</td>
             <td class="num" style="border-left: 2px solid #d3d1c7;"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
-            <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" style="cursor:pointer" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="font-size:9px; color:#1e6624; font-weight:700; margin-top:1px;">✓ PAID</div>' : ''}</td>
-            <td class="num" style="color: var(--navy); font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" style="cursor:pointer" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(superAmt)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
-            <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" style="cursor:pointer" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(totalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="font-size:9px; color:#1e6624; font-weight:700; margin-top:1px;">✓ PAID</div>' : ''}</td>
+            <td class="num" style="color: var(--navy); font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(superAmt)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(totalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
             <td class="num" style="color: var(--muted);">${_fmt2dp(r.cumTotal)}</td>
           </tr>
         `;
@@ -6119,7 +6122,17 @@ function renderTeamPool() {
 .pm-fnlink{color:#854f0b;text-decoration:underline;cursor:pointer;font-weight:600;display:inline-block;margin-top:6px}
 .pm-tu-fns{display:none;margin-top:6px;border-top:.5px dashed #e2c98f;padding-top:6px}
 .pm-tu.fnopen .pm-tu-fns{display:block}
-.fn-pace-main::after{content:''}
+/* instant click affordance on the band + pay cells */
+.pm-open{position:relative;cursor:pointer;border-radius:5px;padding:1px 4px;transition:background .08s}
+.pm-open:hover{background:rgba(13,148,136,.12)}
+.pm-band .fn-pace-main{text-decoration:underline dotted rgba(13,148,136,.55);text-underline-offset:3px;transition:text-decoration-color .08s}
+.pm-band:hover .fn-pace-main{text-decoration-color:#0d9488}
+.pm-cue{display:inline-block;margin-left:4px;font-size:11px;color:rgba(13,148,136,.45);transition:color .08s,transform .08s;vertical-align:middle}
+.pm-band:hover .pm-cue{color:#0d9488;transform:scale(1.15)}
+.pm-open[data-pm-hint]::after{content:attr(data-pm-hint);position:absolute;left:50%;bottom:100%;transform:translateX(-50%) translateY(3px);margin-bottom:7px;background:#0f766e;color:#fff;font-size:11px;font-weight:600;white-space:nowrap;padding:4px 9px;border-radius:6px;z-index:10000;pointer-events:none;opacity:0;transition:opacity .08s,transform .08s;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.pm-open[data-pm-hint]::before{content:'';position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:2px;border:5px solid transparent;border-top-color:#0f766e;z-index:10000;pointer-events:none;opacity:0;transition:opacity .08s}
+.pm-open[data-pm-hint]:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
+.pm-open[data-pm-hint]:hover::before{opacity:1}
 </style>
 <script>
 (function(){
@@ -6154,6 +6167,20 @@ function renderTeamPool() {
     h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>Where each band starts</div><div class="pm-exp-b">'+bt+'</div></div>';
     var comm=annC(pos,B),eff=pos>0?comm/pos:0;
     h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>Why this rate · full-year context</div><div class="pm-exp-b">Your trailing 12-month GP: <b>'+m0(pos)+'</b><br>seed (GP sold) rolling into your live GP received — this is what unlocks each band.<br>Commission at this annual level: <b>'+m0(comm)+'</b> ('+(eff*100).toFixed(1)+'% effective).</div></div>';
+    // --- How the trailing 12 months is built: 26 fortnights, seed (GP sold) rolling over to real GP received ---
+    var idx=(r.idx!=null?r.idx:0),bS=(window.__PMbStart||0),seedFns=window.__PMseedFns||[],gpv=window.__PMgpv||[],fns=window.__PMfns||[];
+    var rolledN=Math.min(idx+1,seedFns.length),keptSeeds=seedFns.slice(rolledN),droppedSeeds=seedFns.slice(0,rolledN),reals=[];
+    for(var rk=bS;rk<=idx;rk++){reals.push({period:(fns[rk]&&fns[rk].period)||('F'+(rk-bS+1)),gp:gpv[rk]||0});}
+    var sumKept=keptSeeds.reduce(function(a,x){return a+x.gp;},0),sumReal=reals.reduce(function(a,x){return a+x.gp;},0),tot=sumKept+sumReal;
+    var tb2='';
+    if(droppedSeeds.length){tb2+='<div class="pm-faint" style="margin-bottom:7px;line-height:1.6">Once a fortnight is paid on your real <b>GP received</b>, it replaces the oldest <b>GP sold</b> seed from last year. <b>'+droppedSeeds.length+'</b> replaced so far:</div>';
+      tb2+=droppedSeeds.map(function(d,j){var rr=reals[j];return '<div style="font-size:11px;margin-bottom:2px"><s style="color:#8b8a83">'+d.period+' · '+m0(d.gp)+' sold</s> <span style="color:#0f766e">→ '+(rr?rr.period+' · <b>'+m0(rr.gp)+' received</b>':'')+'</span></div>';}).join('');}
+    tb2+='<table class="pm-tbl" style="margin-top:8px"><tr class="pm-thd"><td>Fortnight in your 26-fn window</td><td style="text-align:center">basis</td><td style="text-align:right">GP</td></tr>';
+    tb2+=keptSeeds.map(function(s){return '<tr><td>'+s.period+'</td><td style="text-align:center" class="pm-faint">sold · seed</td><td style="text-align:right">'+m0(s.gp)+'</td></tr>';}).join('');
+    tb2+=reals.map(function(s){return '<tr><td>'+s.period+'</td><td style="text-align:center;color:#0f766e">received ✓</td><td style="text-align:right"><b>'+m0(s.gp)+'</b></td></tr>';}).join('');
+    tb2+='<tr class="pm-sumrow"><td colspan="2">= Trailing 12-month total ('+(keptSeeds.length+reals.length)+' fortnights)</td><td style="text-align:right">'+m0(tot)+'</td></tr></table>';
+    tb2+='<div class="pm-faint" style="margin-top:5px">This <b>'+m0(tot)+'</b> is exactly the figure that sets your band — <b>'+pc(cur)+'</b> marginal.</div>';
+    h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>How your trailing 12 months is built · 26 fortnights</div><div class="pm-exp-b">'+tb2+'</div></div>';
     if((r.trueUpApplied||0)>0.5){var ct=null,pr=B[0][1];for(var k=1;k<B.length;k++){if((B[k][1]-B[k-1][1])>0&&pos<B[k][0]){ct=B[k];pr=B[k-1][1];break;}}var sp=ct?Math.round((ct[1]-pr)*100):0;var src=r.sources||[];var tot=src.reduce(function(s,x){return s+x.amt;},0);var fr=src.map(function(x){return '<tr><td>'+x.fn+' · '+pc(x.rate)+' band premium</td><td style="text-align:right">'+m2(x.amt)+'</td></tr>';}).join('')||'<tr><td colspan="2" class="pm-faint">earned earlier this cycle</td></tr>';
       h+='<div class="pm-tu"><div class="pm-tu-h"><span><span class="pm-chev">▸</span> True-Up recovery</span><span>−'+m2(r.trueUpApplied)+'</span></div><div class="pm-tu-b"><ul style="margin:2px 0 0;padding-left:16px;line-height:1.7"><li>Your rolling 12-month GP fell to <b>'+m0(pos)+'</b>'+(ct?' — below the <b>'+m0(ct[0])+'</b> line, so the <b>'+pc(ct[1])+'</b> band closed.':'.')+'</li>'+(ct?'<li>While you were above '+m0(ct[0])+', you earned the <b>'+pc(ct[1])+' − '+pc(pr)+' = '+sp+'%</b> premium on GP above <b>'+m0(ct[0]/26)+'/fortnight</b>.</li>':'')+'<li>That premium is now being recovered — <b>'+m2(r.trueUpApplied)+'</b> this fortnight.</li><li>True-Up balance remaining: <b>'+m2(r.trueUpBalance||0)+'</b>'+((r.trueUpBalance||0)>0.5?' — recovers from coming fortnights, never your base.':' — now cleared.')+'</li></ul><span class="pm-fnlink">▸ See exactly which fortnights this premium was earned in</span><div class="pm-tu-fns"><table class="pm-tbl"><tr class="pm-thd2"><td>fortnight earned in</td><td style="text-align:right">premium</td></tr>'+fr+'<tr class="pm-sumrow2"><td>Total '+pc(ct?ct[1]:0)+'-band premium earned</td><td style="text-align:right">'+m2(tot)+'</td></tr></table></div></div></div>';}
     return h;
