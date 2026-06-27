@@ -3808,34 +3808,19 @@ function renderOTECard() {
   const card = document.createElement('div');
   card.className = 'card';
   card.id = 'ote-card';
-  card.style.cssText = 'border-left: 4px solid var(--navy); margin-bottom: 14px; padding: 14px 18px;';
+  card.style.cssText = 'border-left: 4px solid var(--navy); margin-bottom: 14px; padding: 9px 16px;';
   card.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-      <div>
-        <h2 style="margin: 0 0 2px; font-size: 16px;">Your On-Target Earnings</h2>
-        <p style="font-size: 11px; color: var(--muted); margin: 0; font-family: var(--mono);">All figures super-inclusive · Variable updates live with GP slider</p>
-      </div>
-      ${snapTo ? `<button id="ote-snap-btn" style="background: var(--navy); color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k GP)</button>` : ''}
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:13px;">
+      <span style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700;">On-Target Earnings</span>
+      <span style="font-family:var(--mono); font-weight:700; color:var(--navy);"><span id="ote-total-live">—</span></span>
+      <span style="font-family:var(--mono); color:var(--muted);">OTE</span>
+      <span style="color:#d3d1c7;">·</span>
+      <span style="font-family:var(--mono); color:var(--muted);">base ${fmtMoney(ote.baseInclSuper)} + variable <b id="ote-variable-live" style="color:var(--navy);">—</b> <span id="ote-variable-sub" style="color:var(--faint);">at —</span></span>
+      ${snapTo ? `<button id="ote-snap-btn" style="background: var(--navy); color: #fff; border: none; border-radius: 6px; padding: 5px 11px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k GP)</button>` : ''}
+      <a onclick="var b=document.querySelector('[data-tab=planning]'); if(b){b.click();} return false;" style="margin-left:auto; font-size:12px; color:var(--navy); cursor:pointer; font-weight:600; white-space:nowrap;">View planning →</a>
     </div>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
-      <div style="padding: 10px 14px; background: #fff; border: 1px solid #ecebe5; border-radius: 6px;">
-        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Base</div>
-        <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 2px;">${fmtMoney(ote.baseInclSuper)}</div>
-        <div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">${fmtMoney(ote.baseSalary)} + ${fmtMoney(ote.baseSuperOnBase)} super</div>
-      </div>
-      <div style="padding: 10px 14px; background: #fff; border: 1px solid #ecebe5; border-radius: 6px;">
-        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Variable @ Current GP</div>
-        <div id="ote-variable-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--navy); margin-top: 2px;">—</div>
-        <div id="ote-variable-sub" style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">at —</div>
-      </div>
-      <div style="padding: 10px 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 6px;">
-        <div style="font-size: 10px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total</div>
-        <div id="ote-total-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--navy); margin-top: 2px;">—</div>
-        <div style="font-size: 10px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">pre-tax annual package</div>
-      </div>
-    </div>
-    <details style="margin-top: 10px;">
-      <summary style="cursor: pointer; font-size: 11px; color: var(--muted); padding: 4px 0; font-family: var(--mono); user-select: none;">Pay mix philosophy — why the plan is moving toward more variable</summary>
+    <details style="margin-top: 7px;">
+      <summary style="cursor: pointer; font-size: 11px; color: var(--muted); padding: 2px 0; font-family: var(--mono); user-select: none;">Pay mix philosophy — why the plan is moving toward more variable</summary>
       <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6; margin-top: 6px;">
         Historically most MEC roles sat at roughly <strong>${philosophy?.legacyMix || '85:15'}</strong> or even <strong>${philosophy?.legacyMixOlder || '90:10'}</strong> base-to-variable — comfortable, predictable, but with limited upside. The plan you're looking at nudges us toward <strong>${philosophy?.futureGoal || '75:25'}</strong> over the next few years — gradually putting more of your earnings inside your control. Not a flip-of-the-switch change, more a steady walk in that direction. Bigger ceiling, more reward for stretching.
       </div>
@@ -4789,6 +4774,7 @@ function renderBreakdown(r) {
           ${big('Bonus → Xero', _fmt2dp(bonus), '#1e6624')}
           ${big('Super → Xero', _fmt2dp(superAmt), 'var(--navy)')}
           ${big('Total this pay', _fmt2dp(totalInc), 'var(--ink)')}
+          <button onclick="window.__pmOpen&&window.__pmOpen(${r.idx})" style="margin-left:auto; align-self:center; background:#0d9488; color:#fff; border:none; border-radius:8px; padding:11px 18px; font-size:14px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:7px; white-space:nowrap;" onmouseover="this.style.background='#0f766e'" onmouseout="this.style.background='#0d9488'">See full breakdown ⊕</button>
         </div>
       </div>`;
   }
@@ -6199,7 +6185,37 @@ function renderTeamPool() {
       var fl=e.target.closest('.pm-fnlink');if(fl){fl.parentNode.classList.toggle('fnopen');return;}
     });
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  // --- Glanceability reorder of the Payouts & Super tab: lift the fortnight table directly
+  // under the latest-pay hero; demote the KPI totals + cumulative chart into a collapsed
+  // "Trends & full-year totals" panel below it. Additive + reversible (guarded, runs once). ---
+  function reorderPayouts(){
+    var hero=document.getElementById('fn-latest-hero');
+    var totals=document.getElementById('fn-totals');
+    var chart=document.getElementById('cum-chart-wrap');
+    var tableEl=document.getElementById('fortnightly-table');
+    if(!hero||!totals||!chart||!tableEl) return false;
+    if(document.getElementById('pm-trends')) return true;
+    var tableWrap=tableEl.parentNode, card=hero.parentNode;
+    if(!card) return false;
+    var footerP=null;
+    Array.prototype.forEach.call(card.children,function(c){ if(c.tagName==='P' && /Click any month/.test(c.textContent)) footerP=c; });
+    var det=document.createElement('details');
+    det.id='pm-trends'; det.style.cssText='margin:8px 0 14px;';
+    var sum=document.createElement('summary');
+    sum.style.cssText='cursor:pointer;font-size:11px;color:#8b8a83;text-transform:uppercase;letter-spacing:.05em;font-weight:700;padding:6px 0;user-select:none;';
+    sum.textContent='Trends & full-year totals';
+    det.appendChild(sum);
+    det.appendChild(totals); det.appendChild(chart);
+    var anchor=hero;
+    card.insertBefore(tableWrap, anchor.nextSibling); anchor=tableWrap;
+    if(footerP){ card.insertBefore(footerP, anchor.nextSibling); anchor=footerP; }
+    card.insertBefore(det, anchor.nextSibling);
+    det.addEventListener('toggle',function(){ if(det.open){ setTimeout(function(){ window.dispatchEvent(new Event('resize')); },40); } });
+    return true;
+  }
+  function tryReorder(n){ try{ if(reorderPayouts()) return; }catch(e){} if(n>0) setTimeout(function(){ tryReorder(n-1); },300); }
+  function boot(){ init(); tryReorder(15); }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
 </body>
