@@ -1748,7 +1748,7 @@ async function _devLoadDashboard() {
    Planning + Actual split, no margin multiplier, super-inclusive everywhere.
    ============================================================ */
 
-const EMPLOYEE_ID = 'evie';
+const EMPLOYEE_ID = 'leanne';
 
 // =========================================================================
 // PIN GATE + DECRYPTION (v40)
@@ -2951,7 +2951,10 @@ function computeMonthlyRows() {
   const gateConfig = getProductionGate();
   let prodGateFactor = 1;
   let prodGateInfo = null;
-  if (gateConfig.hasGate) {
+  if (gateConfig.inGracePeriod) {
+    // Grace period — gate exists in spec but isn't enforced yet. Surface for visibility.
+    prodGateInfo = { gracePeriod: true, gracePeriodEnd: gateConfig.gracePeriodEnd, gracePeriodReason: gateConfig.gracePeriodReason, floor: gateConfig.floor, full: gateConfig.full };
+  } else if (gateConfig.hasGate) {
     let ytdEvent = 0, monthsWithData = 0;
     actualsMonths.forEach((m, i) => {
       const ap = actualPayouts[i];
@@ -3353,11 +3356,16 @@ function update() {
     }
   }
 
-  // Planning gate banner — three states: under floor (pause), in ramp (partial), full
+  // Planning gate banner — grace period / under floor / in ramp / full
   const planningBanner = document.getElementById('planning-gate-banner');
   if (planningBanner) {
     const g = r.planningGate;
-    if (g && g.hasGate) {
+    if (g && g.inGracePeriod) {
+      const endDate = new Date(g.gracePeriodEnd);
+      const endStr = endDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      const daysLeft = Math.max(0, Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24)));
+      planningBanner.innerHTML = `<div class="banner info" style="margin-bottom: 22px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8;"><span class="dot"></span><span><strong>Production gate flagged — not yet enforced</strong> · 12-month grace period ends <strong>${endStr}</strong> (~${daysLeft} days remaining). After that, sales commission scales by your annualised Event GP: 0% below ${fmtMoney(g.floor)} → 100% at ${fmtMoney(g.full)}. Until then, your GP sales commission flows in full regardless of production levels.</span></div>`;
+    } else if (g && g.hasGate) {
       const factor = r.planningFactor;
       const factorPct = (factor * 100).toFixed(0);
       if (factor >= 1) {
@@ -3376,10 +3384,16 @@ function update() {
   // ===== ACTUAL =====
   const { rows: mRows, totals: mTot, quarters: qSummary, annualSummary, prodGateInfo } = computeMonthlyRows();
 
-  // Production gate banner — three states (under floor / ramping / full)
+  // Production gate banner — grace period / under floor / ramping / full
   const gateBanner = document.getElementById('prod-gate-banner');
   if (gateBanner) {
-    if (prodGateInfo) {
+    if (prodGateInfo && prodGateInfo.gracePeriod) {
+      const { gracePeriodEnd, floor, full } = prodGateInfo;
+      const endDate = new Date(gracePeriodEnd);
+      const endStr = endDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      const daysLeft = Math.max(0, Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24)));
+      gateBanner.innerHTML = `<div class="banner info" style="margin-bottom: 14px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8;"><span class="dot"></span><span><strong>Production gate flagged — not yet enforced</strong> · You're in a 12-month grace period (ends <strong>${endStr}</strong>, ~${daysLeft} days remaining). After this date, sales commission will scale by your annualised Event GP: 0% below ${fmtMoney(floor)} → 100% at ${fmtMoney(full)}. <strong>Until then, your GP sales commission flows in full</strong> regardless of production levels. Flagged here now so there are no surprises later.</span></div>`;
+    } else if (prodGateInfo) {
       const { ytdEvent, monthsWithData, annualizedEvent, floor, full, factor, passed } = prodGateInfo;
       const factorPct = (factor * 100).toFixed(0);
       if (monthsWithData === 0) {
@@ -4494,18 +4508,15 @@ function renderBreakdown(r) {
   // ===== ⚠ FALLBACK PLACEHOLDER — *** NOT ANY REP'S REAL BANDS *** =====
   // The authoritative bands live ONLY in data.json -> planTypes[<plan>].bands and are
   // loaded at runtime by __hydrateFortnightlyFromData (BANDS = planRec.bands), which
-  // OVERWRITES this array on every load. This is a generic stand-in for the split-second
-  // before data loads. NEVER read a rep's real bands from here.
-  // Rep -> planType (look up the bands in data.json under this plan):
-  //   dane = gp_bands_senior  |  daniel, nic, aimee = gp_bands
-  //   evie = hybrid_gp  |  leanne = hybrid_gp_intended
+  // OVERWRITES this array on every load. NEVER read a rep's real bands from here.
+  // Rep -> planType: dane=gp_bands_senior | daniel,nic,aimee=gp_bands | evie=hybrid_gp | leanne=hybrid_gp_intended
   // To CHANGE commission, edit data.json planTypes — NOT this array.
   let BANDS = [
     [0, 0.04],
     [50000, 0.04],
-    [100000, 0.06],
+    [100000, 0.04],
     [150000, 0.06],
-    [200000, 0.06],
+    [200000, 0.08],
     [250000, 0.09],
     [300000, 0.11],
     [350000, 0.13],
@@ -4519,7 +4530,7 @@ function renderBreakdown(r) {
   // Embedded fallback seed (Daniel / Steer GP sold, OLDEST -> NEWEST), so the
   // dashboard calculates correctly even before the encrypted data carries it.
   // Overridden by __hydrate from employees[].seedFortnights when present.
-  let SEED_GP = [6259.0, 7450.27, 6250.0, 7845.0, 12299.82, 5965.0, 8067.7, 14344.14, 8220.0, 2815.0, 0.0, 5499.0, 2615.0, 2390.0, 0.0, 11345.0, 14198.77, 11746.63, 8257.5, 8794.7, 0.0, 6757.81, 3735.0, 7625.75, 850.0, 5615.0];
+  let SEED_GP = [];
 
   // SEEDED PER-BAND RELEASE: pay marginal fortnight-scale bands on this fortnight's GP,
   // but unlock each band above the floor only once the rep's trailing-12m position has
