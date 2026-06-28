@@ -1837,7 +1837,7 @@ function renderEmployees() {
       <td>${moneyInputHtml(`employees.${i}.baseSalary`)}</td>
       <td><div class="read-only-cell" data-super="${i}">${fmtMoney(superIncl)}</div></td>
       <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
-      <td>${e.placeholder ? '<span class="pill warn">placeholder</span>' : '<span class="pill">active</span>'}</td>
+      <td><select data-i="${i}" data-f="placeholderStatus" title="Active reps appear in the pay run; placeholders are empty/future seats and are skipped" style="font-size:12px; padding:4px 6px;"><option value="active"${e.placeholder ? '' : ' selected'}>active</option><option value="placeholder"${e.placeholder ? ' selected' : ''}>placeholder</option></select></td>
       <td>
         <a href="${e.dashboardFile}" target="_blank" class="btn small" style="text-decoration: none; display: inline-block; padding: 6px 10px; background: var(--navy); color: #fff; border: 1px solid var(--navy); border-radius: 6px; font-size: 12px; font-weight: 500;" title="Open ${e.name}'s dashboard in a new tab">Dashboard ↗</a>
       </td>
@@ -1868,6 +1868,7 @@ function onEmpEdit(ev) {
   if (el.dataset.moneyPath) return;
   const i = +el.dataset.i, f = el.dataset.f;
   if (isNaN(i) || !f) return;
+  if (f === 'placeholderStatus') { data.employees[i].placeholder = (el.value === 'placeholder'); setDirty(); return; }
   data.employees[i][f] = el.value;
   setDirty();
 }
@@ -2954,6 +2955,20 @@ $('#gh-disconnect-btn').addEventListener('click', () => {
   showToast('success', 'GitHub token cleared from this browser.');
 });
 
+// Fetch + decrypt the LATEST committed master from GitHub (via API, immediate — not
+// Pages-cached). Used by saveToGitHub to preserve pay-run data so a Save from this
+// page can never overwrite fortnightly/quarterly entries made in the Admin Payroll page.
+async function _fetchLatestMasterData(s, master) {
+  const baseUrl = `https://api.github.com/repos/${s.repo}`;
+  const headers = { Authorization: `Bearer ${s.pat}`, Accept: 'application/vnd.github+json' };
+  const path = `${encodeURIComponent('GitHub files')}/encrypted/master.enc.json`;
+  const res = await fetch(`${baseUrl}/contents/${path}?ref=${s.branch}&_=${Date.now()}`, { headers, cache: 'no-store' });
+  if (!res.ok) throw new Error(`fetch latest master HTTP ${res.status}`);
+  const meta = await res.json();
+  const encFile = JSON.parse(atob((meta.content || '').replace(/\s/g, '')));
+  return await decryptMasterFile(encFile, master);
+}
+
 async function saveToGitHub() {
   const s = getGhSettings();
   if (!s || !s.pat) {
@@ -2983,6 +2998,27 @@ async function saveToGitHub() {
     if (!pins || Object.keys(pins).length === 0) {
       throw new Error('No PINs found in master file. Run build-encrypted.py once locally to bootstrap PINs.');
     }
+    // MERGE-PRESERVE pay-run data: re-fetch the latest committed master and carry each
+    // rep's pay-entry fields (fortnightly pay runs + quarterly/monthly actualPayouts —
+    // the Admin Payroll page's domain) into what we're about to save. This guarantees a
+    // Save from THIS page can never wipe pay runs, even if this tab is stale. Additive +
+    // guarded: if the re-fetch fails, we fall back to the previous behaviour with a warning.
+    try {
+      btn.textContent = 'Checking latest pay runs…';
+      const fresh = await _fetchLatestMasterData(s, master);
+      if (fresh && Array.isArray(fresh.employees)) {
+        const fById = {};
+        fresh.employees.forEach(e => { if (e && e.id) fById[e.id] = e; });
+        (data.employees || []).forEach(e => {
+          const f = fById[e.id];
+          if (!f) return;
+          ['fortnightly', 'actualPayouts'].forEach(k => { if (f[k] !== undefined) e[k] = f[k]; });
+        });
+      }
+    } catch (preErr) {
+      showToast('saving', 'Couldn’t re-verify latest pay runs — saving current state; please check pay runs after. Encrypting…', 0);
+    }
+
     // Strip the pins from the in-memory data before re-encrypting per-employee files
     // (encryptMasterFile re-adds them for the master)
     const fullData = JSON.parse(JSON.stringify(data));
