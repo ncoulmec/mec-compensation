@@ -3707,7 +3707,7 @@ const SNAP_CHIPS = {
   nic:    [{ label: '↺ Last 365', gp: 340100 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 600000 }],
   dane:   [{ label: '↺ Last 365', gp: 393300 }, { label: '→ Target', gp: 400000, target: true }, { label: '↑ Stretch', gp: 600000 }],
   evie:   [{ label: '↺ Last 365', gp: 187900 }, { label: '→ Target', gp: 250000, target: true }, { label: '↑ Stretch', gp: 325000 }],
-  leanne:  [{ label: '↺ Last 365', gp: 94000  }, { label: '→ Target', gp: 150000, target: true }, { label: '↑ Stretch', gp: 200000 }]
+  evie2:  [{ label: '↺ Last 365', gp: 94000  }, { label: '→ Target', gp: 150000, target: true }, { label: '↑ Stretch', gp: 200000 }]
 };
 
 // Shared funnel state — single source of truth used by BOTH the floater AND the Sales Planning tab.
@@ -3716,7 +3716,7 @@ const FUNNEL_DEFAULTS = {
   nic:    { quoted: 959,  conv: 38, confirmed: 369, avg: 922,  totalGP: 340100, margin: 35, revenue: 971714  },
   dane:   { quoted: 1000, conv: 45, confirmed: 446, avg: 882,  totalGP: 393300, margin: 35, revenue: 1123714 },
   evie:   { quoted: 540,  conv: 43, confirmed: 234, avg: 803,  totalGP: 187900, margin: 35, revenue: 536857  },
-  leanne:  { quoted: 270,  conv: 43, confirmed: 117, avg: 803,  totalGP: 94000,  margin: 35, revenue: 268571  }
+  evie2:  { quoted: 270,  conv: 43, confirmed: 117, avg: 803,  totalGP: 94000,  margin: 35, revenue: 268571  }
 };
 const funnelDefaults = FUNNEL_DEFAULTS[EMPLOYEE_ID] || FUNNEL_DEFAULTS.daniel;
 const funnelState = { ...funnelDefaults };
@@ -3861,7 +3861,7 @@ function wireFloater() {
     evS.value = scenario.eventGP;
   }
   // Adjust Quoted/Confirmed maxes for Evie
-  const isEvie = EMPLOYEE_ID === 'evie' || EMPLOYEE_ID === 'leanne';
+  const isEvie = EMPLOYEE_ID === 'evie' || EMPLOYEE_ID === 'evie2';
   const qR = document.getElementById('gpf-quoted-r'); if (qR) qR.max = isEvie ? 800 : 1500;
   const cR = document.getElementById('gpf-conf-r');   if (cR) cR.max = isEvie ? 400 : 700;
 
@@ -4031,7 +4031,7 @@ function wireSalesPlanning() {
   const aS = document.getElementById('sp-avg-slider'), aI = document.getElementById('sp-avg-input');
   const tS = document.getElementById('sp-totalgp-slider'), tI = document.getElementById('sp-totalgp-input');
   if (!qS) return;
-  const isEvie = EMPLOYEE_ID === 'evie' || EMPLOYEE_ID === 'leanne';
+  const isEvie = EMPLOYEE_ID === 'evie' || EMPLOYEE_ID === 'evie2';
   qS.max = isEvie ? 800 : 1500;
   fS.max = isEvie ? 400 : 700;
   aS.max = 2000; aS.step = 25;
@@ -4497,8 +4497,8 @@ function renderBreakdown(r) {
   // OVERWRITES this array on every load. This is a generic stand-in for the split-second
   // before data loads. NEVER read a rep's real bands from here.
   // Rep -> planType (look up the bands in data.json under this plan):
-  //   dane = gp_bands_senior  |  daniel, nic, aimee = gp_bands
-  //   evie = hybrid_gp  |  leanne = hybrid_gp_intended
+  //   dane = gp_bands_senior  |  daniel, nic, sales4 (Aimee) = gp_bands
+  //   evie = hybrid_gp  |  evie2 (Leanne) = hybrid_gp_intended
   // To CHANGE commission, edit data.json planTypes — NOT this array.
   let BANDS = [
     [0, 0.04],

@@ -4213,11 +4213,15 @@ function renderBreakdown(r) {
   // once the dashboard unlocks, __hydrateFortnightlyFromData replaces these with the
   // rep's actual bands from data.planTypes so they can never drift out of sync.
   // Each band slice: [thresholdStart, marginalRate]
-    // ===== ⚠ FALLBACK ONLY — NOT THE SOURCE OF TRUTH =====
-  // Live comp bands come from data.json -> planTypes['gp_bands'].bands and are
-  // loaded at runtime via window.__hydrateFortnightlyFromData (BANDS = planRec.bands).
-  // To CHANGE commission, edit data.json, NOT this array. This block is only a
-  // no-data-load safety net. Mirrored from data.json on 2026-06-26.
+    // ===== ⚠ FALLBACK PLACEHOLDER — *** NOT ANY REP'S REAL BANDS *** =====
+  // The authoritative bands live ONLY in data.json -> planTypes[<plan>].bands and are
+  // loaded at runtime by __hydrateFortnightlyFromData (BANDS = planRec.bands), which
+  // OVERWRITES this array on every load. This is a generic stand-in for the split-second
+  // before data loads. NEVER read a rep's real bands from here.
+  // Rep -> planType (look up the bands in data.json under this plan):
+  //   dane = gp_bands_senior  |  daniel, nic, sales4 (Aimee) = gp_bands
+  //   evie = hybrid_gp  |  evie2 (Leanne) = hybrid_gp_intended
+  // To CHANGE commission, edit data.json planTypes — NOT this array.
   let BANDS = [
     [0, 0.04],
     [100000, 0.04],
@@ -6142,7 +6146,7 @@ function renderTeamPool() {
   function nextB(p,B){for(var i=0;i<B.length;i++)if(B[i][0]>p)return B[i];return null;}
   function annC(g,B){var t=0;for(var i=0;i<B.length;i++){var nx=(i+1<B.length)?B[i+1][0]:Infinity;if(g>B[i][0])t+=(Math.min(g,nx)-B[i][0])*B[i][1];}return t;}
   function decomp(gp,B){var o=[];for(var i=0;i<B.length;i++){var lo=B[i][0]/26,hi=(i+1<B.length)?B[i+1][0]/26:Infinity;if(gp<=lo)break;o.push({lo:lo,hi:hi,rate:B[i][1],amt:Math.min(gp,hi)-lo});}return o;}
-  function ladder(pos,B,tip){var segs=[[0,300000,.04],[300000,400000,.09],[400000,450000,.12],[450000,500000,.13],[500000,550000,.14],[550000,650000,.16]];var h='';segs.forEach(function(s){var w=(s[1]-s[0])/650000*100;var cls=(pos>=s[0]&&pos<s[1])?'cur':(pos>=s[1]?'on':'');h+='<div class="pm-seg '+cls+'" style="width:'+w+'%">'+pc(s[2])+'</div>';});var mk=Math.min(pos/650000*100,100);return '<div class="pm-ladhover"><div class="pm-ladder">'+h+'<div class="pm-mark" style="left:'+mk+'%"></div></div><div class="pm-scalex"><span>$0</span><span>$300k</span><span>$650k</span></div>'+(tip?'<div class="pm-ladtip">'+tip+'</div>':'')+'</div>';}
+  function ladder(pos,B,tip){if(!B||!B.length)B=[[0,0.04]];var lastThr=B[B.length-1][0],scaleMax=lastThr+100000,segs=[];for(var qi=0;qi<B.length;qi++){var rate=B[qi][1],start=B[qi][0],qj=qi+1;while(qj<B.length&&B[qj][1]===rate)qj++;segs.push([start,(qj<B.length)?B[qj][0]:scaleMax,rate]);qi=qj-1;}var h='';segs.forEach(function(s){var w=(s[1]-s[0])/scaleMax*100;var cls=(pos>=s[0]&&pos<s[1])?'cur':(pos>=s[1]?'on':'');h+='<div class="pm-seg '+cls+'" style="width:'+w+'%">'+pc(s[2])+'</div>';});var mk=Math.min(pos/scaleMax*100,100),mid=Math.round(scaleMax/2/50000)*50000;return '<div class="pm-ladhover"><div class="pm-ladder">'+h+'<div class="pm-mark" style="left:'+mk+'%"></div></div><div class="pm-scalex"><span>$0</span><span>$'+Math.round(mid/1000)+'k</span><span>$'+Math.round(scaleMax/1000)+'k</span></div>'+(tip?'<div class="pm-ladtip">'+tip+'</div>':'')+'</div>';}
   function build(r,B){
     var M=marg(r.pace||0,B),gpBand=r.properPay||0,prod=r.prodComm||0,total=gpBand+prod,bank=total/(1+PMs()),sup=total-bank;
     var gp=r.gp||0,eventGp=r.eventGp||0,pos=r.pace||0,cur=marg(pos,B),nb=nextB(pos,B),h='';

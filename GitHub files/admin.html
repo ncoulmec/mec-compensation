@@ -2225,7 +2225,7 @@ function renderFortnightlyAdmin() {
   _fnpInitialised = true;
 
   // Sales reps included in the grid. Pull from employees, filtered to sales plans.
-  const SALES_PLAN_IDS = ['gp_bands', 'gp_bands_senior', 'hybrid_gp'];
+  const SALES_PLAN_IDS = ['gp_bands', 'gp_bands_senior', 'hybrid_gp', 'hybrid_gp_intended'];
   // Smart short name: if the full name (or id) contains a "2.0" marker, keep it
   // so we don't get two "Evie" columns. Otherwise first word only.
   function shortName(full, id) {
@@ -2243,6 +2243,9 @@ function renderFortnightlyAdmin() {
       ? plan.bands.map(b => [Number(b.threshold) || 0, Number(b.rate) || 0]).sort((a, b) => a[0] - b[0])
       : [[0, 0]];
     const prodRate = typeof plan.productionPct === 'number' ? plan.productionPct : 0.01;
+    const seed = Array.isArray(e.seedFortnights)
+      ? e.seedFortnights.map(s => (s && typeof s === 'object') ? (Number(s.gpSold) || 0) : (Number(s) || 0))
+      : [];
     return {
       id: e.id,
       name: shortName(e.name, e.id),
@@ -2250,7 +2253,8 @@ function renderFortnightlyAdmin() {
       planType: e.planType,
       dashboardFile: e.dashboardFile || '',
       bands,
-      prodRate
+      prodRate,
+      seed
     };
   });
   if (reps.length === 0) { document.getElementById('fnp-tbody').innerHTML = '<tr><td>No sales reps found.</td></tr>'; return; }
@@ -2427,30 +2431,64 @@ function renderFortnightlyAdmin() {
     const rep = repById[repId];
     const bands = rep ? rep.bands : [[0, 0]];
     const prodRate = rep ? rep.prodRate : PROD_RATE;
-    let ytd = 0, cumPay = 0, cumProd = 0, cumEv = 0;
+    // NEW MODEL — matches the rep dashboards + the Zoho comp_my_numbers function:
+    // trailing-12m position (26-fortnight GP-sold seed rolling off as real GP received
+    // comes in) sets the proven marginal band; each fortnight pays its fortnight-scale
+    // bands CAPPED at that marginal rate (premium above it is HELD); when the trailing
+    // position falls below a band threshold whose step-premium was paid, a band-close
+    // True-Up recovers it from this & future fortnights (never base).
+    const SEED = Array.isArray(rep && rep.seed) ? rep.seed : [];
+    const seedTotal = SEED.reduce((a, b) => a + b, 0);
+    let ytd = 0, cumPay = 0, cumProd = 0, cumEv = 0, clawBal = 0, seedDropped = 0;
+    const stepPaid = {};
     const rows = [];
     for (let i = 0; i < FORTNIGHTS.length; i++) {
       const g = gp[i] || 0;
       const e = ev[i] || 0;
       const prevYtd = ytd;
       ytd = prevYtd + g;
-      // PACE + ROLLING TRUE-UP + FLOOR-AT-$0 (replaces cumulative annual marginal).
-      // cumPay monotonic; trueUpBalance ≥ 0 = cash owed back relative to current pace.
       const n = i + 1;
-      const pace = n > 0 ? ytd * 26 / n : 0;
-      const entitlement = pace > 0 ? cumBandComm(pace, bands) * n / 26 : 0;
-      const rawDelta = entitlement - cumPay;
-      const properPay = Math.max(0, rawDelta);
-      const endRate = marginalRate(pace, bands);
-      const startRate = endRate;
-      const naivePay = properPay;
-      const tuAdj = 0;
+      // trailing position = remaining seed (drop n oldest) + GP received to date
+      if ((n - 1) < SEED.length) seedDropped += SEED[n - 1];
+      const position = (seedTotal - seedDropped) + ytd;
+      const M = marginalRate(position, bands);
+      // cap-at-marginal fortnight pay + held premium
+      let grossPay = 0, held = 0; const steps = {};
+      if (g > 0) {
+        for (let k = 0; k < bands.length; k++) {
+          const lo = bands[k][0] / 26;
+          const hi = (k + 1 < bands.length) ? bands[k + 1][0] / 26 : Infinity;
+          if (g <= lo) break;
+          const amt = Math.min(g, hi) - lo;
+          grossPay += amt * Math.min(bands[k][1], M);
+          if (bands[k][1] > M) held += amt * (bands[k][1] - M);
+        }
+        for (let k = 1; k < bands.length; k++) {
+          const T = bands[k][0], sr = bands[k][1] - bands[k - 1][1];
+          if (sr > 0 && position >= T) steps[T] = Math.max(0, g - T / 26) * sr;
+        }
+      }
+      // band-close True-Up: close any paid step whose threshold the position dropped below
+      for (let k = 1; k < bands.length; k++) {
+        const T = bands[k][0];
+        if ((bands[k][1] - bands[k - 1][1]) > 0 && position < T && (stepPaid[T] || 0) > 0) {
+          clawBal += stepPaid[T]; stepPaid[T] = 0;
+        }
+      }
+      const trueUpApplied = clawBal > 0 ? Math.min(clawBal, grossPay) : 0;
+      const properPay = grossPay - trueUpApplied;
+      clawBal -= trueUpApplied;
+      for (const t in steps) { if (steps[t] > 0) stepPaid[t] = (stepPaid[t] || 0) + steps[t]; }
+      const endRate = M;
+      const startRate = M;
+      const naivePay = grossPay + held;          // full fortnight-band earn (all bands released)
+      const tuAdj = trueUpApplied;
       const prodComm = e * prodRate;
       cumPay += properPay;
-      const trueUpBalance = cumPay - entitlement;
+      const trueUpBalance = clawBal;              // running True-Up balance owed back
       cumProd += prodComm;
       cumEv += e;
-      rows.push({ idx: i, gp: g, eventGp: e, ytd, prevYtd, properPay, naivePay, tuAdj, endRate, startRate, pace, entitlement, trueUpBalance, prodComm, cumPay, cumProd, cumEv, cumTotal: cumPay + cumProd, crossed: false });
+      rows.push({ idx: i, gp: g, eventGp: e, ytd, prevYtd, properPay, naivePay, tuAdj, held, endRate, startRate, pace: position, entitlement: naivePay, trueUpBalance, prodComm, cumPay, cumProd, cumEv, cumTotal: cumPay + cumProd, crossed: Math.abs(tuAdj) > 0.5 });
     }
     return rows;
   }
