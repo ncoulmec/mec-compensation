@@ -1657,7 +1657,7 @@ async function _devLoadDashboard() {
    Planning + Actual split, no margin multiplier, super-inclusive everywhere.
    ============================================================ */
 
-const EMPLOYEE_ID = 'nic';
+const EMPLOYEE_ID = 'sales4';
 
 // =========================================================================
 // PIN GATE + DECRYPTION (v40)
@@ -4239,7 +4239,7 @@ function renderBreakdown(r) {
   // Embedded fallback seed (Daniel / Steer GP sold, OLDEST -> NEWEST), so the
   // dashboard calculates correctly even before the encrypted data carries it.
   // Overridden by __hydrate from employees[].seedFortnights when present.
-  let SEED_GP = [9979.45, 18025.5, 2856.0, 8185.88, 8885.0, 7680.0, 22975.02, 9526.0, 14761.15, 7092.0, 17685.32, 23134.78, 9694.32, 17273.86, 15800.0, 3834.55, 7957.5, 20337.5, 20642.5, 18733.18, 9180.0, 11931.14, 17935.0, 24603.73, 15493.5, 30120.0];
+  let SEED_GP = [];
 
   // SEEDED PER-BAND RELEASE: pay marginal fortnight-scale bands on this fortnight's GP,
   // but unlock each band above the floor only once the rep's trailing-12m position has

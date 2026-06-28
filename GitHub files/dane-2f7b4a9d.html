@@ -2292,6 +2292,8 @@ function wireInputs() {
   const mGpSlider = document.getElementById('margin-gp-slider');
   const mGpInput = document.getElementById('margin-gp-input');
   if (mRevSlider && mRevInput && mGpSlider && mGpInput) {
+    // Hybrid (Evie) gets half the range; full Sales (Daniel/Nic/Dane) gets full range
+    // Linked to the GP slider's absolute max from realisticRange schema.
     if (emp.realisticRange) {
       const gpAbsMax = emp.realisticRange.absoluteMax || 600000;
       mGpSlider.max = gpAbsMax;
@@ -3806,34 +3808,19 @@ function renderOTECard() {
   const card = document.createElement('div');
   card.className = 'card';
   card.id = 'ote-card';
-  card.style.cssText = 'border-left: 4px solid var(--navy); margin-bottom: 14px; padding: 14px 18px;';
+  card.style.cssText = 'border-left: 4px solid var(--navy); margin-bottom: 14px; padding: 9px 16px;';
   card.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-      <div>
-        <h2 style="margin: 0 0 2px; font-size: 16px;">Your On-Target Earnings</h2>
-        <p style="font-size: 11px; color: var(--muted); margin: 0; font-family: var(--mono);">All figures super-inclusive · Variable updates live with GP slider</p>
-      </div>
-      ${snapTo ? `<button id="ote-snap-btn" style="background: var(--navy); color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k GP)</button>` : ''}
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:13px;">
+      <span style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700;">On-Target Earnings</span>
+      <span style="font-family:var(--mono); font-weight:700; color:var(--navy);"><span id="ote-total-live">—</span></span>
+      <span style="font-family:var(--mono); color:var(--muted);">OTE</span>
+      <span style="color:#d3d1c7;">·</span>
+      <span style="font-family:var(--mono); color:var(--muted);">base ${fmtMoney(ote.baseInclSuper)} + variable <b id="ote-variable-live" style="color:var(--navy);">—</b> <span id="ote-variable-sub" style="color:var(--faint);">at —</span></span>
+      ${snapTo ? `<button id="ote-snap-btn" style="background: var(--navy); color: #fff; border: none; border-radius: 6px; padding: 5px 11px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--mono);">↑ Set to Target ($${(snapTo/1000).toFixed(0)}k GP)</button>` : ''}
+      <a onclick="var b=document.querySelector('[data-tab=planning]'); if(b){b.click();} return false;" style="margin-left:auto; font-size:12px; color:var(--navy); cursor:pointer; font-weight:600; white-space:nowrap;">View planning →</a>
     </div>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
-      <div style="padding: 10px 14px; background: #fff; border: 1px solid #ecebe5; border-radius: 6px;">
-        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Base</div>
-        <div style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--ink); margin-top: 2px;">${fmtMoney(ote.baseInclSuper)}</div>
-        <div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">${fmtMoney(ote.baseSalary)} + ${fmtMoney(ote.baseSuperOnBase)} super</div>
-      </div>
-      <div style="padding: 10px 14px; background: #fff; border: 1px solid #ecebe5; border-radius: 6px;">
-        <div style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Variable @ Current GP</div>
-        <div id="ote-variable-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--navy); margin-top: 2px;">—</div>
-        <div id="ote-variable-sub" style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">at —</div>
-      </div>
-      <div style="padding: 10px 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-radius: 6px;">
-        <div style="font-size: 10px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">OTE Total</div>
-        <div id="ote-total-live" style="font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--navy); margin-top: 2px;">—</div>
-        <div style="font-size: 10px; color: var(--muted); margin-top: 2px; font-family: var(--mono);">pre-tax annual package</div>
-      </div>
-    </div>
-    <details style="margin-top: 10px;">
-      <summary style="cursor: pointer; font-size: 11px; color: var(--muted); padding: 4px 0; font-family: var(--mono); user-select: none;">Pay mix philosophy — why the plan is moving toward more variable</summary>
+    <details style="margin-top: 7px;">
+      <summary style="cursor: pointer; font-size: 11px; color: var(--muted); padding: 2px 0; font-family: var(--mono); user-select: none;">Pay mix philosophy — why the plan is moving toward more variable</summary>
       <div style="font-size: 12px; color: var(--muted); padding: 10px 14px; background: #fafaf7; border-radius: 6px; line-height: 1.6; margin-top: 6px;">
         Historically most MEC roles sat at roughly <strong>${philosophy?.legacyMix || '85:15'}</strong> or even <strong>${philosophy?.legacyMixOlder || '90:10'}</strong> base-to-variable — comfortable, predictable, but with limited upside. The plan you're looking at nudges us toward <strong>${philosophy?.futureGoal || '75:25'}</strong> over the next few years — gradually putting more of your earnings inside your control. Not a flip-of-the-switch change, more a steady walk in that direction. Bigger ceiling, more reward for stretching.
       </div>
@@ -4222,18 +4209,60 @@ function renderBreakdown(r) {
     if (t.getAttribute('data-tip')) hideTip();
   }, true);
 
-  // Bands match the current sales-rep plan (gp_bands).
+  // Bands match the current sales-rep plan (gp_bands). Used as a fallback only —
+  // once the dashboard unlocks, __hydrateFortnightlyFromData replaces these with the
+  // rep's actual bands from data.planTypes so they can never drift out of sync.
   // Each band slice: [thresholdStart, marginalRate]
+    // ===== ⚠ FALLBACK PLACEHOLDER — *** NOT ANY REP'S REAL BANDS *** =====
+  // The authoritative bands live ONLY in data.json -> planTypes[<plan>].bands and are
+  // loaded at runtime by __hydrateFortnightlyFromData (BANDS = planRec.bands), which
+  // OVERWRITES this array on every load. This is a generic stand-in for the split-second
+  // before data loads. NEVER read a rep's real bands from here.
+  // Rep -> planType (look up the bands in data.json under this plan):
+  //   dane = gp_bands_senior  |  daniel, nic, sales4 (Aimee) = gp_bands
+  //   evie = hybrid_gp  |  evie2 (Leanne) = hybrid_gp_intended
+  // To CHANGE commission, edit data.json planTypes — NOT this array.
   let BANDS = [
-    [0,       0.04],
-    [100000,  0.04],
-    [200000,  0.04],
-    [300000,  0.09],
-    [400000,  0.12],
-    [450000,  0.13],
-    [500000,  0.14],
-    [550000,  0.16]
+    [0, 0.04],
+    [100000, 0.04],
+    [200000, 0.04],
+    [300000, 0.09],
+    [400000, 0.12],
+    [450000, 0.13],
+    [500000, 0.14],
+    [550000, 0.16]
   ];
+
+  // Trailing 26-fortnight seed (GP sold per fortnight, OLDEST -> NEWEST), set by
+  // __hydrateFortnightlyFromData from data.json employees[].seedFortnights. Used to
+  // decide which higher bands a rep has genuinely reached (the release gate).
+  // Embedded fallback seed (Daniel / Steer GP sold, OLDEST -> NEWEST), so the
+  // dashboard calculates correctly even before the encrypted data carries it.
+  // Overridden by __hydrate from employees[].seedFortnights when present.
+  let SEED_GP = [15972.09, 21998.45, 5671.64, 22622.27, 16743.25, 12145.0, 16680.23, 10780.44, 11975.72, 22652.73, 18785.76, 8116.82, 22793.8, 17878.2, 11281.86, 2648.19, 17935.0, 23089.5, 21391.69, 23119.09, 6784.77, 17577.41, 15957.0, 22578.0, 14879.4, 20593.18];
+
+  // SEEDED PER-BAND RELEASE: pay marginal fortnight-scale bands on this fortnight's GP,
+  // but unlock each band above the floor only once the rep's trailing-12m position has
+  // actually reached that band's ANNUAL threshold. No pace, no carry-forward bank.
+  function seededFortnightPay(gp, position, bnds) {
+    if (gp <= 0 || !bnds || !bnds.length) return { pay: 0, held: 0, steps: {} };
+    const M = marginalRate(position);   // pay is CAPPED at the rep's proven marginal band
+    let pay = 0, held = 0; const steps = {};
+    for (let k = 0; k < bnds.length; k++) {
+      const lo = bnds[k][0] / 26;
+      const hi = (k + 1 < bnds.length) ? bnds[k + 1][0] / 26 : Infinity;
+      if (gp <= lo) break;
+      const amt = Math.min(gp, hi) - lo;
+      const rate = Math.min(bnds[k][1], M);
+      pay += amt * rate;
+      if (bnds[k][1] > M) held += amt * (bnds[k][1] - M);   // premium to higher (unproven) bands waits
+    }
+    for (let k = 1; k < bnds.length; k++) {                 // step premiums earned this fn, for the True-Up
+      const T = bnds[k][0], sr = bnds[k][1] - bnds[k - 1][1];
+      if (sr > 0 && position >= T) steps[T] = Math.max(0, gp - T / 26) * sr;
+    }
+    return { pay: pay, held: held, steps: steps };
+  }
 
   // Cumulative band commission up to a given YTD GP
   function cumBandComm(ytd) {
@@ -4412,14 +4441,14 @@ function renderBreakdown(r) {
       const loLabel = fmtThreshK(r.lo);
       const hiLabel = (i+1 < BANDS.length) ? fmtThreshK(BANDS[i+1][0] / 26) : '∞';
       html += ladderRowHtml(loLabel, hiLabel, r.rate, fillPct, r.color, r.isCurrent,
-        '$' + Math.round(r.contrib).toLocaleString(),
+        _fmt2dp(r.contrib),
         r.isCurrent ? '#fff' : '#cfcfcf',
         r.isCurrent ? '700' : '500');
     });
     html += `<div style="display:grid; grid-template-columns: 112px 1fr 76px; gap:7px; margin-top:7px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.18); font-size:10px;">
       <div></div>
       <div style="text-align:right; color:#fff; font-weight:600;">Earn at fortnight bands:</div>
-      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">$${Math.round(d.total).toLocaleString()}</div>
+      <div style="text-align:right; font-family:monospace; color:#fff; font-weight:700;">${_fmt2dp(d.total)}</div>
     </div>
     <div style="margin-top:6px; font-size:9px; color:#aaa; text-align:right;">Per-fortnight bands = annual bands ÷ 26.</div></div>`;
     return html;
@@ -4484,6 +4513,13 @@ function renderBreakdown(r) {
     const wouldEarnTotal = wouldEarnGp + thisFnProdPay;   // production is unaffected by pace
     // Pace adjustment for the GP-band portion only (production isn't paced).
     const paceAdjust = wouldEarnGp - thisFnGpPay;  // >0 = held back to balance; <0 = released catch-up
+    const _heldOnly = r.held || 0;          // band reached this fn but not yet unlocked by trailing (waits)
+    const _trueUp = r.trueUpApplied || 0;   // True-Up recovery: prior overpay recovered from this fortnight
+    // The band whose uplift is being held = the first ANNUAL step the trailing position hasn't reached.
+    const _nextBand = BANDS.find(b => b[0] > annualised);
+    const _nextThr = _nextBand ? _nextBand[0] : null;
+    const _nextRatePct = _nextBand ? +(_nextBand[1] * 100).toFixed(0) : null;
+    const _nextFnThr = _nextThr ? _nextThr / 26 : null;
     const SR = (typeof SUPER_RATE !== 'undefined') ? SUPER_RATE : 0.12;
     const sup = 1 + SR;
     const bonusEx = thisFnTotal / sup;
@@ -4493,8 +4529,8 @@ function renderBreakdown(r) {
     const fnHeader = `<div style="background:#1e6624; color:#fff; padding:6px 11px; border-radius:5px; font-size:11px; font-weight:700; margin:0 0 9px; letter-spacing:.04em;">━━ THIS FORTNIGHT · ${esc(r.paid).toUpperCase()} ━━</div>`;
 
     const fnInputs = `<div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45; margin-bottom:6px;">
-      <div style="color:#cfcfcf;">GP received:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.gp)}</code></div>
-      <div style="color:#cfcfcf;">Event GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(eventGp)}</code></div>
+      <div style="color:#cfcfcf;">GP received:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt2dp(r.gp)}</code></div>
+      <div style="color:#cfcfcf;">Event GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt2dp(eventGp)}</code></div>
     </div>`;
 
     const fnLadder = r.gp > 0
@@ -4507,12 +4543,14 @@ function renderBreakdown(r) {
       // Held back due to true-up (pace says you're ahead of cumulative entitlement)
       reconcile = `<div style="margin-top:9px; padding:10px 12px; background:rgba(255,255,255,0.05); border-radius:5px;">
         <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:4px; font-size:11px; line-height:1.45;">
-          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(wouldEarnGp).toLocaleString()}</code></div>
-          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
-          <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px; margin-top:2px;">= ${fmtThreshK(wouldEarnTotal)} you would have been paid this fortnight</div>
-          <div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Held in your pace bank (releases later):</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−$${Math.round(paceAdjust).toLocaleString()}</code></div>
-          <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">Banked, not lost — this fortnight nudged into the 9% band, but 9% only unlocks once your whole-year pace passes the band line. It's held against your true pace and releases automatically as your pace climbs.</div>
-          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
+          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>${_fmt2dp(wouldEarnGp)}</code></div>
+          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>${_fmt2dp(thisFnProdPay)}</code></div>
+          <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px; margin-top:2px;">= ${_fmt2dp(wouldEarnTotal)} you would have been paid this fortnight</div>
+          ${_heldOnly > 0.5 ? `<div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− Held — next band not yet reached by your 12-month GP:</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−${_fmt2dp(_heldOnly)}</code></div>
+          <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">This ${_fmt2dp(_heldOnly)} is the ${_nextRatePct}% rate on the slice of this fortnight above ${_fmt2dp(_nextFnThr)}. The ${_nextRatePct}% band only unlocks once your rolling 12-month GP reaches ${_fmt2dp(_nextThr)} — you're currently at ${_fmt2dp(annualised)}. It waits there until your 12-month GP gets there; nothing already paid is recovered.</div>` : ''}
+          ${_trueUp > 0.5 ? `<div style="color:#ffb88c; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">− True-Up recovery (earlier overpay):</div><div style="font-family:monospace; text-align:right; color:#ffb88c; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>−${_fmt2dp(_trueUp)}</code></div>
+          <div style="font-size:10px; color:#ffd29b; grid-column:1/-1; padding-left:10px;">Your rolling 12-month GP fell back below a band you'd been paid at, so commission earned at that higher rate is being recovered now. ${r.trueUpBalance > 0.5 ? `${_fmt2dp(r.trueUpBalance)} still to recover from coming fortnights.` : `Balance now cleared.`}</div>` : ''}
+          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>${_fmt2dp(thisFnTotal)}</code></div>
           <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
           <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
         </div>
@@ -4522,11 +4560,11 @@ function renderBreakdown(r) {
       const release = -paceAdjust;
       reconcile = `<div style="margin-top:9px; padding:10px 12px; background:rgba(255,255,255,0.05); border-radius:5px;">
         <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:4px; font-size:11px; line-height:1.45;">
-          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(wouldEarnGp).toLocaleString()}</code></div>
-          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production:</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
-          <div style="color:#9eddb5; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">+ Pace catch-up release:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>+$${Math.round(release).toLocaleString()}</code></div>
+          <div style="color:#9eddb5;">Earn this fortnight at fortnight bands:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>${_fmt2dp(wouldEarnGp)}</code></div>
+          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production:</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>${_fmt2dp(thisFnProdPay)}</code></div>
+          <div style="color:#9eddb5; font-weight:600; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);">+ Pace catch-up release:</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px dashed rgba(255,255,255,0.18);"><code>+${_fmt2dp(release)}</code></div>
           <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">Releasing prior held-back amount because pace has caught up.</div>
-          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
+          <div style="color:#fff; font-weight:700; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.22);"><code>${_fmt2dp(thisFnTotal)}</code></div>
           <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
           <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
         </div>
@@ -4535,9 +4573,9 @@ function renderBreakdown(r) {
       // Steady state (or no GP): no adjustment, simple totals
       reconcile = `<div style="margin-top:9px; padding:10px 12px; background:rgba(255,255,255,0.05); border-radius:5px;">
         <div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:4px; font-size:11px; line-height:1.45;">
-          <div style="color:#9eddb5;">GP band commission (inc super):</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>$${Math.round(thisFnGpPay).toLocaleString()}</code></div>
-          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>$${Math.round(thisFnProdPay).toLocaleString()}</code></div>
-          <div style="color:#fff; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);"><code>$${Math.round(thisFnTotal).toLocaleString()}</code></div>
+          <div style="color:#9eddb5;">GP band commission (inc super):</div><div style="font-family:monospace; text-align:right; color:#9eddb5; font-weight:700;"><code>${_fmt2dp(thisFnGpPay)}</code></div>
+          <div style="color:#cfcfcf;"><span style="padding-left:10px;">+ Event production (1% × Event GP):</span></div><div style="font-family:monospace; text-align:right; color:#cfcfcf;"><code>${_fmt2dp(thisFnProdPay)}</code></div>
+          <div style="color:#fff; font-weight:700; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);">= Net this pay (inc super):</div><div style="font-family:monospace; text-align:right; color:#fff; font-weight:800; margin-top:5px; padding-top:5px; border-top:1px solid rgba(255,255,255,0.22);"><code>${_fmt2dp(thisFnTotal)}</code></div>
           <div style="color:#1e9c4b; padding-left:10px; font-size:10px;">→ Bonus (ex super, → Xero):</div><div style="font-family:monospace; text-align:right; color:#1e9c4b; font-size:10px;"><code>$${(+bonusEx).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
           <div style="color:#7eb3d8; padding-left:10px; font-size:10px;">→ Super (12%):</div><div style="font-family:monospace; text-align:right; color:#7eb3d8; font-size:10px;"><code>$${(+superAmt).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</code></div>
         </div>
@@ -4552,22 +4590,22 @@ function renderBreakdown(r) {
     const yrHeader = `<div style="background:#2b4d75; color:#fff; padding:6px 11px; border-radius:5px; font-size:11px; font-weight:700; margin:14px 0 9px; letter-spacing:.04em;">━━ WHY THIS RATE? · FULL-YEAR CONTEXT ━━</div>`;
 
     const yrInputs = `<div style="display:grid; grid-template-columns: 1fr auto; column-gap:14px; row-gap:3px; font-size:11px; line-height:1.45;">
-      <div>YTD GP so far:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.ytd)}</code></div>
-      <div>Annualised pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(annualised)}</code></div>
-      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ YTD × 26 ÷ ${r.idx + 1} fortnight${r.idx === 0 ? '' : 's'} elapsed</div>
-      <div>Projected ANNUAL commission at pace:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(paceComm)}</code></div>
-      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ ${(paceEff*100).toFixed(1)}% effective rate on ${fmtThreshK(annualised)} annual GP</div>
+      <div>GP received this cycle so far:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(r.ytd)}</code></div>
+      <div>Your trailing 12-month GP:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(annualised)}</code></div>
+      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ last 12 months — seed (GP sold) rolling into your live GP received. This is what unlocks each band.</div>
+      <div>Commission at this annual level:</div><div style="font-family:monospace; text-align:right;"><code>${_fmt(paceComm)}</code></div>
+      <div style="font-size:10px; color:#aaa; grid-column:1/-1; padding-left:10px;">↳ ${(paceEff*100).toFixed(1)}% effective rate on ${fmtThreshK(annualised)} of annual GP</div>
     </div>`;
 
     const yrLadder = yearBandLadderHtml(annualised, paceComm, `Where the ${fmtThreshK(paceComm)} projected annual commission lands`);
 
     const connect = `<div style="margin-top:9px; padding:8px 11px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:10px; color:#cfcfcf; line-height:1.5;">
-      <strong style="color:#fff;">How the two views connect:</strong> the top ladder shows how <em>this fortnight's GP</em> crosses bands at fortnight scale. The bottom shows how your <em>annual pace</em> lands across the full-year bands. At steady pace (sell roughly the same GP each fortnight), the top ladder × 26 fortnights = the bottom ladder.
+      <strong style="color:#fff;">How the two views connect:</strong> the top ladder shows how <em>this fortnight's GP</em> crosses bands at fortnight scale. The bottom shows where your <em>trailing 12-month GP</em> sits on the full-year bands — that's what unlocks each rate. Sell roughly the same GP each fortnight and the top ladder × 26 fortnights = the bottom ladder.
     </div>`;
 
-    const footer = `<div style="margin-top:8px; color:#aaa; font-size:11px;">Pace is volatile early in the year — one strong fortnight inflates the projection. By fortnight 13+ it stabilises.</div>`;
+    const footer = `<div style="margin-top:8px; color:#aaa; font-size:11px;">Your trailing 12-month GP carries your real history, so your rate reflects proven performance from fortnight one — no waiting for a cold start to build up.</div>`;
 
-    return `<div style="font-weight:800; margin-bottom:10px; font-size:14px;">This pay · Pace projection</div>${fnHeader}${fnInputs}${fnLadder}${reconcile}${tuStatus}${yrHeader}${yrInputs}${yrLadder}${connect}${footer}`;
+    return `<div style="font-weight:800; margin-bottom:10px; font-size:14px;">This pay · Band breakdown</div>${fnHeader}${fnInputs}${fnLadder}${reconcile}${tuStatus}${yrHeader}${yrInputs}${yrLadder}${connect}${footer}`;
   }
 
   // ---------- Pace pill (small badge alongside band rate) ----------
@@ -4585,22 +4623,27 @@ function renderBreakdown(r) {
   // ---------- New band-cell renderer (PACE = main, YTD = small pill) ----------
   // r needs: gp, ytd, idx, endRate (YTD-cumulative marginal rate)
   function bandCellHtml(r) {
-    const ytdPct = (r.endRate * 100).toFixed(0) + '%';
-    const ytdTip = `<div style="font-weight: 700; margin-bottom: 4px;">YTD-cumulative band</div><div>The band the <strong>last dollar of YTD GP</strong> earned at. This is the rate dollars are actually being paid at right now. Only ratchets up when cumulative GP crosses a band threshold (e.g. $300k → 9%).</div>`;
+    // MAIN = the highest band this fortnight's GP actually EARNED at (released), at fortnight scale.
+    // PILL = the rep's standing year-band (trailing-12m position) — shown only when it's higher,
+    // i.e. a quiet fortnight didn't reach the rep's overall band.
+    const annualised = (r.pace != null) ? r.pace : pace(r.ytd, r.idx);   // seeded trailing-12m position
+    const yearRate = marginalRate(annualised);
+    const yearPct = (yearRate * 100).toFixed(0) + '%';
+    const yearTip = `<div style="font-weight: 700; margin-bottom: 4px;">Your standing band</div><div>The band your <strong>rolling 12-month GP</strong> sits in — the rate your next dollar earns. Climbs as your trailing GP passes each step.</div>`;
     if (r.gp <= 0 || r.ytd <= 0) {
-      // No GP this period — show YTD as the main number, no pill
-      return `<span class="fn-pace-main same" data-tip='${esc(ytdTip)}'>${ytdPct}</span>`;
+      // No GP this period — show the standing year-band, no pill
+      return `<span class="fn-pace-main same" data-tip='${esc(yearTip)}'>${yearPct}</span>`;
     }
-    const annualised = pace(r.ytd, r.idx);
-    const paceRate = marginalRate(annualised);
-    const pacePct = (paceRate * 100).toFixed(0) + '%';
-    const cls = paceRate > r.endRate ? '' : (paceRate === r.endRate ? 'same' : 'lower');
+    // Highest band actually PAID on this fortnight's GP: reached at fortnight scale AND unlocked by trailing position.
+    let topRate = BANDS[0][1];
+    for (const b of BANDS) { if (r.gp > b[0] / 26 && annualised >= b[0]) topRate = b[1]; }
+    const topPct = (topRate * 100).toFixed(0) + '%';
+    const cls = topRate > BANDS[0][1] ? '' : 'same';
     const paceTip = bandRateTipHtml(r);
-    // Pace = main; YTD = small pill (only if different from pace)
-    const ytdPillHtml = (paceRate === r.endRate)
-      ? ''
-      : `<span class="fn-ytd-pill" data-tip='${esc(ytdTip)}'>YTD ${ytdPct}</span>`;
-    return `<span class="fn-pace-main ${cls}" data-tip='${esc(paceTip)}'>${pacePct}</span>${ytdPillHtml}`;
+    const pillHtml = (yearRate > topRate)
+      ? `<span class="fn-ytd-pill" data-tip='${esc(yearTip)}'>yr ${yearPct}</span>`
+      : '';
+    return `<span class="pm-open pm-band" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})"><span class="fn-pace-main ${cls}">${topPct}</span>${pillHtml}</span>`;
   }
 
   // ---------- Plan-aware helper: where does the first incremental band kick in? ----------
@@ -4723,18 +4766,26 @@ function renderBreakdown(r) {
     const totalInc = r.properPay + r.prodComm;
     const bonus = totalInc / (1 + SUPER_RATE);
     const superAmt = totalInc - bonus;
-    const big = (label, val, color) => `<div style="flex:1; min-width:130px;"><div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; font-weight:700;">${label}</div><div style="font-family:var(--mono); font-size:26px; font-weight:800; color:${color}; margin-top:2px;">${val}</div></div>`;
+    const eff = r.gp > 0 ? r.properPay / r.gp : 0;
+    const effPct = Math.round(eff * 100);
+    const stat = (val, lab) => `<div><div style="font-size:18px; font-weight:700; color:var(--ink); line-height:1.1;">${val}</div><div style="font-size:11px; color:var(--faint); margin-top:2px;">${lab}</div></div>`;
     el.innerHTML = `
-      <div style="background: linear-gradient(135deg,#f1f7f2 0%,#fff 60%); border:1px solid #bfe0c6; border-radius:10px; padding:16px 20px;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
-          <div style="font-size:13px; font-weight:800; color:#1e6624; text-transform:uppercase; letter-spacing:0.05em;">Your latest pay</div>
-          <span style="font-size:11px; font-weight:700; color:#1e6624; background:#eaf5ec; padding:3px 9px; border-radius:999px;">✓ PAID</span>
-          <div style="font-family:var(--mono); font-size:12px; color:var(--muted);">paid ${esc(r.paid)}</div>
+      <div style="background:#fff; border:1px solid #e7e5dd; border-radius:12px; padding:18px 22px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:13px; flex-wrap:wrap;">
+          <span style="font-size:12px; font-weight:700; color:#0f766e; text-transform:uppercase; letter-spacing:0.06em;">Your latest pay</span>
+          <span style="font-size:11px; font-weight:700; color:#0f766e; background:#d1f0e8; padding:3px 10px; border-radius:999px;">✓ paid ${esc(r.paid)}</span>
         </div>
-        <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end;">
-          ${big('Bonus → Xero', _fmt2dp(bonus), '#1e6624')}
-          ${big('Super → Xero', _fmt2dp(superAmt), 'var(--navy)')}
-          ${big('Total this pay', _fmt2dp(totalInc), 'var(--ink)')}
+        <div style="display:flex; align-items:flex-end; gap:26px; flex-wrap:wrap;">
+          <div>
+            <div style="font-size:40px; font-weight:800; color:#0f766e; line-height:1;">${_fmt2dp(totalInc)}</div>
+            <div style="font-size:12px; color:var(--muted); margin-top:3px;">total this pay · inc super</div>
+          </div>
+          <div style="display:flex; gap:22px; padding-bottom:3px;">
+            ${stat(_fmt2dp(bonus), 'bonus → bank')}
+            ${stat(_fmt2dp(superAmt), 'super')}
+            ${stat(_fmt(r.gp), 'GP collected · ' + effPct + '%')}
+          </div>
+          <button onclick="window.__pmOpen&&window.__pmOpen(${r.idx})" style="margin-left:auto; align-self:center; background:#0d9488; color:#fff; border:none; border-radius:9px; padding:12px 20px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap;" onmouseover="this.style.background='#0f766e'" onmouseout="this.style.background='#0d9488'">See full breakdown ⊕</button>
         </div>
       </div>`;
   }
@@ -4827,6 +4878,10 @@ function renderBreakdown(r) {
     let ytd = 0;
     let cumPay = 0;       // cumulative GP commission only
     let cumProd = 0;      // cumulative production commission
+    let stepPaid = {};    // True-Up state: cumulative band-step premium paid, per band threshold
+    let stepHist = {};    // per-band step-premium history (which fortnights it was earned in)
+    let clawBal = 0;      // True-Up balance owed back (recovered from future fortnights)
+    let clawSrc = [];     // source fortnights of the current True-Up balance
     let cumEventGp = 0;   // cumulative Event GP (for tooltips)
     const rows = [];
     const bStart = activeBlock * BLOCK_SIZE;
@@ -4836,27 +4891,45 @@ function renderBreakdown(r) {
       const eventGp = eventGpValues[i] || 0;
       const prevYtd = ytd;
       ytd = prevYtd + gp;
-      // PACE + ROLLING TRUE-UP + FLOOR-AT-$0 (replaces cumulative annual marginal).
-      // cumPay is monotonic; trueUpBalance ≥ 0 = cash owed back relative to current pace.
+      // SEEDED PER-BAND RELEASE (replaces cold-start pace true-up).
+      // Trailing-12m position = seed fortnights not yet rolled off + cycle GP to date.
+      // Each higher band unlocks only once that position reaches its annual threshold.
       const n = pos + 1;
-      const pace = n > 0 ? ytd * 26 / n : 0;
-      const entitlement = pace > 0 ? cumBandComm(pace) * n / 26 : 0;
-      const rawDelta = entitlement - cumPay;
-      const properPay = Math.max(0, rawDelta);
-      const endRate = marginalRate(pace);
+      const seedKeep = SEED_GP.slice(i + 1);            // drop (i+1) oldest seed fortnights as the cycle grows
+      const position = seedKeep.reduce((a, b) => a + b, 0) + ytd;
+      const sfp = seededFortnightPay(gp, position, BANDS);
+      const grossPay = sfp.pay;                         // Model B pay this fortnight (after the band-release gate)
+      const held = sfp.held;                            // band uplift not yet unlocked by trailing position
+      // --- BAND-CLOSE TRUE-UP: when the trailing position falls BELOW a band step, that step's
+      // premium is no longer supported → move it into the True-Up balance, recovered out of this &
+      // future fortnights' pay (down to $0). Steady reps never trigger it.
+      for (let _ki = 1; _ki < BANDS.length; _ki++) {
+        const _T = BANDS[_ki][0];
+        if ((BANDS[_ki][1] - BANDS[_ki - 1][1]) > 0 && position < _T && (stepPaid[_T] || 0) > 0) {
+          clawBal += stepPaid[_T]; stepPaid[_T] = 0; clawSrc = clawSrc.concat(stepHist[_T] || []); stepHist[_T] = [];
+        }
+      }
+      const trueUpApplied = Math.min(clawBal, grossPay);   // recovered from this fortnight
+      const properPay = grossPay - trueUpApplied;
+      clawBal -= trueUpApplied;
+      if (clawBal <= 0.005) clawSrc = [];
+      for (const _t in sfp.steps) { if (sfp.steps[_t] > 0) { stepPaid[_t] = (stepPaid[_t] || 0) + sfp.steps[_t]; (stepHist[_t] = stepHist[_t] || []).push({ fn: (fn.period || ('F' + (i + 1))), amt: sfp.steps[_t], rate: marginalRate(+_t) }); } }
+      const naivePay = grossPay + held;                 // full fortnight-band earn (all bands released)
+      const endRate = marginalRate(position);           // rep's true marginal band at their trailing position
       const startRate = endRate;
-      const naivePay = properPay;
-      const tuAdj = 0;
+      const pace = position;                            // context panel shows trailing-12m position
+      const entitlement = naivePay;
+      const tuAdj = trueUpApplied;
       const prodComm = eventGp * PROD_RATE;
       cumPay += properPay;
-      const trueUpBalance = cumPay - entitlement;
+      const trueUpBalance = clawBal;                    // running True-Up balance owed back
       cumProd += prodComm;
       cumEventGp += eventGp;
       const crossed = Math.abs(tuAdj) > 0.5;
       rows.push({
         ...fn, idx: i, gp, eventGp,
         ytd, prevYtd,
-        properPay, naivePay, tuAdj,
+        properPay, naivePay, tuAdj, grossPay, trueUpApplied, held, sources: clawSrc.slice(),
         endRate, startRate, pace, entitlement, trueUpBalance,
         prodComm,
         cumPay, cumProd, cumEventGp,
@@ -4866,6 +4939,10 @@ function renderBreakdown(r) {
         posInBlock: pos
       });
     });
+    window.__PMrows = rows; window.__PMbands = BANDS; window.__PMsuper = (typeof SUPER_RATE !== 'undefined' ? SUPER_RATE : 0.12);
+    window.__PMgpv = gpValues; window.__PMfns = FORTNIGHTS; window.__PMbStart = bStart;
+    (function(){ var MS=86400000, anchor=Date.UTC(2026,5,1), N=SEED_GP.length;
+      window.__PMseedFns = SEED_GP.map(function(g,s){ var st=new Date(anchor-(N-s)*14*MS), en=new Date(st.getTime()+13*MS); return { period:(_fnShort(st)+' – '+_fnFull(en)), gp:g }; }); })();
 
     // Totals strip with ? tooltips
     const totalGP = rows[rows.length - 1].ytd;
@@ -5038,9 +5115,9 @@ function renderBreakdown(r) {
             <td class="num"><input type="text" class="fn-gp-input" data-idx="${r.idx}" value="${r.gp ? r.gp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
             <td class="num">${rBandCellHtml}</td>
             <td class="num" style="border-left: 2px solid #d3d1c7;"><input type="text" class="fn-event-input" data-idx="${r.idx}" value="${r.eventGp ? r.eventGp.toLocaleString() : ''}" placeholder="0" inputmode="decimal" ${lockAttr} style="${lockStyle}"></td>
-            <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt2dp(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="font-size:9px; color:#1e6624; font-weight:700; margin-top:1px;">✓ PAID</div>' : ''}</td>
-            <td class="num" style="color: var(--navy); font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt2dp(superAmt)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
-            <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell" data-tip='${esc(bd)}'>${_fmt2dp(totalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7; color: #1e6624; font-weight: 700; position: relative;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(bonus)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}${isConf ? '<div style="position:absolute; left:10px; bottom:2px; font-size:9px; color:#1e6624; font-weight:700; letter-spacing:.03em;">✓ PAID</div>' : ''}</td>
+            <td class="num" style="color: var(--navy); font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(superAmt)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
+            <td class="num" style="border-left: 2px solid #d3d1c7; font-weight: 700;">${totalInc > 0 ? `<span class="fn-pay-cell pm-open" data-pm-hint="Click for full pay breakdown" onclick="window.__pmOpen&&window.__pmOpen(${r.idx})">${_fmt2dp(totalInc)}</span>` : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
             <td class="num" style="color: var(--muted);">${_fmt2dp(r.cumTotal)}</td>
           </tr>
         `;
@@ -5442,6 +5519,10 @@ function renderBreakdown(r) {
         BANDS = planRec.bands
           .map(b => [Number(b.threshold) || 0, Number(b.rate) || 0])
           .sort((a, b) => a[0] - b[0]);
+      }
+      // Trailing 26-fortnight seed (GP sold, oldest -> newest) for the band-release gate.
+      if (empRec && Array.isArray(empRec.seedFortnights) && empRec.seedFortnights.length) {
+        SEED_GP = empRec.seedFortnights.map(s => Number(s.gpSold) || 0);
       }
       const f = empRec && empRec.fortnightly;
       if (f && Array.isArray(f.confirmed)) {
@@ -5999,6 +6080,164 @@ function renderTeamPool() {
   }
 })();
 
+</script>
+<style>
+.pmodal-scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;z-index:9999;overflow:auto;padding:40px 16px}
+.pmodal{background:#fff;border-radius:14px;padding:20px;max-width:460px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);position:relative;font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;color:#1f2421}
+.pm-x{position:absolute;top:8px;right:14px;font-size:24px;color:#8b8a83;cursor:pointer;line-height:1}
+.pm-lab{font-size:11px;letter-spacing:.06em;color:#8b8a83;text-align:center}
+.pm-hero{font-size:34px;font-weight:600;text-align:center;line-height:1.1;margin-top:2px}
+.pm-hero.green{color:#0f766e}
+.pm-herosub{font-size:12px;color:#5f5e5a;text-align:center}
+.pm-streams{display:flex;gap:8px;margin-top:14px}
+.pm-stream{flex:1;background:rgba(13,148,136,.05);border-radius:9px;padding:10px 12px}
+.pm-sv{font-size:18px;font-weight:600}.pm-sk{font-size:12px;font-weight:600}.pm-sd{font-size:11px;color:#8b8a83}
+.pm-plus{align-self:center;color:#8b8a83}
+.pm-split{text-align:center;font-size:12px;color:#5f5e5a;margin-top:10px}.pm-split b{color:#1f2421}
+.pm-sec,.pm-exp{border-top:.5px solid #e7e5dd;margin-top:12px;padding-top:12px}
+.pm-ladhead{display:flex;justify-content:space-between;font-size:12px;color:#5f5e5a;margin-bottom:6px}.pm-ladhead b{color:#0f766e}
+.pm-ladder{position:relative;height:22px;display:flex;border-radius:6px;overflow:hidden;font-size:10px;font-weight:600}
+.pm-seg{display:flex;align-items:center;justify-content:center;color:#8b8a83;background:#f3f3ef}
+.pm-seg.on{background:rgba(13,148,136,.08);color:#0f766e}
+.pm-seg.cur{background:rgba(13,148,136,.30);color:#0f766e}
+.pm-mark{position:absolute;top:-2px;bottom:-2px;width:2px;background:#1f2421}
+.pm-scalex{display:flex;justify-content:space-between;font-size:10px;color:#8b8a83;margin-top:2px}
+.pm-act{background:rgba(13,148,136,.08);color:#0f766e;border-radius:7px;padding:7px 10px;font-size:12px;margin-top:8px;text-align:center}
+.pm-ladhover{position:relative}
+.pm-ladhover .pm-ladder{cursor:help}
+.pm-ladtip{display:none;position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:8px;background:#0f766e;color:#fff;font-size:11px;line-height:1.65;padding:9px 12px;border-radius:8px;width:240px;z-index:10001;box-shadow:0 4px 14px rgba(0,0,0,.22);text-align:left}
+.pm-ladtip b{color:#fff}
+.pm-ladhover:hover .pm-ladtip{display:block}
+.pm-exp-h{font-size:12px;font-weight:600;color:#5f5e5a;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.pm-exp-b{font-size:11px;color:#5f5e5a;margin-top:6px;line-height:1.7;padding-left:18px;display:none}
+.pm-exp.open .pm-exp-b{display:block}.pm-exp.open .pm-chev,.pm-tu.open .pm-chev{transform:rotate(90deg)}
+.pm-chev{transition:transform .12s;display:inline-block}
+.pm-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.pm-tbl td{padding:2px 0}.pm-thd td,.pm-thd2 td{color:#8b8a83}
+.pm-sumrow td{border-top:.5px solid #e7e5dd;padding-top:4px;font-weight:600}
+.pm-sumrow2 td{border-top:.5px dashed #e2c98f;padding-top:3px;font-weight:600}
+.pm-faint{color:#8b8a83}.pm-amber{color:#854f0b}
+.pm-tu{background:#faeeda;border-radius:8px;padding:10px 12px;margin-top:8px}
+.pm-tu-h{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#854f0b;cursor:pointer}
+.pm-tu-b{font-size:11px;color:#854f0b;margin-top:6px;line-height:1.7;display:none}
+.pm-tu.open .pm-tu-b{display:block}
+.pm-fnlink{color:#854f0b;text-decoration:underline;cursor:pointer;font-weight:600;display:inline-block;margin-top:6px}
+.pm-tu-fns{display:none;margin-top:6px;border-top:.5px dashed #e2c98f;padding-top:6px}
+.pm-tu.fnopen .pm-tu-fns{display:block}
+/* instant click affordance on the band + pay cells */
+.pm-open{position:relative;cursor:pointer;border-radius:5px;padding:1px 4px;transition:background .08s}
+.pm-open:hover{background:rgba(13,148,136,.12)}
+.pm-band .fn-pace-main{text-decoration:underline dotted rgba(13,148,136,.55);text-underline-offset:3px;transition:text-decoration-color .08s}
+.pm-band:hover .fn-pace-main{text-decoration-color:#0d9488}
+.pm-cue{display:inline-block;margin-left:4px;font-size:11px;color:rgba(13,148,136,.45);transition:color .08s,transform .08s;vertical-align:middle}
+.pm-band:hover .pm-cue{color:#0d9488;transform:scale(1.15)}
+.pm-open[data-pm-hint]::after{content:attr(data-pm-hint);position:absolute;left:50%;bottom:100%;transform:translateX(-50%) translateY(3px);margin-bottom:7px;background:#0f766e;color:#fff;font-size:11px;font-weight:600;white-space:nowrap;padding:4px 9px;border-radius:6px;z-index:10000;pointer-events:none;opacity:0;transition:opacity .08s,transform .08s;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.pm-open[data-pm-hint]::before{content:'';position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:2px;border:5px solid transparent;border-top-color:#0f766e;z-index:10000;pointer-events:none;opacity:0;transition:opacity .08s}
+.pm-open[data-pm-hint]:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
+.pm-open[data-pm-hint]:hover::before{opacity:1}
+</style>
+<script>
+(function(){
+  var PMs=function(){return (window.__PMsuper||0.12);};
+  function m2(n){return '$'+(+n).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function m0(n){return '$'+Math.round(n).toLocaleString();}
+  function pc(r){return Math.round(r*100)+'%';}
+  function marg(p,B){var r=B[0][1];for(var i=0;i<B.length;i++)if(p>=B[i][0])r=B[i][1];return r;}
+  function nextB(p,B){for(var i=0;i<B.length;i++)if(B[i][0]>p)return B[i];return null;}
+  function annC(g,B){var t=0;for(var i=0;i<B.length;i++){var nx=(i+1<B.length)?B[i+1][0]:Infinity;if(g>B[i][0])t+=(Math.min(g,nx)-B[i][0])*B[i][1];}return t;}
+  function decomp(gp,B){var o=[];for(var i=0;i<B.length;i++){var lo=B[i][0]/26,hi=(i+1<B.length)?B[i+1][0]/26:Infinity;if(gp<=lo)break;o.push({lo:lo,hi:hi,rate:B[i][1],amt:Math.min(gp,hi)-lo});}return o;}
+  function ladder(pos,B,tip){var segs=[[0,300000,.04],[300000,400000,.09],[400000,450000,.12],[450000,500000,.13],[500000,550000,.14],[550000,650000,.16]];var h='';segs.forEach(function(s){var w=(s[1]-s[0])/650000*100;var cls=(pos>=s[0]&&pos<s[1])?'cur':(pos>=s[1]?'on':'');h+='<div class="pm-seg '+cls+'" style="width:'+w+'%">'+pc(s[2])+'</div>';});var mk=Math.min(pos/650000*100,100);return '<div class="pm-ladhover"><div class="pm-ladder">'+h+'<div class="pm-mark" style="left:'+mk+'%"></div></div><div class="pm-scalex"><span>$0</span><span>$300k</span><span>$650k</span></div>'+(tip?'<div class="pm-ladtip">'+tip+'</div>':'')+'</div>';}
+  function build(r,B){
+    var M=marg(r.pace||0,B),gpBand=r.properPay||0,prod=r.prodComm||0,total=gpBand+prod,bank=total/(1+PMs()),sup=total-bank;
+    var gp=r.gp||0,eventGp=r.eventGp||0,pos=r.pace||0,cur=marg(pos,B),nb=nextB(pos,B),h='';
+    h+='<div class="pm-lab">YOUR PAY · '+(r.period||'')+'</div><div class="pm-hero'+(total>0?' green':'')+'">'+m2(total)+'</div><div class="pm-herosub">inc super · lands '+(r.paid||'')+'</div>';
+    h+='<div class="pm-streams"><div class="pm-stream"><div class="pm-sv">'+m2(gpBand)+'</div><div class="pm-sk">Sales commission</div><div class="pm-sd">on '+m2(gp)+' GP collected</div><div class="pm-sd">booking owner</div></div><div class="pm-plus">+</div><div class="pm-stream"><div class="pm-sv">'+m2(prod)+'</div><div class="pm-sk">Event production · 1%</div><div class="pm-sd">on '+m0(eventGp)+' GP delivered</div><div class="pm-sd">producer</div></div></div>';
+    h+='<div class="pm-split">→ <b>'+m2(bank)+'</b> to your bank &nbsp;·&nbsp; <b>'+m2(sup)+'</b> to super</div>';
+    var _tIdx=(r.idx!=null?r.idx:0),_tbS=(window.__PMbStart||0),_tSeed=window.__PMseedFns||[],_tGpv=window.__PMgpv||[];
+    var _tRolled=Math.min(_tIdx+1,_tSeed.length),_tKept=_tSeed.slice(_tRolled).reduce(function(a,x){return a+x.gp;},0),_tReal=0;
+    for(var _tk=_tbS;_tk<=_tIdx;_tk++){_tReal+=(_tGpv[_tk]||0);}
+    var _tTot=_tKept+_tReal;
+    var _ladTip='<b>Your trailing 12-month GP</b><br><b style="font-size:13px">'+m0(_tTot)+'</b> — puts you in the <b>'+pc(cur)+'</b> band.<br><span style="opacity:.85">seed (GP sold, last yr) '+m0(_tKept)+' + your GP received '+m0(_tReal)+'</span>';
+    h+='<div class="pm-sec"><div class="pm-ladhead"><span>Your rate this fortnight</span><span><b>'+pc(cur)+'</b> marginal · '+m0(pos)+' trailing</span></div>'+ladder(pos,B,_ladTip);
+    if(nb){h+='<div class="pm-act">▲ '+m0(nb[0]-pos)+' more 12-month GP → unlocks <b>'+pc(nb[1])+'</b><div style="font-size:11px;margin-top:2px">≈ '+m0((nb[0]-pos)/26)+'/fortnight above your current pace, sustained</div></div>';}
+    else h+='<div class="pm-act">Top band — '+pc(cur)+' on every dollar.</div>';
+    h+='</div>';
+    var dec=decomp(gp,B),sum=0,db='<table class="pm-tbl"><tr class="pm-thd"><td>GP slice (this fortnight)</td><td style="text-align:center">rate paid</td><td style="text-align:right">earns</td></tr>';
+    dec.forEach(function(b){var rate=Math.min(b.rate,M),amt=b.amt*rate;sum+=amt;db+='<tr><td>'+m0(b.lo)+'–'+(b.hi===Infinity?'∞':m0(b.hi))+'</td><td style="text-align:center">'+pc(rate)+(b.rate>M?' <span class="pm-faint">('+pc(b.rate)+' band, capped)</span>':'')+'</td><td style="text-align:right">'+m2(amt)+'</td></tr>';});
+    db+='<tr class="pm-sumrow"><td colspan="2">= Net this fortnight</td><td style="text-align:right">'+m2(sum)+'</td></tr></table>';
+    if((r.held||0)>0.5){var hrows='';for(var i=0;i<B.length;i++){if(B[i][1]>M){var hlo=B[i][0]/26,hhi=(i+1<B.length)?B[i+1][0]/26:Infinity;if(gp<=hlo)continue;var hs=Math.min(gp,hhi)-hlo;hrows+='<tr><td>'+m2(hs)+' above '+m0(B[i][0]/26)+'/fn</td><td style="text-align:center">'+pc(B[i][1])+' → +'+Math.round((B[i][1]-M)*100)+'%</td><td style="text-align:right">'+m2(hs*(B[i][1]-M))+'</td></tr>';}}var hb=nextB(pos,B);
+      db+='<div class="pm-amber" style="margin-top:8px;line-height:1.75">Why some is held: your rolling 12-month GP is <b>'+m0(pos)+'</b> — in the <b>'+pc(M)+'</b> band. GP that reaches a higher band still earns your proven <b>'+pc(M)+'</b>; only the <b>premium</b> waits:<table class="pm-tbl" style="margin-top:5px"><tr class="pm-thd2"><td>slice above your band</td><td style="text-align:center">premium held</td><td style="text-align:right">$</td></tr>'+hrows+'<tr class="pm-sumrow2"><td colspan="2">Total held</td><td style="text-align:right">'+m2(r.held)+'</td></tr></table>Unlocks at <b>'+m0(hb[0])+'</b> rolling 12-month GP — you\'re <b>'+m0(hb[0]-pos)+'</b> away.</div>';}
+    h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>This fortnight across the bands</div><div class="pm-exp-b">'+db+'</div></div>';
+    var bt='<table class="pm-tbl"><tr class="pm-thd"><td>Band</td><td style="text-align:right">From (annual GP)</td><td style="text-align:right">Per fortnight (÷26)</td></tr>';
+    var curIdx=0;for(var ci=0;ci<B.length;ci++){if(pos>=B[ci][0])curIdx=ci;}
+    for(var j=0;j<B.length;j++){if(j===0||B[j][1]!==B[j-1][1]){var on=pos>=B[j][0],here=(j===curIdx);bt+='<tr'+(here?' style="background:rgba(13,148,136,.10)"':'')+'><td style="'+(on?'font-weight:600;color:#0f766e':'')+'">'+pc(B[j][1])+(on?' ✓':'')+(here?' <b>◀ you</b>':'')+'</td><td style="text-align:right'+(here?';font-weight:700':'')+'">'+m0(B[j][0])+'</td><td style="text-align:right">'+(B[j][0]===0?'$0':m0(B[j][0]/26))+'</td></tr>';if(here){bt+='<tr><td colspan="3" style="text-align:right;font-size:11px;color:#0f766e;padding:1px 0 3px"><b>↑ your trailing 12-month GP: '+m0(pos)+'</b></td></tr>';}}}
+    bt+='</table><div class="pm-faint" style="margin-top:5px">✓ = bands your trailing 12-month GP (<b>'+m0(pos)+'</b>) has unlocked.</div>';
+    h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>Where each band starts</div><div class="pm-exp-b">'+bt+'</div></div>';
+    var comm=annC(pos,B),eff=pos>0?comm/pos:0;
+    h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>Why this rate · full-year context</div><div class="pm-exp-b">Your trailing 12-month GP: <b>'+m0(pos)+'</b><br>seed (GP sold) rolling into your live GP received — this is what unlocks each band.<br>Commission at this annual level: <b>'+m0(comm)+'</b> ('+(eff*100).toFixed(1)+'% effective).</div></div>';
+    // --- How the trailing 12 months is built: 26 fortnights, seed (GP sold) rolling over to real GP received ---
+    var idx=(r.idx!=null?r.idx:0),bS=(window.__PMbStart||0),seedFns=window.__PMseedFns||[],gpv=window.__PMgpv||[],fns=window.__PMfns||[];
+    var rolledN=Math.min(idx+1,seedFns.length),keptSeeds=seedFns.slice(rolledN),droppedSeeds=seedFns.slice(0,rolledN),reals=[];
+    for(var rk=bS;rk<=idx;rk++){reals.push({period:(fns[rk]&&fns[rk].period)||('F'+(rk-bS+1)),gp:gpv[rk]||0});}
+    var sumKept=keptSeeds.reduce(function(a,x){return a+x.gp;},0),sumReal=reals.reduce(function(a,x){return a+x.gp;},0),tot=sumKept+sumReal;
+    var tb2='';
+    tb2+='<div class="pm-faint" style="margin-bottom:7px;line-height:1.6">Each fortnight paid on real <b>GP received</b> rolls off the oldest <b>GP sold</b> seed — your window is always the most recent 26 fortnights:</div>';
+    tb2+='<table class="pm-tbl" style="margin-top:4px"><tr class="pm-thd"><td>Fortnight in your 26-fn window</td><td style="text-align:center">basis</td><td style="text-align:right">GP</td></tr>';
+    tb2+=keptSeeds.map(function(s){return '<tr><td>'+s.period+'</td><td style="text-align:center" class="pm-faint">sold · seed</td><td style="text-align:right">'+m0(s.gp)+'</td></tr>';}).join('');
+    tb2+=reals.map(function(s){return '<tr><td>'+s.period+'</td><td style="text-align:center;color:#0f766e">received ✓</td><td style="text-align:right"><b>'+m0(s.gp)+'</b></td></tr>';}).join('');
+    tb2+='<tr class="pm-sumrow"><td colspan="2">= Trailing 12-month total ('+(keptSeeds.length+reals.length)+' fortnights)</td><td style="text-align:right">'+m0(tot)+'</td></tr></table>';
+    tb2+='<div class="pm-faint" style="margin-top:5px">This <b>'+m0(tot)+'</b> is exactly the figure that sets your band — <b>'+pc(cur)+'</b> marginal.</div>';
+    h+='<div class="pm-exp"><div class="pm-exp-h"><span class="pm-chev">▸</span>How your trailing 12 months is built · 26 fortnights</div><div class="pm-exp-b">'+tb2+'</div></div>';
+    if((r.trueUpApplied||0)>0.5){var ct=null,pr=B[0][1];for(var k=1;k<B.length;k++){if((B[k][1]-B[k-1][1])>0&&pos<B[k][0]){ct=B[k];pr=B[k-1][1];break;}}var sp=ct?Math.round((ct[1]-pr)*100):0;var src=r.sources||[];var tot=src.reduce(function(s,x){return s+x.amt;},0);var fr=src.map(function(x){return '<tr><td>'+x.fn+' · '+pc(x.rate)+' band premium</td><td style="text-align:right">'+m2(x.amt)+'</td></tr>';}).join('')||'<tr><td colspan="2" class="pm-faint">earned earlier this cycle</td></tr>';
+      h+='<div class="pm-tu"><div class="pm-tu-h"><span><span class="pm-chev">▸</span> True-Up recovery</span><span>−'+m2(r.trueUpApplied)+'</span></div><div class="pm-tu-b"><ul style="margin:2px 0 0;padding-left:16px;line-height:1.7"><li>Your rolling 12-month GP fell to <b>'+m0(pos)+'</b>'+(ct?' — below the <b>'+m0(ct[0])+'</b> line, so the <b>'+pc(ct[1])+'</b> band closed.':'.')+'</li>'+(ct?'<li>While you were above '+m0(ct[0])+', you earned the <b>'+pc(ct[1])+' − '+pc(pr)+' = '+sp+'%</b> premium on GP above <b>'+m0(ct[0]/26)+'/fortnight</b>.</li>':'')+'<li>That premium is now being recovered — <b>'+m2(r.trueUpApplied)+'</b> this fortnight.</li><li>True-Up balance remaining: <b>'+m2(r.trueUpBalance||0)+'</b>'+((r.trueUpBalance||0)>0.5?' — recovers from coming fortnights, never your base.':' — now cleared.')+'</li></ul><span class="pm-fnlink">▸ See exactly which fortnights this premium was earned in</span><div class="pm-tu-fns"><table class="pm-tbl"><tr class="pm-thd2"><td>fortnight earned in</td><td style="text-align:right">premium</td></tr>'+fr+'<tr class="pm-sumrow2"><td>Total '+pc(ct?ct[1]:0)+'-band premium earned</td><td style="text-align:right">'+m2(tot)+'</td></tr></table></div></div></div>';}
+    return h;
+  }
+  window.__pmOpen=function(idx){var rows=window.__PMrows||[],r=rows[idx],B=window.__PMbands;if(!r||!B)return;var sc=document.getElementById('pm-scrim');document.getElementById('pm-body').innerHTML=build(r,B);sc.style.display='flex';};
+  window.__pmClose=function(){var s=document.getElementById('pm-scrim');if(s)s.style.display='none';};
+  function init(){
+    if(document.getElementById('pm-scrim'))return;
+    var s=document.createElement('div');s.id='pm-scrim';s.className='pmodal-scrim';s.style.display='none';
+    s.innerHTML='<div class="pmodal"><div class="pm-x">×</div><div id="pm-body"></div></div>';
+    document.body.appendChild(s);
+    s.addEventListener('click',function(e){
+      if(e.target===s||e.target.className==='pm-x'){window.__pmClose();return;}
+      var eh=e.target.closest('.pm-exp-h');if(eh){eh.parentNode.classList.toggle('open');return;}
+      var th=e.target.closest('.pm-tu-h');if(th){th.parentNode.classList.toggle('open');return;}
+      var fl=e.target.closest('.pm-fnlink');if(fl){fl.parentNode.classList.toggle('fnopen');return;}
+    });
+  }
+  // --- Glanceability reorder of the Payouts & Super tab: lift the fortnight table directly
+  // under the latest-pay hero; demote the KPI totals + cumulative chart into a collapsed
+  // "Trends & full-year totals" panel below it. Additive + reversible (guarded, runs once). ---
+  function reorderPayouts(){
+    var hero=document.getElementById('fn-latest-hero');
+    var totals=document.getElementById('fn-totals');
+    var chart=document.getElementById('cum-chart-wrap');
+    var tableEl=document.getElementById('fortnightly-table');
+    if(!hero||!totals||!chart||!tableEl) return false;
+    if(document.getElementById('pm-trends')) return true;
+    var tableWrap=tableEl.parentNode, card=hero.parentNode;
+    if(!card) return false;
+    var footerP=null;
+    Array.prototype.forEach.call(card.children,function(c){ if(c.tagName==='P' && /Click any month/.test(c.textContent)) footerP=c; });
+    var det=document.createElement('details');
+    det.id='pm-trends'; det.style.cssText='margin:8px 0 14px;';
+    var sum=document.createElement('summary');
+    sum.style.cssText='cursor:pointer;font-size:11px;color:#8b8a83;text-transform:uppercase;letter-spacing:.05em;font-weight:700;padding:6px 0;user-select:none;';
+    sum.textContent='Trends & full-year totals';
+    det.appendChild(sum);
+    det.appendChild(totals); det.appendChild(chart);
+    var anchor=hero;
+    card.insertBefore(tableWrap, anchor.nextSibling); anchor=tableWrap;
+    if(footerP){ card.insertBefore(footerP, anchor.nextSibling); anchor=footerP; }
+    card.insertBefore(det, anchor.nextSibling);
+    det.addEventListener('toggle',function(){ if(det.open){ setTimeout(function(){ window.dispatchEvent(new Event('resize')); },40); } });
+    return true;
+  }
+  function tryReorder(n){ try{ if(reorderPayouts()) return; }catch(e){} if(n>0) setTimeout(function(){ tryReorder(n-1); },300); }
+  function boot(){ init(); tryReorder(15); }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();
 </script>
 </body>
 </html>
