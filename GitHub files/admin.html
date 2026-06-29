@@ -442,6 +442,7 @@
             <div class="zone-sub">Account Transactions export · .xlsx</div>
           </div>
           <input type="file" id="xr-xero-input" accept=".csv,.xlsx,.xls" style="display:none;">
+          <div id="xr-fortnight-hint" style="margin-top:9px; font-size:11px; color:var(--muted); line-height:1.5;"></div>
         </div>
 
         <div class="card">
@@ -2586,11 +2587,23 @@ function renderFortnightlyAdmin() {
       </div>
     </div>`;
 
+    // ── Step 1 · reconcile gate — run the payment sync, then check the Xero recon ──
+    if (!confirmed) {
+      h += `<div style="padding:12px 14px; margin-bottom:14px; background:#fdf6e3; border:1px solid #e8d99a; border-radius:8px;">
+        <div style="font-size:11px; font-weight:700; color:#8a6a00; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">Step 1 · Reconcile before you pay</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <button type="button" id="pr-run-sync" style="padding:8px 14px; border:none; background:#8a6a00; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">▶ Run payment sync</button>
+          <button type="button" id="pr-open-recon" style="padding:8px 14px; border:1px solid #e8d99a; background:#fff; color:#8a6a00; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Check Xero reconciliation →</button>
+          <span style="font-size:11px; color:#8a6a00;">Creates any new Zoho payments from Xero, then verify no double-pays or gaps — <strong>before</strong> pulling GP.</span>
+        </div>
+      </div>`;
+    }
+
     // ── Pull from Zoho — one-click import of GP Received per rep for this fortnight ──
     if (!confirmed) {
       h += `<div id="pr-pull-row" style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; margin-bottom:14px; background:#f6f3ff; border:1px solid #ddd0f5; border-radius:8px;">
         <div style="font-size:12px; color:var(--ink);">
-          <strong style="color:#5a3a8e;">🔄 Pull from Zoho</strong>
+          <strong style="color:#5a3a8e;">🔄 Step 2 · Pull from Zoho</strong>
           <span style="color:var(--muted);"> — auto-import <strong>GP Received</strong> (Zoho Payments · bookings closed on/after 1 Jun 2026) AND <strong>Event GP</strong> (Zoho Bookings · Fortnight Sort Key matches) for every rep. Overwrites both columns below.</span>
         </div>
         <button type="button" id="pr-pull-zoho" style="padding:8px 16px; border:none; background:#5a3a8e; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Pull from Zoho ↓</button>
@@ -2686,13 +2699,24 @@ function renderFortnightlyAdmin() {
       <div style="text-align:right; font-family:var(--mono); color:var(--navy);" id="pr-team-super">${_fmt2dpMoney(teamSuper)}</div>
     </div>`;
 
-    h += `<div style="margin-top:16px; display:flex; justify-content:flex-end; gap:10px; align-items:center;">
-      ${confirmed
-        ? `<span style="font-size:12px; color:var(--muted);">Locked. Unlock if you need to correct a figure.</span>
-           <button type="button" id="pr-unlock" style="padding:10px 18px; border:1px solid #d3d1c7; background:#fff; color:var(--ink); border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">🔓 Unlock to edit</button>`
-        : `<span style="font-size:12px; color:var(--muted);">Entered everything &amp; copied into Xero? Lock it in:</span>
-           <button type="button" id="pr-confirm" style="padding:11px 22px; border:none; background:#1e6624; color:#fff; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer;">✓ Confirm &amp; Save this pay run</button>`}
-    </div>`;
+    if (confirmed) {
+      h += `<div style="margin-top:16px; display:flex; justify-content:flex-end; gap:10px; align-items:center;">
+        <span style="font-size:12px; color:var(--muted);">Locked. Unlock if you need to correct a figure.</span>
+        <button type="button" id="pr-unlock" style="padding:10px 18px; border:1px solid #d3d1c7; background:#fff; color:var(--ink); border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">🔓 Unlock to edit</button>
+      </div>`;
+    } else {
+      h += `<div style="margin-top:16px; padding:14px 16px; background:#fafaf7; border:1px solid #e8e6dd; border-radius:8px;">
+        <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px;">Step 3 · Confirm &amp; save</div>
+        <label for="pr-recon-ack" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-bottom:12px;">
+          <input type="checkbox" id="pr-recon-ack" style="width:18px; height:18px; margin-top:1px; flex:none; cursor:pointer;">
+          <span style="font-size:13px; color:var(--ink);">I've run the payment sync and checked the Xero reconciliation for this fortnight — payments and GP are up to date in Zoho.</span>
+        </label>
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px;">
+          <span id="pr-confirm-hint" style="font-size:12px; color:var(--muted);">Tick the box above to enable saving</span>
+          <button type="button" id="pr-confirm" disabled style="padding:11px 22px; border:none; background:#cdd0c9; color:#fff; border-radius:8px; font-size:15px; font-weight:700; cursor:not-allowed;">🔒 Confirm &amp; Save this pay run</button>
+        </div>
+      </div>`;
+    }
 
     wrap.innerHTML = h;
     wirePayRun(idx, confirmed);
@@ -2915,7 +2939,39 @@ function renderFortnightlyAdmin() {
         inp.addEventListener('blur', () => { persist(); renderTotals(); renderBody(); renderAudit(); });
       });
       const cbtn = document.getElementById('pr-confirm');
-      if (cbtn) cbtn.addEventListener('click', () => confirmAndSavePayrun(idx));
+      if (cbtn) cbtn.addEventListener('click', () => { if (!cbtn.disabled) confirmAndSavePayrun(idx); });
+
+      // Reconciliation acknowledgement gate — Save stays locked until ticked
+      const ack  = document.getElementById('pr-recon-ack');
+      const hint = document.getElementById('pr-confirm-hint');
+      if (ack && cbtn) {
+        const updateConfirm = () => {
+          if (ack.checked) {
+            cbtn.disabled = false;
+            cbtn.style.background = '#1e6624'; cbtn.style.cursor = 'pointer';
+            cbtn.innerHTML = '✓ Confirm &amp; Save this pay run';
+            if (hint) hint.style.visibility = 'hidden';
+          } else {
+            cbtn.disabled = true;
+            cbtn.style.background = '#cdd0c9'; cbtn.style.cursor = 'not-allowed';
+            cbtn.innerHTML = '🔒 Confirm &amp; Save this pay run';
+            if (hint) hint.style.visibility = 'visible';
+          }
+        };
+        ack.addEventListener('change', updateConfirm);
+      }
+
+      // Step 1 buttons: run the payment auto-creator sync, and jump to the recon tab
+      const syncBtn = document.getElementById('pr-run-sync');
+      if (syncBtn) syncBtn.addEventListener('click', () => {
+        const url = `${ZOHO_PULL_URL}?action=sync&key=${encodeURIComponent(ZOHO_PULL_KEY)}`;
+        window.open(url, '_blank', 'noopener');
+      });
+      const reconBtn = document.getElementById('pr-open-recon');
+      if (reconBtn) reconBtn.addEventListener('click', () => {
+        const t = document.querySelector('.admin-tab-btn[data-admin-tab="xero-recon"]');
+        if (t) t.click();
+      });
     } else {
       const ubtn = document.getElementById('pr-unlock');
       if (ubtn) ubtn.addEventListener('click', () => {
@@ -3471,6 +3527,20 @@ function renderFortnightlyAdmin() {
 
     const included = [], excluded = [];
 
+    // Pin Payments (card) linkage: the actual receivable-payment row references only a
+    // charge id — "Pin Payments (ch_XXX)" — with NO invoice number. The invoice lives on
+    // the linked fee-reimbursement row — "Pin Payments fees reimbursement for INV-YYYY
+    // (ch_XXX)". Pre-scan all rows to map ch_XXX → INV-YYYY so these card payments resolve
+    // to their invoice instead of being dropped as "No INV- found".
+    const chargeToInv = new Map();
+    for (let i = hdrIdx + 1; i < rows.length; i++) {
+      const rr = rows[i];
+      const blob = (cRef >= 0 ? String(rr[cRef] || '') : '') + ' ' + (cDesc >= 0 ? String(rr[cDesc] || '') : '');
+      const chM  = blob.match(/(ch_[A-Za-z0-9_-]+)/);
+      const invM = blob.match(/\bINV-\d+\b/i);
+      if (chM && invM) chargeToInv.set(chM[1], invM[0].toUpperCase());
+    }
+
     for (let i = hdrIdx + 1; i < rows.length; i++) {
       const r = rows[i];
       if (r.every(c => !c && c !== 0)) continue;
@@ -3484,8 +3554,13 @@ function renderFortnightlyAdmin() {
       // Skip section header rows (e.g. "Business Account" with no source)
       if (!source) continue;
 
-      // Determine invoice number: explicit column first, then Reference
-      const invNo = (invCol.match(/^INV-/i) ? invCol : '') || (ref.match(/^INV-/i) ? ref : '');
+      // Determine invoice number: explicit column → Reference → Pin Payments charge id.
+      let invNo = (invCol.match(/INV-\d+/i) ? invCol.match(/INV-\d+/i)[0] : '')
+                || (ref.match(/INV-\d+/i) ? ref.match(/INV-\d+/i)[0] : '');
+      if (!invNo) {
+        const chM = (ref + ' ' + desc).match(/(ch_[A-Za-z0-9_-]+)/);
+        if (chM && chargeToInv.has(chM[1])) invNo = chargeToInv.get(chM[1]);
+      }
 
       // Parse amount — for Receivable Payments the money is in Debit (Excel) or Gross
       let amount = 0;
@@ -3694,6 +3769,27 @@ function renderFortnightlyAdmin() {
     }
     h += `<div class="recon-stat"><div class="rs-val" style="color:var(--faint)">${excluded.length}</div><div class="rs-lbl">Auto-excluded</div></div>`;
     h += '</div>';
+
+    // ---- Date-window mismatch guard ----
+    // A frequent false alarm: the Xero export covers a wider window than the Zoho export
+    // (or vice-versa). Receipts outside the overlap show as "Not in Zoho" even though the
+    // record exists — it just wasn't in the uploaded file. Warn up front.
+    if (hasZoho) {
+      const xd = included.map(r => parseDMY(r.date)).filter(Boolean);
+      const zd = [];
+      for (const [, es] of zohoMap.invMap.entries()) es.forEach(e => { const t = parseDMY(e.date); if (t) zd.push(t); });
+      if (xd.length && zd.length) {
+        const DAY = 86400000;
+        const xmin = Math.min(...xd), xmax = Math.max(...xd), zmin = Math.min(...zd), zmax = Math.max(...zd);
+        const fmtD = ts => { const d = new Date(ts); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); };
+        if (zmin > xmin + 2 * DAY || zmax < xmax - 2 * DAY) {
+          h += `<div style="padding:11px 14px; margin-bottom:16px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; font-size:12px; color:#92400e;">`;
+          h += `⚠ <strong>The two files cover different date ranges.</strong> Xero export: <strong>${fmtD(xmin)}–${fmtD(xmax)}</strong> &nbsp;·&nbsp; Zoho export: <strong>${fmtD(zmin)}–${fmtD(zmax)}</strong>. `;
+          h += `Payments outside the overlap will show as false “Not in Zoho”. Re-export so both files cover the same window before trusting the missing count.`;
+          h += `</div>`;
+        }
+      }
+    }
 
     // ---- Main table ----
     h += '<div style="overflow-x:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:14px;">';
@@ -3926,7 +4022,7 @@ function renderFortnightlyAdmin() {
       // (B) To review — invoice live in this window, extra Zoho record with no receipt link
       if (reviewEntries.length) {
         h += `<div style="padding:10px 16px; background:#fffbeb; border-bottom:1px solid #fde68a; font-size:12px; color:#92400e;">`;
-        h += `This invoice is in the uploaded Xero window, but Zoho has an extra payment the in-window receipt doesn't cover. Usually it's a genuine instalment whose receipt is outside the window — but check the <strong>Booking</strong> matches the Xero client (a mismatch means the payment is on the wrong invoice).`;
+        h += `This invoice is in the uploaded Xero window, but Zoho has an extra payment the in-window receipt doesn't cover. Usually it's a genuine instalment whose receipt is outside this window. The <strong>Xero client</strong> is shown for context — note it often differs from the booking name (you invoice a different entity), so a name difference alone is normal. The reliable duplicate signal is the receipt link, not the name.`;
         h += `</div>`;
         h += `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:12px;">`;
         h += `<thead><tr style="background:#fafaf7; border-bottom:1px solid var(--border);">`;
@@ -3939,14 +4035,13 @@ function renderFortnightlyAdmin() {
         h += `</tr></thead><tbody>`;
         reviewEntries.forEach(({ invNum, entry, xeroAmount, xeroClient }) => {
           const booking = entry.bookingName || entry.paymentName || '—';
-          const clientMismatch = xeroClient && normName(booking) && !normName(xeroClient).includes(normName(booking).split(' ')[0]) && !normName(booking).includes(normName(xeroClient).split(' ')[0]);
           h += `<tr style="border-bottom:1px solid var(--border); background:#fffbeb;">`;
           h += `<td style="padding:6px 10px; font-family:var(--mono); font-size:11px; white-space:nowrap;">${xesc(entry.date || '—')}</td>`;
           h += `<td style="padding:6px 10px; font-family:var(--mono); font-size:11px;"><a href="${xesc(zSearch(invNum))}" target="_blank" rel="noopener" style="color:var(--navy); text-decoration:none;">${xesc(entry.invRaw || invNum)} ↗</a></td>`;
           h += `<td style="padding:6px 10px; font-size:11px;">${xesc(booking)}</td>`;
           h += `<td style="padding:6px 10px; text-align:right; font-family:var(--mono); font-size:11px;">${fmtAUD(entry.amount)}</td>`;
           h += `<td style="padding:6px 10px; text-align:right; font-family:var(--mono); font-size:11px; color:var(--muted);">${xeroAmount != null ? fmtAUD(xeroAmount) : '—'}</td>`;
-          h += `<td style="padding:6px 10px; font-size:11px; ${clientMismatch ? 'color:#991b1b; font-weight:600;' : 'color:var(--muted);'}">${xesc(xeroClient || '—')}${clientMismatch ? ' ⚠' : ''}</td>`;
+          h += `<td style="padding:6px 10px; font-size:11px; color:var(--muted);">${xesc(xeroClient || '—')}</td>`;
           h += `</tr>`;
         });
         h += `</tbody></table></div>`;
@@ -4069,6 +4164,23 @@ function renderFortnightlyAdmin() {
   window.initXeroRecon = function() {
     wireZone('xr-xero-zone', 'xr-xero-input', 'xero');
     wireZone('xr-zoho-zone', 'xr-zoho-input', 'zoho');
+
+    // Predefined reconciliation window = the fortnight currently being paid (the most
+    // recently completed period on the pay schedule). Removes date guesswork and keeps
+    // the Xero and Zoho exports aligned to the same fortnight.
+    (function setFortnightHint() {
+      const el = document.getElementById('xr-fortnight-hint');
+      if (!el) return;
+      const DAY = 86400000;
+      const firstEnd = new Date(2026, 5, 14); firstEnd.setHours(0, 0, 0, 0); // 14 Jun 2026 — first period end
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      let block = Math.floor((today - firstEnd) / (14 * DAY)); if (block < 0) block = 0;
+      const end = new Date(firstEnd.getTime() + block * 14 * DAY);
+      const start = new Date(end.getTime() - 13 * DAY);
+      const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const f = d => d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear();
+      el.innerHTML = '<span style="color:var(--ink); font-weight:600;">📅 This pay run: ' + f(start) + ' – ' + f(end) + '</span><br>Set the Xero <em>Date range</em> to exactly these dates, and export the same range from Zoho, so both files cover the full fortnight.';
+    })();
   };
 })();
 
