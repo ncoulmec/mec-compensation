@@ -3592,6 +3592,12 @@ function renderFortnightlyAdmin() {
     const hasZoho = zohoMap && zohoMap.invMap && zohoMap.invMap.size > 0;
 
     // ---- Annotate each Xero row with match status ----
+    // CONSUMING 1-to-1 match: each Zoho payment record can satisfy only ONE Xero
+    // payment. Without this, two Xero payments on the same invoice + amount (e.g. a
+    // client paying the same $X twice in two instalments) both matched the SAME single
+    // Zoho record and BOTH showed "Matched" — hiding the genuinely-missing second one
+    // (the ESDAN/Rishi case). We track consumed Zoho entries and only match unconsumed.
+    const consumed = new Set();
     const rows = included.map(row => {
       if (!hasZoho) return { ...row, status: 'pending' };
 
@@ -3599,19 +3605,26 @@ function renderFortnightlyAdmin() {
       const zohoEntries = zohoMap.invMap.get(lookupKey);
 
       if (zohoEntries && zohoEntries.length > 0) {
-        // 1. First check: does any single Zoho entry match the Xero amount exactly?
-        //    This handles cases where an old payment for the same invoice is in Zoho
-        //    (e.g. Adam Wong: one entry from Dec 2025, one from May 2026 — only May matches).
-        const singleMatch = zohoEntries.find(e => Math.abs((e.amount || 0) - row.amount) <= 0.05);
+        const avail = zohoEntries.filter(e => !consumed.has(e));
+        // 1. A single UNCONSUMED entry matching the Xero amount → clean 1-to-1 match.
+        const singleMatch = avail.find(e => Math.abs((e.amount || 0) - row.amount) <= 0.05);
         if (singleMatch) {
-          return { ...row, status: 'ok', zohoTotal: row.amount, zohoEntries, singleMatch: true };
+          consumed.add(singleMatch);
+          return { ...row, status: 'ok', zohoTotal: row.amount, zohoEntries: [singleMatch], singleMatch: true };
         }
-        // 2. Fallback: sum all entries (handles split-booking invoices like RACV where
-        //    each booking has its own Zoho payment that together equal the Xero amount).
-        const zohoTotal = zohoEntries.reduce((s, e) => s + (e.amount || 0), 0);
-        const diff = Math.abs(zohoTotal - row.amount);
-        const status = diff <= 0.05 ? 'ok' : 'mismatch';
-        return { ...row, status, zohoTotal, zohoEntries };
+        // 2. Split-invoice: the remaining unconsumed entries SUM to the Xero amount
+        //    (handles RACV-style invoices split one Zoho payment per booking).
+        if (avail.length > 0) {
+          const zohoTotal = avail.reduce((s, e) => s + (e.amount || 0), 0);
+          if (Math.abs(zohoTotal - row.amount) <= 0.05) {
+            avail.forEach(e => consumed.add(e));
+            return { ...row, status: 'ok', zohoTotal, zohoEntries: avail };
+          }
+          return { ...row, status: 'mismatch', zohoTotal, zohoEntries: avail };
+        }
+        // Every Zoho entry for this invoice was already used by an earlier Xero
+        // payment → this one has no remaining match → genuinely missing.
+        return { ...row, status: 'missing', zohoTotal: 0, zohoEntries: [] };
       }
 
       // No invoice match — try fuzzy name fallback
@@ -3626,11 +3639,12 @@ function renderFortnightlyAdmin() {
         }
       }
       if (nameMatches) {
-        // Check if any name-matched entry also has the right amount
-        const singleMatch = nameMatches.find(e => Math.abs((e.amount || 0) - row.amount) <= 0.05);
-        const zohoTotal = singleMatch ? row.amount : nameMatches.reduce((s, e) => s + (e.amount || 0), 0);
+        const avail = nameMatches.filter(e => !consumed.has(e));
+        const singleMatch = avail.find(e => Math.abs((e.amount || 0) - row.amount) <= 0.05);
+        if (singleMatch) consumed.add(singleMatch);
+        const zohoTotal = singleMatch ? row.amount : avail.reduce((s, e) => s + (e.amount || 0), 0);
         const status = singleMatch ? 'ok' : 'possible_match';
-        return { ...row, status, zohoTotal, zohoEntries: nameMatches, nameMatchedClient: (nameMatches[0].paymentName || nameMatches[0].bookingName || ''), singleMatch: !!singleMatch };
+        return { ...row, status, zohoTotal, zohoEntries: singleMatch ? [singleMatch] : avail, nameMatchedClient: (nameMatches[0].paymentName || nameMatches[0].bookingName || ''), singleMatch: !!singleMatch };
       }
 
       return { ...row, status: 'missing', zohoTotal: null, zohoEntries: [] };
