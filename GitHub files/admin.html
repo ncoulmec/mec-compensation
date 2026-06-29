@@ -2237,15 +2237,26 @@ function renderFortnightlyAdmin() {
   // for their plan. This ensures hybrid_gp (Evie / Evie 2.0) uses its finer band
   // structure rather than the gp_bands ladder. Bands are normalised to sorted
   // [threshold, rate] pairs.
+  // Hardcoded 26-fortnight GP-sold seed per rep — fallback for when the encrypted data
+  // doesn't carry employees[].seedFortnights (the rep dashboards embed the same seed the
+  // same way). If seedFortnights IS present in data it takes precedence, so this becomes a
+  // no-op once the data is updated. Without this, admin computes on an empty trailing
+  // window (everything at 4%) and disagrees with the dashboards.
+  const ADMIN_SEED = {
+    dane: [15972.09, 21998.45, 5671.64, 22622.27, 16743.25, 12145.0, 16680.23, 10780.44, 11975.72, 22652.73, 18785.76, 8116.82, 22793.8, 17878.2, 11281.86, 2648.19, 17935.0, 23089.5, 21391.69, 23119.09, 6784.77, 17577.41, 15957.0, 22578.0, 14879.4, 20593.18],
+    daniel: [13529.09, 18937.5, 5357.5, 2390.0, 8924.5, 10734.8, 15986.66, 20956.62, 17456.75, 18312.0, 20666.59, 8909.0, 18596.55, 10921.0, 7330.0, 4730.0, 21697.6, 13134.5, 14222.0, 14600.0, 8600.0, 14007.0, 7772.5, 13557.0, 12852.5, 10122.5],
+    nic: [9979.45, 18025.5, 2856.0, 8185.88, 8885.0, 7680.0, 22975.02, 9526.0, 14761.15, 7092.0, 17685.32, 23134.78, 9694.32, 17273.86, 15800.0, 3834.55, 7957.5, 20337.5, 20642.5, 18733.18, 9180.0, 11931.14, 17935.0, 24603.73, 15493.5, 30120.0],
+    evie: [6259.0, 7450.27, 6250.0, 7845.0, 12299.82, 5965.0, 8067.7, 14344.14, 8220.0, 2815.0, 0.0, 5499.0, 2615.0, 2390.0, 0.0, 11345.0, 14198.77, 11746.63, 8257.5, 8794.7, 0.0, 6757.81, 3735.0, 7625.75, 850.0, 5615.0]
+  };
   const reps = (data.employees || []).filter(e => SALES_PLAN_IDS.includes(e.planType) && !e.placeholder).map(e => {
     const plan = (data.planTypes && data.planTypes[e.planType]) || {};
     const bands = Array.isArray(plan.bands) && plan.bands.length
       ? plan.bands.map(b => [Number(b.threshold) || 0, Number(b.rate) || 0]).sort((a, b) => a[0] - b[0])
       : [[0, 0]];
     const prodRate = typeof plan.productionPct === 'number' ? plan.productionPct : 0.01;
-    const seed = Array.isArray(e.seedFortnights)
+    const seed = (Array.isArray(e.seedFortnights) && e.seedFortnights.length)
       ? e.seedFortnights.map(s => (s && typeof s === 'object') ? (Number(s.gpSold) || 0) : (Number(s) || 0))
-      : [];
+      : (ADMIN_SEED[e.id] || []);
     return {
       id: e.id,
       name: shortName(e.name, e.id),
