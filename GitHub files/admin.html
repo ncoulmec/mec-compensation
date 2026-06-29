@@ -2416,15 +2416,28 @@ function renderFortnightlyAdmin() {
     else monthGroups.push({ month: fn.month, idxs: [i] });
   });
 
-  // First pay cycle AFTER each quarter close — keyed by FORTNIGHTS index. The inline
-  // banner is injected before the month group whose first fortnight is this index, so
-  // payroll staff are prompted to run Quarterly Payroll on the same run.
-  const QUARTER_CLOSE_PROMPTS = {
-    2:  { label: 'Q4 FY26', closed: '30 Jun 2026', paid: '13 Jul 2026' },
-    8:  { label: 'Q1 FY27', closed: '30 Sep 2026', paid: '5 Oct 2026' },
-    16: { label: 'Q2 FY27', closed: '31 Dec 2026', paid: '11 Jan 2027' },
-    22: { label: 'Q3 FY27', closed: '31 Mar 2027', paid: '5 Apr 2027' }
-  };
+  // First pay run AFTER each quarter close — DERIVED from the quarter-end dates so it
+  // stays correct every year regardless of how the fortnight calendar falls. For each
+  // quarter end we pick the first fortnight whose PAID date is after the close (the run
+  // before close can't include quarter-end data; the next run is where the quarterly is
+  // processed). The banner is injected directly UNDER that fortnight's row, below.
+  const _QC = [
+    { label: 'Q4 FY26', end: new Date(2026, 5, 30) },   // 30 Jun 2026
+    { label: 'Q1 FY27', end: new Date(2026, 8, 30) },   // 30 Sep 2026
+    { label: 'Q2 FY27', end: new Date(2026, 11, 31) },  // 31 Dec 2026
+    { label: 'Q3 FY27', end: new Date(2027, 2, 31) }    // 31 Mar 2027
+  ];
+  const _parsePaid = (s) => { const m = String(s).match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/); return m ? new Date(+m[3], _MON_TO_NUM[m[2]], +m[1]) : null; };
+  const QUARTER_CLOSE_PROMPTS = {};
+  _QC.forEach(qc => {
+    for (let i = 0; i < FORTNIGHTS.length; i++) {
+      const pd = _parsePaid(FORTNIGHTS[i].paid);
+      if (pd && pd > qc.end) {
+        QUARTER_CLOSE_PROMPTS[i] = { label: qc.label, closed: qc.end.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }), paid: FORTNIGHTS[i].paid };
+        break;
+      }
+    }
+  });
 
   // Expanded state — start collapsed (months hidden)
   const expanded = new Set();
@@ -2641,7 +2654,7 @@ function renderFortnightlyAdmin() {
           <input type="text" id="pr-ev-${esc(r.id)}" data-rep="${esc(r.id)}" data-kind="event" inputmode="decimal" ${lock} value="${f.row.eventGp ? f.row.eventGp.toLocaleString() : ''}" placeholder="0" style="width:100%; padding:9px 10px; border:1px solid #d3d1c7; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; ${lockStyle}">
         </div>
         <div style="text-align:right; position:relative;">
-          <span class="um-tooltip" data-tip="${esc(repBreakdown)}" style="position:absolute; top:-7px; right:-2px; z-index:2;">?</span>
+          <span onclick="window.__amOpen&&window.__amOpen('${esc(r.id)}',${idx})" title="Click for the full pay breakdown (same as the rep's dashboard)" class="um-tooltip" style="position:absolute; top:-7px; right:-2px; z-index:2; cursor:pointer;">?</span>
           <input type="text" class="pr-copy" tabindex="-1" id="pr-bonus-${esc(r.id)}" readonly value="${_fmt2dp(f.exSuper)}" title="Bonus ex super — click to copy into Xero" style="width:100%; padding:9px 10px; border:1px solid #c3e4d0; border-radius:6px; text-align:right; font-family:var(--mono); font-size:15px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;">
         </div>
         <div style="text-align:right;">
@@ -2863,7 +2876,7 @@ function renderFortnightlyAdmin() {
     document.querySelectorAll('#fnp-payrun .pr-xero-note').forEach(btn => {
       btn.addEventListener('click', async () => {
         const rep = btn.getAttribute('data-rep');
-        const money = (v) => '$' + Math.round(v).toLocaleString();
+        const money = (v) => '$' + (Number(v) || 0).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const period = FORTNIGHTS[idx].period;
         // Rebuild from the band math (not just the GP cells) so the note shows the
         // commission earned on each stream and matches the Bonus → Xero figure exactly.
@@ -2991,23 +3004,8 @@ function renderFortnightlyAdmin() {
       let monthRowGP = 0;
       reps.forEach(r => { monthRowGP += monthGpByRep[r.id]; });
 
-      // Quarter-close prompt — injected as a full-width banner BEFORE the month group
-      // whose first fortnight is the first pay cycle after a quarter close. This is
-      // where payroll staff are prompted to also run the Quarterly Payroll tab.
-      const qPrompt = QUARTER_CLOSE_PROMPTS[mg.idxs[0]];
-      if (qPrompt) {
-        h += `<tr class="fnp-qclose-row">
-          <td colspan="${reps.length + 2}" style="padding: 0; background: #fff;">
-            <div style="margin: 12px 8px; padding: 12px 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-left: 3px solid var(--navy); border-radius: 6px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-              <div style="flex: 1; min-width: 280px;">
-                <div style="font-size: 12px; font-weight: 700; color: var(--navy);">⚑ ${esc(qPrompt.label)} closed ${esc(qPrompt.closed)} — first pay cycle of the new quarter</div>
-                <div style="font-size: 11px; color: var(--muted); margin-top: 3px;">This fortnight (paid ${esc(qPrompt.paid)}) is the first run after quarter close. Also process the quarterly commission for Hayley, Tom &amp; Michael.</div>
-              </div>
-              <button class="fnp-goto-quarterly" style="padding: 7px 14px; background: var(--navy); color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;">📈 Open Quarterly Payroll →</button>
-            </div>
-          </td>
-        </tr>`;
-      }
+      // Quarter-close prompt is rendered UNDER its specific fortnight detail row
+      // (the first pay run AFTER a quarter closes), in the detail loop below.
       h += `<tr class="fnp-month-row" data-mi="${mi}" style="cursor: pointer; font-weight: 600; ${groupBg}">
         <td style="padding: 8px 10px; position: sticky; left: 0; ${groupBg} z-index: 2; border-bottom: 1px solid #ecebe5;">
           <span class="fnp-caret" style="display: inline-block; width: 10px; color: var(--muted); transition: transform 0.15s; transform: ${isOpen ? 'rotate(90deg)' : 'rotate(0deg)'};">▸</span>
@@ -3089,6 +3087,24 @@ function renderFortnightlyAdmin() {
           ${rowCells}
           <td style="text-align: right; padding: 5px 10px; border-bottom: 1px solid #f4f3ed; font-family: var(--mono); font-size: 12px; font-weight: 600; background: #fefcf7;">${rowTotal > 0 ? _fmt(rowTotal) : '<span style="color: var(--faint); font-weight: 400;">—</span>'}</td>
         </tr>`;
+
+        // Quarter-close banner — rendered DIRECTLY UNDER the fortnight that is the
+        // first pay run after a quarter closes. Always visible (not tied to the
+        // month-group expand state) so payroll never misses the quarterly run.
+        const qP = QUARTER_CLOSE_PROMPTS[fi];
+        if (qP) {
+          h += `<tr class="fnp-qclose-row">
+          <td colspan="${reps.length + 2}" style="padding: 0; background: #fff;">
+            <div style="margin: 10px 8px; padding: 12px 14px; background: #eef4fa; border: 1px solid #cdd9e8; border-left: 3px solid var(--navy); border-radius: 6px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 280px;">
+                <div style="font-size: 12px; font-weight: 700; color: var(--navy);">⚑ ${esc(qP.label)} closed ${esc(qP.closed)} — process quarterly commission in this pay run</div>
+                <div style="font-size: 11px; color: var(--muted); margin-top: 3px;">This fortnight (paid ${esc(qP.paid)}) is the first pay run after the quarter closed. Also run the quarterly commission for Hayley, Tom &amp; Michael.</div>
+              </div>
+              <button class="fnp-goto-quarterly" style="padding: 7px 14px; background: var(--navy); color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;">📈 Open Quarterly Payroll →</button>
+            </div>
+          </td>
+        </tr>`;
+        }
       });
     });
     tbody.innerHTML = h;
