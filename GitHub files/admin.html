@@ -2522,6 +2522,19 @@ function renderFortnightlyAdmin() {
 
   const _btnNav = 'width:34px;height:34px;border:1px solid #d3d1c7;background:#fff;border-radius:6px;cursor:pointer;font-size:14px;color:var(--ink);';
 
+  // Opens the unified pay-breakdown modal (identical to the rep dashboards) for one
+  // rep + fortnight. Defined here so it closes over computeRepRows/repById/gpMatrix/FORTNIGHTS.
+  window.__amOpen = function (repId, idx) {
+    try {
+      var rep = repById[repId]; if (!rep) return;
+      var row = computeRepRows(repId)[idx]; if (!row) return;
+      var fn = FORTNIGHTS[idx], gpv = gpMatrix[repId] || [];
+      var reals = [];
+      for (var k = 0; k <= idx; k++) { reals.push({ period: (FORTNIGHTS[k] ? FORTNIGHTS[k].period : ('F' + (k + 1))), gp: (gpv[k] || 0) }); }
+      window.__amRender && window.__amRender({ row: row, B: rep.bands, seed: (rep.seed || []), reals: reals, fnIdx: idx, period: fn.period, paid: fn.paid, name: rep.fullName });
+    } catch (e) {}
+  };
+
   function renderPayRun() {
     if (payrunIdx == null) payrunIdx = defaultPayrunIdx();
     const idx = payrunIdx;
@@ -2603,7 +2616,7 @@ function renderFortnightlyAdmin() {
       const repBreakdown = buildRepBreakdown(r, f);
       h += `<div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap:10px; align-items:center; padding:10px 4px; border-top:1px solid #f0efe9;">
         <div>
-          <div style="font-weight:700; color:var(--ink);">${esc(r.fullName)}</div>
+          <div onclick="window.__amOpen&&window.__amOpen('${esc(r.id)}',${idx})" title="Click for the full pay breakdown (same as the rep's dashboard)" style="font-weight:700; color:var(--ink); cursor:pointer;">${esc(r.fullName)} <span style="font-size:11px; color:#0d9488;">⊕</span></div>
           <div style="font-size:10px; color:var(--faint); font-family:var(--mono);">${esc(r.planType)} · YTD <span id="pr-ytd-${esc(r.id)}">${_fmt(f.row.ytd)}</span> · <span id="pr-rate-${esc(r.id)}">${(f.row.endRate * 100).toFixed(0)}%</span></div>
           <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
             <button type="button" class="pr-xero-note" data-rep="${esc(r.id)}" tabindex="-1" title="Copy this fortnight's GP note to paste into the Xero payslip" style="padding:4px 10px; border:1px solid #cdd9e8; background:#eef4fa; color:var(--navy); border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">📋 Copy Xero note</button>
@@ -4350,6 +4363,111 @@ function renderQuarterlyAdmin() {
 }
 
 load();
+</script>
+<style>
+.amodal-scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;z-index:99999;overflow:auto;padding:40px 16px}
+.amodal{background:#fff;border-radius:14px;padding:20px;max-width:460px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);position:relative;font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;color:#1f2421}
+.am-x{position:absolute;top:8px;right:14px;font-size:24px;color:#8b8a83;cursor:pointer;line-height:1}
+.am-lab{font-size:11px;letter-spacing:.06em;color:#8b8a83;text-align:center}
+.am-hero{font-size:34px;font-weight:600;text-align:center;line-height:1.1;margin-top:2px;color:#0f766e}
+.am-herosub{font-size:12px;color:#5f5e5a;text-align:center}
+.am-streams{display:flex;gap:8px;margin-top:14px}
+.am-stream{flex:1;background:rgba(13,148,136,.05);border-radius:9px;padding:10px 12px}
+.am-sv{font-size:18px;font-weight:600}.am-sk{font-size:12px;font-weight:600}.am-sd{font-size:11px;color:#8b8a83}
+.am-plus{align-self:center;color:#8b8a83}
+.am-split{text-align:center;font-size:12px;color:#5f5e5a;margin-top:10px}.am-split b{color:#1f2421}
+.am-sec,.am-exp{border-top:.5px solid #e7e5dd;margin-top:12px;padding-top:12px}
+.am-ladhead{display:flex;justify-content:space-between;font-size:12px;color:#5f5e5a;margin-bottom:6px}.am-ladhead b{color:#0f766e}
+.am-ladder{position:relative;height:22px;display:flex;border-radius:6px;overflow:hidden;font-size:10px;font-weight:600;cursor:help}
+.am-seg{display:flex;align-items:center;justify-content:center;color:#8b8a83;background:#f3f3ef}
+.am-seg.on{background:rgba(13,148,136,.08);color:#0f766e}
+.am-seg.cur{background:rgba(13,148,136,.30);color:#0f766e}
+.am-mark{position:absolute;top:-2px;bottom:-2px;width:2px;background:#1f2421}
+.am-scalex{display:flex;justify-content:space-between;font-size:10px;color:#8b8a83;margin-top:2px}
+.am-act{background:rgba(13,148,136,.08);color:#0f766e;border-radius:7px;padding:7px 10px;font-size:12px;margin-top:8px;text-align:center}
+.am-ladhover{position:relative}
+.am-ladtip{display:none;position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:8px;background:#0f766e;color:#fff;font-size:11px;line-height:1.65;padding:9px 12px;border-radius:8px;width:240px;z-index:100001;box-shadow:0 4px 14px rgba(0,0,0,.22);text-align:left}
+.am-ladtip b{color:#fff}
+.am-ladhover:hover .am-ladtip{display:block}
+.am-exp-h{font-size:12px;font-weight:600;color:#5f5e5a;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.am-exp-b{font-size:11px;color:#5f5e5a;margin-top:6px;line-height:1.7;padding-left:18px;display:none}
+.am-exp.open .am-exp-b{display:block}.am-exp.open .am-chev,.am-tu.open .am-chev{transform:rotate(90deg)}
+.am-chev{transition:transform .12s;display:inline-block}
+.am-tbl{width:100%;border-collapse:collapse;font-size:11px}.am-tbl td{padding:2px 0}.am-thd td,.am-thd2 td{color:#8b8a83}
+.am-sumrow td{border-top:.5px solid #e7e5dd;padding-top:4px;font-weight:600}
+.am-sumrow2 td{border-top:.5px dashed #e2c98f;padding-top:3px;font-weight:600}
+.am-faint{color:#8b8a83}.am-amber{color:#854f0b}
+.am-tu{background:#faeeda;border-radius:8px;padding:10px 12px;margin-top:8px}
+.am-tu-h{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#854f0b;cursor:pointer}
+.am-tu-b{font-size:11px;color:#854f0b;margin-top:6px;line-height:1.7;display:none}
+.am-tu.open .am-tu-b{display:block}
+</style>
+<script>
+(function(){
+  function m2(n){return '$'+(Number(n)||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function m0(n){return '$'+Math.round(Number(n)||0).toLocaleString();}
+  function pc(r){return Math.round((Number(r)||0)*100)+'%';}
+  function marg(p,B){var r=B.length?B[0][1]:0;for(var i=0;i<B.length;i++)if(p>=B[i][0])r=B[i][1];return r;}
+  function nextB(p,B){for(var i=0;i<B.length;i++)if(B[i][0]>p)return B[i];return null;}
+  function annC(g,B){var t=0;for(var i=0;i<B.length;i++){var nx=(i+1<B.length)?B[i+1][0]:Infinity;if(g>B[i][0])t+=(Math.min(g,nx)-B[i][0])*B[i][1];}return t;}
+  function decomp(gp,B){var o=[];for(var i=0;i<B.length;i++){var lo=B[i][0]/26,hi=(i+1<B.length)?B[i+1][0]/26:Infinity;if(gp<=lo)break;o.push({lo:lo,hi:hi,rate:B[i][1],amt:Math.min(gp,hi)-lo});}return o;}
+  function seedLabel(s){var st=new Date(2026,5,1);st.setDate(st.getDate()-(26-s)*14);var en=new Date(st);en.setDate(st.getDate()+13);var o={day:'numeric',month:'short'};return st.toLocaleDateString('en-AU',o)+' – '+en.toLocaleDateString('en-AU',o);}
+  function ladder(pos,B,tip){if(!B||!B.length)B=[[0,0.04]];var lastThr=B[B.length-1][0],scaleMax=lastThr+100000,segs=[];for(var qi=0;qi<B.length;qi++){var rate=B[qi][1],start=B[qi][0],qj=qi+1;while(qj<B.length&&B[qj][1]===rate)qj++;segs.push([start,(qj<B.length)?B[qj][0]:scaleMax,rate]);qi=qj-1;}var h='';segs.forEach(function(s){var w=(s[1]-s[0])/scaleMax*100;var cls=(pos>=s[0]&&pos<s[1])?'cur':(pos>=s[1]?'on':'');h+='<div class="am-seg '+cls+'" style="width:'+w+'%">'+pc(s[2])+'</div>';});var mk=Math.min(pos/scaleMax*100,100),mid=Math.round(scaleMax/2/50000)*50000;return '<div class="am-ladhover"><div class="am-ladder">'+h+'<div class="am-mark" style="left:'+mk+'%"></div></div><div class="am-scalex"><span>$0</span><span>$'+Math.round(mid/1000)+'k</span><span>$'+Math.round(scaleMax/1000)+'k</span></div>'+(tip?'<div class="am-ladtip">'+tip+'</div>':'')+'</div>';}
+  function amBuild(ctx){
+    var B=(ctx.B||[[0,0.04]]).map(function(b){return [Number(b[0]),Number(b[1])];});
+    var row=ctx.row||{},pos=Number(row.pace)||0,cur=marg(pos,B),M=cur;
+    var gp=Number(row.gp)||0,eventGp=Number(row.eventGp)||0,prod=Number(row.prodComm)||0;
+    var gpBand=Number(row.properPay)||0,total=gpBand+prod,bank=total/1.12,sup=total-bank;
+    var held=Number(row.held)||0,tuApplied=Number(row.tuAdj)||0,tuBal=Number(row.trueUpBalance)||0;
+    var seed=ctx.seed||[],reals=ctx.reals||[],fnIdx=Number(ctx.fnIdx)||0,nb=nextB(pos,B);
+    var keptSeed=seed.slice(fnIdx+1),keptSum=keptSeed.reduce(function(a,x){return a+Number(x);},0),realSum=reals.reduce(function(a,x){return a+Number(x.gp);},0);
+    var h='';
+    h+='<div class="am-lab">'+(ctx.name?String(ctx.name).toUpperCase()+' · ':'')+'PAY · '+(ctx.period||'')+'</div><div class="am-hero">'+m2(total)+'</div><div class="am-herosub">inc super · lands '+(ctx.paid||'')+'</div>';
+    h+='<div class="am-streams"><div class="am-stream"><div class="am-sv">'+m2(gpBand)+'</div><div class="am-sk">Sales commission</div><div class="am-sd">on '+m2(gp)+' GP collected</div><div class="am-sd">booking owner</div></div><div class="am-plus">+</div><div class="am-stream"><div class="am-sv">'+m2(prod)+'</div><div class="am-sk">Event production · 1%</div><div class="am-sd">on '+m0(eventGp)+' GP delivered</div><div class="am-sd">producer</div></div></div>';
+    h+='<div class="am-split">→ <b>'+m2(bank)+'</b> to bank &nbsp;·&nbsp; <b>'+m2(sup)+'</b> to super</div>';
+    var ladTip='<b>Trailing 12-month GP</b><br><b style="font-size:13px">'+m0(pos)+'</b> — in the <b>'+pc(cur)+'</b> band.<br><span style="opacity:.85">seed (GP sold) '+m0(keptSum)+' + GP received '+m0(realSum)+'</span>';
+    h+='<div class="am-sec"><div class="am-ladhead"><span>Rate this fortnight</span><span><b>'+pc(cur)+'</b> marginal · '+m0(pos)+' trailing</span></div>'+ladder(pos,B,ladTip);
+    if(nb){var need=nb[0]-pos;h+='<div class="am-act">▲ '+m0(need)+' more 12-month GP → unlocks <b>'+pc(nb[1])+'</b><div style="font-size:11px;margin-top:2px">≈ '+m0(need/26)+'/fortnight above current pace, sustained</div></div>';}
+    else h+='<div class="am-act">Top band — '+pc(cur)+' on every dollar.</div>';
+    h+='</div>';
+    var dec=decomp(gp,B),sum=0,db='<table class="am-tbl"><tr class="am-thd"><td>GP slice (this fortnight)</td><td style="text-align:center">rate paid</td><td style="text-align:right">earns</td></tr>';
+    dec.forEach(function(b){var rate=Math.min(b.rate,M),amt=b.amt*rate;sum+=amt;db+='<tr><td>'+m0(b.lo)+'–'+(b.hi===Infinity?'∞':m0(b.hi))+'</td><td style="text-align:center">'+pc(rate)+(b.rate>M?' <span class="am-faint">('+pc(b.rate)+' band, capped)</span>':'')+'</td><td style="text-align:right">'+m2(amt)+'</td></tr>';});
+    db+='<tr class="am-sumrow"><td colspan="2">= Net this fortnight</td><td style="text-align:right">'+m2(sum)+'</td></tr></table>';
+    if(held>0.5){var hrows='';for(var i=0;i<B.length;i++){if(B[i][1]>M){var hlo=B[i][0]/26,hhi=(i+1<B.length)?B[i+1][0]/26:Infinity;if(gp<=hlo)continue;var hs=Math.min(gp,hhi)-hlo;hrows+='<tr><td>'+m2(hs)+' above '+m0(B[i][0]/26)+'/fn</td><td style="text-align:center">'+pc(B[i][1])+' → +'+Math.round((B[i][1]-M)*100)+'%</td><td style="text-align:right">'+m2(hs*(B[i][1]-M))+'</td></tr>';}}var hb=nextB(pos,B);
+      db+='<div class="am-amber" style="margin-top:8px;line-height:1.75">Why some is held: rolling 12-month GP is <b>'+m0(pos)+'</b> — in the <b>'+pc(M)+'</b> band. GP reaching a higher band still earns the proven <b>'+pc(M)+'</b>; only the <b>premium</b> waits:<table class="am-tbl" style="margin-top:5px"><tr class="am-thd2"><td>slice above band</td><td style="text-align:center">premium held</td><td style="text-align:right">$</td></tr>'+hrows+'<tr class="am-sumrow2"><td colspan="2">Total held</td><td style="text-align:right">'+m2(held)+'</td></tr></table>'+(hb?'Unlocks at <b>'+m0(hb[0])+'</b> rolling 12-month GP — <b>'+m0(hb[0]-pos)+'</b> away.':'')+'</div>';}
+    h+='<div class="am-exp"><div class="am-exp-h"><span class="am-chev">▸</span>This fortnight across the bands</div><div class="am-exp-b">'+db+'</div></div>';
+    var curIdx=0;for(var ci=0;ci<B.length;ci++){if(pos>=B[ci][0])curIdx=ci;}
+    var bt='<table class="am-tbl"><tr class="am-thd"><td>Band</td><td style="text-align:right">From (annual GP)</td><td style="text-align:right">Per fortnight (÷26)</td></tr>';
+    for(var j=0;j<B.length;j++){if(j===0||B[j][1]!==B[j-1][1]){var on=pos>=B[j][0],here=(j===curIdx);bt+='<tr'+(here?' style="background:rgba(13,148,136,.10)"':'')+'><td style="'+(on?'font-weight:600;color:#0f766e':'')+'">'+pc(B[j][1])+(on?' ✓':'')+(here?' <b>◀</b>':'')+'</td><td style="text-align:right'+(here?';font-weight:700':'')+'">'+m0(B[j][0])+'</td><td style="text-align:right">'+(B[j][0]===0?'$0':m0(B[j][0]/26))+'</td></tr>';if(here){bt+='<tr><td colspan="3" style="text-align:right;font-size:11px;color:#0f766e;padding:1px 0 3px"><b>↑ trailing 12-month GP: '+m0(pos)+'</b></td></tr>';}}}
+    bt+='</table><div class="am-faint" style="margin-top:5px">✓ = bands the trailing 12-month GP (<b>'+m0(pos)+'</b>) has unlocked.</div>';
+    h+='<div class="am-exp"><div class="am-exp-h"><span class="am-chev">▸</span>Where each band starts</div><div class="am-exp-b">'+bt+'</div></div>';
+    var tb2='<div class="am-faint" style="margin-bottom:7px;line-height:1.6">Each fortnight paid on real <b>GP received</b> rolls off the oldest <b>GP sold</b> seed — window is the most recent 26 fortnights:</div>';
+    tb2+='<table class="am-tbl" style="margin-top:4px"><tr class="am-thd"><td>Fortnight in the 26-fn window</td><td style="text-align:center">basis</td><td style="text-align:right">GP</td></tr>';
+    tb2+=keptSeed.map(function(v,k){return '<tr><td>'+seedLabel(fnIdx+1+k)+'</td><td style="text-align:center" class="am-faint">sold · seed</td><td style="text-align:right">'+m0(v)+'</td></tr>';}).join('');
+    tb2+=reals.map(function(r){return '<tr><td>'+r.period+'</td><td style="text-align:center;color:#0f766e">received ✓</td><td style="text-align:right"><b>'+m0(r.gp)+'</b></td></tr>';}).join('');
+    tb2+='<tr class="am-sumrow"><td colspan="2">= Trailing 12-month total ('+(keptSeed.length+reals.length)+' fortnights)</td><td style="text-align:right">'+m0(keptSum+realSum)+'</td></tr></table>';
+    h+='<div class="am-exp"><div class="am-exp-h"><span class="am-chev">▸</span>How the trailing 12 months is built · 26 fortnights</div><div class="am-exp-b">'+tb2+'</div></div>';
+    var comm=annC(pos,B),eff=pos>0?comm/pos:0;
+    h+='<div class="am-exp"><div class="am-exp-h"><span class="am-chev">▸</span>Why this rate · full-year context</div><div class="am-exp-b">Trailing 12-month GP: <b>'+m0(pos)+'</b><br>seed (GP sold) rolling into live GP received — this unlocks each band.<br>Commission at this annual level: <b>'+m0(comm)+'</b> ('+(eff*100).toFixed(1)+'% effective).</div></div>';
+    if(tuApplied>0.5){var ct=null,pr=B[0][1];for(var k2=1;k2<B.length;k2++){if((B[k2][1]-B[k2-1][1])>0&&pos<B[k2][0]){ct=B[k2];pr=B[k2-1][1];break;}}var sp=ct?Math.round((ct[1]-pr)*100):0;
+      h+='<div class="am-tu"><div class="am-tu-h"><span><span class="am-chev">▸</span> True-Up recovery</span><span>−'+m2(tuApplied)+'</span></div><div class="am-tu-b"><ul style="margin:2px 0 0;padding-left:16px;line-height:1.7"><li>Rolling 12-month GP fell to <b>'+m0(pos)+'</b>'+(ct?' — below the <b>'+m0(ct[0])+'</b> line, so the <b>'+pc(ct[1])+'</b> band closed.':'.')+'</li>'+(ct?'<li>While above '+m0(ct[0])+', the <b>'+sp+'%</b> premium was earned on GP above <b>'+m0(ct[0]/26)+'/fortnight</b>.</li>':'')+'<li>That premium is being recovered — <b>'+m2(tuApplied)+'</b> this fortnight.</li><li>True-Up balance remaining: <b>'+m2(tuBal)+'</b>'+(tuBal>0.5?' — recovers from coming fortnights, never base.':' — now cleared.')+'</li></ul></div></div>';}
+    return h;
+  }
+  window.__amRender=function(ctx){
+    var sc=document.getElementById('am-scrim');
+    if(!sc){ sc=document.createElement('div'); sc.id='am-scrim'; sc.className='amodal-scrim'; sc.style.display='none';
+      sc.innerHTML='<div class="amodal"><div class="am-x">×</div><div id="am-body"></div></div>';
+      document.body.appendChild(sc);
+      sc.addEventListener('click',function(e){
+        if(e.target===sc||e.target.className==='am-x'){sc.style.display='none';return;}
+        var eh=e.target.closest&&e.target.closest('.am-exp-h'); if(eh){eh.parentNode.classList.toggle('open');return;}
+        var th=e.target.closest&&e.target.closest('.am-tu-h'); if(th){th.parentNode.classList.toggle('open');return;}
+      });
+    }
+    try{ document.getElementById('am-body').innerHTML=amBuild(ctx); }catch(e){ document.getElementById('am-body').innerHTML='<div style="padding:20px;color:#a4302a">Breakdown unavailable.</div>'; }
+    sc.style.display='flex';
+  };
+})();
 </script>
 </body>
 </html>
