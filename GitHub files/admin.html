@@ -844,10 +844,65 @@ const fmtNum = (n) => n == null || n === '' ? '' : Number(n).toLocaleString('en-
 const fmtMoney = (n) => n == null || isNaN(n) ? '—' : '$' + Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 });
 const parseNum = (s) => { const c = String(s).replace(/[^0-9.-]/g, ''); return c === '' ? null : +c; };
 
+// ==== CANONICAL BAND GUARD (added 2 Jul 2026) ==============================
+// WHY: Evie was paid on the ORIGINAL hybrid_gp bands (5% band at $150k) instead
+// of the agreed FY27 table (6% starts at $100k). Fixing data.json (DEV) never
+// fixed production, because every "Save to GitHub" re-encrypts planTypes from
+// the PREVIOUSLY decrypted master — so stale bands re-published themselves on
+// every save, forever. This guard runs on every unlock: if the loaded data's
+// bands differ from the canonical table below, it corrects them in memory,
+// marks the session dirty, and shows a banner telling you to Save to GitHub.
+// TO CHANGE A PLAN IN FUTURE: edit the table below (and data.json to keep DEV
+// in sync). Whatever is written here is the single source of truth for prod.
+const CANONICAL_BANDS = {
+  // Evie — YEAR 1 SPECIAL agreed May 2026, live 1 Jun 2026: 4% to $100k, then
+  // 6% held across $100k–$250k, 9% $250–300k, 11%/13% above, stretch 14%/16%.
+  // (Matches the deal description stored on planTypes.hybrid_gp in data.json.)
+  hybrid_gp: [
+    { threshold: 0,      rate: 0.04, poolRate: 0 },
+    { threshold: 100000, rate: 0.06, poolRate: 0 },
+    { threshold: 250000, rate: 0.09, poolRate: 0 },
+    { threshold: 300000, rate: 0.11, poolRate: 0 },
+    { threshold: 350000, rate: 0.13, poolRate: 0 },
+    { threshold: 500000, rate: 0.14, poolRate: 0 },
+    { threshold: 550000, rate: 0.16, poolRate: 0 }
+  ]
+};
+function _migrateCanonicalBands() {
+  try {
+    if (!data || !data.planTypes) return;
+    // Normalise: sort by threshold, drop redundant same-rate steps, so two
+    // tables that pay identically (e.g. one with a $50k step still at 4%)
+    // compare as equal and don't trigger a false correction.
+    const norm = (b) => {
+      const rows = (Array.isArray(b) ? b : [])
+        .map(x => [Number(x.threshold) || 0, Number(x.rate) || 0])
+        .sort((a, c) => a[0] - c[0]);
+      return rows.filter((r, i) => i === 0 || r[1] !== rows[i - 1][1]);
+    };
+    const fixed = [];
+    Object.keys(CANONICAL_BANDS).forEach(pt => {
+      const want = CANONICAL_BANDS[pt];
+      const have = data.planTypes[pt] && data.planTypes[pt].bands;
+      if (JSON.stringify(norm(have)) !== JSON.stringify(norm(want))) {
+        if (!data.planTypes[pt]) data.planTypes[pt] = {};
+        data.planTypes[pt].bands = JSON.parse(JSON.stringify(want));
+        fixed.push(pt);
+      }
+    });
+    if (fixed.length) {
+      dirty = true;
+      const slot = document.getElementById('error-slot');
+      if (slot) slot.innerHTML = '<div class="error-banner" style="background:#fff8e6; border-color:#e0c470; color:#6a4a00;"><strong>Commission band table corrected:</strong> the loaded data carried an out-of-date band table for <strong>' + fixed.join(', ') + '</strong> and it has been replaced with the agreed plan for this session. <strong>Click "Save to GitHub" now</strong> to publish the correction to the master file and every rep dashboard — until you save, production still has the old bands.</div>';
+    }
+  } catch (e) { console.error('Canonical band guard failed:', e); }
+}
+
 async function load() {
   try {
     // v41: Master password gate + decrypt the encrypted master file
     data = await (DEV_MODE ? _devLoadAdmin() : unlockAdmin());
+    _migrateCanonicalBands();
     $('#loading').style.display = 'none';
     $('#content').style.display = 'block';
     $('#meta-sub').textContent = `${data.meta.companyName} · Actuals for payroll — last edited ${data.meta.effectiveDate}`;
