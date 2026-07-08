@@ -2389,6 +2389,38 @@ function renderFortnightlyAdmin() {
   const ZOHO_PULL_KEY = 'mecPayRec5xQ8kT2vNbWj9rL3z';
   const ZOHO_PULL_URL = `https://script.google.com/macros/s/${ZOHO_PULL_DEPLOYMENT}/exec`;
 
+  // Google rewrites Apps Script web-app links to /macros/u/{N}/ when you're signed
+  // into multiple Google accounts, and that /u/N/ form 404s ("unable to open the
+  // file") in any window where account N isn't the bookings account (incl. incognito,
+  // which has no accounts at all). A web page physically can't open an incognito
+  // window, so instead we pop a small panel with the CLEAN (account-free) link and a
+  // Copy button — paste it into an incognito window (no accounts → no /u/N/ rewrite)
+  // and it runs anonymously as bookings@.
+  function mecShowScriptLink(label, url) {
+    const old = document.getElementById('mec-link-modal'); if (old) old.remove();
+    const ov = document.createElement('div');
+    ov.id = 'mec-link-modal';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(18,28,48,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML =
+      '<div style="background:#fff;max-width:540px;width:100%;border-radius:12px;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.35);font-family:-apple-system,BlinkMacSystemFont,sans-serif;">'
+      + '<div style="font-size:16px;font-weight:800;color:#12233f;margin-bottom:6px;">' + label + '</div>'
+      + '<div style="font-size:13px;color:#54607a;line-height:1.55;margin-bottom:14px;"><strong>Copy this link and paste it into an incognito window</strong> (Cmd/Ctrl + Shift + N), then press Enter. Incognito is required: a normal window is signed into your Google accounts, so Chrome rewrites the link to <code>/u/0/</code> or <code>/u/1/</code> on Enter and it fails with "unable to open the file". Incognito has no accounts, so the link runs cleanly as bookings@.</div>'
+      + '<input id="mec-link-input" readonly value="' + url + '" style="width:100%;padding:9px 10px;border:1px solid #cdd3dd;border-radius:6px;font-family:monospace;font-size:12px;margin-bottom:12px;box-sizing:border-box;">'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">'
+      + '<button id="mec-link-copy" style="padding:9px 16px;border:none;background:#1e6624;color:#fff;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copy link</button>'
+      + '<button id="mec-link-close" style="padding:9px 16px;border:1px solid #cdd3dd;background:#fff;color:#54607a;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">Close</button>'
+      + '</div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', (e) => { if (e.target === ov) ov.remove(); });
+    document.getElementById('mec-link-close').addEventListener('click', () => ov.remove());
+    document.getElementById('mec-link-copy').addEventListener('click', () => {
+      const inp = document.getElementById('mec-link-input'); inp.focus(); inp.select();
+      const done = () => { const b = document.getElementById('mec-link-copy'); if (b) { b.textContent = '✓ Copied'; setTimeout(() => { b.innerHTML = '📋 Copy link'; }, 1600); } };
+      try { navigator.clipboard.writeText(url).then(done, () => { document.execCommand('copy'); done(); }); }
+      catch (e) { document.execCommand('copy'); done(); }
+    });
+  }
+
   // Convert a FORTNIGHTS entry into {start, end} in YYYY-MM-DD form.
   // Period covers the 14 days ending the day before `paid`, e.g. paid 15 Jun
   // → period 1 Jun (incl) to 14 Jun (incl).
@@ -3021,7 +3053,7 @@ function renderFortnightlyAdmin() {
       const syncBtn = document.getElementById('pr-run-sync');
       if (syncBtn) syncBtn.addEventListener('click', () => {
         const url = `${ZOHO_PULL_URL}?action=sync&key=${encodeURIComponent(ZOHO_PULL_KEY)}`;
-        window.open(url, '_blank', 'noopener');
+        mecShowScriptLink('Run payment sync', url);
       });
       const reconBtn = document.getElementById('pr-open-recon');
       if (reconBtn) reconBtn.addEventListener('click', () => {
@@ -3031,7 +3063,7 @@ function renderFortnightlyAdmin() {
       const gpReconBtn = document.getElementById('pr-open-gp-recon');
       if (gpReconBtn) gpReconBtn.addEventListener('click', () => {
         const url = `${ZOHO_PULL_URL}?action=gp-report&key=${encodeURIComponent(ZOHO_PULL_KEY)}`;
-        window.open(url, '_blank', 'noopener');
+        mecShowScriptLink('GP reconciliation check', url);
       });
     } else {
       const ubtn = document.getElementById('pr-unlock');
