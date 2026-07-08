@@ -2649,7 +2649,8 @@ function renderFortnightlyAdmin() {
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
           <button type="button" id="pr-run-sync" style="padding:8px 14px; border:none; background:#8a6a00; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">▶ Run payment sync</button>
           <button type="button" id="pr-open-recon" style="padding:8px 14px; border:1px solid #e8d99a; background:#fff; color:#8a6a00; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Check Xero reconciliation →</button>
-          <span style="font-size:11px; color:#8a6a00;">Creates any new Zoho payments from Xero, then verify no double-pays or gaps — <strong>before</strong> pulling GP.</span>
+          <button type="button" id="pr-open-gp-recon" style="padding:8px 14px; border:1px solid #bfe0cb; background:#fff; color:#1e6624; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Check GP reconciliation ↗</button>
+          <span style="font-size:11px; color:#8a6a00;">Sync creates any new Zoho payments from Xero · Xero recon catches double-pays/gaps · GP recon confirms the GP attributed is correct — run all three <strong>before</strong> confirming.</span>
         </div>
       </div>`;
     }
@@ -2764,7 +2765,7 @@ function renderFortnightlyAdmin() {
         <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px;">Step 3 · Confirm &amp; save</div>
         <label for="pr-recon-ack" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-bottom:12px;">
           <input type="checkbox" id="pr-recon-ack" style="width:18px; height:18px; margin-top:1px; flex:none; cursor:pointer;">
-          <span style="font-size:13px; color:var(--ink);">I've run the payment sync and checked the Xero reconciliation for this fortnight — payments and GP are up to date in Zoho.</span>
+          <span style="font-size:13px; color:var(--ink);">I've run the payment sync and checked <strong>both</strong> reconciliations for this fortnight — Xero (payments captured, no double-pays) and GP (attributed GP is correct). Everything is up to date in Zoho.</span>
         </label>
         <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px;">
           <span id="pr-confirm-hint" style="font-size:12px; color:var(--muted);">Tick the box above to enable saving</span>
@@ -3026,6 +3027,11 @@ function renderFortnightlyAdmin() {
       if (reconBtn) reconBtn.addEventListener('click', () => {
         const t = document.querySelector('.admin-tab-btn[data-admin-tab="xero-recon"]');
         if (t) t.click();
+      });
+      const gpReconBtn = document.getElementById('pr-open-gp-recon');
+      if (gpReconBtn) gpReconBtn.addEventListener('click', () => {
+        const url = `${ZOHO_PULL_URL}?action=gp-report&key=${encodeURIComponent(ZOHO_PULL_KEY)}`;
+        window.open(url, '_blank', 'noopener');
       });
     } else {
       const ubtn = document.getElementById('pr-unlock');
@@ -3966,25 +3972,29 @@ function renderFortnightlyAdmin() {
       const hasUrlCol = !!zohoMap.hasUrlCol;
 
       // (A) DEFINITIVE duplicate scan — the real "never pay commission twice" guard.
-      //     The Xero Transaction URL holds the bankTransactionID, which is unique per
-      //     receipt. If two Zoho payment records carry the SAME URL, the same money has
-      //     been counted twice. This does NOT depend on the uploaded Xero window, so it
-      //     catches duplicates the invoice+amount heuristic below cannot. Only available
-      //     when the Zoho export includes a "Xero Transaction URL" column.
+      //     Keyed on (Xero Transaction URL + Booking). The URL holds the bankTransactionID
+      //     (unique per receipt), but ONE receipt legitimately splits across MANY bookings
+      //     — residencies / shared invoices (RACV, Kingpin, Collingwood, Nick & Nora's)
+      //     all carry the same URL on a record per booking. So keying on URL alone would
+      //     false-flag every split. A TRUE duplicate is the same receipt on the SAME
+      //     booking. This does NOT depend on the uploaded Xero window. Only available when
+      //     the Zoho export includes a "Xero Transaction URL" column.
       const dupGroups = [];
       if (hasUrlCol) {
-        const byUrl = new Map();
+        const byUrlBooking = new Map();
         const seenForUrl = new Set();
         for (const [, entries] of zohoMap.invMap.entries()) {
           entries.forEach(e => {
             if (!e.xeroUrl || seenForUrl.has(e)) return; // same entry can sit under >1 invoice key
             seenForUrl.add(e);
-            if (!byUrl.has(e.xeroUrl)) byUrl.set(e.xeroUrl, []);
-            byUrl.get(e.xeroUrl).push(e);
+            const bk = (e.bookingName || e.paymentName || '').trim().toLowerCase();
+            const key = e.xeroUrl + '||' + bk;
+            if (!byUrlBooking.has(key)) byUrlBooking.set(key, []);
+            byUrlBooking.get(key).push(e);
           });
         }
-        for (const [url, list] of byUrl.entries()) {
-          if (list.length > 1) dupGroups.push({ url, list });
+        for (const [, list] of byUrlBooking.entries()) {
+          if (list.length > 1) dupGroups.push({ url: list[0].xeroUrl, list });
         }
       }
 
