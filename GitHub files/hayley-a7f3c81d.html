@@ -497,7 +497,7 @@
       <div class="kpi-card">
         <div class="label">Year-End Catch-up</div>
         <div class="value" id="ytd-holdback">—</div>
-        <div class="sub">Tops up if your final trailing figure ends higher — never negative</div>
+        <div class="sub">Calculated at year-end once all four quarters are in — tops up if your final trailing figure ends higher, never negative</div>
       </div>
     </div>
 
@@ -1063,30 +1063,29 @@ async function load() {
     plan = data.planTypes[emp.planType];
     if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
 
-    // Seed quarterly grid: respect any saved user data (cm > 0). If localStorage is empty
-    // OR all four cm entries are 0 (treated as still-first-load), pre-fill each row with the
-    // company's TRAILING 365-day CM (last financial year) — the figure this model actually
-    // wants in each box. Hayley sees a representative baseline immediately and can override
-    // with the real trailing figure from Xero when she has it.
+    // Launch state: pre-fill the just-completed quarter (Apr–Jun 2026) with its ACTUAL
+    // trailing-365 CM, and leave the upcoming quarters blank for Hayley to fill in at each
+    // quarter-end. Respects any saved user data (cm > 0) so edits are never overwritten.
+    const LAUNCH_Q1_TRAILING_CM = 1017942; // Apr–Jun 2026 actual — last financial year CM to 30 Jun 2026
     let savedActuals = null;
     try { savedActuals = JSON.parse(localStorage.getItem(ACTUALS_LS_KEY) || 'null'); } catch (e) {}
     const hasUserData = Array.isArray(savedActuals) && savedActuals.some(s => s && +s.cm > 0);
     const shouldSeed = !hasUserData;
-    const trailingSeed = (typeof computeLTMCM === 'function') ? Math.round(computeLTMCM() || 0) : 0;
     actualsQuarters = defaultQuarters().map((q, i) => {
       const savedRow = (savedActuals && savedActuals[i]) || null;
       const savedCM = (savedRow && +savedRow.cm > 0) ? +savedRow.cm : 0;
-      const seedFromLY = shouldSeed && savedCM <= 0 && trailingSeed > 0;
+      // Only the first quarter carries the launch actual; the rest start blank.
+      const seedThis = shouldSeed && savedCM <= 0 && i === 0 && LAUNCH_Q1_TRAILING_CM > 0;
       return {
         quarter: q.quarter,
-        cm: savedCM > 0 ? savedCM : (seedFromLY ? trailingSeed : 0),
+        cm: savedCM > 0 ? savedCM : (seedThis ? LAUNCH_Q1_TRAILING_CM : 0),
         np: 0,
         autoFromPL: false,
-        seededFromLY: seedFromLY,
+        seededFromLY: false, // launch actual, not a seed — no chip
       };
     });
-    // Persist seeded defaults so subsequent reloads see them as actual inputs (and Hayley can clear/edit at will)
-    if (shouldSeed && actualsQuarters.some(q => q.seededFromLY)) {
+    // Persist the launch actual so subsequent reloads keep it (Hayley can still edit/clear).
+    if (shouldSeed && actualsQuarters.some(q => +q.cm > 0)) {
       try { localStorage.setItem(ACTUALS_LS_KEY, JSON.stringify(actualsQuarters)); } catch (e) {}
     }
 
@@ -1709,6 +1708,13 @@ function update() {
 
   // ===== ACTUAL =====
   const { rows: qRows, totals: qTot, latestAnnual, trueUp, latestTrailingCM } = computeQuarterlyPayouts();
+  const sr = (data.globals && data.globals.superRate) || 0.12;
+  // Build the super breakdown tooltip for a payout figure (all figures super-inclusive).
+  const payoutTip = (inc) => {
+    const ex = inc / (1 + sr), sup = inc - ex;
+    return `This is your quarterly payout: ${fmtMoney(inc)} in total, including super. `
+         + `That's ${fmtMoney(ex)} paid to your bank (ex-super) + ${fmtMoney(sup)} super = ${fmtMoney(inc)} including super.`;
+  };
   const tbody = document.getElementById('quarterly-body');
   qRows.forEach(qr => {
     const row = tbody.querySelector(`tr[data-qtr-idx="${qr.idx}"]`);
@@ -1720,7 +1726,7 @@ function update() {
       const aCmTxt = qr.annualisedCM ? `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">on ${fmtMoney(qr.annualisedCM)} trailing CM</div>` : '';
       annualCell.innerHTML = (qr.annualInc > 0 ? fmtMoney(qr.annualInc) : '<span style="color: var(--muted);">$0</span>') + aCmTxt;
       qpayoutCell.innerHTML = qr.quarterlyPayout > 0
-        ? fmtMoney(qr.quarterlyPayout) + `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">¼ of full-year commission</div>`
+        ? `<span title="${payoutTip(qr.quarterlyPayout).replace(/"/g, '&quot;')}" style="cursor: help; border-bottom: 1px dotted var(--faint);">${fmtMoney(qr.quarterlyPayout)}</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">¼ of full-year · inc. super · hover for split</div>`
         : (qr.annualisedCM > 0 && qr.annualisedCM < 1000000
             ? '<span style="color: var(--muted);">$0</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">below $1M floor</div>'
             : (qr.annualisedCM >= 1000000 && qr.annualisedCM < 1100000
@@ -1742,11 +1748,19 @@ function update() {
   const lyCMEl = document.getElementById('tot-ly-cm');
   if (lyCMEl) lyCMEl.textContent = lyCMTotal > 0 ? fmtMoney(lyCMTotal) : '—';
   document.getElementById('tot-annual').textContent = fmtMoney(latestAnnual);
-  document.getElementById('tot-qpayout').textContent = fmtMoney(qTot.quarterlyPayout);
+  const totQEl = document.getElementById('tot-qpayout');
+  totQEl.textContent = fmtMoney(qTot.quarterlyPayout);
+  if (qTot.quarterlyPayout > 0) { totQEl.title = payoutTip(qTot.quarterlyPayout).replace('quarterly payout', 'total paid to date'); totQEl.style.cursor = 'help'; }
 
   // YTD summary
   const quartersWithData = qRows.filter(q => q.cm > 0).length;
-  document.getElementById('ytd-cash').textContent = fmtMoney(qTot.quarterlyPayout);
+  const ytdCashEl = document.getElementById('ytd-cash');
+  ytdCashEl.textContent = fmtMoney(qTot.quarterlyPayout);
+  if (qTot.quarterlyPayout > 0) {
+    const ytdEx = qTot.quarterlyPayout / (1 + sr), ytdSup = qTot.quarterlyPayout - ytdEx;
+    ytdCashEl.title = `Total paid to date: ${fmtMoney(qTot.quarterlyPayout)} including super — ${fmtMoney(ytdEx)} to your bank + ${fmtMoney(ytdSup)} super.`;
+    ytdCashEl.style.cursor = 'help';
+  } else { ytdCashEl.title = ''; ytdCashEl.style.cursor = 'default'; }
   document.getElementById('ytd-cash-sub').textContent = quartersWithData > 0
     ? `${quartersWithData}/4 quarters · ¼ of full-year commission each, paid in full`
     : 'Nothing paid yet — enter quarters below';
@@ -1756,8 +1770,10 @@ function update() {
   if (ytdCmSubEl) ytdCmSubEl.textContent = quartersWithData > 0
     ? 'Latest trailing 365-day figure entered'
     : '—';
-  // Year-end catch-up (tops up only) — usually $0 when the trailing figure is steady.
-  document.getElementById('ytd-holdback').textContent = fmtMoney(trueUp);
+  // Year-end catch-up is only meaningful once all four quarters are in — before that, the
+  // remaining quarters are still to be paid, so a mid-year figure would overstate it. Show "—".
+  const catchupEl = document.getElementById('ytd-holdback');
+  catchupEl.textContent = (quartersWithData >= 4) ? fmtMoney(trueUp) : '—';
 
   // Projection
   const projEl = document.getElementById('ytd-projection');
