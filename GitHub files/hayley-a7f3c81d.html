@@ -141,6 +141,25 @@
   .tooltip-trigger { display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 50%; background: var(--border); font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 4px; cursor: help; position: relative; font-family: 'DM Sans', sans-serif; text-transform: none; letter-spacing: normal; }
   .tooltip-trigger:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 0; transform: translateY(-4px); background: var(--ink); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 400; line-height: 1.4; white-space: normal; width: 260px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 
+  /* Pay-figure hover — a value that reveals its ex/super/inc breakdown */
+  .pay-hover { cursor: help; border-bottom: 1px dotted var(--faint); }
+  .pay-hover:hover { border-bottom-color: var(--ink); }
+  /* Floating tooltip (appended to body, position:fixed — never clipped by table scroll) */
+  #mec-tip {
+    position: fixed; z-index: 9999; max-width: 300px;
+    background: #14181d; color: #fff; padding: 11px 13px; border-radius: 9px;
+    font-family: 'DM Sans', system-ui, sans-serif; font-size: 12.5px; line-height: 1.5;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.28); pointer-events: none;
+    opacity: 0; visibility: hidden; transition: opacity 0.09s ease;
+  }
+  #mec-tip.show { opacity: 1; visibility: visible; }
+  #mec-tip .tt-h { font-weight: 700; margin-bottom: 5px; }
+  #mec-tip .tt-r { display: flex; justify-content: space-between; gap: 18px; font-family: var(--mono); font-size: 12px; padding: 1px 0; }
+  #mec-tip .tt-r.tot { border-top: 1px solid rgba(255,255,255,0.22); margin-top: 5px; padding-top: 5px; font-weight: 700; }
+  #mec-tip .tt-r .lab { color: #b9c2cc; font-family: 'DM Sans', sans-serif; }
+  #mec-tip::after { content: ''; position: absolute; top: 100%; left: var(--arrow, 24px); border: 7px solid transparent; border-top-color: #14181d; }
+  #mec-tip.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #14181d; }
+
   table.bands { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.bands th { text-align: left; padding: 10px 10px; font-weight: 500; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); }
   table.bands td { padding: 11px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -1001,9 +1020,53 @@ const fmtMoney = (n) => {
   const sign = v < 0 ? '-' : '';
   return sign + '$' + Math.abs(v).toLocaleString('en-AU', { maximumFractionDigits: 0 });
 };
+// Exact-cents money — used for pay/commission figures where rounding to the dollar isn't acceptable.
+const fmtMoney2 = (n) => {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const v = Number(n);
+  const sign = v < 0 ? '-' : '';
+  return sign + '$' + Math.abs(v).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 const fmtPct = (n, d = 1) => (n * 100).toFixed(d) + '%';
 const fmtNum = (n) => Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 });
 const parseNum = (s) => { const c = String(s).replace(/[^0-9.-]/g, ''); return c === '' ? 0 : +c; };
+
+// ---- Floating pay tooltip: instant, styled, appended to <body> so it's never clipped ----
+let _mecTipEl = null;
+function _mecTip() {
+  if (!_mecTipEl) { _mecTipEl = document.createElement('div'); _mecTipEl.id = 'mec-tip'; document.body.appendChild(_mecTipEl); }
+  return _mecTipEl;
+}
+function showPayTip(target) {
+  const html = target.getAttribute('data-paytip');
+  if (!html) return;
+  const el = _mecTip();
+  el.innerHTML = html;
+  el.classList.remove('below');
+  el.classList.add('show');
+  const r = target.getBoundingClientRect();
+  const tr = el.getBoundingClientRect();
+  let left = r.left + r.width / 2 - tr.width / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - tr.width - 8));
+  let top = r.top - tr.height - 11;
+  if (top < 8) { top = r.bottom + 11; el.classList.add('below'); }   // flip below if no room above
+  const arrow = Math.max(12, Math.min(r.left + r.width / 2 - left, tr.width - 16));
+  el.style.setProperty('--arrow', arrow + 'px');
+  el.style.left = Math.round(left) + 'px';
+  el.style.top = Math.round(top) + 'px';
+}
+function hidePayTip() { if (_mecTipEl) _mecTipEl.classList.remove('show'); }
+document.addEventListener('mouseover', (e) => { const t = e.target.closest && e.target.closest('[data-paytip]'); if (t) showPayTip(t); });
+document.addEventListener('mouseout', (e) => { const t = e.target.closest && e.target.closest('[data-paytip]'); if (t) hidePayTip(); });
+document.addEventListener('scroll', hidePayTip, true);
+// Build the ex/super/inc breakdown tooltip markup for a super-inclusive payout figure.
+function payTipHtml(inc, sr, heading) {
+  const ex = inc / (1 + sr), sup = inc - ex;
+  return `<div class="tt-h">${heading || 'This quarter’s payout'}</div>`
+       + `<div class="tt-r"><span class="lab">To your bank (ex-super)</span><span>${fmtMoney2(ex)}</span></div>`
+       + `<div class="tt-r"><span class="lab">Super (${(sr * 100).toFixed(0)}%)</span><span>${fmtMoney2(sup)}</span></div>`
+       + `<div class="tt-r tot"><span class="lab">Total, inc. super</span><span>${fmtMoney2(inc)}</span></div>`;
+}
 
 // --- Sign out: clear decrypted dashboard cache + reload ---
 function signOut() {
@@ -1471,10 +1534,10 @@ function renderPayrollLockedCard() {
     return `<tr>
       <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${QLABELS[i]}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${cm > 0 ? fmtMoney(cm) : '—'}</td>
-      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(ex)}</td>
-      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--navy);">${fmtMoney(sup)}</td>
-      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney(inc)}</td>
-      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: #854f0b;">${fmtMoney(held)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney2(ex)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--navy);">${fmtMoney2(sup)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney2(inc)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: #854f0b;">${fmtMoney2(held)}</td>
     </tr>`;
   }).join('');
 
@@ -1502,10 +1565,10 @@ function renderPayrollLockedCard() {
         <tfoot>
           <tr style="border-top: 2px solid var(--ink);">
             <td style="padding: 8px 10px; font-weight: 700;" colspan="2">YTD total</td>
-            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney(totBonus)}</td>
-            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--navy);">${fmtMoney(totSuper)}</td>
-            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney(totBonus + totSuper)}</td>
-            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: #854f0b;">${fmtMoney(totHeld)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney2(totBonus)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--navy);">${fmtMoney2(totSuper)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney2(totBonus + totSuper)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: #854f0b;">${fmtMoney2(totHeld)}</td>
           </tr>
         </tfoot>
       </table>
@@ -1723,12 +1786,6 @@ function update() {
   // ===== ACTUAL =====
   const { rows: qRows, totals: qTot, latestAnnual, trueUp, latestTrailingCM } = computeQuarterlyPayouts();
   const sr = (data.globals && data.globals.superRate) || 0.12;
-  // Build the super breakdown tooltip for a payout figure (all figures super-inclusive).
-  const payoutTip = (inc) => {
-    const ex = inc / (1 + sr), sup = inc - ex;
-    return `This is your quarterly payout: ${fmtMoney(inc)} in total, including super. `
-         + `That's ${fmtMoney(ex)} paid to your bank (ex-super) + ${fmtMoney(sup)} super = ${fmtMoney(inc)} including super.`;
-  };
   const tbody = document.getElementById('quarterly-body');
   qRows.forEach(qr => {
     const row = tbody.querySelector(`tr[data-qtr-idx="${qr.idx}"]`);
@@ -1736,15 +1793,15 @@ function update() {
     const annualCell = row.querySelector('[data-cell="annual"]');
     const qpayoutCell = row.querySelector('[data-cell="qpayout"]');
     if (qr.cm > 0) {
-      // The trailing figure IS the annual CM — show it as the basis for the full-year commission.
+      // The trailing figure IS the annual CM — show it as the basis for the full-year commission (exact cents).
       const aCmTxt = qr.annualisedCM ? `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">on ${fmtMoney(qr.annualisedCM)} trailing CM</div>` : '';
-      annualCell.innerHTML = (qr.annualInc > 0 ? fmtMoney(qr.annualInc) : '<span style="color: var(--muted);">$0</span>') + aCmTxt;
+      annualCell.innerHTML = (qr.annualInc > 0 ? fmtMoney2(qr.annualInc) : '<span style="color: var(--muted);">$0.00</span>') + aCmTxt;
       qpayoutCell.innerHTML = qr.quarterlyPayout > 0
-        ? `<span title="${payoutTip(qr.quarterlyPayout).replace(/"/g, '&quot;')}" style="cursor: help; border-bottom: 1px dotted var(--faint);">${fmtMoney(qr.quarterlyPayout)}</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">¼ of full-year · inc. super · hover for split</div>`
+        ? `<span class="pay-hover" data-paytip="${payTipHtml(qr.quarterlyPayout, sr, 'This quarter’s payout').replace(/"/g, '&quot;')}">${fmtMoney2(qr.quarterlyPayout)}</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">¼ of full-year · inc. super · hover for split</div>`
         : (qr.annualisedCM > 0 && qr.annualisedCM < 1000000
-            ? '<span style="color: var(--muted);">$0</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">below $1M floor</div>'
+            ? '<span style="color: var(--muted);">$0.00</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">below $1M floor</div>'
             : (qr.annualisedCM >= 1000000 && qr.annualisedCM < 1100000
-                ? '<span style="color: var(--muted);">$0</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">milestone ramping</div>'
+                ? '<span style="color: var(--muted);">$0.00</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">milestone ramping</div>'
                 : '—'));
     } else {
       annualCell.textContent = '—';
@@ -1761,20 +1818,22 @@ function update() {
   });
   const lyCMEl = document.getElementById('tot-ly-cm');
   if (lyCMEl) lyCMEl.textContent = lyCMTotal > 0 ? fmtMoney(lyCMTotal) : '—';
-  document.getElementById('tot-annual').textContent = fmtMoney(latestAnnual);
+  document.getElementById('tot-annual').textContent = fmtMoney2(latestAnnual);
   const totQEl = document.getElementById('tot-qpayout');
-  totQEl.textContent = fmtMoney(qTot.quarterlyPayout);
-  if (qTot.quarterlyPayout > 0) { totQEl.title = payoutTip(qTot.quarterlyPayout).replace('quarterly payout', 'total paid to date'); totQEl.style.cursor = 'help'; }
+  totQEl.textContent = fmtMoney2(qTot.quarterlyPayout);
+  if (qTot.quarterlyPayout > 0) {
+    totQEl.setAttribute('data-paytip', payTipHtml(qTot.quarterlyPayout, sr, 'Total paid to date'));
+    totQEl.style.cursor = 'help';
+  } else { totQEl.removeAttribute('data-paytip'); totQEl.style.cursor = ''; }
 
   // YTD summary
   const quartersWithData = qRows.filter(q => q.cm > 0).length;
   const ytdCashEl = document.getElementById('ytd-cash');
-  ytdCashEl.textContent = fmtMoney(qTot.quarterlyPayout);
+  ytdCashEl.textContent = fmtMoney2(qTot.quarterlyPayout);
   if (qTot.quarterlyPayout > 0) {
-    const ytdEx = qTot.quarterlyPayout / (1 + sr), ytdSup = qTot.quarterlyPayout - ytdEx;
-    ytdCashEl.title = `Total paid to date: ${fmtMoney(qTot.quarterlyPayout)} including super — ${fmtMoney(ytdEx)} to your bank + ${fmtMoney(ytdSup)} super.`;
+    ytdCashEl.setAttribute('data-paytip', payTipHtml(qTot.quarterlyPayout, sr, 'Total paid to date'));
     ytdCashEl.style.cursor = 'help';
-  } else { ytdCashEl.title = ''; ytdCashEl.style.cursor = 'default'; }
+  } else { ytdCashEl.removeAttribute('data-paytip'); ytdCashEl.style.cursor = 'default'; }
   document.getElementById('ytd-cash-sub').textContent = quartersWithData > 0
     ? `${quartersWithData}/4 quarters · ¼ of full-year commission each, paid in full`
     : 'Nothing paid yet — enter quarters below';
@@ -1787,7 +1846,7 @@ function update() {
   // Year-end catch-up is only meaningful once all four quarters are in — before that, the
   // remaining quarters are still to be paid, so a mid-year figure would overstate it. Show "—".
   const catchupEl = document.getElementById('ytd-holdback');
-  catchupEl.textContent = (quartersWithData >= 4) ? fmtMoney(trueUp) : '—';
+  catchupEl.textContent = (quartersWithData >= 4) ? fmtMoney2(trueUp) : '—';
 
   // Projection
   const projEl = document.getElementById('ytd-projection');
@@ -1801,7 +1860,7 @@ function update() {
     const projFlat = calcFlatBonuses(projAnnualCM).total;
     const projTotal = (projCM + projFlat) * r.effectiveKpi;
     const projPackage = r.baseInc + projTotal;
-    projEl.textContent = fmtMoney(projTotal);
+    projEl.textContent = fmtMoney2(projTotal);
     projSubEl.innerHTML = `On your latest trailing figure your total package is <strong>${fmtMoney(projPackage)}</strong> — keep it up!`;
   } else {
     projEl.textContent = '—';
