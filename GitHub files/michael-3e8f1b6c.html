@@ -1611,6 +1611,13 @@ const fmtMoney = (n) => {
   const sign = v < 0 ? '-' : '';
   return sign + '$' + Math.abs(v).toLocaleString('en-AU', { maximumFractionDigits: 0 });
 };
+// Same as fmtMoney but always to the cent — used for actual pay figures (Bonus/Super to Xero).
+const fmtMoney2 = (n) => {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const v = Number(n);
+  const sign = v < 0 ? '-' : '';
+  return sign + '$' + Math.abs(v).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 const fmtPct = (n, d = 1) => (n * 100).toFixed(d) + '%';
 const fmtNum = (n) => Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 });
 const parseNum = (s) => {
@@ -2625,9 +2632,9 @@ function updateQuarterlyDisplay(r) {
         const sup = quarterlyPayout - ex;
         el.innerHTML = `<div style="text-align:right;font-size:11px;font-weight:700;color:#1e6624;">✓ PAID</div>
           <div style="margin-top:3px;font-size:11px;font-family:var(--mono);line-height:1.55;">
-            <div style="display:flex;justify-content:space-between;gap:8px;"><span style="color:var(--muted);">Bonus → Xero</span><span style="color:#1e6624;font-weight:600;">${fmtMoney(ex)}</span></div>
-            <div style="display:flex;justify-content:space-between;gap:8px;"><span style="color:var(--muted);">+ Super (12%)</span><span style="color:var(--navy);font-weight:600;">${fmtMoney(sup)}</span></div>
-            <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #cfe6d5;margin-top:2px;padding-top:2px;"><span style="font-weight:600;">Total this pay</span><span style="font-weight:700;">${fmtMoney(quarterlyPayout)}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;"><span style="color:var(--muted);">Bonus → Xero</span><span style="color:#1e6624;font-weight:600;">${fmtMoney2(ex)}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;"><span style="color:var(--muted);">+ Super (12%)</span><span style="color:var(--navy);font-weight:600;">${fmtMoney2(sup)}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #cfe6d5;margin-top:2px;padding-top:2px;"><span style="font-weight:600;">Total this pay</span><span style="font-weight:700;">${fmtMoney2(quarterlyPayout)}</span></div>
           </div>`;
       } else {
         el.textContent = ttmRev == null ? `${fmtMoney(quarterlyPayout)} (projected)` : fmtMoney(quarterlyPayout);
@@ -2677,7 +2684,7 @@ function updateQuarterlyDisplay(r) {
       const tuSup = trueup - tuEx;
       trueupVals = {
         amount: fmtMoney(trueup),
-        detail: `<span style="color:#1e6624;">Bonus → Xero (ex super) <strong>${fmtMoney(tuEx)}</strong></span> · <span style="color:var(--navy);">+ Super (12%) <strong>${fmtMoney(tuSup)}</strong></span><br><span style="color:var(--muted);">Annual entitlement ${fmtMoney(annualEntitlementAtPayoutPct)} − paid ${fmtMoney(totalPaidAllQuarters)}</span>`,
+        detail: `<span style="color:#1e6624;">Bonus → Xero (ex super) <strong>${fmtMoney2(tuEx)}</strong></span> · <span style="color:var(--navy);">+ Super (12%) <strong>${fmtMoney2(tuSup)}</strong></span><br><span style="color:var(--muted);">Annual entitlement ${fmtMoney(annualEntitlementAtPayoutPct)} − paid ${fmtMoney(totalPaidAllQuarters)}</span>`,
         explainer: `You finished above your quarterly run-rate — this catches you up to the full annual commission earned at your final TTM of ${fmtMoney(finalTTM)}.`
       };
     } else {
