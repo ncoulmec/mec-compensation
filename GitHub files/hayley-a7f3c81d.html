@@ -1063,6 +1063,20 @@ async function load() {
     plan = data.planTypes[emp.planType];
     if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
 
+    // ── Canonical GM milestone guard ──────────────────────────────────────────
+    // Hayley's first $100k zone ($1.0M → $1.1M) must deliver a TRUE $11,200 bonus
+    // (inc super — i.e. $10,000 + 12% super) at $1.1M, ramping linearly from $1.0M.
+    // Some deployed data modelled this as a 10% band, which only reaches $10,000.
+    // Force the correct structure here so the number is right no matter what the
+    // encrypted data carries: 0% below $1.1M + an $11,200 ramping milestone bonus,
+    // then 5% to $1.4M and 7.5% above. Edit these four lines if the plan ever changes.
+    if (emp.planType === 'gm') {
+      plan.cmBaseline = 1100000;
+      plan.cmBands = [{ threshold: 0, rate: 0 }, { threshold: 1100000, rate: 0.05 }, { threshold: 1400000, rate: 0.075 }];
+      plan.flatBonuses = [{ threshold: 1100000, amount: 11200, rampFromMetric: 1000000, label: '$11,200 Maintenance Milestone (inc super) — ramps linearly from $1M to $1.1M CM' }];
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
     // Launch state: pre-fill the just-completed quarter (Apr–Jun 2026) with its ACTUAL
     // trailing-365 CM, and leave the upcoming quarters blank for Hayley to fill in at each
     // quarter-end. Respects any saved user data (cm > 0) so edits are never overwritten.

@@ -890,6 +890,24 @@ function _migrateCanonicalBands() {
         fixed.push(pt);
       }
     });
+
+    // gm (Hayley): the first $100k zone ($1.0M → $1.1M) must be a TRUE $11,200
+    // milestone bonus (inc super = $10,000 + 12%) at $1.1M, ramping from $1.0M —
+    // NOT a 10% band (which only reaches $10,000). Enforce cmBands + flatBonuses.
+    const GM_CM_BANDS = [{ threshold: 0, rate: 0 }, { threshold: 1100000, rate: 0.05 }, { threshold: 1400000, rate: 0.075 }];
+    const GM_FLAT = [{ threshold: 1100000, amount: 11200, rampFromMetric: 1000000, label: '$11,200 Maintenance Milestone (inc super) — ramps linearly from $1M to $1.1M CM' }];
+    if (data.planTypes.gm) {
+      const g = data.planTypes.gm;
+      const f0 = Array.isArray(g.flatBonuses) ? (g.flatBonuses[0] || {}) : {};
+      const bandsWrong = JSON.stringify(norm(g.cmBands)) !== JSON.stringify(norm(GM_CM_BANDS));
+      const flatWrong = !Array.isArray(g.flatBonuses) || g.flatBonuses.length !== 1 || +f0.amount !== 11200 || +f0.rampFromMetric !== 1000000 || +f0.threshold !== 1100000;
+      if (bandsWrong || flatWrong) {
+        g.cmBands = JSON.parse(JSON.stringify(GM_CM_BANDS));
+        g.flatBonuses = JSON.parse(JSON.stringify(GM_FLAT));
+        g.cmBaseline = 1100000;
+        fixed.push('gm');
+      }
+    }
     if (fixed.length) {
       dirty = true;
       const slot = document.getElementById('error-slot');
