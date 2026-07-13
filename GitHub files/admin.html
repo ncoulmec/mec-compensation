@@ -381,6 +381,7 @@
 
       <div class="card" style="margin-bottom: 14px;">
         <h2 style="margin: 0 0 12px;">Quarterly Payroll · Single-Screen Entry</h2>
+        <div id="qtp-pull-mount"></div>
         <div id="qtp-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px;"></div>
         <div style="overflow-x: auto; border: 1px solid #ecebe5; border-radius: 6px;">
           <table class="payroll" id="qtp-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
@@ -4543,9 +4544,9 @@ function renderQuarterlyAdmin() {
         const copyVals = incSuper > 0
           ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px;">
                <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Bonus</div>
-                 <input type="text" class="qtp-copy-bonus" tabindex="-1" readonly value="${Math.round(exSuper).toLocaleString()}" title="Bonus ex super — click to copy" style="width: 100%; padding: 6px 9px; border: 1px solid #c3e4d0; border-radius: 6px; background: #f5faf7; text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 600; color: #1e6624; cursor: pointer;"></div>
+                 <input type="text" class="qtp-copy-bonus" tabindex="-1" readonly value="${exSuper.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}" title="Bonus ex super — click to copy" style="width: 100%; padding: 6px 9px; border: 1px solid #c3e4d0; border-radius: 6px; background: #f5faf7; text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 600; color: #1e6624; cursor: pointer;"></div>
                <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Super</div>
-                 <input type="text" class="qtp-copy-super" tabindex="-1" readonly value="${Math.round(superAmt).toLocaleString()}" title="Super (12%) — click to copy" style="width: 100%; padding: 6px 9px; border: 1px solid #cdd9e8; border-radius: 6px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer;"></div>
+                 <input type="text" class="qtp-copy-super" tabindex="-1" readonly value="${superAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}" title="Super (12%) — click to copy" style="width: 100%; padding: 6px 9px; border: 1px solid #cdd9e8; border-radius: 6px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer;"></div>
              </div>
              <div style="font-size: 9px; color: var(--muted); margin-top: 3px; text-align: right; font-family: var(--mono);">annualised ${_fmt(row.annualised)}</div>`
           : (row.metric > 0
@@ -4718,10 +4719,86 @@ function renderQuarterlyAdmin() {
     });
   }
 
+  // ── Pull from Zoho — one-click TTM performance revenue for Tom & Michael ──
+  // Calls the same Apps Script web app as the fortnightly pull, new action
+  // `pull-quarterly-rev`. Returns each performer's trailing-365 (by Event_Date,
+  // ending at the selected quarter's close) ex-GST Confirmed performance revenue.
+  // Hayley (CM from a custom Xero report) stays manual for now.
+  const QTP_QUARTER_END = ['2026-06-30', '2026-09-30', '2026-12-31', '2027-03-31'];
+  const QTP_PULL_URL = 'https://script.google.com/macros/s/AKfycbxQ0KETFYKJQXB0-r4IWwgKINeLp_76aaAvZH1qn0m3pK0dZCsbzuEXggQbGgFup7DI0Q/exec';
+  const QTP_PULL_KEY = 'mecPayRec5xQ8kT2vNbWj9rL3z';
+  function renderQuarterlyPull() {
+    const mount = document.getElementById('qtp-pull-mount');
+    if (!mount) return;
+    let defIdx = 0;
+    for (let i = 0; i < QUARTERS.length; i++) { if (!isQuarterConfirmed(i)) { defIdx = i; break; } }
+    const opts = QUARTERS.map((q, i) => `<option value="${i}" ${i === defIdx ? 'selected' : ''}>${esc(q.label)} · ${esc(q.period)}</option>`).join('');
+    mount.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 12px; margin-bottom:14px; background:#f6f3ff; border:1px solid #ddd0f5; border-radius:8px;">
+        <div style="font-size:12px; color:var(--ink);">
+          <strong style="color:#5a3a8e;">🔄 Pull from Zoho</strong>
+          <span style="color:var(--muted);"> — auto-fills <strong>Tom &amp; Michael</strong>'s trailing-365 <strong>Performance Revenue (ex GST)</strong> for the selected quarter (Confirmed bookings by event date; on-hold/cancelled excluded). Hayley's CM is entered manually from Xero.</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <select id="qtp-pull-q" style="padding:7px 10px; border:1px solid #d3d1c7; border-radius:6px; font-size:12px; background:#fff;">${opts}</select>
+          <button type="button" id="qtp-pull-btn" style="padding:8px 16px; border:none; background:#5a3a8e; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Pull from Zoho ↓</button>
+        </div>
+      </div>
+      <div id="qtp-pull-status" style="display:none; padding:10px 12px; margin-bottom:14px; border-radius:8px; font-size:12px; font-family:var(--mono);"></div>`;
+
+    const btn = document.getElementById('qtp-pull-btn');
+    const statusEl = document.getElementById('qtp-pull-status');
+    const showStatus = (kind, msg) => {
+      if (!statusEl) return;
+      const pal = kind === 'ok' ? { bg:'#eaf5ec', bd:'#bfe0c6', c:'#1e6624' }
+                : kind === 'warn' ? { bg:'#fdf6e3', bd:'#e8d99a', c:'#8a6a00' }
+                : { bg:'#fdecea', bd:'#f0c5c0', c:'#a4302a' };
+      statusEl.style.display = 'block';
+      statusEl.style.background = pal.bg;
+      statusEl.style.border = '1px solid ' + pal.bd;
+      statusEl.style.color = pal.c;
+      statusEl.innerHTML = msg;
+    };
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const qi = parseInt(document.getElementById('qtp-pull-q').value, 10) || 0;
+      if (isQuarterConfirmed(qi)) { showStatus('warn', 'That quarter is <strong>confirmed/locked</strong>. Unlock it first, then pull.'); return; }
+      const quarterEnd = QTP_QUARTER_END[qi];
+      const targets = cohort.filter(c => c.planType === 'hybrid_rev' || c.planType === 'hybrid_rev_senior');
+      if (!targets.length) { showStatus('err', 'No Tom/Michael rows found in this cohort.'); return; }
+      btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Pulling…'; btn.style.opacity = '0.6'; btn.style.cursor = 'wait';
+      showStatus('warn', `Querying Zoho for trailing-365 performance revenue ending <strong>${esc(quarterEnd)}</strong>… this can take 10–20 seconds.`);
+      try {
+        const url = `${QTP_PULL_URL}?action=pull-quarterly-rev&key=${encodeURIComponent(QTP_PULL_KEY)}&quarterEnd=${encodeURIComponent(quarterEnd)}`;
+        const r = await fetch(url, { method: 'GET', redirect: 'follow' });
+        const body = await r.json();
+        if (!body || body.ok === false) { showStatus('err', '✗ Pull failed: ' + (body && body.error ? esc(body.error) : 'unknown error')); return; }
+        const reps = body.reps || {};
+        const lines = [];
+        targets.forEach(c => {
+          const val = reps[c.planType];
+          if (val == null) { lines.push(`${esc(c.name)}: no data`); return; }
+          qMatrix[c.id][qi] = +val;
+          const e = (data.employees || []).find(x => x.id === c.id);
+          if (e) ensureQuarterly(e).values[qi] = +val;
+          lines.push(`${esc(c.name)}: $${(+val).toLocaleString()}`);
+        });
+        if (typeof setDirty === 'function') setDirty();
+        renderTotals(); renderBody(); renderAudit();
+        showStatus('ok', `<strong>✓ Filled ${esc(QUARTERS[qi].label)}</strong> — ${lines.join(' · ')}<div style="margin-top:6px; font-size:10px; color:var(--muted);">Enter Hayley's CM manually, then tick the checkbox and Confirm &amp; Save the quarter.</div>`);
+      } catch (e) {
+        showStatus('err', '✗ Pull failed: ' + esc(e.message || String(e)) + '<div style="margin-top:4px; font-size:10px;">Common causes: Apps Script not re-deployed with the new action, key mismatch, or Zoho session expired (re-auth the script).</div>');
+      } finally {
+        btn.disabled = false; btn.textContent = orig; btn.style.opacity = ''; btn.style.cursor = '';
+      }
+    });
+  }
+
   renderHeader();
   renderTotals();
   renderBody();
   renderAudit();
+  renderQuarterlyPull();
 }
 
 load();
