@@ -338,11 +338,14 @@
     <dt>Super-Inclusive</dt>
     <dd>The dollar figures already include the 12% superannuation. So a $46k commission means $41k paid into your bank (pre-tax) and $5k paid into your super fund — $46k total in your name.</dd>
 
-    <dt>75% Quarterly / 25% Holdback</dt>
-    <dd>Each quarter pays 75% of commission earned to that point. The remaining 25% is held back and reconciled at year-end based on actual full-year CM.</dd>
+    <dt>Trailing 365-day CM</dt>
+    <dd>The company's Contribution Margin over the last 365 days (last financial year), pulled from Xero. This is already a full-year figure — your commission is calculated directly on it each quarter.</dd>
 
-    <dt>Quarterly True-Up</dt>
-    <dd>Each quarter we look at cumulative CM, calculate the commission earned to date, subtract what's been paid in earlier quarters, and pay the difference (capped at 75% per quarter).</dd><dt>Total Package</dt>
+    <dt>Quarter of the Year, Paid in Full</dt>
+    <dd>Each quarter we calculate the full-year commission your trailing 365-day CM earns, then pay a quarter of it — 100%, with no holdback. Cash flow stays steady through the year instead of waiting for year-end.</dd>
+
+    <dt>Year-End Catch-up</dt>
+    <dd>If your final trailing figure ends higher than your quarterly run-rate, the difference between the full annual entitlement and the sum of your quarterly payouts is paid as a top-up. It only ever tops up — never negative.</dd><dt>Total Package</dt>
     <dd>Base salary + super on base + CM commission. The full cost-to-MEC of employing you for the year.</dd>
   
     <dt>KPI Multiplier</dt>
@@ -427,7 +430,7 @@
         <div class="card" style="margin-bottom: 0;">
           <h2>Breakdown</h2>
           <div class="table-wrap"><table class="breakdown" id="breakdown-table"></table></div>
-          <p style="font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.5;">Commissions are super-inclusive. <strong>75%</strong> of the total annual incentive is paid quarterly; <strong>25%</strong> is held back for year-end reconciliation.</p>
+          <p style="font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.5;">Commissions are super-inclusive. Paid quarterly at <strong>a quarter of the full-year commission each quarter — in full</strong>, with a year-end catch-up if your final trailing figure ends higher.</p>
         </div>
       </div>
     </div>
@@ -472,7 +475,7 @@
     <div class="section-gap"></div>
 
     <div class="section-head">      <h2>What you've earned</h2>
-      <p class="blurb">Enter the company's actual CM at each quarter-end. Quarterly payouts are 75% of annualised commission pro-rata; the 25% holdback is reconciled at year-end. Edits persist on this device.</p>
+      <p class="blurb">At each quarter-end, enter the company's trailing 365-day CM (last financial year). Each quarter pays a quarter of the full-year commission that figure earns — in full, no holdback. Edits persist on this device.</p>
     </div>
 
     <div class="kpi-row">
@@ -487,39 +490,39 @@
         <div class="sub" id="ytd-projection-sub">Enter a quarter or two to see year-end projection</div>
       </div>
       <div class="kpi-card">
-        <div class="label">YTD CM</div>
+        <div class="label">Trailing 365-day CM</div>
         <div class="value" id="ytd-cmnp">—</div>
-        <div class="sub" id="ytd-cmnp-sub">Sum across quarters entered</div>
+        <div class="sub" id="ytd-cmnp-sub">Latest full-year figure entered</div>
       </div>
       <div class="kpi-card">
-        <div class="label">Year-End Holdback</div>
+        <div class="label">Year-End Catch-up</div>
         <div class="value" id="ytd-holdback">—</div>
-        <div class="sub">25% held for year-end reconciliation</div>
+        <div class="sub">Tops up if your final trailing figure ends higher — never negative</div>
       </div>
     </div>
 
     <div class="card">
       <h2>Quarterly Payouts</h2>
-      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 8px;">Enter the company's actual CM <strong>for that quarter</strong> (single-quarter figure, not cumulative). We'll annualise based on your YTD pace (YTD CM × 4 ÷ quarters entered) and project the full-year commission. Each quarter pays 75% of the projected annual, pro-rata by quarters entered, minus what's already been paid.</p>
+      <p style="font-size: 13px; color: var(--muted); margin: 2px 0 8px;">Enter the company's <strong>trailing 365-day CM</strong> (the last-financial-year figure from Xero) at each quarter-end. That figure is already a full year, so we apply the CM bands + milestone directly to it, then pay <strong>a quarter of the resulting full-year commission — in full</strong>. If your final trailing figure ends higher than the run-rate, a year-end catch-up tops you up.</p>
       <div style="margin: 0 0 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
         <a class="btn small" href="https://reporting.xero.com/!!w0P0/v1/Run/15016844?isCustom=True" target="_blank" rel="noopener" style="text-decoration: none; background: #13b5ea; color: #fff; border: 1px solid #13b5ea; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;">📊 Open Xero CM Report ↗</a>
-        <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Opens the custom Contribution Margin report — pull each quarter's CM directly and paste into the quarterly grid below.</span>
+        <span style="font-size: 11px; color: var(--muted); font-family: var(--mono);">Opens the custom Contribution Margin report — set it to the last 365 days (last financial year), then paste that trailing CM into the quarterly grid below.</span>
       </div>
       <div style="overflow-x: auto;">
         <div class="table-wrap"><table class="quarterly" id="quarterly-table">
           <thead>
             <tr>
               <th>Quarter</th>
-              <th class="num">CM<small>This quarter</small></th>
+              <th class="num">Trailing 365-day CM<small>Last 365 days</small></th>
               <th class="num" style="background:#fafaf7;">Last Year CM<small>Same Q last year</small></th>
-              <th class="num">Annualised Commission<small>Inc. super</small></th>
-              <th class="num">Quarterly Payout<small>75% · inc. super</small></th>
+              <th class="num">Full-Year Commission<small>Inc. super</small></th>
+              <th class="num">Quarterly Payout<small>¼ of year · inc. super</small></th>
             </tr>
           </thead>
           <tbody id="quarterly-body"></tbody>
         </table></div>
       </div>
-      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Payouts accrue progressively — each quarter pays the additional commission earned since last quarter (capped at 75% of cumulative annualised earning).</p>
+      <p style="font-size: 11px; color: var(--faint); margin: 12px 0 0; font-family: var(--mono);">Each quarter pays ¼ of the full-year commission on that quarter's trailing 365-day CM — paid in full, with a year-end catch-up if the final figure ends higher.</p>
     </div>
   </section>
 
@@ -564,7 +567,7 @@
 
     <div class="banner info">
       <span class="dot"></span>
-      <span id="payout-banner-text">Your commission is paid quarterly at 75%, with 25% held back for year-end reconciliation.</span>
+      <span id="payout-banner-text">Your commission is paid quarterly — a quarter of your full-year commission each quarter, in full, with a year-end catch-up if your final trailing figure ends higher.</span>
     </div>
 
     <div class="super-card">
@@ -804,7 +807,7 @@ async function _devLoadDashboard() {
 
 /* ============================================================
    Employee Compensation Dashboard — Hayley Wilson (GM, gm plan)
-   CM incentive only, quarterly 75/25 payout split.
+   CM incentive only, trailing-365 model — quarter of full-year commission each quarter, paid in full.
    ============================================================ */
 
 const EMPLOYEE_ID = 'hayley';
@@ -1061,22 +1064,22 @@ async function load() {
     if (!plan) throw new Error(`Plan "${emp.planType}" not found`);
 
     // Seed quarterly grid: respect any saved user data (cm > 0). If localStorage is empty
-    // OR all four cm entries are 0 (treated as still-first-load), pre-fill each row with
-    // last year's same-quarter CM from the company P&L. Hayley sees real baseline numbers
-    // immediately and can override with actuals when she has them.
+    // OR all four cm entries are 0 (treated as still-first-load), pre-fill each row with the
+    // company's TRAILING 365-day CM (last financial year) — the figure this model actually
+    // wants in each box. Hayley sees a representative baseline immediately and can override
+    // with the real trailing figure from Xero when she has it.
     let savedActuals = null;
     try { savedActuals = JSON.parse(localStorage.getItem(ACTUALS_LS_KEY) || 'null'); } catch (e) {}
     const hasUserData = Array.isArray(savedActuals) && savedActuals.some(s => s && +s.cm > 0);
     const shouldSeed = !hasUserData;
+    const trailingSeed = (typeof computeLTMCM === 'function') ? Math.round(computeLTMCM() || 0) : 0;
     actualsQuarters = defaultQuarters().map((q, i) => {
-      const ly = lookupLastYearQuarter(q.quarter);
-      const lyCM = ly && ly.cm > 0 ? Math.round(ly.cm) : 0;
       const savedRow = (savedActuals && savedActuals[i]) || null;
       const savedCM = (savedRow && +savedRow.cm > 0) ? +savedRow.cm : 0;
-      const seedFromLY = shouldSeed && savedCM <= 0 && lyCM > 0;
+      const seedFromLY = shouldSeed && savedCM <= 0 && trailingSeed > 0;
       return {
         quarter: q.quarter,
-        cm: savedCM > 0 ? savedCM : (seedFromLY ? lyCM : 0),
+        cm: savedCM > 0 ? savedCM : (seedFromLY ? trailingSeed : 0),
         np: 0,
         autoFromPL: false,
         seededFromLY: seedFromLY,
@@ -1359,7 +1362,7 @@ function renderQuarterlyGrid() {
     const lyCMText = lyCM != null ? fmtMoney(lyCM) : '—';
     // Subtle "seeded from last year" chip — vanishes once user actually edits the cell
     const seedChip = q.seededFromLY
-      ? `<span style="font-size:9px; color:var(--muted); font-weight:500; margin-left:6px; padding: 1px 5px; border: 1px solid var(--border); border-radius: 3px; background: #fafaf7;" title="Default scenario — seeded from last year's actual CM. Edit to model your own forecast.">LY seed</span>`
+      ? `<span style="font-size:9px; color:var(--muted); font-weight:500; margin-left:6px; padding: 1px 5px; border: 1px solid var(--border); border-radius: 3px; background: #fafaf7;" title="Default scenario — seeded from the company's trailing 365-day CM. Paste the actual last-365-days figure from Xero to lock it in.">trailing seed</span>`
       : '';
     const conf = quarterConfirmed[i];
     return `
@@ -1436,9 +1439,11 @@ function renderPayrollLockedCard() {
   }
 
   const sr = (data.globals && data.globals.superRate) || 0.12;
-  const payoutPct = (plan && plan.payoutPercentage != null) ? plan.payoutPercentage : 0.75;
-  // Use the YTD-pace payout from the main grid compute — the same model the admin paid on
-  // (cmBands + flat bonuses, annualised by YTD pace, 75% pro-rata). actualsQuarters has
+  // Hayley is now paid in full each quarter (trailing-365 model) — force 100% so this card
+  // is correct even if the encrypted planTypes data still carries the old 0.75 holdback.
+  const payoutPct = 1.0;
+  // Use the trailing-365 payout from the main grid compute — the same model the admin paid on
+  // (cmBands + flat bonuses on the trailing CM, quarter of full-year, paid in full). actualsQuarters has
   // already been seeded with the confirmed CM, so payRows[i] reflects the actual paid amount.
   const payRows = (typeof computeQuarterlyPayouts === 'function') ? (computeQuarterlyPayouts().rows || []) : [];
   let totBonus = 0, totSuper = 0, totHeld = 0;
@@ -1465,7 +1470,7 @@ function renderPayrollLockedCard() {
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 8px;">
         <div>
           <div style="font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">🔒 Payroll-Locked Quarters</div>
-          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Quarterly CM actuals confirmed by payroll. Paid at 75% each quarter, with 25% held to year-end. These are locked — your scenario inputs above are for modelling future quarters only.</div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Trailing 365-day CM actuals confirmed by payroll. Paid in full each quarter (a quarter of the full-year commission). These are locked — your scenario inputs above are for modelling future quarters only.</div>
         </div>
         <div style="font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 600;">${confIdx.length} of 4 quarters</div>
       </div>
@@ -1476,8 +1481,8 @@ function renderPayrollLockedCard() {
             <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">CM</th>
             <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Bonus → Xero</th>
             <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">+ Super</th>
-            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Paid (75%)</th>
-            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Held (25%)</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Paid (in full)</th>
+            <th style="text-align: right; padding: 6px 10px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Catch-up</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
@@ -1494,50 +1499,51 @@ function renderPayrollLockedCard() {
     </div>`;
 }
 
-// User enters QUARTERLY CM in each row (single quarter's contribution margin).
-// We then:
-//   1. Accumulate YTD CM across entered quarters
-//   2. ANNUALISE based on pace = ytdCM × 4 / quartersEntered
-//   3. Apply the CM bands + milestone formula to the annualised figure
-//   4. Pro-rata the 75% quarterly payout by quartersEntered/4
-// Each quarter pays only the NEW commission earned since the last quarter (delta).
+// TRAILING 365-DAY (TTM) MODEL — mirrors Tom & Michael's proven engine.
+// Each quarter's input IS the last-365-days CM (already a full-year figure), pulled
+// from Xero's trailing-year CM report. We then:
+//   1. Apply the CM bands + milestone formula DIRECTLY to that trailing figure
+//   2. Pay 1/4 of the resulting full-year commission that quarter, IN FULL (no holdback)
+//   3. Year-end catch-up: if the final trailing figure's full entitlement exceeds the
+//      sum of the four quarterly slices, the difference tops up at year-end (never claws back).
+// NOTE: payout is hardcoded to 100% here so pushing this file alone delivers the correct
+// pay even if the encrypted planTypes data still carries the old 0.75 holdback.
 function computeQuarterlyPayouts() {
   const g = data.globals;
   const effectiveKpi = Math.min(Math.max(scenario.kpiScore, g.kpiScoreFloor || 0), g.kpiScoreCap || 1);
-  const payoutPct = plan.payoutPercentage != null ? plan.payoutPercentage : 0.75;
 
-  let ytdCM = 0;
   let quartersEntered = 0;
   let cumPaid = 0;
+  let lastRowWithData = null;
   const rows = actualsQuarters.map((q, i) => {
-    const qcm = +q.cm || 0;
-    if (qcm <= 0) {
-      // No data entered yet for this quarter — carry forward state, output zeros
-      return { idx: i, quarter: q.quarter, cm: 0, ytdCM, annualisedCM: 0, annualInc: 0, quarterlyPayout: 0 };
+    const trailingCM = +q.cm || 0;
+    if (trailingCM <= 0) {
+      // No trailing figure entered yet for this quarter — output zeros
+      return { idx: i, quarter: q.quarter, cm: 0, ytdCM: 0, annualisedCM: 0, annualInc: 0, quarterlyPayout: 0 };
     }
-    ytdCM += qcm;
     quartersEntered++;
-    // Annualised pace: extrapolate YTD CM across the full year proportional to quarters entered
-    const annualisedCM = ytdCM * (4 / quartersEntered);
+    // The trailing 365-day CM already IS the annual figure — no pace extrapolation needed.
+    const annualisedCM = trailingCM;
     const cmEarn = calcCMIncentive(annualisedCM).earning;
     const flatEarn = calcFlatBonuses(annualisedCM).total;
     const annualInc = (cmEarn + flatEarn) * effectiveKpi;
-    // Total commission payable to-date = 75% of annualised, pro-rata by quarters entered
-    const cumPayable = annualInc * payoutPct * (quartersEntered / 4);
-    const quarterlyPayout = Math.max(0, cumPayable - cumPaid);
+    // Pay a quarter of the full-year commission that level earns, in full.
+    const quarterlyPayout = annualInc / 4;
     cumPaid += quarterlyPayout;
-    return { idx: i, quarter: q.quarter, cm: qcm, ytdCM, annualisedCM, annualInc, quarterlyPayout };
+    const row = { idx: i, quarter: q.quarter, cm: trailingCM, ytdCM: trailingCM, annualisedCM, annualInc, quarterlyPayout };
+    lastRowWithData = row;
+    return row;
   });
   const totals = rows.reduce((a, r) => ({
     cm: a.cm + r.cm,
     annualInc: Math.max(a.annualInc, r.annualInc),
     quarterlyPayout: a.quarterlyPayout + r.quarterlyPayout,
   }), { cm: 0, annualInc: 0, quarterlyPayout: 0 });
-  const lastRowWithData = [...rows].reverse().find(r => r.cm > 0);
   const latestAnnual = lastRowWithData ? lastRowWithData.annualInc : 0;
-  // 25% holdback is only against what the FULL annual projection would pay — pro-rata by quarters entered
-  const holdback = latestAnnual * (1 - payoutPct) * (quartersEntered / 4);
-  return { rows, totals, latestAnnual, holdback };
+  // Year-end catch-up (tops up only, never negative): full entitlement at the latest
+  // trailing figure minus what the quarterly slices already paid.
+  const trueUp = lastRowWithData ? Math.max(0, latestAnnual - cumPaid) : 0;
+  return { rows, totals, latestAnnual, holdback: 0, trueUp, latestTrailingCM: lastRowWithData ? lastRowWithData.cm : 0 };
 }
 
 function update() {
@@ -1702,7 +1708,7 @@ function update() {
   if (typeof renderPayrollLockedCard === 'function') renderPayrollLockedCard();
 
   // ===== ACTUAL =====
-  const { rows: qRows, totals: qTot, latestAnnual, holdback } = computeQuarterlyPayouts();
+  const { rows: qRows, totals: qTot, latestAnnual, trueUp, latestTrailingCM } = computeQuarterlyPayouts();
   const tbody = document.getElementById('quarterly-body');
   qRows.forEach(qr => {
     const row = tbody.querySelector(`tr[data-qtr-idx="${qr.idx}"]`);
@@ -1710,11 +1716,11 @@ function update() {
     const annualCell = row.querySelector('[data-cell="annual"]');
     const qpayoutCell = row.querySelector('[data-cell="qpayout"]');
     if (qr.cm > 0) {
-      // Always show the annualised CM so the user understands the projection — even when commission is $0.
-      const aCmTxt = qr.annualisedCM ? `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">${fmtMoney(qr.annualisedCM)} annualised CM</div>` : '';
+      // The trailing figure IS the annual CM — show it as the basis for the full-year commission.
+      const aCmTxt = qr.annualisedCM ? `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">on ${fmtMoney(qr.annualisedCM)} trailing CM</div>` : '';
       annualCell.innerHTML = (qr.annualInc > 0 ? fmtMoney(qr.annualInc) : '<span style="color: var(--muted);">$0</span>') + aCmTxt;
       qpayoutCell.innerHTML = qr.quarterlyPayout > 0
-        ? fmtMoney(qr.quarterlyPayout) + `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">75% × ¼ of annual</div>`
+        ? fmtMoney(qr.quarterlyPayout) + `<div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">¼ of full-year commission</div>`
         : (qr.annualisedCM > 0 && qr.annualisedCM < 1000000
             ? '<span style="color: var(--muted);">$0</span><div style="font-size: 10px; color: var(--faint); margin-top: 2px; font-family: var(--mono);">below $1M floor</div>'
             : (qr.annualisedCM >= 1000000 && qr.annualisedCM < 1100000
@@ -1725,7 +1731,8 @@ function update() {
       qpayoutCell.textContent = '—';
     }
   });
-  document.getElementById('tot-cm').textContent = fmtMoney(qTot.cm);
+  // "Year totals" CM column shows the latest trailing-365 figure (snapshots overlap, so a sum is meaningless).
+  document.getElementById('tot-cm').textContent = latestTrailingCM > 0 ? fmtMoney(latestTrailingCM) : '—';
   // Sum last-year CM across the same 4 quarters
   let lyCMTotal = 0;
   actualsQuarters.forEach(q => {
@@ -1741,33 +1748,34 @@ function update() {
   const quartersWithData = qRows.filter(q => q.cm > 0).length;
   document.getElementById('ytd-cash').textContent = fmtMoney(qTot.quarterlyPayout);
   document.getElementById('ytd-cash-sub').textContent = quartersWithData > 0
-    ? `${quartersWithData}/4 quarters · 75% of annualised accrued`
+    ? `${quartersWithData}/4 quarters · ¼ of full-year commission each, paid in full`
     : 'Nothing paid yet — enter quarters below';
   const ytdCmEl = document.getElementById('ytd-cmnp');
-  if (ytdCmEl) ytdCmEl.textContent = fmtMoney(qTot.cm);
+  if (ytdCmEl) ytdCmEl.textContent = latestTrailingCM > 0 ? fmtMoney(latestTrailingCM) : '—';
   const ytdCmSubEl = document.getElementById('ytd-cmnp-sub');
   if (ytdCmSubEl) ytdCmSubEl.textContent = quartersWithData > 0
-    ? `CM sum across ${quartersWithData} quarters`
+    ? 'Latest trailing 365-day figure entered'
     : '—';
-  document.getElementById('ytd-holdback').textContent = fmtMoney(holdback);
+  // Year-end catch-up (tops up only) — usually $0 when the trailing figure is steady.
+  document.getElementById('ytd-holdback').textContent = fmtMoney(trueUp);
 
   // Projection
   const projEl = document.getElementById('ytd-projection');
   const projSubEl = document.getElementById('ytd-projection-sub');
   if (quartersWithData > 0) {
-    // Annualise from latest quarterly CM using linear extrapolation
+    // The latest trailing figure IS the full-year CM — no pace extrapolation needed.
     const latestIdx = quartersWithData - 1;
     const latest = qRows[latestIdx];
-    const projAnnualCM = latest.cm * (4 / quartersWithData);
+    const projAnnualCM = latest.cm;
     const projCM = calcCMIncentive(projAnnualCM).earning;
     const projFlat = calcFlatBonuses(projAnnualCM).total;
     const projTotal = (projCM + projFlat) * r.effectiveKpi;
     const projPackage = r.baseInc + projTotal;
     projEl.textContent = fmtMoney(projTotal);
-    projSubEl.innerHTML = `At this pace your total package is <strong>${fmtMoney(projPackage)}</strong> — keep it up!`;
+    projSubEl.innerHTML = `On your latest trailing figure your total package is <strong>${fmtMoney(projPackage)}</strong> — keep it up!`;
   } else {
     projEl.textContent = '—';
-    projSubEl.textContent = 'Enter a quarter or two to see year-end projection';
+    projSubEl.textContent = 'Enter a quarter to see your full-year projection';
   }
 
   // Floater footers — Commission @ Scenario + Total Package @ Scenario

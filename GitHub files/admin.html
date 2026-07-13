@@ -375,7 +375,7 @@
       <div class="card" style="margin-bottom: 14px; padding: 16px 20px; background: #f6f8fc; border-left: 4px solid var(--navy);">
         <div style="font-size: 11px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">📈 Quarterly payroll cycle</div>
         <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.55;">
-          Hayley, Tom &amp; Michael are paid on a <strong>quarterly</strong> cadence. <strong>Hayley:</strong> enter each quarter's CM — system annualises (YTD × 4 ÷ quarters entered), applies CM bands + milestone, and shows the 75% pro-rata payout (25% reconciled at year-end). <strong>Tom &amp; Michael:</strong> enter their <strong>last 365 days (TTM) performance revenue</strong> each quarter — commission is calculated on that TTM, then divided by 4 for the quarter's payout (100% paid each quarter, no holdback). A year-end catch-up tops them up if their final TTM is higher than the quarterly run-rate. Run this <strong>once per quarter close</strong>, alongside the matching fortnightly cycle.
+          Hayley, Tom &amp; Michael are all paid on a <strong>quarterly</strong> cadence using the <strong>trailing-365 (TTM)</strong> model. <strong>Hayley:</strong> enter her <strong>last 365 days (last financial year) CM</strong> each quarter — CM bands + milestone are applied directly to that figure, then divided by 4 for the quarter's payout (100% paid, no holdback). <strong>Tom &amp; Michael:</strong> same model on their <strong>last 365 days performance revenue</strong>. For all three, a year-end catch-up tops them up if their final trailing figure is higher than the quarterly run-rate. Run this <strong>once per quarter close</strong>, alongside the matching fortnightly cycle.
         </div>
       </div>
 
@@ -2404,7 +2404,7 @@ function renderFortnightlyAdmin() {
     ov.innerHTML =
       '<div style="background:#fff;max-width:540px;width:100%;border-radius:12px;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.35);font-family:-apple-system,BlinkMacSystemFont,sans-serif;">'
       + '<div style="font-size:16px;font-weight:800;color:#12233f;margin-bottom:6px;">' + label + '</div>'
-      + '<div style="font-size:13px;color:#54607a;line-height:1.55;margin-bottom:14px;"><strong>Copy this link and paste it into an incognito window</strong> (Cmd/Ctrl + Shift + N), then press Enter. Incognito is required: a normal window is signed into your Google accounts, so Chrome rewrites the link to <code>/u/0/</code> or <code>/u/1/</code> on Enter and it fails with "unable to open the file". Incognito has no accounts, so the link runs cleanly as bookings@.</div>'
+      + '<div style="font-size:13px;color:#54607a;line-height:1.55;margin-bottom:14px;">Copy this link and paste it into an <strong>incognito window</strong> (Cmd/Ctrl + Shift + N), then press Enter.</div>'
       + '<input id="mec-link-input" readonly value="' + url + '" style="width:100%;padding:9px 10px;border:1px solid #cdd3dd;border-radius:6px;font-family:monospace;font-size:12px;margin-bottom:12px;box-sizing:border-box;">'
       + '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">'
       + '<button id="mec-link-copy" style="padding:9px 16px;border:none;background:#1e6624;color:#fff;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">📋 Copy link</button>'
@@ -3057,8 +3057,8 @@ function renderFortnightlyAdmin() {
       });
       const reconBtn = document.getElementById('pr-open-recon');
       if (reconBtn) reconBtn.addEventListener('click', () => {
-        const t = document.querySelector('.admin-tab-btn[data-admin-tab="xero-recon"]');
-        if (t) t.click();
+        const url = `${ZOHO_PULL_URL}?action=xero-recon&key=${encodeURIComponent(ZOHO_PULL_KEY)}`;
+        mecShowScriptLink('Xero reconciliation check', url);
       });
       const gpReconBtn = document.getElementById('pr-open-gp-recon');
       if (gpReconBtn) gpReconBtn.addEventListener('click', () => {
@@ -4285,8 +4285,8 @@ function renderFortnightlyAdmin() {
 // QUARTERLY PAYROLL ADMIN GRID
 // Quarters as rows, the 3 quarterly-cohort employees as columns.
 // Each cell = that quarter's metric (CM for Hayley, Performance
-// Revenue for Tom & Michael). Annualises YTD pace, applies the
-// employee's band ladder + milestone, shows the 75% pro-rata payout.
+// Revenue for Tom & Michael; trailing-365 CM for Hayley). Applies the
+// employee's band ladder + milestone to the trailing figure, pays a quarter in full.
 // Self-contained, in-memory (mirrors the fortnightly admin pattern).
 // ============================================================
 let _qtpInitialised = false;
@@ -4305,9 +4305,13 @@ function renderQuarterlyAdmin() {
   };
   const cohort = (data.employees || []).filter(e => QTP_PLAN_IDS.includes(e.planType) && !e.placeholder).map(e => {
     const plan = data.planTypes[e.planType] || {};
-    // TTM plans (Tom/Michael): input is the last-365-days revenue, payout = annual / 4.
-    // YTD plans (Hayley): input is that quarter's CM, system annualises by YTD pace.
-    const isTTM = (e.planType === 'hybrid_rev' || e.planType === 'hybrid_rev_senior');
+    // TTM (trailing-365) plans: input is the last-365-days figure, payout = annual / 4, paid in full.
+    //   - Tom/Michael (hybrid_rev*): metric = Performance Revenue.
+    //   - Hayley (gm): metric = trailing-365 CM (moved onto this model Jul 2026).
+    const isTTM = (e.planType === 'hybrid_rev' || e.planType === 'hybrid_rev_senior' || e.planType === 'gm');
+    // Hayley's holdback was removed with the model change — pay 100%. Forced here so the admin
+    // is correct even if the encrypted planTypes data still carries her old 0.75 payoutPercentage.
+    const payoutPct = (e.planType === 'gm') ? 1.0 : (plan.payoutPercentage != null ? plan.payoutPercentage : 1.0);
     return {
       id: e.id,
       name: e.name.split(' ')[0],
@@ -4319,7 +4323,7 @@ function renderQuarterlyAdmin() {
       dataSource: QTP_DATA_SOURCE[e.planType] || null,
       bands: plan.cmBands || plan.bands || [],
       flatBonuses: Array.isArray(plan.flatBonuses) ? plan.flatBonuses : [],
-      payoutPct: plan.payoutPercentage != null ? plan.payoutPercentage : 1.0
+      payoutPct
     };
   });
   if (cohort.length === 0) { document.getElementById('qtp-tbody').innerHTML = '<tr><td>No quarterly-cohort employees found.</td></tr>'; return; }
@@ -4404,7 +4408,7 @@ function renderQuarterlyAdmin() {
 
   // Compute per-quarter rows for one employee.
   // TTM plans (Tom/Michael): each quarter input IS the TTM (last 365 days). Annual comm = bands(TTM) + bonus(TTM); quarterly payout = annual / 4 × payoutPct (no YTD pacing).
-  // YTD plans (Hayley): each quarter input is that quarter's CM. Annualise via YTD × 4 ÷ quartersEntered; payout is cumulative pro-rata of annual × payoutPct.
+  // YTD-pace branch (legacy — no quarterly-cohort plan uses it now that Hayley is on TTM; kept as a defensive fallback).
   function computeEmpQuarters(c) {
     let ytd = 0, quartersEntered = 0, cumPaid = 0;
     const rows = [];
