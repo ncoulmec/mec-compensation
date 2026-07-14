@@ -1618,6 +1618,16 @@ const fmtMoney2 = (n) => {
   const sign = v < 0 ? '-' : '';
   return sign + '$' + Math.abs(v).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
+// Escape user/booking text before inserting into HTML.
+const escHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+// "2025-07-04" → "4 Jul 2025"
+const fmtGigDate = (iso) => {
+  if (!iso) return '—';
+  const p = String(iso).slice(0, 10).split('-');
+  if (p.length !== 3) return String(iso);
+  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return (+p[2]) + ' ' + (M[(+p[1]) - 1] || '') + ' ' + p[0];
+};
 const fmtPct = (n, d = 1) => (n * 100).toFixed(d) + '%';
 const fmtNum = (n) => Number(n).toLocaleString('en-AU', { maximumFractionDigits: 0 });
 const parseNum = (s) => {
@@ -2539,13 +2549,49 @@ function renderPayrollLockedCard() {
     const ex = payout / (1 + sr);
     const sup = payout - ex;
     totBonus += ex; totSuper += sup;
+    // Frozen per-booking breakdown — the gigs that made up this quarter's revenue.
+    const gigs = (q.lines || [])[i] || [];
+    let gigRow = '';
+    if (gigs.length) {
+      const ZOHO_DEAL = 'https://crm.zoho.com/crm/org657079535/tab/Potentials/';
+      const gigRows = gigs.map(gg => {
+        const nm = escHtml(gg.name || '(no name)');
+        const link = gg.id
+          ? `<a href="${ZOHO_DEAL}${escHtml(String(gg.id))}" target="_blank" rel="noopener" style="color: var(--navy); text-decoration: none;">${nm} ↗</a>`
+          : nm;
+        return `<tr>
+          <td style="padding: 4px 8px; font-family: var(--mono); color: var(--muted); white-space: nowrap;">${fmtGigDate(gg.date)}</td>
+          <td style="padding: 4px 8px;">${link}</td>
+          <td style="padding: 4px 8px; text-align: right; font-family: var(--mono);">${fmtMoney2(gg.exgst)}</td>
+        </tr>`;
+      }).join('');
+      gigRow = `<tr><td colspan="5" style="padding: 0 10px 12px;">
+        <details style="margin-top: 2px;">
+          <summary style="cursor: pointer; font-size: 11px; color: var(--accent); font-weight: 600; padding: 4px 0;">View the ${gigs.length} booking${gigs.length === 1 ? '' : 's'} behind ${fmtMoney(pr)} &rarr;</summary>
+          <div style="margin-top: 6px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+              <thead><tr style="background: #fafaf7;">
+                <th style="text-align: left; padding: 5px 8px; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Event date</th>
+                <th style="text-align: left; padding: 5px 8px; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Booking</th>
+                <th style="text-align: right; padding: 5px 8px; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Revenue (ex GST)</th>
+              </tr></thead>
+              <tbody>${gigRows}</tbody>
+              <tfoot><tr style="border-top: 1px solid var(--border); font-weight: 700;">
+                <td style="padding: 5px 8px;" colspan="2">Total &middot; ${gigs.length} performance${gigs.length === 1 ? '' : 's'}</td>
+                <td style="padding: 5px 8px; text-align: right; font-family: var(--mono);">${fmtMoney2(pr)}</td>
+              </tr></tfoot>
+            </table>
+          </div>
+        </details>
+      </td></tr>`;
+    }
     return `<tr>
       <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${QLABELS[i]}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${fmtMoney(pr)}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(ex)}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--navy);">${fmtMoney(sup)}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney(ex + sup)}</td>
-    </tr>`;
+    </tr>` + gigRow;
   }).join('');
 
   wrap.innerHTML = `

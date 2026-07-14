@@ -4364,11 +4364,14 @@ function renderQuarterlyAdmin() {
     const q = emp.quarterly;
     if (!Array.isArray(q.values)) q.values = [];
     if (!Array.isArray(q.confirmed)) q.confirmed = [];
+    if (!Array.isArray(q.lines)) q.lines = [];   // frozen per-booking breakdown (Tom/Michael)
     q.values.length = QUARTERS.length;
     q.confirmed.length = QUARTERS.length;
+    q.lines.length = QUARTERS.length;
     for (let i = 0; i < QUARTERS.length; i++) {
       if (typeof q.values[i] !== 'number' || !isFinite(q.values[i])) q.values[i] = 0;
       q.confirmed[i] = (q.confirmed[i] === true);
+      if (!Array.isArray(q.lines[i])) q.lines[i] = [];
     }
     q.audit = (q.audit == null) ? '' : String(q.audit);
     q.scheduleId = Q_SCHEDULE_ID;
@@ -4780,7 +4783,12 @@ function renderQuarterlyAdmin() {
           if (val == null) { lines.push(`${esc(c.name)}: no data`); return; }
           qMatrix[c.id][qi] = +val;
           const e = (data.employees || []).find(x => x.id === c.id);
-          if (e) ensureQuarterly(e).values[qi] = +val;
+          if (e) {
+            const eq = ensureQuarterly(e);
+            eq.values[qi] = +val;
+            // Freeze the per-booking breakdown so the rep's dashboard can show it.
+            eq.lines[qi] = (body.lines && body.lines[c.planType]) || [];
+          }
           lines.push(`${esc(c.name)}: $${(+val).toLocaleString()}`);
         });
         if (typeof setDirty === 'function') setDirty();
