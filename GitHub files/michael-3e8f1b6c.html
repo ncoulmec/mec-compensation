@@ -2588,9 +2588,9 @@ function renderPayrollLockedCard() {
     return `<tr>
       <td style="padding: 8px 10px; font-family: var(--mono); font-weight: 600; color: var(--accent);">🔒 ${QLABELS[i]}</td>
       <td style="padding: 8px 10px; text-align: right; font-family: var(--mono);">${fmtMoney(pr)}</td>
-      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney(ex)}</td>
-      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--navy);">${fmtMoney(sup)}</td>
-      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney(ex + sup)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--accent); font-weight: 600;">${fmtMoney2(ex)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); color: var(--navy);">${fmtMoney2(sup)}</td>
+      <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney2(ex + sup)}</td>
     </tr>` + gigRow;
   }).join('');
 
@@ -2617,9 +2617,9 @@ function renderPayrollLockedCard() {
         <tfoot>
           <tr style="border-top: 2px solid var(--ink);">
             <td style="padding: 8px 10px; font-weight: 700;" colspan="2">YTD total paid</td>
-            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney(totBonus)}</td>
-            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--navy);">${fmtMoney(totSuper)}</td>
-            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney(totBonus + totSuper)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--accent);">${fmtMoney2(totBonus)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700; color: var(--navy);">${fmtMoney2(totSuper)}</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: var(--mono); font-weight: 700;">${fmtMoney2(totBonus + totSuper)}</td>
           </tr>
         </tfoot>
       </table>
