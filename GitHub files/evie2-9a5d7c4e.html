@@ -9,7 +9,7 @@
 <title>Compensation Dashboard · Daniel Steer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --navy: #1a3a5c;
@@ -1357,12 +1357,94 @@
     <div class="card" style="background: #fff; border-left: 4px solid var(--navy);">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
         <div>
-          <h2 style="margin: 0 0 4px;">Fortnightly Payout <span style="font-size: 10px; padding: 1px 6px; background: #eef4fa; color: var(--navy); border: 1px solid #cdd9e8; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan · Forward 12 months</span></h2>
-          <p style="font-size: 12px; color: var(--muted); margin: 0;">Every fortnight is calculated against the proper YTD cumulative band math — each pay is exactly what you've earned, no monthly or quarterly true-up needed. Once payroll confirms a fortnight it appears <strong>locked and marked ✓ PAID</strong> — that's your actual paid figure, with the exact <strong>Bonus</strong> and <strong>Super</strong> amounts (right-hand columns) that go into Xero. Fortnights not yet confirmed stay <strong>editable so you can model your year</strong> — hover the totals or any row for the breakdown.</p>
+          <h2 style="margin: 0 0 4px;">Your Pay &amp; the Premium Wallet <span style="font-size: 10px; padding: 1px 6px; background: #f0ecfa; color: #5b3fa8; border: 1px solid #d9cef0; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">Active plan</span></h2>
+          <p style="font-size: 12px; color: var(--muted); margin: 0;">Two streams. Your <strong>4% base + 1% event production</strong> lands in your bank and super <strong>every fortnight</strong>. The <strong>premium above 4%</strong> — your reward for a strong trailing 12 months — builds in a <strong>Quarterly Premium Wallet</strong> and pays as one lump each quarter-end. Your annual total is unchanged from before; only <em>when</em> the premium lands has moved.</p>
         </div>
-        <div id="fn-year-switch" style="display: flex; align-items: center; gap: 8px;"></div>
+        <div id="fn-year-switch" style="display: none; align-items: center; gap: 8px;"></div>
       </div>
 
+      <!-- ===================== PREMIUM WALLET VIEW =====================
+           Styles + markup ported verbatim from the Zoho widget (sales_hq_styles.css
+           + bookings_hq_widget_v71.html) so the dashboard matches the widget exactly:
+           same tokens, teal pay card, slate wallet accents, system mono/sans. -->
+      <style>
+        #wallet-view{--border:#e3e8ef;--fg:#313c49;--fg-dim:#667085;--silver:#8e99a8;--muted:#eceff3;--surface2:#f5f7fa;--cash:#0d9488;--cash-dk:#0f766e;--cash-dim:rgba(13,148,136,.10);--purple:#3f4a5c;--purple-dim:rgba(63,74,92,.07);--mono:'Puvi','Roboto','Helvetica Neue',Arial,sans-serif;--sans:'Puvi','Roboto','Helvetica Neue',Arial,sans-serif;font-family:var(--sans);color:var(--fg);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;letter-spacing:0;}
+        #wallet-view .pay-big,#wallet-view .wm-big,#wallet-view td.r,#wallet-view .wm-p{letter-spacing:0;}
+        #wallet-view .wv-card{background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.04);box-sizing:border-box;padding:18px;}
+        #wallet-view .payB{border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.04);height:100%;box-sizing:border-box;}
+        #wallet-view .payB-top{background:var(--cash-dk);color:#eafffb;padding:18px 22px;height:100%;box-sizing:border-box;}
+        #wallet-view .payB-lab{font-size:11px;font-weight:700;letter-spacing:.7px;opacity:.88;text-transform:uppercase;}
+        #wallet-view .pay-big{font-family:var(--mono);font-size:40px;font-weight:700;color:#fff;letter-spacing:-.4px;line-height:1.05;margin-top:2px;}
+        #wallet-view .payB-sub{font-size:12.5px;opacity:.92;margin-top:6px;}
+        #wallet-view .payB-chip{display:inline-block;background:rgba(255,255,255,.16);color:#eafffb;border-radius:8px;padding:5px 11px;font-weight:600;font-size:13px;margin:8px 8px 0 0;}
+        #wallet-view .payB-links{margin-top:12px;display:flex;gap:18px;flex-wrap:wrap;}
+        #wallet-view .payB-links span{font-size:12.5px;font-weight:700;color:#fff;text-decoration:underline;cursor:pointer;}
+        #wallet-view .wm-wallet{border:1px solid #d9e0e8;background:#f7f9fb;border-radius:12px;padding:18px;box-sizing:border-box;height:100%;}
+        #wallet-view .wm-lab{font-size:11px;font-weight:700;letter-spacing:.7px;color:var(--fg-dim);margin-bottom:4px;text-transform:uppercase;}
+        #wallet-view .wm-big{font-family:var(--mono);font-size:30px;font-weight:700;color:#1f2937;line-height:1.05;}
+        #wallet-view .wm-add{font-size:13px;color:var(--cash-dk);font-weight:700;}
+        #wallet-view .wm-track{height:10px;background:var(--muted);border-radius:999px;overflow:hidden;margin:12px 0 4px;}
+        #wallet-view .wm-fill{height:100%;background:linear-gradient(90deg,#5eead4,var(--cash-dk));border-radius:999px;}
+        #wallet-view .wm-next{font-size:12.5px;color:var(--fg-dim);font-weight:600;}
+        #wallet-view .wm-link{display:inline-block;margin-top:10px;color:var(--purple);font-weight:600;font-size:12.5px;cursor:pointer;border-bottom:1px dotted var(--purple);}
+        #wallet-view .wm-i{cursor:help;border:1px solid var(--purple);border-radius:50%;width:15px;height:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-style:italic;color:var(--purple);vertical-align:middle;}
+        #wallet-view h2.wv-h{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--fg-dim);margin:0 0 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+        #wallet-view table{width:100%;border-collapse:collapse;font-size:13.5px;}
+        #wallet-view th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--fg-dim);padding:6px 8px;border-bottom:1px solid var(--border);}
+        #wallet-view td{padding:8px 8px;border-bottom:1px solid var(--muted);white-space:nowrap;}
+        #wallet-view th.r{text-align:right;}
+        #wallet-view td.r{text-align:right;font-family:var(--mono);}
+        #wallet-view .wm-p{color:var(--purple);font-family:var(--mono);}
+        #wallet-view .clock-tag{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;border-radius:5px;padding:2px 7px;}
+        #wallet-view .clock-tag.recd{background:var(--cash-dim);color:var(--cash-dk);border:1px solid rgba(13,148,136,.35);}
+        #wallet-view .tag-wallet{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--purple);border:1px solid var(--purple);border-radius:4px;padding:1px 5px;}
+        #wallet-view .fn-note{font-size:12.5px;color:var(--fg-dim);margin-top:10px;line-height:1.5;}
+        #wallet-view .wv-legacy summary{cursor:pointer;font-weight:600;color:var(--fg-dim);font-size:12.5px;padding:6px 0;list-style:none;}
+        #wallet-view .wv-legacy summary::-webkit-details-marker{display:none;}
+        @media(max-width:720px){#wallet-top-grid{grid-template-columns:1fr !important;}}
+        /* --- pay-breakdown + wallet-help modal (mirrors the widget popups) --- */
+        #wv-modal{display:none;position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:10050;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;font-family:'Puvi','Roboto','Helvetica Neue',Arial,sans-serif;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;}
+        #wv-modal.open{display:flex;}
+        #wv-modal .wv-mcard{background:#fff;border-radius:16px;max-width:620px;width:100%;padding:26px 28px 28px;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative;color:#313c49;}
+        #wv-modal .wv-mclose{position:absolute;top:14px;right:16px;font-size:22px;color:#667085;cursor:pointer;border:none;background:none;line-height:1;}
+        #wv-modal .wv-mnav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px;}
+        #wv-modal .wv-navb{border:1px solid #e3e8ef;background:#fff;border-radius:8px;width:30px;height:30px;font-size:13px;cursor:pointer;color:#0f766e;}
+        #wv-modal .wv-navb:disabled{opacity:.35;cursor:default;}
+        #wv-modal .wv-mlab{font-weight:600;font-size:15px;}
+        #wv-modal .wv-mhero{font-size:44px;font-weight:700;text-align:center;color:#0f766e;line-height:1.05;}
+        #wv-modal .wv-mheadlab{text-align:center;font-size:10.5px;letter-spacing:.07em;color:#667085;font-weight:700;text-transform:uppercase;}
+        #wv-modal .wv-mherosub{text-align:center;font-size:13px;color:#667085;}
+        #wv-modal .wv-msplit{text-align:center;font-size:13.5px;margin-top:8px;}
+        #wv-modal .wv-mbox{border:1px solid #e3e8ef;border-radius:12px;padding:2px 16px;margin-top:16px;}
+        #wv-modal .wv-simple{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid #eef1f5;font-size:13.5px;}
+        #wv-modal .wv-mwallet{margin-top:12px;background:#f7f9fb;border:1px solid #d9e0e8;border-radius:12px;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+        #wv-modal .wv-mlink{color:#3f4a5c;font-weight:600;font-size:12.5px;cursor:pointer;border-bottom:1px dotted #3f4a5c;white-space:nowrap;}
+        #wv-modal .wv-sech{border-top:1px solid #e3e8ef;margin:14px 0 4px;padding-top:10px;font-size:11px;letter-spacing:.05em;color:#667085;font-weight:700;text-transform:uppercase;}
+        #wv-modal details{margin-top:2px;}
+        #wv-modal details summary{cursor:pointer;font-size:13px;color:#313c49;font-weight:600;list-style:none;padding:8px 0;}
+        #wv-modal details.wv-msec{border-top:1px solid #eef1f5;padding-top:2px;}
+        #wv-modal details summary::-webkit-details-marker{display:none;}
+        #wv-modal details.wv-msec>summary::before{content:'▸ ';color:#667085;}
+        #wv-modal details.wv-msec[open]>summary::before{content:'▾ ';color:#667085;}
+        #wv-modal table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px;}
+        #wv-modal td{padding:5px 4px;border-bottom:1px solid #f1f3f7;vertical-align:top;}
+        #wv-modal td.r{text-align:right;white-space:nowrap;}
+        #wv-modal .wv-mbar{display:flex;height:22px;border-radius:6px;overflow:hidden;font-size:10px;font-weight:700;}
+        #wv-modal .wv-mscroll{max-height:280px;overflow:auto;border:1px solid #e3e8ef;border-radius:8px;margin-top:6px;}
+      </style>
+      <div id="wallet-view">
+        <div id="wallet-top-grid" style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:stretch;">
+          <div id="wallet-hero"></div>
+          <div id="wallet-card"></div>
+        </div>
+        <div id="wallet-ledger" class="wv-card" style="margin-top:18px;"></div>
+        <div id="wallet-legacy" style="margin-top:14px;"></div>
+      </div>
+      <div id="wv-modal"><div class="wv-mcard"><button class="wv-mclose" type="button" aria-label="Close">&times;</button><div class="wv-mbody"></div></div></div>
+
+      <!-- Legacy pace/true-up engine kept in the DOM (hidden) so the fortnight math still
+           computes; the Premium Wallet view above reads its rows via window.__PMrows. -->
+      <div id="legacy-fn-ui" style="display:none;">
       <div id="fn-latest-hero" style="margin: 14px 0;"></div>
 
       <div id="fn-totals" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 14px 0;"></div>
@@ -1459,6 +1541,7 @@
         </div>
         <p style="font-size: 11px; color: var(--faint); margin: 10px 0 0; font-family: var(--mono);">Tolerance: ±$1.00 (rounding) · ±$1,000 (acceptable timing variance) · &gt;$1,000 requires reconciliation.</p>
       </div>
+      </div><!-- /#legacy-fn-ui -->
     </div>
 
     <!-- ============================================================
@@ -1466,7 +1549,8 @@
          Collapsible: stat tiles always visible, table folds away.
          Pre-populated per-employee with real GP Sold figures (Jun 2025 – May 2026).
          ============================================================ -->
-    <div class="card" style="background: linear-gradient(135deg, #f0f7f3 0%, #fff 100%); border-left: 4px solid #48a14d;">
+    <!-- "Last 12 Months — what you would've earned" retired (static seeded view). Hidden per Nathan 14 Jul 2026; delete when confirmed. -->
+    <div class="card" style="display: none; background: linear-gradient(135deg, #f0f7f3 0%, #fff 100%); border-left: 4px solid #48a14d;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
         <div>
           <h2 style="margin: 0 0 4px;">Last 12 Months <span style="font-size: 10px; padding: 1px 6px; background: #e7f6ea; color: #1e6624; border: 1px solid #c3e4d0; border-radius: 4px; margin-left: 6px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;">What you would've earned</span></h2>
@@ -5231,7 +5315,7 @@ function renderBreakdown(r) {
       });
     });
     window.__PMrows = rows; window.__PMbands = BANDS; window.__PMsuper = (typeof SUPER_RATE !== 'undefined' ? SUPER_RATE : 0.12);
-    window.__PMgpv = gpValues; window.__PMfns = FORTNIGHTS; window.__PMbStart = bStart;
+    window.__PMgpv = gpValues; window.__PMevv = eventGpValues; window.__PMfns = FORTNIGHTS; window.__PMbStart = bStart;
     (function(){ var MS=86400000, anchor=Date.UTC(2026,5,1), N=SEED_GP.length;
       window.__PMseedFns = SEED_GP.map(function(g,s){ var st=new Date(anchor-(N-s)*14*MS), en=new Date(st.getTime()+13*MS); return { period:(_fnShort(st)+' – '+_fnFull(en)), gp:g }; }); })();
 
@@ -5797,6 +5881,7 @@ function renderBreakdown(r) {
 
   // Initial render (all-blank — replaced once data unlocks)
   render();
+  if (window.renderWalletView) try { window.renderWalletView(); } catch (e) {}
   renderTrailing();
 
   // ---- Bridge hook: payroll-confirmed fortnights flow in here after unlock. ----
@@ -5826,12 +5911,244 @@ function renderBreakdown(r) {
         }
       }
       render();
+      if (window.renderWalletView) try { window.renderWalletView(); } catch (e) {}
       renderTrailing();
     } catch (e) { /* non-fatal — widget keeps working as a model */ }
   };
 })();
 
+/* ===================================================================
+   PREMIUM WALLET VIEW — renders the Payouts & Super tab.
+   Reads the fortnight engine's exposed state (window.__PM*) so it can
+   never drift from the pay math. Mirrors the Zoho widget walletModel
+   (reconciled to the cent — see outputs/wallet_reconcile.js).
+   =================================================================== */
+(function () {
+  var LEGACY_PAID = {};   // Daniel actual paid, old model (0-based fn idx). 15–28 Jun, 29 Jun–12 Jul.
+  function m2(n){ return "$" + (Number(n)||0).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function mFull(n){ return "$" + Math.round(Number(n)||0).toLocaleString("en-AU"); }
+  function pct2(x){ return (Number(x)*100).toFixed(2) + "%"; }
+  function dLabel(dt){ return dt.toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"}); }
+
+  window.renderWalletView = function () {
+    var view = document.getElementById('wallet-view'); if (!view) return;
+    var BANDS = window.__PMbands, seedFns = window.__PMseedFns || [], FN = window.__PMfns || [];
+    var gpv = window.__PMgpv || [], evv = window.__PMevv || [], rows = window.__PMrows || [];
+    if (!BANDS || !BANDS.length) return;
+
+    var base = BANDS[0][1], PROD = 0.01, SUP = window.__PMsuper || 0.12;
+    var trailing = seedFns.reduce(function (a, b) { return a + (Number(b.gp) || 0); }, 0);
+    function ladder(y){ var e=0; for(var k=0;k<BANDS.length;k++){ var lo=BANDS[k][0], hi=(k+1<BANDS.length)?BANDS[k+1][0]:Infinity; if(y<=lo)break; e+=(Math.min(y,hi)-lo)*BANDS[k][1]; } return e; }
+    var blended = trailing > 0 ? ladder(trailing) / trailing : base;
+
+    var MS = 86400000, anchor = Date.UTC(2026, 5, 1), today = new Date();
+    function fnStart(i){ return new Date(anchor + i*14*MS); }
+    function qStart(dt){ return new Date(Date.UTC(dt.getUTCFullYear(), Math.floor(dt.getUTCMonth()/3)*3, 1)); }
+    function qEnd(dt){ var y=dt.getUTCFullYear(); var e=[Date.UTC(y,2,31),Date.UTC(y,5,30),Date.UTC(y,8,30),Date.UTC(y,11,31)]; for(var i=0;i<e.length;i++){ if(dt.getTime()<=e[i]) return new Date(e[i]); } return new Date(Date.UTC(y+1,2,31)); }
+
+    var qs = qStart(today);
+    var launchIdx = 0; for (var i=0;i<FN.length;i++){ if (fnStart(i).getTime() >= qs.getTime()) { launchIdx = i; break; } }
+    var curIdx = launchIdx; for (var j=0;j<FN.length;j++){ if (fnStart(j).getTime() <= today.getTime()) curIdx = j; else break; }
+    if (curIdx < launchIdx) curIdx = launchIdx;
+    var qeDate = qEnd(fnStart(curIdx));
+
+    // Mirrors the widget: premium never goes negative; base/event (and therefore
+    // "lands now") are shown raw — a negative fortnight displays as-is, exactly as
+    // the widget does. (Floor + carry-forward is a parked change that will apply to
+    // BOTH the widget and dashboard together, so they stay identical.)
+    function fig(i){
+      var gp=Number(gpv[i])||0, eg=Number(evv[i])||0;
+      var baseInc=base*gp, eventInc=eg*PROD, prem=Math.max(0,(blended-base)*gp);
+      var land=baseInc+eventInc, full=land+prem;
+      var bank=land/(1+SUP), sup=land-bank;
+      return {gp:gp,eg:eg,baseInc:baseInc,eventInc:eventInc,prem:prem,land:land,full:full,bank:bank,sup:sup,neg:land<0};
+    }
+
+    // wallet balance = sum of premium across launch-onward fortnights this quarter
+    var walletBal=0, launchCount=0;
+    for (var w=launchIdx; w<=curIdx; w++){ walletBal += fig(w).prem; launchCount++; }
+    var cur = fig(curIdx);
+
+    /* ---------- HERO (widget .payB pay card) ---------- */
+    var heroEl = document.getElementById('wallet-hero');
+    var landsDate = (FN[curIdx] && FN[curIdx].paid) || '';
+    heroEl.className = '';
+    heroEl.innerHTML =
+      '<div class="payB"><div class="payB-top">' +
+        '<div class="payB-lab">Your commission this fortnight · inc super</div>' +
+        '<div class="pay-big">' + m2(cur.full) + '</div>' +
+        '<div class="payB-sub">' +
+          '<span class="payB-chip">' + m2(cur.land) + ' lands now</span>' +
+          '<span class="payB-chip">▲ +' + m2(cur.prem) + ' → your wallet</span>' +
+        '</div>' +
+        '<div class="payB-sub" style="margin-top:8px">→ <b>' + m2(cur.bank) + '</b> to your bank · <b>' + m2(cur.sup) + '</b> to super' + (landsDate ? ' · lands <b>' + landsDate + '</b>' : '') + '</div>' +
+        '<div class="payB-links"><span data-wv-view="' + curIdx + '">View payments ›</span><span data-wv-modal="' + curIdx + '">How it\'s made up ›</span></div>' +
+      '</div></div>';
+
+    /* ---------- WALLET CARD (widget .wm-wallet) ---------- */
+    var cardEl = document.getElementById('wallet-card');
+    var weeks = Math.max(1, Math.ceil((qeDate - today) / (7 * MS)));
+    var tracking = (launchCount >= 2 && walletBal > 0) ? Math.round(walletBal / launchCount * 6.5 / 10) * 10 : 0;
+    var fillPct = tracking > 0 ? Math.min(walletBal / tracking * 100, 100) : 0;
+    var tipTxt = 'Your reward for consistent selling — the slice of your commission above 4%. It builds every fortnight and pays as one lump each quarter (next ' + dLabel(qeDate) + '), on top of what lands now.';
+    cardEl.className = '';
+    cardEl.innerHTML =
+      '<div class="wm-wallet">' +
+        '<div class="wm-lab">Quarterly Premium Wallet <span class="wm-i" title="' + tipTxt + '">i</span></div>' +
+        '<div style="font-size:12px;color:var(--fg-dim);margin:-1px 0 3px">Your reward for consistent selling</div>' +
+        '<div class="wm-big">' + m2(walletBal) + '</div>' +
+        '<div class="wm-add">▲ +' + m2(cur.prem) + ' added this fortnight</div>' +
+        '<div class="wm-track"><div class="wm-fill" style="width:' + fillPct.toFixed(0) + '%"></div></div>' +
+        '<div class="wm-next">Pays into your bank <b>' + dLabel(qeDate) + '</b> · ~' + weeks + ' weeks' +
+          (tracking > 0 ? ' · on track for <b>~' + mFull(tracking) + '</b>' : '') + '</div>' +
+        '<div><span class="wm-link" data-wv-help="1">How the wallet works ›</span></div>' +
+      '</div>';
+
+    /* ---------- LAUNCH-ONWARD LEDGER (widget walletPayTable) ---------- */
+    var ledgerEl = document.getElementById('wallet-ledger');
+    var runBal = 0, body = '';
+    for (var L = launchIdx; L <= curIdx; L++){
+      var f = fig(L); runBal += f.prem;
+      var isNow = (L === curIdx);
+      body += '<tr data-wv-modal="' + L + '" style="cursor:pointer">' +
+        '<td>' + ((FN[L] && FN[L].period) || ('FN ' + L)) + (isNow ? ' <span style="color:var(--fg-dim)">now</span>' : '') + '</td>' +
+        '<td class="r">' + mFull(f.gp) + '</td>' +
+        '<td class="r"><b>' + m2(f.full) + '</b></td>' +
+        '<td class="r">' + m2(f.land) + '</td>' +
+        '<td class="r wm-p">+' + m2(f.prem) + '</td>' +
+        '<td class="r wm-p">' + m2(runBal) + '</td>' +
+        '<td class="r" style="color:var(--fg-dim)">—</td>' +
+      '</tr>';
+    }
+    ledgerEl.innerHTML =
+      '<h2 class="wv-h">My Commission by Fortnight <span class="clock-tag recd">GP RECEIVED</span> <span class="tag-wallet">PREMIUM WALLET</span></h2>' +
+      '<div style="overflow-x:auto"><table><thead><tr>' +
+        '<th>Fortnight</th><th class="r">GP rec\'d</th><th class="r">Total commission</th><th class="r">Lands now</th><th class="r">Premium → wallet</th><th class="r">Wallet balance</th><th class="r">Payout</th>' +
+      '</tr></thead><tbody>' + body + '</tbody></table></div>' +
+      '<div class="fn-note"><b>Total commission = Lands now + Premium.</b> <b>Lands now</b> (4% base + 1% event, inc super) reaches your bank &amp; super every fortnight; the <b>premium</b> above 4% builds in the wallet and pays out each quarter-end. The Premium Wallet starts this quarter and builds forward from here. Click any row for the full breakdown.</div>';
+
+    /* ---------- LEGACY (pre-launch, collapsed) ---------- */
+    var legacyEl = document.getElementById('wallet-legacy');
+    var paidByIdx = {};
+    rows.forEach(function (r) { if (r.confirmed && (r.idx < launchIdx)) paidByIdx[r.idx] = (Number(r.properPay)||0) + (Number(r.prodComm)||0); });
+    var legRows = '', legCount = 0;
+    for (var g = launchIdx - 1; g >= 0; g--){   // most recent fortnight first
+      var amt = (paidByIdx[g] != null && paidByIdx[g] > 0) ? paidByIdx[g] : (LEGACY_PAID[g] != null ? LEGACY_PAID[g] : null);
+      if (amt == null) continue;
+      legCount++;
+      legRows += '<tr>' +
+        '<td>' + ((FN[g] && FN[g].period) || ('FN ' + g)) + '</td>' +
+        '<td class="r"><b>' + m2(amt) + '</b></td>' +
+        '<td style="color:var(--fg-dim)">paid in full · previous plan</td>' +
+        '<td class="r wm-p">$0.00</td>' +
+      '</tr>';
+    }
+    if (legRows) {
+      legacyEl.innerHTML =
+        '<div class="wv-card"><details class="wv-legacy"><summary>▸ Legacy · previous plan (' + legCount + ' earlier fortnight' + (legCount===1?'':'s') + ', paid in full — no wallet)</summary>' +
+        '<div style="overflow-x:auto;margin-top:10px"><table><thead><tr>' +
+          '<th>Fortnight</th><th class="r">Total paid</th><th>How</th><th class="r">Wallet</th>' +
+        '</tr></thead><tbody>' + legRows + '</tbody></table></div>' +
+        '<div class="fn-note">Paid in full under the previous fortnightly plan, before the Premium Wallet started — nothing was held back, $0 to the wallet.</div></details></div>';
+    } else {
+      legacyEl.innerHTML = '';
+    }
+
+    /* ---------- MODALS (self-contained; close over this render's data) ---------- */
+    var ZOHO_URL = 'https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000097394002';
+    function simpleRow(l, v){ return '<div class="wv-simple"><span>' + l + '</span><b>' + v + '</b></div>'; }
+
+    window.openWVPayments = function(){ window.open(ZOHO_URL, '_blank', 'noopener'); };
+
+    window.openWVWalletHelp = function(){
+      var host = document.getElementById('wv-modal'); if (!host) return;
+      var endLbl = dLabel(qeDate);
+      var e1 = Math.round((blended - base) * 10000) / 100;
+      var f = fig(curIdx);
+      // merge consecutive same-rate bands into segments
+      var segs = []; for (var k = 0; k < BANDS.length; k++){ var lo = BANDS[k][0], r = BANDS[k][1], hi = (k+1<BANDS.length)?BANDS[k+1][0]:Infinity; if (segs.length && segs[segs.length-1].r===r) segs[segs.length-1].hi=hi; else segs.push({lo:lo,hi:hi,r:r}); }
+      var top = BANDS[BANDS.length-1][0], scale = top + 100000;
+      var posPct = Math.min(trailing/scale*100,100), labL = Math.max(6, Math.min(posPct,94));
+      var barSeg = segs.map(function(s){ var w=(Math.min(s.hi===Infinity?scale:s.hi,scale)-s.lo)/scale*100; var hit=(trailing>s.lo && (s.hi===Infinity||trailing<=s.hi)); return '<div style="width:'+w.toFixed(1)+'%;background:'+(hit?'#0d9488':'#e6eaf0')+';color:'+(hit?'#fff':'#7a8598')+';border-right:1px solid #fff;display:flex;align-items:center;justify-content:center">'+Math.round(s.r*100)+'%</div>'; }).join('');
+      var bandBar = '<div style="position:relative;margin:8px 0 24px"><div class="wv-mbar">'+barSeg+'</div><div style="position:absolute;top:-4px;bottom:-4px;left:'+posPct.toFixed(1)+'%;width:2px;background:#0f172a"></div><div style="position:absolute;top:100%;left:'+labL.toFixed(1)+'%;transform:translateX(-50%);font-size:10px;color:#667085;white-space:nowrap;margin-top:3px">you &middot; '+mFull(trailing)+'</div></div>';
+      var bandRows = segs.map(function(s){ var unlocked=trailing>=s.lo; var hi=(trailing>s.lo && (s.hi===Infinity||trailing<=s.hi)); var rng=mFull(s.lo)+' &ndash; '+(s.hi===Infinity?'and up':mFull(s.hi)); var note=hi?('&#9664; you &middot; '+mFull(trailing)):(unlocked?'unlocked &#10003;':(mFull(s.lo-trailing)+' away')); return '<tr'+(hi?' style="background:rgba(13,148,136,.10)"':'')+'><td>'+(hi?'<b>':'')+Math.round(s.r*100)+'%'+(hi?'</b>':'')+'</td><td>'+rng+'</td><td style="color:#667085">'+note+'</td></tr>'; }).join('');
+      // blended-rate ladder decomposition
+      var dec=[]; for (var dk=0;dk<BANDS.length;dk++){ var dlo=BANDS[dk][0], dhi=(dk+1<BANDS.length)?BANDS[dk+1][0]:Infinity; if (trailing<=dlo) break; var damt=Math.min(trailing,dhi)-dlo; dec.push({rate:BANDS[dk][1],amt:damt,earns:damt*BANDS[dk][1]}); }
+      var ladderComm = dec.reduce(function(a,x){return a+x.earns;},0);
+      var ladderRows = dec.map(function(x,i){ return '<tr><td>'+(i===0?'First ':'Next ')+mFull(x.amt)+' &#215; '+Math.round(x.rate*100)+'%</td><td class="r">'+m2(x.earns)+'</td></tr>'; }).join('');
+      // this fortnight — where the GP went (band-by-band)
+      var split = segs.map(function(s){ var inB=Math.max(0,Math.min(trailing,s.hi)-s.lo); if (inB<=0||trailing<=0) return null; var amt=inB/trailing*f.gp; return {r:s.r,amt:amt,prem:amt*(s.r-base)}; }).filter(Boolean);
+      var splitRows = split.map(function(x){ if (x.r<=base) return '<tr><td>'+mFull(x.amt)+' in your '+Math.round(x.r*100)+'% band &rarr; base</td><td class="r" style="color:#0f766e">'+m2(x.amt*x.r)+'</td></tr>'; return '<tr><td>'+mFull(x.amt)+' in your '+Math.round(x.r*100)+'% band &rarr; '+Math.round(base*100)+'% base + '+Math.round((x.r-base)*100)+'% premium</td><td class="r"><span style="color:#0f766e">'+m2(x.amt*base)+'</span> <span style="color:#3f4a5c">+'+m2(x.prem)+'</span></td></tr>'; }).join('');
+      var h = '';
+      h += '<div style="text-align:center;padding-bottom:11px;border-bottom:1px solid #e3e8ef">'+
+        '<div class="wv-mheadlab">How your Quarterly Premium Wallet works</div>'+
+        '<div class="wv-mhero" style="font-size:34px;margin:6px 0 2px">'+m2(walletBal)+'</div>'+
+        '<div class="wv-mherosub">building now &middot; pays into your bank '+endLbl+'</div></div>';
+      h += '<div style="font-size:13px;line-height:1.7;margin-top:14px">'+
+        '<p style="margin:0 0 11px"><b>What it is.</b> Every dollar you collect earns your blended rate ('+pct2(blended)+'). The first <b>4%</b> lands in your bank every fortnight. Everything <b>above 4%</b> &mdash; the premium &mdash; builds here in your wallet.</p>'+
+        '<p style="margin:0 0 11px"><b>How it builds.</b> This fortnight it grew by <b>'+m2(cur.prem)+'</b>. It ticks up a little each pay run as you collect more cash.</p>'+
+        '<p style="margin:0 0 11px"><b>When it pays.</b> The whole balance pays into your bank at the end of each quarter &mdash; next on <b>'+endLbl+'</b> &mdash; on top of your normal fortnightly commission.</p>'+
+        '<p style="margin:0"><b>It never goes backwards.</b> Through a quarter it only builds. If your rate eases, new additions just get smaller &mdash; whatever is already in your wallet stays yours.</p></div>';
+      h += '<div class="wv-sech">The detail &mdash; how your rate is set</div>';
+      h += '<details class="wv-msec" open><summary>Your blended rate &middot; '+pct2(blended)+'</summary>'+
+        '<div style="font-size:12px;color:#667085;margin-top:8px">Your last 12 months &mdash; '+mFull(trailing)+' &mdash; sets one blended rate. Every dollar you collect: 4% to your bank now, the extra '+e1.toFixed(2)+'% to your wallet.</div>'+bandBar+
+        '<details><summary style="color:#0f766e;font-size:11.5px">show the maths &rsaquo;</summary>'+
+          '<div style="font-size:11.5px;color:#667085;margin-top:6px;line-height:1.6">Your rate is your <b>total commission across every band</b>, divided by your trailing GP:</div>'+
+          '<table>'+ladderRows+'<tr style="border-top:1px solid #e3e8ef"><td><b>= Total commission across the bands</b></td><td class="r"><b>'+m2(ladderComm)+'</b></td></tr><tr><td>&divide; your trailing 12-month GP</td><td class="r">'+mFull(trailing)+'</td></tr><tr><td style="color:#0f766e"><b>= your blended rate</b></td><td class="r" style="color:#0f766e"><b>'+pct2(blended)+'</b></td></tr></table>'+
+        '</details></details>';
+      h += '<details class="wv-msec"><summary>This fortnight &mdash; where the '+m2(f.gp)+' went</summary><table>'+splitRows+'<tr style="border-top:1px solid #e3e8ef"><td><b>4% base &rarr; bank</b></td><td class="r"><b>'+m2(f.baseInc/1.12)+'</b> <span style="color:#667085">ex super</span></td></tr><tr><td style="color:#3f4a5c"><b>&rarr; your Premium Wallet</b></td><td class="r" style="color:#3f4a5c"><b>+'+m2(f.prem)+'</b></td></tr></table></details>';
+      h += '<details class="wv-msec"><summary>Where each band starts</summary><table><tr><td style="font-weight:700;color:#667085;font-size:10.5px">RATE</td><td style="font-weight:700;color:#667085;font-size:10.5px">APPLIES TO (ANNUAL GP)</td><td></td></tr>'+bandRows+'</table><div style="font-size:11px;color:#667085;margin-top:4px">&#10003; = bands your trailing 12-month GP ('+mFull(trailing)+') has unlocked.</div></details>';
+      host.querySelector('.wv-mbody').innerHTML = h;
+      host.classList.add('open');
+    };
+
+    window.openWVModal = function(sel){
+      sel = Number(sel); if (isNaN(sel)) sel = curIdx;
+      if (sel < launchIdx) sel = launchIdx; if (sel > curIdx) sel = curIdx;
+      var host = document.getElementById('wv-modal'); if (!host) return;
+      var f = fig(sel), lbl = (FN[sel] && FN[sel].period) || ('FN ' + sel), hasEvent = (f.eg > 0);
+      var h = '';
+      h += '<div class="wv-mnav">' +
+        '<button type="button" class="wv-navb" data-wvnav="-1"' + (sel <= launchIdx ? ' disabled' : '') + '>&#9664;</button>' +
+        '<div class="wv-mlab">' + lbl + '</div>' +
+        '<button type="button" class="wv-navb" data-wvnav="1"' + (sel >= curIdx ? ' disabled' : '') + '>&#9654;</button></div>';
+      h += '<div class="wv-mhero">' + m2(f.full) + '</div><div class="wv-mherosub">your commission this fortnight · inc super</div>';
+      h += '<div class="wv-msplit"><b>' + m2(f.land) + '</b> lands now &nbsp;·&nbsp; <b style="color:#3f4a5c">+' + m2(f.prem) + '</b> → your wallet</div>';
+      h += '<div class="wv-msplit" style="opacity:.85;margin-top:2px">→ <b>' + m2(f.bank) + '</b> to your bank · <b>' + m2(f.sup) + '</b> to super</div>';
+      h += '<div class="wv-mbox">';
+      h += simpleRow('Sales — <b>4%</b> of ' + m2(f.gp) + ' GP received', m2(f.baseInc));
+      if (hasEvent) h += simpleRow('Event production — <b>1%</b> of ' + mFull(f.eg) + ' GP delivered', m2(f.eventInc));
+      h += '<div class="wv-simple" style="font-weight:700"><span>Lands now <span style="font-weight:400;color:#667085">inc super</span></span><b>' + m2(f.land) + '</b></div>';
+      h += '<div class="wv-simple" style="color:#667085"><span>= ' + m2(f.bank) + ' to your bank + ' + m2(f.sup) + ' to super</span><span></span></div>';
+      h += '<div class="wv-simple" style="border-bottom:none"><span style="color:#3f4a5c">Premium → your wallet</span><b style="color:#3f4a5c">+' + m2(f.prem) + '</b></div>';
+      h += '<div class="wv-simple" style="font-weight:700;border-bottom:none;border-top:2px solid #e3e8ef"><span>Total commission this fortnight</span><b>' + m2(f.full) + '</b></div>';
+      h += '</div>';
+      h += '<div class="wv-mwallet"><div><div style="font-weight:700;font-size:14px;color:#0f766e">+ ' + m2(f.prem) + ' into your Quarterly Wallet</div><div style="font-size:12px;color:#667085">the premium above 4% — pays out each quarter</div></div><span class="wv-mlink" data-wv-help="1">how the wallet works ›</span></div>';
+      h += '<details><summary>show me the maths ›</summary><div style="font-size:12.5px;color:#667085;line-height:1.75;margin-top:7px">Your <b>blended rate</b> is ' + pct2(blended) + ' (set by your last 12 months). On this fortnight\'s ' + m2(f.gp) + ' GP that\'s <b>' + m2(blended * f.gp) + '</b>. Your <b>4% base</b> (' + m2(f.baseInc) + ') is in your commission above — the rest, <b style="color:#0f766e">+' + m2(f.prem) + '</b>, goes to your wallet.</div></details>';
+      host.querySelector('.wv-mbody').innerHTML = h;
+      host.classList.add('open');
+      Array.prototype.forEach.call(host.querySelectorAll('[data-wvnav]'), function(b){ b.onclick = function(){ window.openWVModal(sel + Number(b.getAttribute('data-wvnav'))); }; });
+    };
+  };
+})();
+
+/* one-time modal click + close wiring */
+(function(){
+  document.addEventListener('click', function(e){
+    var t = e.target; if (!t || !t.closest) return;
+    var host = document.getElementById('wv-modal');
+    if (t.closest('[data-wv-view]')) { e.preventDefault(); if (window.openWVPayments) window.openWVPayments(); return; }
+    if (t.closest('[data-wv-help]')) { e.preventDefault(); if (window.openWVWalletHelp) window.openWVWalletHelp(); return; }
+    var m = t.closest('[data-wv-modal]');
+    if (m) { e.preventDefault(); if (window.openWVModal) window.openWVModal(m.getAttribute('data-wv-modal')); return; }
+    if (t.closest('.wv-mclose')) { if (host) host.classList.remove('open'); return; }
+    if (host && t === host) { host.classList.remove('open'); return; }
+  });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { var h = document.getElementById('wv-modal'); if (h) h.classList.remove('open'); } });
+})();
+
 load();
+if (window.renderWalletView) try { window.renderWalletView(); } catch (e) {}
 
 function renderKpiTab(r) {
   // KPI is locked at 1.0× (DRAFT) for now — overwrite scenario.kpiScore so commission isn't actually affected.
