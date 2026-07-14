@@ -5699,7 +5699,7 @@ function renderBreakdown(r) {
         '<div class="wm-track"><div class="wm-fill" style="width:' + fillPct.toFixed(0) + '%"></div></div>' +
         '<div class="wm-next">Pays into your bank <b>' + dLabel(qeDate) + '</b> · ~' + weeks + ' weeks' +
           (tracking > 0 ? ' · on track for <b>~' + mFull(tracking) + '</b>' : '') + '</div>' +
-        '<div><span class="wm-link">How the wallet works ›</span></div>' +
+        '<div><span class="wm-link" data-wv-help="1">How the wallet works ›</span></div>' +
       '</div>';
 
     /* ---------- LAUNCH-ONWARD LEDGER (widget walletPayTable) ---------- */
@@ -5751,7 +5751,70 @@ function renderBreakdown(r) {
     } else {
       legacyEl.innerHTML = '';
     }
+
+    /* ---------- MODALS (self-contained; close over this render's data) ---------- */
+    var ZOHO_URL = 'https://crm.zoho.com/crm/org657079535/tab/Dashboards/2877869000097394002';
+    function simpleRow(l, v){ return '<div class="wv-simple"><span>' + l + '</span><b>' + v + '</b></div>'; }
+
+    window.openWVPayments = function(){ window.open(ZOHO_URL, '_blank', 'noopener'); };
+
+    window.openWVWalletHelp = function(){
+      var host = document.getElementById('wv-modal'); if (!host) return;
+      host.querySelector('.wv-mbody').innerHTML =
+        '<div class="wv-mlab" style="text-align:center;margin-bottom:4px">How the Quarterly Premium Wallet works</div>' +
+        '<div style="font-size:13.5px;color:#334155;line-height:1.8;margin-top:8px">' +
+        '<p style="margin:0 0 12px"><b>Every fortnight</b>, your <b>4% base</b> commission (plus 1% on any event GP you produce) lands in your bank and super — same as always.</p>' +
+        '<p style="margin:0 0 12px">Because your trailing 12-month GP puts you above the 4% band, you also earn a <b>premium</b> — the slice above 4%. Instead of paying that out fortnightly, it now builds up in your <b>Premium Wallet</b>.</p>' +
+        '<p style="margin:0 0 12px">The wallet pays out as <b>one lump each quarter-end</b> (next <b>' + dLabel(qeDate) + '</b>), straight to your bank and super. Then it resets to $0 and starts building again.</p>' +
+        '<p style="margin:0 0 12px">Your <b>total for the year is exactly the same</b> as before — only the <i>timing</i> of the premium has changed: quarterly instead of fortnightly.</p>' +
+        '<p style="margin:0;color:#667085;font-size:12.5px">The wallet only ever holds the premium above 4% — your base pay is never held back.</p>' +
+        '</div>';
+      host.classList.add('open');
+    };
+
+    window.openWVModal = function(sel){
+      sel = Number(sel); if (isNaN(sel)) sel = curIdx;
+      if (sel < launchIdx) sel = launchIdx; if (sel > curIdx) sel = curIdx;
+      var host = document.getElementById('wv-modal'); if (!host) return;
+      var f = fig(sel), lbl = (FN[sel] && FN[sel].period) || ('FN ' + sel), hasEvent = (f.eg > 0);
+      var h = '';
+      h += '<div class="wv-mnav">' +
+        '<button type="button" class="wv-navb" data-wvnav="-1"' + (sel <= launchIdx ? ' disabled' : '') + '>&#9664;</button>' +
+        '<div class="wv-mlab">' + lbl + '</div>' +
+        '<button type="button" class="wv-navb" data-wvnav="1"' + (sel >= curIdx ? ' disabled' : '') + '>&#9654;</button></div>';
+      h += '<div class="wv-mhero">' + m2(f.full) + '</div><div class="wv-mherosub">your commission this fortnight · inc super</div>';
+      h += '<div class="wv-msplit"><b>' + m2(f.land) + '</b> lands now &nbsp;·&nbsp; <b style="color:#3f4a5c">+' + m2(f.prem) + '</b> → your wallet</div>';
+      h += '<div class="wv-msplit" style="opacity:.85;margin-top:2px">→ <b>' + m2(f.bank) + '</b> to your bank · <b>' + m2(f.sup) + '</b> to super</div>';
+      h += '<div class="wv-mbox">';
+      h += simpleRow('Sales — <b>4%</b> of ' + m2(f.gp) + ' GP received', m2(f.baseInc));
+      if (hasEvent) h += simpleRow('Event production — <b>1%</b> of ' + mFull(f.eg) + ' GP delivered', m2(f.eventInc));
+      h += '<div class="wv-simple" style="font-weight:700"><span>Lands now <span style="font-weight:400;color:#667085">inc super</span></span><b>' + m2(f.land) + '</b></div>';
+      h += '<div class="wv-simple" style="color:#667085"><span>= ' + m2(f.bank) + ' to your bank + ' + m2(f.sup) + ' to super</span><span></span></div>';
+      h += '<div class="wv-simple" style="border-bottom:none"><span style="color:#3f4a5c">Premium → your wallet</span><b style="color:#3f4a5c">+' + m2(f.prem) + '</b></div>';
+      h += '<div class="wv-simple" style="font-weight:700;border-bottom:none;border-top:2px solid #e3e8ef"><span>Total commission this fortnight</span><b>' + m2(f.full) + '</b></div>';
+      h += '</div>';
+      h += '<div class="wv-mwallet"><div><div style="font-weight:700;font-size:14px;color:#0f766e">+ ' + m2(f.prem) + ' into your Quarterly Wallet</div><div style="font-size:12px;color:#667085">the premium above 4% — pays out each quarter</div></div><span class="wv-mlink" data-wv-help="1">how the wallet works ›</span></div>';
+      h += '<details><summary>show me the maths ›</summary><div style="font-size:12.5px;color:#667085;line-height:1.75;margin-top:7px">Your <b>blended rate</b> is ' + pct2(blended) + ' (set by your last 12 months). On this fortnight\'s ' + m2(f.gp) + ' GP that\'s <b>' + m2(blended * f.gp) + '</b>. Your <b>4% base</b> (' + m2(f.baseInc) + ') is in your commission above — the rest, <b style="color:#0f766e">+' + m2(f.prem) + '</b>, goes to your wallet.</div></details>';
+      host.querySelector('.wv-mbody').innerHTML = h;
+      host.classList.add('open');
+      Array.prototype.forEach.call(host.querySelectorAll('[data-wvnav]'), function(b){ b.onclick = function(){ window.openWVModal(sel + Number(b.getAttribute('data-wvnav'))); }; });
+    };
   };
+})();
+
+/* one-time modal click + close wiring */
+(function(){
+  document.addEventListener('click', function(e){
+    var t = e.target; if (!t || !t.closest) return;
+    var host = document.getElementById('wv-modal');
+    if (t.closest('[data-wv-view]')) { e.preventDefault(); if (window.openWVPayments) window.openWVPayments(); return; }
+    if (t.closest('[data-wv-help]')) { e.preventDefault(); if (window.openWVWalletHelp) window.openWVWalletHelp(); return; }
+    var m = t.closest('[data-wv-modal]');
+    if (m) { e.preventDefault(); if (window.openWVModal) window.openWVModal(m.getAttribute('data-wv-modal')); return; }
+    if (t.closest('.wv-mclose')) { if (host) host.classList.remove('open'); return; }
+    if (host && t === host) { host.classList.remove('open'); return; }
+  });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { var h = document.getElementById('wv-modal'); if (h) h.classList.remove('open'); } });
 })();
 
 load();
