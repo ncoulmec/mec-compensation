@@ -2390,7 +2390,7 @@ function renderPayrollLockedCard() {
     // Frozen per-booking breakdown — the gigs that made up this quarter's revenue.
     const gigs = (q.lines || [])[i] || [];
     let gigRow = '';
-    if (gigs.length) {
+    if (gigs.length && pr > 0) {
       const ZOHO_DEAL = 'https://crm.zoho.com/crm/org657079535/tab/Potentials/';
       const gigRows = gigs.map(gg => {
         const nm = escHtml(gg.name || '(no name)');

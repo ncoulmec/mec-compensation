@@ -4649,9 +4649,17 @@ function renderQuarterlyAdmin() {
         const raw = inp.value.replace(/[^0-9.\-]/g, '');
         const n = parseFloat(raw);
         const val = isFinite(n) ? n : 0;
+        const prev = qMatrix[emp][idx];
         qMatrix[emp][idx] = val;
         const e = (data.employees || []).find(x => x.id === emp);
-        if (e) { ensureQuarterly(e).values[idx] = val; if (typeof setDirty === 'function') setDirty(); }
+        if (e) {
+          const eq = ensureQuarterly(e);
+          eq.values[idx] = val;
+          // A hand-edit (including clearing to 0) no longer matches the pulled
+          // bookings, so drop the frozen breakdown. Only a fresh Pull re-populates it.
+          if (val !== prev) eq.lines[idx] = [];
+          if (typeof setDirty === 'function') setDirty();
+        }
       };
       inp.addEventListener('blur', () => {
         commit();
