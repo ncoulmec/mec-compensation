@@ -448,6 +448,10 @@
     letter-spacing: 0.05em;
     color: var(--muted);
   }
+  /* Sensitive base-salary masking: blur the values (not the headers) until revealed */
+  #emp-table .col-base, #emp-table .col-super { transition: filter .12s ease; }
+  #emp-table.emp-hidden .col-base, #emp-table.emp-hidden .col-super { filter: blur(8px); }
+  #emp-table.emp-hidden .col-base *, #emp-table.emp-hidden .col-super * { pointer-events: none; user-select: none; }
   .read-only-cell {
     padding: 6px 10px;
     font-family: 'DM Mono', monospace;
@@ -882,9 +886,12 @@
   <!-- Employees -->
   <section class="panel" id="panel-employees">
     <div class="card">
-      <h2>Employees</h2>
-      <p class="intro">Base salaries, roles, and plan assignments. Base salary is the "before super" figure. Changes flow to each person's dashboard.</p>
-      <table id="emp-table">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <h2 style="margin:0">Employees</h2>
+        <button type="button" id="toggle-base" class="btn small" style="cursor:pointer; padding:6px 12px; background:#fff; color:var(--navy); border:1px solid var(--navy); border-radius:6px; font-size:12px; font-weight:600; white-space:nowrap;">👁 Show base salaries</button>
+      </div>
+      <p class="intro">Base salaries, roles, and plan assignments. Base salary is the "before super" figure. Changes flow to each person's dashboard. <span style="color:var(--muted);">Base pay is hidden by default — click <strong>Show base salaries</strong> to reveal.</span></p>
+      <table id="emp-table" class="emp-hidden">
         <thead>
           <tr>
             <th style="width:18%">Name</th>
@@ -1834,8 +1841,8 @@ function renderEmployees() {
     tr.innerHTML = `
       <td><input type="text" class="name-input" value="${e.name}" data-i="${i}" data-f="name"></td>
       <td><input type="text" class="name-input" value="${e.role}" data-i="${i}" data-f="role"></td>
-      <td>${moneyInputHtml(`employees.${i}.baseSalary`)}</td>
-      <td><div class="read-only-cell" data-super="${i}">${fmtMoney(superIncl)}</div></td>
+      <td class="col-base">${moneyInputHtml(`employees.${i}.baseSalary`)}</td>
+      <td class="col-super"><div class="read-only-cell" data-super="${i}">${fmtMoney(superIncl)}</div></td>
       <td><select data-i="${i}" data-f="planType">${planOpts}</select></td>
       <td><select data-i="${i}" data-f="placeholderStatus" title="Active reps appear in the pay run; placeholders are empty/future seats and are skipped" style="font-size:12px; padding:4px 6px;"><option value="active"${e.placeholder ? '' : ' selected'}>active</option><option value="placeholder"${e.placeholder ? ' selected' : ''}>placeholder</option></select></td>
       <td>
@@ -1856,8 +1863,8 @@ function renderEmployeeTotals() {
   tfoot.innerHTML = `
     <tr class="totals-row">
       <td colspan="2">Team total</td>
-      <td class="read-only-cell" style="color: var(--ink); font-weight: 600;">${fmtMoney(baseTotal)}</td>
-      <td class="read-only-cell" style="color: var(--accent); font-weight: 600;">${fmtMoney(superTotal)}</td>
+      <td class="read-only-cell col-base" style="color: var(--ink); font-weight: 600;">${fmtMoney(baseTotal)}</td>
+      <td class="read-only-cell col-super" style="color: var(--accent); font-weight: 600;">${fmtMoney(superTotal)}</td>
       <td colspan="3" style="color: var(--muted); font-size: 12px; font-family: 'DM Sans', sans-serif;">Sum of all base salaries, and the super-inclusive total (base × 1.${(superRate*100).toFixed(0)})</td>
     </tr>
   `;
@@ -4360,6 +4367,19 @@ load();
   } else {
     init();
   }
+})();
+
+/* Base-salary reveal toggle (Employees tab) — masked by default, click to reveal */
+(function(){
+  function wire(){
+    var tbl = document.getElementById('emp-table');
+    var btn = document.getElementById('toggle-base');
+    if (!tbl || !btn) return;
+    function apply(){ btn.innerHTML = tbl.classList.contains('emp-hidden') ? '👁 Show base salaries' : '🙈 Hide base salaries'; }
+    apply();
+    btn.addEventListener('click', function(){ tbl.classList.toggle('emp-hidden'); apply(); });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
 })();
 </script>
 
