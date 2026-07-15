@@ -923,6 +923,19 @@ function _migrateCanonicalBands() {
         fixed.push('gm');
       }
     }
+    // Employee → planType assignments that must hold. Self-heals a mis-assignment in the
+    // published master (e.g. Leanne/evie2 wrongly left on Evie's hybrid_gp instead of her
+    // own hybrid_gp_intended, which made her dashboard render Evie's ladder).
+    const CANONICAL_ASSIGN = { evie2: 'hybrid_gp_intended' };
+    if (Array.isArray(data.employees)) {
+      Object.keys(CANONICAL_ASSIGN).forEach(function (empId) {
+        const emp = data.employees.find(function (e) { return e.id === empId; });
+        if (emp && emp.planType !== CANONICAL_ASSIGN[empId]) {
+          emp.planType = CANONICAL_ASSIGN[empId];
+          fixed.push(empId + ' → ' + CANONICAL_ASSIGN[empId]);
+        }
+      });
+    }
     if (fixed.length) {
       dirty = true;
       const slot = document.getElementById('error-slot');
