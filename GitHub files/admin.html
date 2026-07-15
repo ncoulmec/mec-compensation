@@ -870,6 +870,17 @@ const CANONICAL_BANDS = {
     { threshold: 350000, rate: 0.13, poolRate: 0 },
     { threshold: 500000, rate: 0.14, poolRate: 0 },
     { threshold: 550000, rate: 0.16, poolRate: 0 }
+  ],
+  // Leanne (Evie 2.0) — intended long-term hybrid. Updated 15 Jul 2026: 6% now runs
+  // 150k–300k (dropped the old 8% $200-250k and 9% $250-300k), then 11%/13% above,
+  // stretch 14%/16%. Matches planTypes.hybrid_gp_intended in data.json + engine "leanne".
+  hybrid_gp_intended: [
+    { threshold: 0,      rate: 0.04, poolRate: 0 },
+    { threshold: 150000, rate: 0.06, poolRate: 0 },
+    { threshold: 300000, rate: 0.11, poolRate: 0 },
+    { threshold: 350000, rate: 0.13, poolRate: 0 },
+    { threshold: 500000, rate: 0.14, poolRate: 0 },
+    { threshold: 550000, rate: 0.16, poolRate: 0 }
   ]
 };
 function _migrateCanonicalBands() {
