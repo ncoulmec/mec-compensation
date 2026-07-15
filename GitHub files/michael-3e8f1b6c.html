@@ -1931,6 +1931,12 @@ function wireGigPlanning(prefix, defaults, onChange) {
   renderAll();
 }
 
+// A project counts as completed (baked into base salary) when its status looks done.
+function isProjectCompleted(p) {
+  const s = String((p && p.status) || '').toLowerCase();
+  return s === 'completed' || s === 'complete' || s === 'done' || s === 'paid' || s === 'signed-off';
+}
+
 function renderProjectToggles() {
   const container = document.getElementById('project-toggles');
   if (myProjects.length === 0) {
@@ -1938,15 +1944,18 @@ function renderProjectToggles() {
     return;
   }
   container.innerHTML = myProjects.map(p => {
-    const checked = scenario.projectsEnabled[p.id] !== false;
+    const done = isProjectCompleted(p);
+    // Completed projects are already in base — always shown ticked + locked, never re-added.
+    const checked = done ? true : (scenario.projectsEnabled[p.id] !== false);
     const amountLabel = p.bonusIncludesSuper
       ? `+${fmtMoney(p.bonusAmount)} to base salary <small style="color: var(--faint); font-weight: 400;">(incl. super)</small>`
       : `+${fmtMoney(p.bonusAmount)} to base salary <small style="color: var(--faint); font-weight: 400;">(+ super on top)</small>`;
+    const doneTag = done ? ` <small style="color: var(--accent); font-weight: 700;">✓ Completed — in your base</small>` : '';
     return `
-      <label class="project-toggle ${checked ? 'checked' : ''}" for="proj-${p.id}">
+      <label class="project-toggle ${checked ? 'checked' : ''}" for="proj-${p.id}"${done ? ' title="Completed — already added to your base salary"' : ''}>
         <div class="left">
-          <input type="checkbox" id="proj-${p.id}" ${checked ? 'checked' : ''} onchange="toggleProject('${p.id}', this.checked)">
-          <span class="pname">${p.name}</span>
+          <input type="checkbox" id="proj-${p.id}" ${checked ? 'checked' : ''} ${done ? 'disabled' : `onchange="toggleProject('${p.id}', this.checked)"`}>
+          <span class="pname">${p.name}${doneTag}</span>
         </div>
         <span class="pamount">${amountLabel}</span>
       </label>
@@ -2139,7 +2148,9 @@ function calcAll() {
 
   // Projects — respect toggles
   let projectsIncSuper = 0, projectsExSuper = 0;
-  const activeProjects = myProjects.filter(p => scenario.projectsEnabled[p.id] !== false);
+  // Completed projects are already in base salary — never counted as an additional
+  // (modelled) uplift, so ticking/showing them can't double-count.
+  const activeProjects = myProjects.filter(p => !isProjectCompleted(p) && scenario.projectsEnabled[p.id] !== false);
   activeProjects.forEach(p => {
     if (p.bonusIncludesSuper) {
       projectsIncSuper += p.bonusAmount;
