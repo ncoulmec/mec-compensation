@@ -399,6 +399,9 @@
         <p class="blurb">For each person, paste their full-year metric total from the source of truth (Xero CM report for Hayley, Zoho Performance Revenue for Tom &amp; Michael) and we'll verify it matches the sum of their 4 quarter entries above.</p>
         <div id="qtp-audit-body" style="overflow-x: auto;"></div>
       </div>
+
+      <!-- Base-salary project completions (systems-manager uplifts) -->
+      <div id="qtp-projects-mount"></div>
     </div>
 
     <!-- ========== TEAM POOL ADMIN ========== -->
@@ -4810,11 +4813,75 @@ function renderQuarterlyAdmin() {
     });
   }
 
+  // ── Base-salary project completions ──
+  // Marking a project complete flips its status AND raises the person's base
+  // salary by the project's ex-super uplift. Both fields ride into the encrypted
+  // per-employee file on Save, so the dashboard reflects the higher base + the
+  // completed project. Xero is still updated manually on DOD approval.
+  function renderProjectCompletions() {
+    const mount = document.getElementById('qtp-projects-mount');
+    if (!mount) return;
+    const sr = (data.globals && data.globals.superRate) || 0.12;
+    const DONE = ['completed', 'complete', 'done', 'paid', 'signed-off'];
+    const isDone = (p) => DONE.includes(String(p.status || '').toLowerCase());
+    const upliftEx = (p) => {
+      const amt = +p.bonusAmount || 0;
+      return Math.round((p.bonusIncludesSuper ? amt / (1 + sr) : amt) * 100) / 100;
+    };
+    const c2 = (n) => (+n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const withProjects = (data.employees || []).filter(e => !e.placeholder && (data.projects || []).some(p => (p.assignedTo || []).includes(e.id)));
+    if (!withProjects.length) { mount.innerHTML = ''; return; }
+
+    let h = `<div class="card" style="margin-bottom: 14px;">
+      <h2 style="margin: 0 0 6px;">🏗️ Base-Salary Project Completions</h2>
+      <p class="blurb" style="margin: 0 0 12px;">Marking a project complete raises that person's <strong>base salary</strong> by the project's ex-super uplift and flags it as done on their dashboard. <strong>Also update Xero</strong> for the actual pay on DOD approval. Reopen to reverse.</p>`;
+    withProjects.forEach(e => {
+      const projs = (data.projects || []).filter(p => (p.assignedTo || []).includes(e.id));
+      h += `<div style="border-top: 1px solid #f0efe9; padding: 10px 4px;">
+        <div style="font-weight: 700; color: var(--ink);">${esc(e.name)} <span style="font-size: 11px; color: var(--faint); font-family: var(--mono); font-weight: 400;">· base $${c2(e.baseSalary)} ex-super</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">`;
+      projs.forEach(p => {
+        const done = isDone(p);
+        const ex = upliftEx(p);
+        h += `<div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 8px; background: ${done ? '#eaf5ec' : '#fafaf7'}; border: 1px solid ${done ? '#bfe0c6' : '#ecebe5'}; border-radius: 6px;">
+          <div style="font-size: 13px;">${done ? '✅ ' : ''}<strong>${esc(p.name)}</strong> <span style="color: var(--muted); font-size: 11px;">+$${(+p.bonusAmount || 0).toLocaleString()}${p.bonusIncludesSuper ? ' inc super' : ''} · $${c2(ex)} to base</span> <span style="font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em;">${esc(p.status || '')}</span></div>
+          <button type="button" class="qtp-proj-btn" data-emp="${esc(e.id)}" data-proj="${esc(p.id)}" style="padding: 6px 12px; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; ${done ? 'background:#fff; color:#a4302a; border:1px solid #f0c5c0;' : 'background:#1e6624; color:#fff;'}">${done ? 'Reopen −$' + c2(ex) : 'Mark complete +$' + c2(ex)}</button>
+        </div>`;
+      });
+      h += `</div></div>`;
+    });
+    h += `</div>`;
+    mount.innerHTML = h;
+
+    mount.querySelectorAll('.qtp-proj-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const e = (data.employees || []).find(x => x.id === btn.getAttribute('data-emp'));
+        const p = (data.projects || []).find(x => x.id === btn.getAttribute('data-proj'));
+        if (!e || !p) return;
+        const ex = upliftEx(p);
+        if (!isDone(p)) {
+          const newBase = Math.round(((+e.baseSalary || 0) + ex) * 100) / 100;
+          if (!confirm(`Mark "${p.name}" complete for ${e.name}?\n\nThis raises their base salary by $${c2(ex)} → $${c2(newBase)} ex-super.\nRemember to update Xero too. Then Save to GitHub.`)) return;
+          p.status = 'Completed';
+          e.baseSalary = newBase;
+        } else {
+          const newBase = Math.round(((+e.baseSalary || 0) - ex) * 100) / 100;
+          if (!confirm(`Reopen "${p.name}" for ${e.name}?\n\nThis lowers their base salary by $${c2(ex)} → $${c2(newBase)} ex-super.`)) return;
+          p.status = 'In Progress';
+          e.baseSalary = newBase;
+        }
+        if (typeof setDirty === 'function') setDirty();
+        renderProjectCompletions();
+      });
+    });
+  }
+
   renderHeader();
   renderTotals();
   renderBody();
   renderAudit();
   renderQuarterlyPull();
+  renderProjectCompletions();
 }
 
 load();
