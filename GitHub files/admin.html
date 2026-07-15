@@ -2655,7 +2655,13 @@ function renderFortnightlyAdmin() {
     const rows = computeRepRows(repId);
     const last = rows[rows.length - 1];
     const crossings = rows.filter(r => r.crossed).length;
-    return { rows, totalGP: last.ytd, totalEv: last.cumEv, totalPay: last.cumPay, totalProd: last.cumProd, totalAll: last.cumTotal, crossings };
+    // Year-overview "pay" is wallet-aware: from launch it's the SALES lands-now (4% × GP),
+    // matching what actually reaches Xero each fortnight; before launch it's the old-model band pay.
+    const rep = repById[repId];
+    const baseRate = (rep && rep.bands && rep.bands[0]) ? rep.bands[0][1] : 0.04;
+    let totalPay = 0;
+    rows.forEach((r, i) => { totalPay += (i >= WALLET_LAUNCH_IDX ? r.gp * baseRate : r.properPay); });
+    return { rows, totalGP: last.ytd, totalEv: last.cumEv, totalPay, totalProd: last.cumProd, totalAll: last.cumTotal, crossings };
   }
 
   // =====================================================================
@@ -2669,13 +2675,47 @@ function renderFortnightlyAdmin() {
     return FORTNIGHTS.length - 1;
   }
 
-  // Figures for one rep in one fortnight, reusing the cumulative band math.
+  // ── PREMIUM WALLET (from the 13–26 Jul run onward — matches the Zoho widget) ──────────
+  // From launch, each fortnight pays 4% base + 1% event NOW (Bonus/Super → Xero); the
+  // premium above 4% ((blended − 4%) × GP received) accrues to a per-rep QUARTERLY wallet and
+  // pays as a lump on the first pay run of the NEXT quarter. Fortnights BEFORE launch stay
+  // locked on the old model (full band commission fortnightly) — never recomputed.
+  const WALLET_LAUNCH_IDX = (function () { const i = FORTNIGHTS.findIndex(f => f.paid === '27 Jul 2026'); return i < 0 ? 3 : i; })();
+  const WALLET_COMP_START = new Date(2026, 5, 1); // 1 Jun 2026 = fortnight-0 start
+  function wFnStart(idx) { const d = new Date(WALLET_COMP_START); d.setDate(d.getDate() + idx * 14); return d; }
+  function wQEnd(dt) { const y = dt.getFullYear(); const ends = [new Date(y, 2, 31), new Date(y, 5, 30), new Date(y, 8, 30), new Date(y, 11, 31)]; for (let i = 0; i < ends.length; i++) { if (dt <= ends[i]) return ends[i]; } return new Date(y + 1, 2, 31); }
+  function wQKey(idx) { return wQEnd(wFnStart(idx)).getTime(); }
+
+  // Per-fortnight wallet ledger for one rep. incSuper = what goes to Xero this fortnight.
+  function walletLedger(repId) {
+    const rows = computeRepRows(repId);
+    const rep = repById[repId];
+    const bands = (rep && rep.bands) || [[0, 0.04]];
+    const baseRate = bands[0][1] || 0.04;
+    const byQ = {}; const out = [];
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const isWallet = i >= WALLET_LAUNCH_IDX;
+      const g = r.gp, prodComm = r.prodComm, pos = r.pace;
+      const blended = pos > 0 ? cumBandComm(pos, bands) / pos : baseRate;
+      // lands now (→ Xero): wallet model = 4% + event ; legacy (locked) = full band commission + event
+      const landsNow = isWallet ? (baseRate * g + prodComm) : (r.properPay + prodComm);
+      const premium = isWallet ? Math.max(0, (blended - baseRate) * g) : 0;
+      let payout = 0;
+      if (isWallet) {
+        if (i > WALLET_LAUNCH_IDX && wQKey(i) !== wQKey(i - 1)) payout = byQ[wQKey(i - 1)] || 0; // first run of a new quarter pays the prior quarter's wallet
+        byQ[wQKey(i)] = (byQ[wQKey(i)] || 0) + premium;
+      }
+      const incSuper = landsNow;
+      out.push({ idx: i, row: r, isWallet, g, prodComm, blended, baseRate, landsNow, premium, walletBal: isWallet ? (byQ[wQKey(i)] || 0) : 0, payout, incSuper, exSuper: incSuper / SUPER_DIV, superAmt: incSuper - incSuper / SUPER_DIV });
+    }
+    return out;
+  }
+
+  // Figures for one rep in one fortnight — wallet model from launch, legacy (locked) before it.
   function payrunFigures(repId, idx) {
-    const row = computeRepRows(repId)[idx];
-    const incSuper = row.properPay + row.prodComm;
-    const exSuper = incSuper / SUPER_DIV;
-    const superAmt = incSuper - exSuper;
-    return { row, incSuper, exSuper, superAmt };
+    const e = walletLedger(repId)[idx];
+    return { row: e.row, incSuper: e.incSuper, exSuper: e.exSuper, superAmt: e.superAmt, wallet: e };
   }
 
   const _btnNav = 'width:34px;height:34px;border:1px solid #d3d1c7;background:#fff;border-radius:6px;cursor:pointer;font-size:14px;color:var(--ink);';
@@ -2689,7 +2729,8 @@ function renderFortnightlyAdmin() {
       var fn = FORTNIGHTS[idx], gpv = gpMatrix[repId] || [];
       var reals = [];
       for (var k = 0; k <= idx; k++) { reals.push({ period: (FORTNIGHTS[k] ? FORTNIGHTS[k].period : ('F' + (k + 1))), gp: (gpv[k] || 0) }); }
-      window.__amRender && window.__amRender({ row: row, B: rep.bands, seed: (rep.seed || []), reals: reals, fnIdx: idx, period: fn.period, paid: fn.paid, name: rep.fullName });
+      var w = walletLedger(repId)[idx]; // wallet-model figures for this fortnight (null-safe below)
+      window.__amRender && window.__amRender({ row: row, B: rep.bands, seed: (rep.seed || []), reals: reals, fnIdx: idx, period: fn.period, paid: fn.paid, name: rep.fullName, wallet: w });
     } catch (e) {}
   };
 
@@ -2789,6 +2830,15 @@ function renderFortnightlyAdmin() {
         <div>
           <div onclick="window.__amOpen&&window.__amOpen('${esc(r.id)}',${idx})" title="Click for the full pay breakdown (same as the rep's dashboard)" style="font-weight:700; color:var(--ink); cursor:pointer;">${esc(r.fullName)} <span style="font-size:11px; color:#0d9488;">⊕</span></div>
           <div style="font-size:10px; color:var(--faint); font-family:var(--mono);">${esc(r.planType)} · YTD <span id="pr-ytd-${esc(r.id)}">${_fmt(f.row.ytd)}</span> · <span id="pr-rate-${esc(r.id)}">${(f.row.endRate * 100).toFixed(0)}%</span></div>
+          ${f.wallet && f.wallet.isWallet ? `<div id="pr-wallet-${esc(r.id)}" style="font-size:10px; color:var(--purple,#3f4a5c); font-family:var(--mono); margin-top:2px;">💰 wallet ${_fmt2dpMoney(f.wallet.walletBal)}${f.wallet.premium > 0 ? ` · +${_fmt2dp(f.wallet.premium)} this fn → quarterly` : ''}</div>` : ''}
+          ${f.wallet && f.wallet.payout > 0 ? `<div style="margin-top:6px; background:#eef6f1; border:1px solid #bfe0cd; border-radius:7px; padding:7px 9px;">
+            <div style="font-size:10.5px; font-weight:800; color:#0f5132; text-transform:uppercase; letter-spacing:.04em;">▲ Wallet payout this run — quarter closed</div>
+            <div style="display:flex; gap:8px; margin-top:5px;">
+              <input type="text" class="pr-copy" tabindex="-1" readonly value="${_fmt2dp(f.wallet.payout / SUPER_DIV)}" title="Wallet bonus (ex super) — click to copy into Xero" style="flex:1; padding:6px 8px; border:1px solid #bfe0cd; border-radius:5px; text-align:right; font-family:var(--mono); font-size:13px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;">
+              <input type="text" class="pr-copy" tabindex="-1" readonly value="${_fmt2dp(f.wallet.payout - f.wallet.payout / SUPER_DIV)}" title="Wallet super — click to copy into Xero" style="flex:1; padding:6px 8px; border:1px solid #cdd9e8; border-radius:5px; text-align:right; font-family:var(--mono); font-size:13px; font-weight:700; color:var(--navy); background:#eef4fa; cursor:pointer;">
+            </div>
+            <div style="font-size:9.5px; color:#4a6b57; margin-top:3px;">bonus + super — add <b>on top</b> of this fortnight's normal pay</div>
+          </div>` : ''}
           <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
             <button type="button" class="pr-xero-note" data-rep="${esc(r.id)}" tabindex="-1" title="Copy this fortnight's GP note to paste into the Xero payslip" style="padding:4px 10px; border:1px solid #cdd9e8; background:#eef4fa; color:var(--navy); border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">📋 Copy Xero note</button>
             ${r.dashboardFile ? `<a href="${esc(r.dashboardFile)}" target="_blank" rel="noopener" tabindex="-1" title="Open ${esc(r.fullName)}'s dashboard in a new tab — verify the pushed figures" style="padding:4px 10px; border:1px solid #d6c9e8; background:#f3eefa; color:#5a3a8e; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; text-decoration:none;">👤 ${esc(r.name)}'s dashboard ↗</a>` : ''}
@@ -2867,6 +2917,8 @@ function renderFortnightlyAdmin() {
       set(`pr-rate-${r.id}`, (f.row.endRate * 100).toFixed(0) + '%');
       set(`pr-bonus-${r.id}`, _fmt2dp(f.exSuper));
       set(`pr-super-${r.id}`, _fmt2dp(f.superAmt));
+      const w = f.wallet;
+      if (w && w.isWallet) set(`pr-wallet-${r.id}`, '💰 wallet ' + _fmt2dpMoney(w.walletBal) + (w.premium > 0 ? ' · +' + _fmt2dp(w.premium) + ' this fn → quarterly' : ''));
     });
     const tb = document.getElementById('pr-team-bonus'); if (tb) tb.textContent = _fmt2dpMoney(teamBonus);
     const ts = document.getElementById('pr-team-super'); if (ts) ts.textContent = _fmt2dpMoney(teamSuper);
@@ -3189,7 +3241,8 @@ function renderFortnightlyAdmin() {
         let g = 0, p = 0, t = 0;
         mg.idxs.forEach(fi => {
           const row = repRows[r.id][fi];
-          g += row.gp; p += row.properPay; t += row.tuAdj;
+          const _base = (r.bands && r.bands[0]) ? r.bands[0][1] : 0.04;
+          g += row.gp; p += (fi >= WALLET_LAUNCH_IDX ? row.gp * _base : row.properPay); t += row.tuAdj;
           if (row.crossed) hasCrossing = true;
         });
         monthGpByRep[r.id] = g; monthPayByRep[r.id] = p; monthTuByRep[r.id] = t;
@@ -4962,6 +5015,27 @@ load();
   function amBuild(ctx){
     var B=(ctx.B||[[0,0.04]]).map(function(b){return [Number(b[0]),Number(b[1])];});
     var row=ctx.row||{},pos=Number(row.pace)||0,cur=marg(pos,B),M=cur;
+    // ── WALLET MODEL modal (from launch onward) — matches the Zoho widget's pay modal ──
+    if(ctx.wallet && ctx.wallet.isWallet){
+      var w=ctx.wallet;
+      var wgp=Number(row.gp)||0, wev=Number(row.eventGp)||0, wprod=Number(row.prodComm)||0;
+      var wbase=w.baseRate, wbl=w.blended, wsales=wbase*wgp, wland=w.landsNow, wprem=w.premium, wfull=wland+wprem, wbank=wland/1.12, wsup=wland-wbank;
+      var sr='display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:.5px solid #efeee8;font-size:13px';
+      var hw='';
+      hw+='<div class="am-lab">'+(ctx.name?String(ctx.name).toUpperCase()+' · ':'')+'PAY · '+(ctx.period||'')+'</div><div class="am-hero">'+m2(wfull)+'</div><div class="am-herosub">commission this fortnight · inc super · lands '+(ctx.paid||'')+'</div>';
+      hw+='<div class="am-split" style="text-align:center"><b>'+m2(wland)+'</b> lands now (&rarr; Xero) &nbsp;·&nbsp; <b style="color:#3f4a5c">+'+m2(wprem)+'</b> &rarr; wallet</div>';
+      hw+='<div style="margin-top:12px;border:1px solid #e7e5dd;border-radius:10px;padding:2px 14px">';
+      hw+='<div style="'+sr+'"><span>Sales — <b>'+pc(wbase)+'</b> of '+m2(wgp)+' GP received</span><b>'+m2(wsales)+'</b></div>';
+      if(wev>0||wprod>0) hw+='<div style="'+sr+'"><span>Event production — <b>1%</b> of '+m0(wev)+' GP delivered</span><b>'+m2(wprod)+'</b></div>';
+      hw+='<div style="'+sr+';font-weight:700"><span>Lands now <span class="am-faint">inc super &rarr; Xero</span></span><b>'+m2(wland)+'</b></div>';
+      hw+='<div style="'+sr+'" class="am-faint"><span>= '+m2(wbank)+' to bank + '+m2(wsup)+' to super</span><span></span></div>';
+      hw+='<div style="'+sr+'"><span style="color:#3f4a5c">Premium &rarr; quarterly wallet</span><b style="color:#3f4a5c">+'+m2(wprem)+'</b></div>';
+      hw+='<div style="'+sr+';font-weight:700;border-top:2px solid #e7e5dd;border-bottom:none"><span>Total commission this fortnight</span><b>'+m2(wfull)+'</b></div>';
+      hw+='</div>';
+      hw+='<div style="margin-top:10px;background:#f7f9fb;border:1px solid #d9e0e8;border-radius:10px;padding:11px 14px;font-size:12px;color:#3f4a5c;line-height:1.6"><b>Wallet balance this quarter: '+m2(w.walletBal)+'</b> — the premium above '+pc(wbase)+' builds here and pays as a lump on the first pay run after quarter-close. Lands-now (Bonus/Super) goes to Xero <b>now</b>.</div>';
+      hw+='<div style="margin-top:9px;font-size:11.5px;color:#5f5e5a;line-height:1.6">Blended rate this fortnight: <b>'+(wbl*100).toFixed(2)+'%</b> (trailing '+m0(pos)+'). Premium = ('+(wbl*100).toFixed(2)+'% − '+pc(wbase)+') × '+m2(wgp)+' GP received = <b>'+m2(wprem)+'</b>.</div>';
+      return hw;
+    }
     var gp=Number(row.gp)||0,eventGp=Number(row.eventGp)||0,prod=Number(row.prodComm)||0;
     var gpBand=Number(row.properPay)||0,total=gpBand+prod,bank=total/1.12,sup=total-bank;
     var held=Number(row.held)||0,tuApplied=Number(row.tuAdj)||0,tuBal=Number(row.trueUpBalance)||0;
