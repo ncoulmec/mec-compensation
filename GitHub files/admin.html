@@ -2682,9 +2682,12 @@ function renderFortnightlyAdmin() {
   // locked on the old model (full band commission fortnightly) — never recomputed.
   const WALLET_LAUNCH_IDX = (function () { const i = FORTNIGHTS.findIndex(f => f.paid === '27 Jul 2026'); return i < 0 ? 3 : i; })();
   const WALLET_COMP_START = new Date(2026, 5, 1); // 1 Jun 2026 = fortnight-0 start
-  function wFnStart(idx) { const d = new Date(WALLET_COMP_START); d.setDate(d.getDate() + idx * 14); return d; }
   function wQEnd(dt) { const y = dt.getFullYear(); const ends = [new Date(y, 2, 31), new Date(y, 5, 30), new Date(y, 8, 30), new Date(y, 11, 31)]; for (let i = 0; i < ends.length; i++) { if (dt <= ends[i]) return ends[i]; } return new Date(y + 1, 2, 31); }
-  function wQKey(idx) { return wQEnd(wFnStart(idx)).getTime(); }
+  // Bucket by the fortnight's PAID date — the wallet pays out on the first run PAID after a quarter
+  // closes (Q1 FY27 → 5 Oct 2026 · Q2 → 11 Jan 2027 · Q3 → 5 Apr 2027 …), matching the admin's
+  // existing quarterly-commission convention.
+  function wPaidDate(idx) { const p = FORTNIGHTS[idx] && FORTNIGHTS[idx].paid; let d = p ? new Date(p) : NaN; if (isNaN(d)) { d = new Date(WALLET_COMP_START); d.setDate(d.getDate() + idx * 14 + 14); } return d; }
+  function wQKey(idx) { return wQEnd(wPaidDate(idx)).getTime(); }
 
   // Per-fortnight wallet ledger for one rep. incSuper = what goes to Xero this fortnight.
   function walletLedger(repId) {
@@ -5026,7 +5029,7 @@ load();
       hw+='<div class="am-split" style="text-align:center"><b>'+m2(wland)+'</b> lands now (&rarr; Xero) &nbsp;·&nbsp; <b style="color:#3f4a5c">+'+m2(wprem)+'</b> &rarr; wallet</div>';
       hw+='<div style="margin-top:12px;border:1px solid #e7e5dd;border-radius:10px;padding:2px 14px">';
       hw+='<div style="'+sr+'"><span>Sales — <b>'+pc(wbase)+'</b> of '+m2(wgp)+' GP received</span><b>'+m2(wsales)+'</b></div>';
-      if(wev>0||wprod>0) hw+='<div style="'+sr+'"><span>Event production — <b>1%</b> of '+m0(wev)+' GP delivered</span><b>'+m2(wprod)+'</b></div>';
+      hw+='<div style="'+sr+'"><span>Event production — <b>1%</b> of '+m0(wev)+' GP delivered'+(wprod>0?'':' <span class="am-faint">· none this fortnight</span>')+'</span><b>'+m2(wprod)+'</b></div>';
       hw+='<div style="'+sr+';font-weight:700"><span>Lands now <span class="am-faint">inc super &rarr; Xero</span></span><b>'+m2(wland)+'</b></div>';
       hw+='<div style="'+sr+'" class="am-faint"><span>= '+m2(wbank)+' to bank + '+m2(wsup)+' to super</span><span></span></div>';
       hw+='<div style="'+sr+'"><span style="color:#3f4a5c">Premium &rarr; quarterly wallet</span><b style="color:#3f4a5c">+'+m2(wprem)+'</b></div>';
