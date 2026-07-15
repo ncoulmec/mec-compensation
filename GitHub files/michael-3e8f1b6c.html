@@ -1950,7 +1950,7 @@ function renderProjectToggles() {
     const amountLabel = p.bonusIncludesSuper
       ? `+${fmtMoney(p.bonusAmount)} to base salary <small style="color: var(--faint); font-weight: 400;">(incl. super)</small>`
       : `+${fmtMoney(p.bonusAmount)} to base salary <small style="color: var(--faint); font-weight: 400;">(+ super on top)</small>`;
-    const doneTag = done ? ` <small style="color: var(--accent); font-weight: 700;">✓ Completed — in your base</small>` : '';
+    const doneTag = done ? `<span style="display: block; font-size: 11px; color: var(--accent); font-weight: 700; margin-top: 3px;">✓ Completed — in your base</span>` : '';
     return `
       <label class="project-toggle ${checked ? 'checked' : ''}" for="proj-${p.id}"${done ? ' title="Completed — already added to your base salary"' : ''}>
         <div class="left">
@@ -2161,6 +2161,15 @@ function calcAll() {
     }
   });
 
+  // Completed projects are already in base salary. Shown on the Project Uplift
+  // card for recognition (labelled "in base"), but NOT re-added to the total.
+  let completedIncSuper = 0, completedCount = 0;
+  myProjects.filter(isProjectCompleted).forEach(p => {
+    completedIncSuper += p.bonusIncludesSuper ? p.bonusAmount : p.bonusAmount * (1 + g.superRate);
+    completedCount++;
+  });
+  const projectUpliftDisplay = completedIncSuper + projectsIncSuper;
+
   // v16 super model: band output is super-INCLUSIVE (bandsIncludeSuper=true).
   // variable = variable comp inc-super. Derive ex-super portion by dividing.
   const base = emp.baseSalary;
@@ -2199,6 +2208,7 @@ function calcAll() {
   return {
     bandComm, production, preKpi, effectiveKpi, variable, variableEx, commSuperAmt, breakdown,
     projectsIncSuper, projectsExSuper, activeProjects,
+    completedIncSuper, completedCount, projectUpliftDisplay,
     base, baseInc, baseSuper, commInc,
     subtotalExSuper, superOnPay, superOnProjects, totalSuper, totalPackage,
     nextTier, progressPct, toGo, contextMsg,
@@ -2279,11 +2289,12 @@ function update() {
   document.getElementById('card-comm-sub').textContent = r.variable > 0
     ? `${fmtMoney(r.variableEx)} + ${fmtMoney(r.commSuperAmt)} super`
     : 'No commission at this revenue';
-  document.getElementById('card-projects').textContent = fmtMoney(r.projectsIncSuper);
+  document.getElementById('card-projects').textContent = fmtMoney(r.projectUpliftDisplay);
   const nActive = r.activeProjects.length;
-  document.getElementById('card-projects-sub').textContent = nActive > 0
-    ? `${nActive} project${nActive === 1 ? '' : 's'} included`
-    : 'Nothing ticked';
+  const projParts = [];
+  if (r.completedCount > 0) projParts.push(`${r.completedCount} completed · in base`);
+  if (nActive > 0) projParts.push(`${nActive} modelled`);
+  document.getElementById('card-projects-sub').textContent = projParts.length ? projParts.join(' · ') : 'Nothing ticked';
 
   // Total package — inverted card, sub shows ex-super + super
   document.getElementById('card-total').textContent = fmtMoney(r.totalPackage);
