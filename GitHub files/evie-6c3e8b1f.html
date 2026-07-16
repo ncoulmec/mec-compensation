@@ -5899,6 +5899,11 @@ function renderBreakdown(r) {
           }
         }
       }
+      // SINGLE SOURCE: the admin publishes the engine's authoritative Premium Wallet
+      // per fortnight on the employee record (engineWalletByFn). Expose it so
+      // renderWalletView shows the EXACT number the widget / admin / pay run use —
+      // no independent client re-estimate that could drift by a dollar or two.
+      window.__PMengineWallet = (empRec && empRec.engineWalletByFn) || {};
       render();
       if (window.renderWalletView) try { window.renderWalletView(); } catch (e) {}
       renderTrailing();
@@ -5957,6 +5962,16 @@ function renderBreakdown(r) {
     var walletBal=0, launchCount=0;
     for (var w=launchIdx; w<=curIdx; w++){ walletBal += fig(w).prem; launchCount++; }
     var cur = fig(curIdx);
+
+    // SINGLE SOURCE: prefer the admin-published engine wallet for this fortnight so
+    // the rep sees the exact number the widget / admin / pay run use. Falls back to
+    // the client band math above only when the engine hasn't been pulled yet.
+    var _ew = (window.__PMengineWallet || {})[curIdx];
+    if (_ew) {
+      if (_ew.blended_rate != null) blended = Number(_ew.blended_rate);
+      if (_ew.premium_fn != null) { cur.prem = Number(_ew.premium_fn); cur.full = cur.land + cur.prem; }
+      if (_ew.wallet_qtd != null) walletBal = Number(_ew.wallet_qtd);
+    }
 
     /* ---------- HERO (widget .payB pay card) ---------- */
     var heroEl = document.getElementById('wallet-hero');

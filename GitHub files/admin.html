@@ -2695,22 +2695,41 @@ function renderFortnightlyAdmin() {
     const rep = repById[repId];
     const bands = (rep && rep.bands) || [[0, 0.04]];
     const baseRate = bands[0][1] || 0.04;
-    const byQ = {}; const out = [];
+    // SINGLE SOURCE: the engine's authoritative wallet, pulled per fortnight, is
+    // stored on the employee as engineWalletByFn[adminIdx]. When present we use its
+    // premium_fn / wallet_qtd / blended_rate verbatim (identical to the widget &
+    // dashboards). The client-side band math below is only a fallback for fortnights
+    // that were never pulled from the engine.
+    const _emp = (typeof data !== 'undefined' && data.employees) ? data.employees.find(e => e.id === repId) : null;
+    const engFn = (_emp && _emp.engineWalletByFn) || {};
+    const out = [];
+    let prevWalletBal = 0, prevQKey = null;
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
       const isWallet = i >= WALLET_LAUNCH_IDX;
       const g = r.gp, prodComm = r.prodComm, pos = r.pace;
-      const blended = pos > 0 ? cumBandComm(pos, bands) / pos : baseRate;
+      let blended = pos > 0 ? cumBandComm(pos, bands) / pos : baseRate;
       // lands now (→ Xero): wallet model = 4% + event ; legacy (locked) = full band commission + event
       const landsNow = isWallet ? (baseRate * g + prodComm) : (r.properPay + prodComm);
-      const premium = isWallet ? Math.max(0, (blended - baseRate) * g) : 0;
-      let payout = 0;
+      let premium = isWallet ? Math.max(0, (blended - baseRate) * g) : 0;
+      const eng = engFn[i];
+      let fromEngine = false;
+      if (isWallet && eng && eng.premium_fn != null) {
+        premium = +eng.premium_fn;
+        if (eng.blended_rate != null) blended = +eng.blended_rate;
+        fromEngine = true;
+      }
+      let payout = 0, walletBal = 0;
       if (isWallet) {
-        if (i > WALLET_LAUNCH_IDX && wQKey(i) !== wQKey(i - 1)) payout = byQ[wQKey(i - 1)] || 0; // first run of a new quarter pays the prior quarter's wallet
-        byQ[wQKey(i)] = (byQ[wQKey(i)] || 0) + premium;
+        const qkey = wQKey(i);
+        const newQuarter = (prevQKey !== null && qkey !== prevQKey);
+        if (newQuarter) payout = prevWalletBal; // first run of a new quarter pays the prior quarter's final balance
+        // walletBal = engine's authoritative quarter-to-date total when pulled, else accumulate the premium
+        walletBal = (fromEngine && eng.wallet_qtd != null) ? (+eng.wallet_qtd) : ((newQuarter ? 0 : prevWalletBal) + premium);
+        prevWalletBal = walletBal; prevQKey = qkey;
       }
       const incSuper = landsNow;
-      out.push({ idx: i, row: r, isWallet, g, prodComm, blended, baseRate, landsNow, premium, walletBal: isWallet ? (byQ[wQKey(i)] || 0) : 0, payout, incSuper, exSuper: incSuper / SUPER_DIV, superAmt: incSuper - incSuper / SUPER_DIV });
+      out.push({ idx: i, row: r, isWallet, g, prodComm, blended, baseRate, landsNow, premium, walletBal, payout, fromEngine, incSuper, exSuper: incSuper / SUPER_DIV, superAmt: incSuper - incSuper / SUPER_DIV });
     }
     return out;
   }
@@ -2822,10 +2841,12 @@ function renderFortnightlyAdmin() {
 
     let teamBonus = 0, teamSuper = 0;
     const teamRows = [];
+    const walletPayouts = [];
     reps.forEach(r => {
       const f = payrunFigures(r.id, idx);
       teamBonus += f.exSuper; teamSuper += f.superAmt;
       teamRows.push({ name: r.name, exSuper: f.exSuper, superAmt: f.superAmt });
+      if (f.wallet && f.wallet.payout > 0) walletPayouts.push({ name: r.fullName, payout: f.wallet.payout });
       const lock = confirmed ? 'readonly tabindex="-1"' : '';
       const lockStyle = confirmed ? 'background:#f4f3ed; color:var(--muted); cursor:not-allowed;' : 'background:#fff;';
       const repBreakdown = buildRepBreakdown(r, f);
@@ -2834,14 +2855,6 @@ function renderFortnightlyAdmin() {
           <div onclick="window.__amOpen&&window.__amOpen('${esc(r.id)}',${idx})" title="Click for the full pay breakdown (same as the rep's dashboard)" style="font-weight:700; color:var(--ink); cursor:pointer;">${esc(r.fullName)} <span style="font-size:11px; color:#0d9488;">⊕</span></div>
           <div style="font-size:10px; color:var(--faint); font-family:var(--mono);">${esc(r.planType)} · YTD <span id="pr-ytd-${esc(r.id)}">${_fmt(f.row.ytd)}</span> · <span id="pr-rate-${esc(r.id)}">${(f.row.endRate * 100).toFixed(0)}%</span></div>
           ${f.wallet && f.wallet.isWallet ? `<div id="pr-wallet-${esc(r.id)}" style="font-size:10px; color:var(--purple,#3f4a5c); font-family:var(--mono); margin-top:2px;">💰 wallet ${_fmt2dpMoney(f.wallet.walletBal)}${f.wallet.premium > 0 ? ` · +${_fmt2dp(f.wallet.premium)} this fn → quarterly` : ''}</div>` : ''}
-          ${f.wallet && f.wallet.payout > 0 ? `<div style="margin-top:6px; background:#eef6f1; border:1px solid #bfe0cd; border-radius:7px; padding:7px 9px;">
-            <div style="font-size:10.5px; font-weight:800; color:#0f5132; text-transform:uppercase; letter-spacing:.04em;">▲ Wallet payout this run — quarter closed</div>
-            <div style="display:flex; gap:8px; margin-top:5px;">
-              <input type="text" class="pr-copy" tabindex="-1" readonly value="${_fmt2dp(f.wallet.payout / SUPER_DIV)}" title="Wallet bonus (ex super) — click to copy into Xero" style="flex:1; padding:6px 8px; border:1px solid #bfe0cd; border-radius:5px; text-align:right; font-family:var(--mono); font-size:13px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;">
-              <input type="text" class="pr-copy" tabindex="-1" readonly value="${_fmt2dp(f.wallet.payout - f.wallet.payout / SUPER_DIV)}" title="Wallet super — click to copy into Xero" style="flex:1; padding:6px 8px; border:1px solid #cdd9e8; border-radius:5px; text-align:right; font-family:var(--mono); font-size:13px; font-weight:700; color:var(--navy); background:#eef4fa; cursor:pointer;">
-            </div>
-            <div style="font-size:9.5px; color:#4a6b57; margin-top:3px;">bonus + super — add <b>on top</b> of this fortnight's normal pay</div>
-          </div>` : ''}
           <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
             <button type="button" class="pr-xero-note" data-rep="${esc(r.id)}" tabindex="-1" title="Copy this fortnight's GP note to paste into the Xero payslip" style="padding:4px 10px; border:1px solid #cdd9e8; background:#eef4fa; color:var(--navy); border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">📋 Copy Xero note</button>
             ${r.dashboardFile ? `<a href="${esc(r.dashboardFile)}" target="_blank" rel="noopener" tabindex="-1" title="Open ${esc(r.fullName)}'s dashboard in a new tab — verify the pushed figures" style="padding:4px 10px; border:1px solid #d6c9e8; background:#f3eefa; color:#5a3a8e; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px; text-decoration:none;">👤 ${esc(r.name)}'s dashboard ↗</a>` : ''}
@@ -2885,6 +2898,40 @@ function renderFortnightlyAdmin() {
       <div style="text-align:right; font-family:var(--mono); color:#1e6624;" id="pr-team-bonus">${_fmt2dpMoney(teamBonus)}</div>
       <div style="text-align:right; font-family:var(--mono); color:var(--navy);" id="pr-team-super">${_fmt2dpMoney(teamSuper)}</div>
     </div>`;
+
+    // ── Grouped QUARTERLY WALLET PAYOUT (only on the first run after a quarter closes) ──
+    if (walletPayouts.length) {
+      const priorQEnd = new Date(wQKey(idx - 1));
+      const qlabel = priorQEnd.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      let totBonus = 0, totSuper = 0;
+      const rowsH = walletPayouts.map(function (wp) {
+        const bonus = wp.payout / SUPER_DIV, sup = wp.payout - bonus; totBonus += bonus; totSuper += sup;
+        return `<div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr 1fr; gap:10px; align-items:center; padding:8px 4px; border-top:1px solid #e3efe8;">
+          <div style="font-weight:700; color:var(--ink);">${esc(wp.name)}</div>
+          <div style="text-align:right; font-family:var(--mono); font-size:12px; color:var(--muted);">wallet ${_fmt2dpMoney(wp.payout)}</div>
+          <div></div>
+          <div style="text-align:right;"><input type="text" class="pr-copy" tabindex="-1" readonly value="${_fmt2dp(bonus)}" title="Wallet bonus (ex super) — click to copy into Xero" style="width:100%; padding:8px 10px; border:1px solid #bfe0cd; border-radius:6px; text-align:right; font-family:var(--mono); font-size:14px; font-weight:700; color:#1e6624; background:#f5faf7; cursor:pointer;"></div>
+          <div style="text-align:right;"><input type="text" class="pr-copy" tabindex="-1" readonly value="${_fmt2dp(sup)}" title="Wallet super — click to copy into Xero" style="width:100%; padding:8px 10px; border:1px solid #cdd9e8; border-radius:6px; text-align:right; font-family:var(--mono); font-size:14px; font-weight:700; color:var(--navy); background:#eef4fa; cursor:pointer;"></div>
+        </div>`;
+      }).join('');
+      h += `<div style="margin-top:18px; border:1px solid #bfe0cd; border-radius:12px; overflow:hidden;">
+        <div style="background:#eef6f1; padding:12px 16px; border-bottom:1px solid #bfe0cd;">
+          <div style="font-size:12px; font-weight:800; color:#0f5132; text-transform:uppercase; letter-spacing:.04em;">💰 Quarterly wallet payout — quarter ended ${esc(qlabel)}</div>
+          <div style="font-size:12px; color:#3a5c49; margin-top:3px;">These lump sums pay out this run, <b>on top</b> of each person's normal fortnightly pay above. Copy each Bonus + Super into Xero as a separate line. <b>Reconcile against each rep's dashboard/widget wallet before paying.</b></div>
+        </div>
+        <div style="padding:4px 12px 10px;">
+          <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr 1fr; gap:10px; padding:8px 4px; font-size:10px; font-weight:700; color:var(--faint); text-transform:uppercase; letter-spacing:.04em;">
+            <div>Rep</div><div style="text-align:right;">Wallet total</div><div></div><div style="text-align:right;">Bonus → Xero</div><div style="text-align:right;">Super → Xero</div>
+          </div>
+          ${rowsH}
+          <div style="display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr 1fr; gap:10px; padding:10px 4px 4px; border-top:2px solid #bfe0cd; font-weight:800;">
+            <div style="color:#0f5132;">Wallet payout total</div><div></div><div></div>
+            <div style="text-align:right; font-family:var(--mono); color:#1e6624;">${_fmt2dpMoney(totBonus)}</div>
+            <div style="text-align:right; font-family:var(--mono); color:var(--navy);">${_fmt2dpMoney(totSuper)}</div>
+          </div>
+        </div>
+      </div>`;
+    }
 
     if (confirmed) {
       h += `<div style="margin-top:16px; display:flex; justify-content:flex-end; gap:10px; align-items:center;">
@@ -2984,6 +3031,7 @@ function renderFortnightlyAdmin() {
           const repTotals = body.reps || {};
           const eventTotals = body.eventReps || {};
           let appliedGp = 0, appliedEv = 0, missed = [];
+          let engApplied = 0, engWalletRaw = [], engNote = null;
           // Write-through helper: mirror the input-blur persist() flow exactly.
           // Without this, the Save payload uses stale data.employees[].fortnightly
           // values and the pulled numbers never reach GitHub or the rep dashboards.
@@ -3021,6 +3069,37 @@ function renderFortnightlyAdmin() {
               missed.push(r2.name);
             }
           });
+
+          // ── Premium Wallet (SINGLE SOURCE) ──────────────────────────────────
+          // Store the engine's authoritative wallet for THIS fortnight on each
+          // employee (engineWalletByFn[idx]). The engine always computes the CURRENT
+          // fortnight, so we only trust it when its fortnight matches the run being
+          // pulled (engineFortnight.index - 1 === idx). This value then drives the
+          // admin display, the quarterly payout, and — once saved — the dashboards,
+          // so widget = admin = dashboard = engine.
+          const engFort = body.engineFortnight;
+          const engByRep = body.engineByRep || {};
+          if (body.engineOk && engFort && (engFort.index - 1) === idx) {
+            reps.forEach(r2 => {
+              const eng = engByRep[r2.id];
+              if (!eng) return;
+              const emp = (data.employees || []).find(e => e.id === r2.id);
+              if (!emp) return;
+              if (!emp.engineWalletByFn) emp.engineWalletByFn = {};
+              emp.engineWalletByFn[idx] = {
+                wallet_qtd: +eng.wallet_qtd, premium_fn: +eng.premium_fn,
+                blended_rate: +eng.blended_rate, trailing_position: +eng.trailing_position,
+                fnIndex: engFort.index, pulledAt: body.pulledAt
+              };
+              engApplied++;
+              engWalletRaw.push({ name: r2.name, wallet: +eng.wallet_qtd, premium: +eng.premium_fn });
+            });
+          } else if (body.engineOk && engFort) {
+            engNote = `Engine is on fortnight ${engFort.index} (${engFort.label}); this run is fortnight ${idx + 1}. Wallet not applied — pull the current fortnight to sync the wallet.`;
+          } else if (body.engineOk === false) {
+            engNote = 'Engine wallet unavailable' + ((body.engineErrors && body.engineErrors.length) ? ' (' + body.engineErrors.join('; ') + ')' : '') + ' — wallet falls back to the admin estimate.';
+          }
+
           // Mark dirty so the Save button knows to push and the unsaved-changes
           // indicator shows up — same as the input-blur flow.
           if (typeof setDirty === 'function') setDirty();
@@ -3038,6 +3117,12 @@ function renderFortnightlyAdmin() {
           };
           const repLines = reps.map(lineFor).filter(Boolean);
           if (repLines.length) lines.push(`<div style="margin-top:6px;">${repLines.join(' &nbsp;·&nbsp; ')}</div>`);
+          if (engApplied) {
+            const wl = engWalletRaw.map(w => `${esc(w.name)} 💰${dollar(w.wallet)}${w.premium > 0 ? ` (+${dollar(w.premium)} this fn)` : ''}`).join(' &nbsp;·&nbsp; ');
+            lines.push(`<div style="margin-top:6px; color:#3f4a5c;"><strong>✓ Premium Wallet — single source (engine):</strong> ${wl}</div>`);
+          } else if (engNote) {
+            lines.push(`<div style="margin-top:4px; color:#8a6a00;">⚠ ${esc(engNote)}</div>`);
+          }
           if (missed.length) lines.push(`<div style="margin-top:4px; color:#8a6a00;">No Zoho data for: ${missed.map(esc).join(', ')} (set to 0)</div>`);
           const allUnmapped = [].concat(body.unmapped || [], body.eventUnmapped || []);
           if (allUnmapped.length) {
