@@ -5718,17 +5718,20 @@ function renderBreakdown(r) {
     cardEl.className = '';
     cardEl.innerHTML =
       '<div class="wm-wallet">' +
-        '<div class="wm-lab" style="margin-bottom:7px">Quarterly Premium Wallet <span class="wm-i" title="' + tipTxt + '">i</span></div>' +
+        '<div class="wm-lab" style="margin-bottom:7px">Quarterly Premium Wallet <span style="font-size:9px;font-weight:800;letter-spacing:.06em;background:#fdf6e9;color:#8a6a00;border:1px solid #e7c887;border-radius:20px;padding:2px 7px;vertical-align:middle">ESTIMATE</span> <span class="wm-i" title="' + tipTxt + '">i</span></div>' +
         '<div style="display:flex;align-items:center;gap:14px">' +
           '<svg width="80" height="62" viewBox="0 0 96 74" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 auto" aria-label="wallet"><rect x="26" y="4" width="46" height="20" rx="3" fill="#3f9e74"/><rect x="20" y="9" width="52" height="18" rx="3" fill="#5cb98a"/><circle cx="46" cy="17" r="5" fill="#bfe9d2"/><text x="46" y="20.5" font-size="7" font-weight="900" fill="#2e7d5b" text-anchor="middle">$</text><rect x="6" y="20" width="84" height="48" rx="9" fill="#6b4423"/><rect x="6" y="26" width="84" height="42" rx="9" fill="#8a5a2b"/><rect x="11" y="31" width="74" height="32" rx="6" fill="none" stroke="#c8a06a" stroke-width="1.2" stroke-dasharray="3 3"/><rect x="66" y="38" width="22" height="17" rx="5" fill="#6b4423"/><circle cx="77" cy="46.5" r="3.4" fill="#d4a017"/><circle cx="17" cy="62" r="9" fill="#e9be4e" stroke="#c8951a" stroke-width="1.5"/><text x="17" y="65.5" font-size="9" font-weight="900" fill="#8a6206" text-anchor="middle">$</text></svg>' +
-          '<div><div class="wm-big" style="margin:0">' + m2(walletBal) + '</div>' +
+          '<div><div class="wm-big" style="margin:0">≈ ' + m2(walletBal) + '</div>' +
           '<div class="wm-add">▲ +' + m2(cur.prem) + ' added this fortnight</div></div>' +
         '</div>' +
         '<div class="wm-track" style="margin-top:13px"><div class="wm-fill" style="width:' + fillPct.toFixed(0) + '%"></div></div>' +
         '<div class="wm-next">Pays into your bank <b>' + dLabel(qeDate) + '</b> · ~' + weeks + ' weeks' +
           (tracking > 0 ? ' · on track for <b>~' + mFull(tracking) + '</b>' : '') + '</div>' +
         '<div><span class="wm-link" data-wv-help="1">How the wallet works ›</span></div>' +
-        '<div style="font-size:10px;color:var(--fg-dim);margin-top:9px;line-height:1.5;border-top:1px dashed #e3e8ef;padding-top:7px">ⓘ This is a <b>snapshot</b> from your last pay run. Your blended rate &amp; wallet update <b>live</b> with every new sale in the Zoho “My Numbers” view, so they can read slightly differently here between pay runs.</div>' +
+        '<div style="margin-top:11px;background:#fdf6e9;border:1px solid #e7c887;border-radius:9px;padding:9px 11px;font-size:11px;color:#7a5c0a;line-height:1.55">' +
+          '<b>⚠ Estimate — not your final wallet.</b> This is a snapshot from the last pay run. Your wallet grows with every sale, so the <b>live</b> figure is in Zoho → <b>Bookings HQ → My Numbers</b> and will differ slightly from this.' +
+          '<div style="margin-top:5px">The <b>money that lands in your bank each fortnight is exact</b> and always matches. Only this wallet estimate moves — it settles and pays in full at quarter-end.</div>' +
+        '</div>' +
       '</div>';
 
     /* ---------- LAUNCH-ONWARD LEDGER (widget walletPayTable) ---------- */
