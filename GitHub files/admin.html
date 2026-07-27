@@ -2765,6 +2765,65 @@ function renderFortnightlyAdmin() {
     } catch (e) {}
   };
 
+  // ── Pay-run checklist state (per fortnight, survives a page reload) ──────────
+  // Tracks which steps have been ticked and, crucially, which reps' Xero NOTES have
+  // been copied — the step that's easiest to miss and hardest to notice afterwards.
+  function prStepsKey(idx) { return 'mec_payrun_steps_v1_' + idx; }
+  function prSteps(idx) {
+    try {
+      const raw = localStorage.getItem(prStepsKey(idx));
+      const o = raw ? JSON.parse(raw) : {};
+      return { steps: o.steps || {}, notes: o.notes || {} };
+    } catch (e) { return { steps: {}, notes: {} }; }
+  }
+  function prStepsSave(idx, st) {
+    try { localStorage.setItem(prStepsKey(idx), JSON.stringify(st)); } catch (e) {}
+  }
+  // Repaint the "N of M notes copied" badge + the per-rep buttons, and gate Confirm.
+  function prRefreshNotes(idx) {
+    const st = prSteps(idx);
+    const btns = Array.from(document.querySelectorAll('#fnp-payrun .pr-xero-note'));
+    const total = btns.length;
+    let done = 0;
+    btns.forEach(b => {
+      const rep = b.getAttribute('data-rep');
+      if (st.notes[rep]) {
+        done++;
+        b.innerHTML = '✓ Note copied';
+        b.style.background = '#d4edda'; b.style.borderColor = '#9cc7a6'; b.style.color = '#1e6624';
+      } else {
+        b.innerHTML = '📋 Copy Xero note';
+        b.style.background = '#eef4fa'; b.style.borderColor = '#cdd9e8'; b.style.color = '';
+      }
+    });
+    const badge = document.getElementById('pr-notes-badge');
+    const all = total > 0 && done === total;
+    if (badge) {
+      badge.textContent = done + ' of ' + total + ' copied';
+      badge.style.background = all ? '#eaf5ec' : '#fdecea';
+      badge.style.color      = all ? '#1e6624' : '#b91c1c';
+      badge.style.border     = '1px solid ' + (all ? '#9cc7a6' : '#f5b5ae');
+    }
+    // Gate Step 6 until every note is copied (with an explicit override for edge cases).
+    const warn = document.getElementById('pr-notes-warn');
+    if (warn) {
+      warn.style.display = (all || window.__mecSkipNoteGate) ? 'none' : 'block';
+      warn.innerHTML = '⚠ <b>' + (total - done) + ' rep' + ((total - done) === 1 ? '' : 's') + ' still need their Xero note copied</b> (Step 5). '
+        + 'Their payslip will have no breakdown, and it\'s very hard to spot afterwards. '
+        + '<a href="#" id="pr-skip-notes" style="color:#8a6a00;">I\'ve already done these another way — let me save</a>';
+    }
+    const cb = document.getElementById('pr-recon-ack');
+    const btn = document.getElementById('pr-confirm');
+    if (cb && btn) {
+      const blocked = !all && !window.__mecSkipNoteGate;
+      cb.disabled = blocked;
+      if (blocked) { btn.disabled = true; btn.style.background = '#cdd0c9'; btn.style.cursor = 'not-allowed'; }
+      const hint = document.getElementById('pr-confirm-hint');
+      if (hint && blocked) hint.textContent = 'Copy every rep\'s Xero note first (' + done + ' of ' + total + ')';
+    }
+    return { done, total, all };
+  }
+
   function renderPayRun() {
     if (payrunIdx == null) payrunIdx = defaultPayrunIdx();
     const idx = payrunIdx;
@@ -2795,8 +2854,10 @@ function renderFortnightlyAdmin() {
     // ── The pay-run checklist — ONE numbered sequence, top to bottom, so anyone can follow it ──
     // (Steps 1-4 here; steps 5 & 6 are the copy-to-Xero + Confirm block below the rep table.)
     if (!confirmed) {
+      const _st = prSteps(idx);
       const _stepRow = (n, title, why, btnHtml, accent) => `
-        <div style="display:flex; align-items:center; gap:12px; padding:10px 12px; background:#fff; border:1px solid #e6e3d8; border-radius:8px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:11px; padding:10px 12px; background:#fff; border:1px solid #e6e3d8; border-radius:8px; margin-bottom:8px;">
+          <input type="checkbox" class="pr-step-chk" data-step="${n}" ${_st.steps[n] ? 'checked' : ''} title="Tick when you've done this step" style="flex:0 0 auto; width:17px; height:17px; cursor:pointer;">
           <span style="flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:${accent}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; font-family:var(--mono);">${n}</span>
           <div style="flex:1; min-width:0;">
             <div style="font-size:13px; font-weight:700; color:var(--ink);">${title}</div>
@@ -2829,9 +2890,14 @@ function renderFortnightlyAdmin() {
           '<button type="button" id="pr-pull-zoho" style="padding:8px 16px; border:none; background:#5a3a8e; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Pull from Zoho ↓</button>',
           '#5a3a8e')}
 
+        ${_stepRow(5, 'Copy each rep\'s pay into Xero',
+          'For every rep below: copy <b>Bonus</b> and <b>Super</b> into their Xero payslip, then hit <b>📋 Copy Xero note</b> on their row and paste it into the payslip note. The counter tracks which ones you\'ve done.',
+          '<span id="pr-notes-badge" style="display:inline-block; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:800; white-space:nowrap;">—</span>',
+          '#5a3a8e')}
+
         <div style="display:flex; align-items:center; gap:12px; padding:9px 12px; background:#f4f2ea; border:1px dashed #d9d4c2; border-radius:8px;">
-          <span style="flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:#b9b3a1; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; font-family:var(--mono);">5</span>
-          <div style="font-size:12px; color:var(--muted); line-height:1.45;">Then <strong style="color:var(--ink);">check the figures in the table below</strong>, copy each rep's <strong>Bonus</strong> and <strong>Super</strong> into Xero — and finish at <strong>Step 6 · Confirm &amp; Save</strong> underneath the table.</div>
+          <span style="flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:#b9b3a1; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; font-family:var(--mono);">6</span>
+          <div style="font-size:12px; color:var(--muted); line-height:1.45;">Finish at <strong style="color:var(--ink);">Step 6 · Confirm &amp; Save</strong> underneath the table.</div>
         </div>
       </div>
       <div id="pr-pull-status" style="display:none; padding:10px 12px; margin-bottom:14px; border-radius:8px; font-size:12px; font-family:var(--mono);"></div>`;
@@ -2974,6 +3040,7 @@ function renderFortnightlyAdmin() {
           <div style="font-size:13px; font-weight:800; color:var(--ink);">Confirm &amp; save this pay run <span style="font-weight:600; color:var(--muted);">— the last step</span></div>
         </div>
         <div style="font-size:11.5px; color:var(--muted); margin:0 0 11px 36px; line-height:1.5;">Saving <strong>locks</strong> this fortnight and publishes each rep's figures to their own dashboard. You can still unlock it afterwards if something needs correcting.</div>
+        <div id="pr-notes-warn" style="display:none; margin:0 0 11px 36px; padding:9px 12px; background:#fdf6e3; border:1px solid #e8d99a; border-radius:8px; font-size:12px; color:#8a6a00; line-height:1.55;"></div>
         <label for="pr-recon-ack" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin:0 0 12px 36px; padding:10px 12px; background:#fff; border:1px solid #e6e3d8; border-radius:8px;">
           <input type="checkbox" id="pr-recon-ack" style="width:18px; height:18px; margin-top:1px; flex:none; cursor:pointer;">
           <span style="font-size:13px; color:var(--ink); line-height:1.5;">Tick to confirm I've done <strong>steps 1&ndash;5</strong>: ran the payment sync, checked <strong>both</strong> reconciliations (Xero &amp; GP), pulled the figures from Zoho, and copied every rep's <strong>Bonus</strong> and <strong>Super</strong> into Xero.</span>
@@ -3230,12 +3297,38 @@ function renderFortnightlyAdmin() {
         // separates "what you earned" from "how it splits into bank + super".
         const note = `[${period}]: ${earned.join(' + ')} = ${money(f.incSuper)} → ${money(f.exSuper)} ex super + 12% super = ${money(f.incSuper)}`;
         const ok = await _copyText(note);
-        const orig = btn.innerHTML;
-        btn.innerHTML = ok ? '✓ Copied' : '⚠ Copy failed';
-        const obg = btn.style.background; btn.style.background = ok ? '#d4edda' : '#fdecea';
-        setTimeout(() => { btn.innerHTML = orig; btn.style.background = obg; }, 1100);
+        if (ok) {
+          // Remember it — the button stays green and the Step 5 counter ticks up, so a
+          // missed note is obvious at a glance instead of being silently forgotten.
+          const st = prSteps(idx); st.notes[rep] = true; prStepsSave(idx, st);
+          prRefreshNotes(idx);
+        } else {
+          btn.innerHTML = '⚠ Copy failed';
+          btn.style.background = '#fdecea';
+          setTimeout(() => prRefreshNotes(idx), 1200);
+        }
       });
     });
+    // Step checkboxes 1-5 — remembered per fortnight so a reload doesn't lose your place.
+    document.querySelectorAll('#fnp-payrun .pr-step-chk').forEach(chk => {
+      chk.addEventListener('change', () => {
+        const st = prSteps(idx);
+        st.steps[chk.getAttribute('data-step')] = chk.checked;
+        prStepsSave(idx, st);
+      });
+    });
+    document.addEventListener('click', function _skipNotes(e) {
+      const a = e.target && e.target.closest && e.target.closest('#pr-skip-notes');
+      if (!a) return;
+      e.preventDefault();
+      window.__mecSkipNoteGate = true;
+      prRefreshNotes(idx);
+      const cb = document.getElementById('pr-recon-ack');
+      const hint = document.getElementById('pr-confirm-hint');
+      if (cb) cb.disabled = false;
+      if (hint) hint.textContent = 'Tick the box above to enable saving';
+    });
+    prRefreshNotes(idx);
 
     if (!confirmed) {
       document.querySelectorAll('#fnp-payrun input[data-rep]').forEach(inp => {
