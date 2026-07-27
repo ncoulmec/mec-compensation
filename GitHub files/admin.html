@@ -3289,13 +3289,27 @@ function renderFortnightlyAdmin() {
         // commission earned on each stream and matches the Bonus → Xero figure exactly.
         const f = payrunFigures(rep, idx);
         const gpAmt = f.row.gp || 0, evAmt = f.row.eventGp || 0;
+        const w = f.wallet;
         const earned = [];
-        if (gpAmt > 0 || f.row.properPay > 0) earned.push(`${money(f.row.properPay)} on ${money(gpAmt)} GP Received`);
-        if (evAmt > 0 || f.row.prodComm > 0) earned.push(`${money(f.row.prodComm)} on ${money(evAmt)} Event GP Produced`);
-        if (!earned.length) earned.push('$0 GP this fortnight');
-        // Single line (Xero payslip notes don't reliably keep line breaks); the arrow
-        // separates "what you earned" from "how it splits into bank + super".
-        const note = `[${period}]: ${earned.join(' + ')} = ${money(f.incSuper)} → ${money(f.exSuper)} ex super + 12% super = ${money(f.incSuper)}`;
+        let note;
+        if (w && w.isWallet) {
+          // WALLET MODEL: what lands in the payslip is 4% base + 1% event. The premium is NOT
+          // paid now — it accrues to the quarterly wallet — so it's stated separately.
+          // (Fixed 27 Jul: this note used row.properPay, the legacy pre-wallet band figure, which
+          // matched neither the amount paid nor the total commission — e.g. "$934.82 … = $671.88".)
+          const basePct = Math.round((w.baseRate || 0.04) * 100);
+          if (gpAmt > 0) earned.push(`${money(w.baseRate * w.g)} (${basePct}% base on ${money(gpAmt)} GP Received)`);
+          if (evAmt > 0 || w.prodComm > 0) earned.push(`${money(w.prodComm)} (1% on ${money(evAmt)} Event GP Produced)`);
+          if (!earned.length) earned.push('$0 GP this fortnight');
+          note = `[${period}]: ${earned.join(' + ')} = ${money(f.incSuper)} inc super → ${money(f.exSuper)} + ${money(f.incSuper - f.exSuper)} super`
+               + (w.premium > 0 ? ` · plus ${money(w.premium)} added to your Quarterly Premium Wallet (paid at quarter-end)` : '');
+        } else {
+          // LEGACY fortnights (before the wallet launched) — paid in full on the band model.
+          if (gpAmt > 0 || f.row.properPay > 0) earned.push(`${money(f.row.properPay)} on ${money(gpAmt)} GP Received`);
+          if (evAmt > 0 || f.row.prodComm > 0) earned.push(`${money(f.row.prodComm)} on ${money(evAmt)} Event GP Produced`);
+          if (!earned.length) earned.push('$0 GP this fortnight');
+          note = `[${period}]: ${earned.join(' + ')} = ${money(f.incSuper)} → ${money(f.exSuper)} ex super + 12% super = ${money(f.incSuper)}`;
+        }
         const ok = await _copyText(note);
         if (ok) {
           // Remember it — the button stays green and the Step 5 counter ticks up, so a
