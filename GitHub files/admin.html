@@ -2815,8 +2815,8 @@ function renderFortnightlyAdmin() {
           '#8a6a00')}
 
         ${_stepRow(2, 'Check the Xero reconciliation',
-          'Catches double-payments and gaps between Xero and Zoho. Opens in a new tab — come back here after.',
-          '<button type="button" id="pr-open-recon" style="padding:8px 14px; border:1px solid #e8d99a; background:#fff; color:#8a6a00; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Check Xero recon →</button>',
+          'Opens the <b>Xero Recon</b> tab. Export Account Transactions from Xero for <b>this fortnight\'s dates</b> and drop the file in — it lists any invoice payments still missing from Zoho, and catches double-ups. Come back to this tab after.',
+          '<button type="button" id="pr-open-recon" style="padding:8px 14px; border:1px solid #e8d99a; background:#fff; color:#8a6a00; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Open Xero Recon →</button>',
           '#8a6a00')}
 
         ${_stepRow(3, 'Check the GP reconciliation',
@@ -3283,10 +3283,12 @@ function renderFortnightlyAdmin() {
         const url = `${ZOHO_PULL_URL}?action=sync&key=${encodeURIComponent(ZOHO_PULL_KEY)}`;
         mecShowScriptLink('Run payment sync', url);
       });
+      // Step 2 opens the built-in Xero Recon TAB (a CSV compare), not an Apps Script endpoint.
+      // There is no ?action=xero-recon route — pointing at one just served the script's index page.
       const reconBtn = document.getElementById('pr-open-recon');
       if (reconBtn) reconBtn.addEventListener('click', () => {
-        const url = `${ZOHO_PULL_URL}?action=xero-recon&key=${encodeURIComponent(ZOHO_PULL_KEY)}`;
-        mecShowScriptLink('Xero reconciliation check', url);
+        const t = document.querySelector('[data-admin-tab="xero-recon"]');
+        if (t) { t.click(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
       });
       const gpReconBtn = document.getElementById('pr-open-gp-recon');
       if (gpReconBtn) gpReconBtn.addEventListener('click', () => {
@@ -3826,9 +3828,14 @@ function renderFortnightlyAdmin() {
   // intentionally NOT tracked in the Zoho Payments module (they're not commissionable
   // event bookings), so their receipts should be auto-excluded rather than shown as
   // "missing from Zoho". Mirrors the auto-creator's SKIP_CONTACTS list.
+  // NOTE: this name list is inherently leaky — teachers/students come and go, and anyone not
+  // listed shows up as a false "missing from Zoho" (e.g. Jon Hammond, 27 Jul run). The durable
+  // fix is to exclude on the Xero REVENUE ACCOUNT the invoice is coded to ("DJ School" /
+  // "DJ School - NDIS"), which self-maintains. That needs the invoice line-item account code,
+  // which the CSV export doesn't carry — it's part of the automated Xero recon build.
   const SKIP_CONTACTS = [
     'david madden', 'chris ngoo', 'alex smedley', 'braydon zirkler',
-    'ray mangano', 'daniel dickinson', 'anthony mckee',
+    'ray mangano', 'daniel dickinson', 'anthony mckee', 'jon hammond',
   ];
 
   // ---- Process Xero file (CSV rows or Excel rows) ----
@@ -4380,7 +4387,8 @@ function renderFortnightlyAdmin() {
       // (C) Calm collapsed section — everything that's expected noise
       if (calmEntries.length > 0) {
         h += `<details style="border-top:1px solid var(--border);"><summary style="padding:10px 16px; cursor:pointer; font-size:12px; color:var(--muted); user-select:none;">${calmEntries.length} Zoho payment${calmEntries.length === 1 ? '' : 's'} outside this Xero window (expected) — click to review</summary>`;
-        h += `<div style="padding:8px 16px 4px; font-size:11px; color:var(--muted); font-style:italic;">These either carry their own Xero receipt link or belong to an invoice not in the uploaded window. Expected when the Zoho export is all-time and the Xero export is a short period. No action needed.</div>`;
+        h += `<div style="padding:8px 16px 4px; font-size:11px; color:var(--muted); font-style:italic;">These either carry their own Xero receipt link or belong to an invoice not in the uploaded window — usually expected when the Zoho export is all-time and the Xero export is a short period.</div>`;
+        h += `<div style="margin:6px 16px 8px; padding:8px 11px; background:#fdf6e3; border:1px solid #e8d99a; border-radius:8px; font-size:11px; color:#8a6a00; line-height:1.55;"><b>⚠ Worth a click if the date falls inside this pay run.</b> Open the receipt — if the Xero payment says <b>Deleted / “Payment reversed”</b>, the cash never landed but Zoho still has a payment record, so a rep is being credited GP for money you never received. <b>Delete that Zoho payment record</b>, then re-run <b>Pull from Zoho</b>.</div>`;
         h += `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:11px;">`;
         h += `<thead><tr style="background:#fafaf7; border-bottom:1px solid var(--border);">`;
         h += `<th style="padding:5px 10px; text-align:left; font-size:10px; font-weight:600; color:var(--muted);">Date</th>`;
@@ -4392,9 +4400,10 @@ function renderFortnightlyAdmin() {
         calmEntries.forEach(({ invNum, entry }) => {
           h += `<tr style="border-bottom:1px solid var(--border);">`;
           h += `<td style="padding:5px 10px; font-family:var(--mono);">${xesc(entry.date || '—')}</td>`;
-          h += `<td style="padding:5px 10px; font-family:var(--mono);">${xesc(entry.invRaw || invNum)}</td>`;
+          h += `<td style="padding:5px 10px; font-family:var(--mono);"><a href="${xesc(zSearch(entry.invRaw || invNum))}" target="_blank" rel="noopener" style="color:var(--navy); text-decoration:none;">${xesc(entry.invRaw || invNum)} ↗</a></td>`;
           h += `<td style="padding:5px 10px; text-align:right; font-family:var(--mono);">${fmtAUD(entry.amount)}</td>`;
-          h += `<td style="padding:5px 10px;">${xesc(entry.bookingName || entry.paymentName || '—')}</td>`;
+          const _cbk = entry.bookingName || entry.paymentName || '';
+          h += `<td style="padding:5px 10px;">${_cbk ? `<a href="${xesc(zSearch(_cbk))}" target="_blank" rel="noopener" style="color:var(--navy);">${xesc(_cbk)} ↗</a>` : '—'}</td>`;
           h += `<td style="padding:5px 10px;">${entry.xeroUrl ? `<a href="${xesc(entry.xeroUrl)}" target="_blank" rel="noopener" style="color:var(--navy);">open ↗</a>` : '<span style="color:var(--faint)">—</span>'}</td>`;
           h += `</tr>`;
         });
