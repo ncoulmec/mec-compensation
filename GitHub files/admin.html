@@ -2815,8 +2815,8 @@ function renderFortnightlyAdmin() {
           '#8a6a00')}
 
         ${_stepRow(2, 'Check the Xero reconciliation',
-          'Opens the <b>Xero Recon</b> tab. Export Account Transactions from Xero for <b>this fortnight\'s dates</b> and drop the file in — it lists any invoice payments still missing from Zoho, and catches double-ups. Come back to this tab after.',
-          '<button type="button" id="pr-open-recon" style="padding:8px 14px; border:1px solid #e8d99a; background:#fff; color:#8a6a00; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Open Xero Recon →</button>',
+          'Pulls Xero <b>and</b> Zoho live — no file upload. Flags any Zoho payment with <b>no live Xero receipt</b> (a reversed payment you\'d otherwise pay commission on), plus double-ups and anything still missing from Zoho.',
+          '<button type="button" id="pr-open-recon" style="padding:8px 14px; border:1px solid #e8d99a; background:#fff; color:#8a6a00; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Check Xero recon →</button>',
           '#8a6a00')}
 
         ${_stepRow(3, 'Check the GP reconciliation',
@@ -3283,12 +3283,12 @@ function renderFortnightlyAdmin() {
         const url = `${ZOHO_PULL_URL}?action=sync&key=${encodeURIComponent(ZOHO_PULL_KEY)}`;
         mecShowScriptLink('Run payment sync', url);
       });
-      // Step 2 opens the built-in Xero Recon TAB (a CSV compare), not an Apps Script endpoint.
-      // There is no ?action=xero-recon route — pointing at one just served the script's index page.
+      // Step 2 → the AUTOMATED Xero recon (pulls Xero + Zoho live, no CSV upload).
+      // The manual CSV compare still lives on the Xero Recon tab as a fallback.
       const reconBtn = document.getElementById('pr-open-recon');
       if (reconBtn) reconBtn.addEventListener('click', () => {
-        const t = document.querySelector('[data-admin-tab="xero-recon"]');
-        if (t) { t.click(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        const url = `${ZOHO_PULL_URL}?action=xero-recon&key=${encodeURIComponent(ZOHO_PULL_KEY)}`;
+        mecShowScriptLink('Xero reconciliation check', url);
       });
       const gpReconBtn = document.getElementById('pr-open-gp-recon');
       if (gpReconBtn) gpReconBtn.addEventListener('click', () => {
