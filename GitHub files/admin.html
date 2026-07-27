@@ -329,7 +329,7 @@
       <div class="card" style="margin-bottom: 14px; padding: 16px 20px; background: linear-gradient(135deg, #fffaf2 0%, #fff 100%); border-left: 4px solid #b8860b;">
         <div style="font-size: 11px; color: #8a6a00; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800;">📅 How to run a payday</div>
         <div style="font-size: 13px; color: var(--ink); margin-top: 6px; line-height: 1.55;">
-          For each pay run below: enter every rep's <strong>GP received</strong> (and Event GP) for the fortnight, copy the <strong>Bonus</strong> and <strong>Super</strong> figures into Xero, then click <strong>Confirm &amp; Save</strong>. Confirming locks the fortnight, saves it, and shows each person their paid amount on their own dashboard. First pay date: <strong>Mon 15 Jun 2026</strong>.
+          Open the pay run below and <strong>follow steps 1&ndash;6 in order</strong>, top to bottom — sync, check both reconciliations, pull the figures from Zoho, copy each rep's <strong>Bonus</strong> and <strong>Super</strong> into Xero, then <strong>Confirm &amp; Save</strong>. Confirming locks the fortnight and publishes each person's figures to their own dashboard (you can unlock it again if you need to fix something). First pay date: <strong>Mon 15 Jun 2026</strong>.
         </div>
       </div>
 
@@ -2783,27 +2783,47 @@ function renderFortnightlyAdmin() {
       </div>
     </div>`;
 
-    // ── Step 1 · reconcile gate — run the payment sync, then check the Xero recon ──
+    // ── The pay-run checklist — ONE numbered sequence, top to bottom, so anyone can follow it ──
+    // (Steps 1-4 here; steps 5 & 6 are the copy-to-Xero + Confirm block below the rep table.)
     if (!confirmed) {
-      h += `<div style="padding:12px 14px; margin-bottom:14px; background:#fdf6e3; border:1px solid #e8d99a; border-radius:8px;">
-        <div style="font-size:11px; font-weight:700; color:#8a6a00; text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px;">Step 1 · Reconcile before you pay</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-          <button type="button" id="pr-run-sync" style="padding:8px 14px; border:none; background:#8a6a00; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">▶ Run payment sync</button>
-          <button type="button" id="pr-open-recon" style="padding:8px 14px; border:1px solid #e8d99a; background:#fff; color:#8a6a00; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Check Xero reconciliation →</button>
-          <button type="button" id="pr-open-gp-recon" style="padding:8px 14px; border:1px solid #bfe0cb; background:#fff; color:#1e6624; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Check GP reconciliation ↗</button>
-          <span style="font-size:11px; color:#8a6a00;">Sync creates any new Zoho payments from Xero · Xero recon catches double-pays/gaps · GP recon confirms the GP attributed is correct — run all three <strong>before</strong> confirming.</span>
-        </div>
-      </div>`;
-    }
+      const _stepRow = (n, title, why, btnHtml, accent) => `
+        <div style="display:flex; align-items:center; gap:12px; padding:10px 12px; background:#fff; border:1px solid #e6e3d8; border-radius:8px; margin-bottom:8px;">
+          <span style="flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:${accent}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; font-family:var(--mono);">${n}</span>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:13px; font-weight:700; color:var(--ink);">${title}</div>
+            <div style="font-size:11px; color:var(--muted); line-height:1.45;">${why}</div>
+          </div>
+          <div style="flex:0 0 auto;">${btnHtml}</div>
+        </div>`;
 
-    // ── Pull from Zoho — one-click import of GP Received per rep for this fortnight ──
-    if (!confirmed) {
-      h += `<div id="pr-pull-row" style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; margin-bottom:14px; background:#f6f3ff; border:1px solid #ddd0f5; border-radius:8px;">
-        <div style="font-size:12px; color:var(--ink);">
-          <strong style="color:#5a3a8e;">🔄 Step 2 · Pull from Zoho</strong>
-          <span style="color:var(--muted);"> — auto-import <strong>GP Received</strong> (Zoho Payments · bookings closed on/after 1 Jun 2026) AND <strong>Event GP</strong> (Zoho Bookings · Fortnight Sort Key matches) for every rep. Overwrites both columns below.</span>
+      h += `<div style="padding:13px 14px; margin-bottom:14px; background:#fbf9f2; border:1px solid #e8d99a; border-radius:10px;">
+        <div style="font-size:12px; font-weight:800; color:#8a6a00; text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px;">Run this pay run — do the steps in order</div>
+        <div style="font-size:11.5px; color:#8a6a00; margin-bottom:11px;">Work top to bottom. Don't skip a step — each one makes sure nobody is over- or under-paid.</div>
+
+        ${_stepRow(1, 'Run the payment sync',
+          'Creates any new Zoho payment records from Xero, so this fortnight\'s cash is all captured.',
+          '<button type="button" id="pr-run-sync" style="padding:8px 14px; border:none; background:#8a6a00; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">▶ Run payment sync</button>',
+          '#8a6a00')}
+
+        ${_stepRow(2, 'Check the Xero reconciliation',
+          'Catches double-payments and gaps between Xero and Zoho. Opens in a new tab — come back here after.',
+          '<button type="button" id="pr-open-recon" style="padding:8px 14px; border:1px solid #e8d99a; background:#fff; color:#8a6a00; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Check Xero recon →</button>',
+          '#8a6a00')}
+
+        ${_stepRow(3, 'Check the GP reconciliation',
+          'Confirms the gross profit attributed to each booking is correct before it turns into commission.',
+          '<button type="button" id="pr-open-gp-recon" style="padding:8px 14px; border:1px solid #bfe0cb; background:#fff; color:#1e6624; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Check GP recon ↗</button>',
+          '#1e6624')}
+
+        ${_stepRow(4, 'Pull the figures from Zoho',
+          'Auto-fills <strong>GP Received</strong> and <strong>Event GP</strong> for every rep below, and their Premium Wallet. Overwrites both columns.',
+          '<button type="button" id="pr-pull-zoho" style="padding:8px 16px; border:none; background:#5a3a8e; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Pull from Zoho ↓</button>',
+          '#5a3a8e')}
+
+        <div style="display:flex; align-items:center; gap:12px; padding:9px 12px; background:#f4f2ea; border:1px dashed #d9d4c2; border-radius:8px;">
+          <span style="flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:#b9b3a1; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; font-family:var(--mono);">5</span>
+          <div style="font-size:12px; color:var(--muted); line-height:1.45;">Then <strong style="color:var(--ink);">check the figures in the table below</strong>, copy each rep's <strong>Bonus</strong> and <strong>Super</strong> into Xero — and finish at <strong>Step 6 · Confirm &amp; Save</strong> underneath the table.</div>
         </div>
-        <button type="button" id="pr-pull-zoho" style="padding:8px 16px; border:none; background:#5a3a8e; color:#fff; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;">Pull from Zoho ↓</button>
       </div>
       <div id="pr-pull-status" style="display:none; padding:10px 12px; margin-bottom:14px; border-radius:8px; font-size:12px; font-family:var(--mono);"></div>`;
     }
@@ -2939,11 +2959,15 @@ function renderFortnightlyAdmin() {
         <button type="button" id="pr-unlock" style="padding:10px 18px; border:1px solid #d3d1c7; background:#fff; color:var(--ink); border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">🔓 Unlock to edit</button>
       </div>`;
     } else {
-      h += `<div style="margin-top:16px; padding:14px 16px; background:#fafaf7; border:1px solid #e8e6dd; border-radius:8px;">
-        <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px;">Step 3 · Confirm &amp; save</div>
-        <label for="pr-recon-ack" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-bottom:12px;">
+      h += `<div style="margin-top:16px; padding:14px 16px; background:#fbf9f2; border:1px solid #e8d99a; border-radius:10px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+          <span style="flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:#1e6624; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; font-family:var(--mono);">6</span>
+          <div style="font-size:13px; font-weight:800; color:var(--ink);">Confirm &amp; save this pay run <span style="font-weight:600; color:var(--muted);">— the last step</span></div>
+        </div>
+        <div style="font-size:11.5px; color:var(--muted); margin:0 0 11px 36px; line-height:1.5;">Saving <strong>locks</strong> this fortnight and publishes each rep's figures to their own dashboard. You can still unlock it afterwards if something needs correcting.</div>
+        <label for="pr-recon-ack" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin:0 0 12px 36px; padding:10px 12px; background:#fff; border:1px solid #e6e3d8; border-radius:8px;">
           <input type="checkbox" id="pr-recon-ack" style="width:18px; height:18px; margin-top:1px; flex:none; cursor:pointer;">
-          <span style="font-size:13px; color:var(--ink);">I've run the payment sync and checked <strong>both</strong> reconciliations for this fortnight — Xero (payments captured, no double-pays) and GP (attributed GP is correct). Everything is up to date in Zoho.</span>
+          <span style="font-size:13px; color:var(--ink); line-height:1.5;">Tick to confirm I've done <strong>steps 1&ndash;5</strong>: ran the payment sync, checked <strong>both</strong> reconciliations (Xero &amp; GP), pulled the figures from Zoho, and copied every rep's <strong>Bonus</strong> and <strong>Super</strong> into Xero.</span>
         </label>
         <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px;">
           <span id="pr-confirm-hint" style="font-size:12px; color:var(--muted);">Tick the box above to enable saving</span>
