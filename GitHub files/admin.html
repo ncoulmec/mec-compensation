@@ -2730,8 +2730,11 @@ function renderFortnightlyAdmin() {
         const qkey = wQKey(i);
         const newQuarter = (prevQKey !== null && qkey !== prevQKey);
         if (newQuarter) payout = prevWalletBal; // first run of a new quarter pays the prior quarter's final balance
-        // walletBal = engine's authoritative quarter-to-date total when pulled, else accumulate the premium
-        walletBal = (fromEngine && eng.wallet_qtd != null) ? (+eng.wallet_qtd) : ((newQuarter ? 0 : prevWalletBal) + premium);
+        // Accumulate the quarter's premiums. Because each premium is now derived from the engine's blended
+        // rate with the engine's own formula, this sum reproduces the engine's wallet_qtd exactly — so we
+        // don't read a per-fortnight snapshot here (it may not exist for a given fortnight, and reading
+        // .wallet_qtd off an undefined snapshot was crashing the Pull).
+        walletBal = (newQuarter ? 0 : prevWalletBal) + premium;
         prevWalletBal = walletBal; prevQKey = qkey;
       }
       const incSuper = landsNow;
