@@ -2702,6 +2702,10 @@ function renderFortnightlyAdmin() {
     // that were never pulled from the engine.
     const _emp = (typeof data !== 'undefined' && data.employees) ? data.employees.find(e => e.id === repId) : null;
     const engFn = (_emp && _emp.engineWalletByFn) || {};
+    // The engine's latest blended rate drives EVERY wallet fortnight's premium, so the admin reproduces
+    // the widget exactly: premium = (blended − base) × that fortnight's GP.
+    const engLatest = (_emp && _emp.engineLatest) || null;
+    const engBlended = (engLatest && engLatest.blended_rate != null) ? +engLatest.blended_rate : null;
     const out = [];
     let prevWalletBal = 0, prevQKey = null;
     for (let i = 0; i < rows.length; i++) {
@@ -2709,15 +2713,17 @@ function renderFortnightlyAdmin() {
       const isWallet = i >= WALLET_LAUNCH_IDX;
       const g = r.gp, prodComm = r.prodComm, pos = r.pace;
       let blended = pos > 0 ? cumBandComm(pos, bands) / pos : baseRate;
+      let fromEngine = false;
+      if (engBlended != null) { blended = engBlended; fromEngine = true; }
       // lands now (→ Xero): wallet model = 4% + event ; legacy (locked) = full band commission + event
       const landsNow = isWallet ? (baseRate * g + prodComm) : (r.properPay + prodComm);
       let premium = isWallet ? Math.max(0, (blended - baseRate) * g) : 0;
       const eng = engFn[i];
-      let fromEngine = false;
-      if (isWallet && eng && eng.premium_fn != null) {
-        premium = +eng.premium_fn;
-        if (eng.blended_rate != null) blended = +eng.blended_rate;
-        fromEngine = true;
+      // Only trust a stored per-fortnight premium when it was captured for THAT fortnight while it was the
+      // engine's current one AND the GP hasn't moved since — otherwise recompute from the blended rate.
+      if (isWallet && eng && eng.premium_fn != null && eng.blended_rate != null &&
+          Math.abs(((+eng.blended_rate) - baseRate) * g - (+eng.premium_fn)) < 0.02) {
+        premium = +eng.premium_fn; blended = +eng.blended_rate; fromEngine = true;
       }
       let payout = 0, walletBal = 0;
       if (isWallet) {
@@ -3103,23 +3109,32 @@ function renderFortnightlyAdmin() {
           // so widget = admin = dashboard = engine.
           const engFort = body.engineFortnight;
           const engByRep = body.engineByRep || {};
-          if (body.engineOk && engFort && (engFort.index - 1) === idx) {
+          if (body.engineOk && engFort) {
             reps.forEach(r2 => {
               const eng = engByRep[r2.id];
               if (!eng) return;
               const emp = (data.employees || []).find(e => e.id === r2.id);
               if (!emp) return;
-              if (!emp.engineWalletByFn) emp.engineWalletByFn = {};
-              emp.engineWalletByFn[idx] = {
-                wallet_qtd: +eng.wallet_qtd, premium_fn: +eng.premium_fn,
-                blended_rate: +eng.blended_rate, trailing_position: +eng.trailing_position,
-                fnIndex: engFort.index, pulledAt: body.pulledAt
+              // ALWAYS store the engine's latest blended rate (ungated by fortnight). The premium for ANY
+              // fortnight is then (blended − base) × that fortnight's GP — the identical formula the engine
+              // and the rep widget use, so all three surfaces reproduce the same number no matter WHEN we
+              // pulled. (Fixed 27 Jul: we used to freeze a single fortnight's premium_fn at pull time, so a
+              // mid-fortnight pull left a stale premium next to a later, fuller GP figure.)
+              emp.engineLatest = {
+                blended_rate: +eng.blended_rate, wallet_qtd: +eng.wallet_qtd,
+                trailing_position: +eng.trailing_position, fnIndex: engFort.index, pulledAt: body.pulledAt
               };
+              if (!emp.engineWalletByFn) emp.engineWalletByFn = {};
+              if ((engFort.index - 1) === idx) {
+                emp.engineWalletByFn[idx] = {
+                  wallet_qtd: +eng.wallet_qtd, premium_fn: +eng.premium_fn,
+                  blended_rate: +eng.blended_rate, trailing_position: +eng.trailing_position,
+                  fnIndex: engFort.index, pulledAt: body.pulledAt
+                };
+              }
               engApplied++;
               engWalletRaw.push({ name: r2.name, wallet: +eng.wallet_qtd, premium: +eng.premium_fn });
             });
-          } else if (body.engineOk && engFort) {
-            engNote = `Engine is on fortnight ${engFort.index} (${engFort.label}); this run is fortnight ${idx + 1}. Wallet not applied — pull the current fortnight to sync the wallet.`;
           } else if (body.engineOk === false) {
             engNote = 'Engine wallet unavailable' + ((body.engineErrors && body.engineErrors.length) ? ' (' + body.engineErrors.join('; ') + ')' : '') + ' — wallet falls back to the admin estimate.';
           }
@@ -5134,18 +5149,23 @@ load();
       var wbase=w.baseRate, wbl=w.blended, wsales=wbase*wgp, wland=w.landsNow, wprem=w.premium, wfull=wland+wprem, wbank=wland/1.12, wsup=wland-wbank;
       var sr='display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:.5px solid #efeee8;font-size:13px';
       var hw='';
-      hw+='<div class="am-lab">'+(ctx.name?String(ctx.name).toUpperCase()+' · ':'')+'PAY · '+(ctx.period||'')+'</div><div class="am-hero">'+m2(wfull)+'</div><div class="am-herosub">commission this fortnight · inc super · lands '+(ctx.paid||'')+'</div>';
-      hw+='<div class="am-split" style="text-align:center"><b>'+m2(wland)+'</b> lands now (&rarr; Xero) &nbsp;·&nbsp; <b style="color:#3f4a5c">+'+m2(wprem)+'</b> &rarr; wallet</div>';
+      /* WORDING IS DELIBERATELY WORD-FOR-WORD IDENTICAL to the rep's Bookings HQ pay modal, so a rep can
+         hold the two screens side by side and every line matches. Don't "improve" the copy here alone —
+         change both, or they stop being cross-checkable. (Payroll jargon like "→ Xero" removed for this reason.) */
+      hw+='<div class="am-lab">'+(ctx.name?String(ctx.name).toUpperCase()+' · ':'')+'PAY · '+(ctx.period||'')+'</div><div class="am-hero">'+m2(wfull)+'</div><div class="am-herosub">your commission this fortnight · inc super</div>';
+      hw+='<div class="am-split" style="text-align:center"><b>'+m2(wland)+'</b> lands now &nbsp;·&nbsp; <b style="color:#3f4a5c">+'+m2(wprem)+'</b> &rarr; your wallet</div>';
+      hw+='<div class="am-split" style="text-align:center;opacity:.85;margin-top:2px">&rarr; <b>'+m2(wbank)+'</b> to your bank · <b>'+m2(wsup)+'</b> to super</div>';
       hw+='<div style="margin-top:12px;border:1px solid #e7e5dd;border-radius:10px;padding:2px 14px">';
       hw+='<div style="'+sr+'"><span>Sales — <b>'+pc(wbase)+'</b> of '+m2(wgp)+' GP received</span><b>'+m2(wsales)+'</b></div>';
       hw+='<div style="'+sr+'"><span>Event production — <b>1%</b> of '+m0(wev)+' GP delivered'+(wprod>0?'':' <span class="am-faint">· none this fortnight</span>')+'</span><b>'+m2(wprod)+'</b></div>';
-      hw+='<div style="'+sr+';font-weight:700"><span>Lands now <span class="am-faint">inc super &rarr; Xero</span></span><b>'+m2(wland)+'</b></div>';
-      hw+='<div style="'+sr+'" class="am-faint"><span>= '+m2(wbank)+' to bank + '+m2(wsup)+' to super</span><span></span></div>';
-      hw+='<div style="'+sr+'"><span style="color:#3f4a5c">Premium &rarr; quarterly wallet</span><b style="color:#3f4a5c">+'+m2(wprem)+'</b></div>';
+      hw+='<div style="'+sr+';font-weight:700"><span>Lands now <span class="am-faint">inc super</span></span><b>'+m2(wland)+'</b></div>';
+      hw+='<div style="'+sr+'" class="am-faint"><span>= '+m2(wbank)+' to your bank + '+m2(wsup)+' to super</span><span></span></div>';
+      hw+='<div style="'+sr+'"><span style="color:#3f4a5c">Premium &rarr; your wallet</span><b style="color:#3f4a5c">+'+m2(wprem)+'</b></div>';
       hw+='<div style="'+sr+';font-weight:700;border-top:2px solid #e7e5dd;border-bottom:none"><span>Total commission this fortnight</span><b>'+m2(wfull)+'</b></div>';
       hw+='</div>';
-      hw+='<div style="margin-top:10px;background:#f7f9fb;border:1px solid #d9e0e8;border-radius:10px;padding:11px 14px;font-size:12px;color:#3f4a5c;line-height:1.6"><b>Wallet balance this quarter: '+m2(w.walletBal)+'</b> — the premium above '+pc(wbase)+' builds here and pays as a lump on the first pay run after quarter-close. Lands-now (Bonus/Super) goes to Xero <b>now</b>.</div>';
+      hw+='<div style="margin-top:10px;background:#f7f9fb;border:1px solid #d9e0e8;border-radius:10px;padding:11px 14px;font-size:12px;color:#3f4a5c;line-height:1.6"><b>+ '+m2(wprem)+' into your Quarterly Wallet</b> — the premium above '+pc(wbase)+' builds here and pays out each quarter. Balance this quarter: <b>'+m2(w.walletBal)+'</b>.</div>';
       hw+='<div style="margin-top:9px;font-size:11.5px;color:#5f5e5a;line-height:1.6">Blended rate this fortnight: <b>'+(wbl*100).toFixed(2)+'%</b> (trailing '+m0(pos)+'). Premium = ('+(wbl*100).toFixed(2)+'% − '+pc(wbase)+') × '+m2(wgp)+' GP received = <b>'+m2(wprem)+'</b>.</div>';
+      hw+='<div style="margin-top:10px;padding:9px 12px;background:#fbf9f2;border:1px dashed #e2c98f;border-radius:8px;font-size:11.5px;color:#854f0b;line-height:1.55">✓ <b>Cross-check:</b> this should match exactly what '+(ctx.name?String(ctx.name).split(' ')[0]:'the rep')+' sees in <b>Bookings HQ → My Numbers</b> for this fortnight. If it doesn\'t, re-run <b>Pull from Zoho</b> — the engine is the source of truth.</div>';
       return hw;
     }
     var gp=Number(row.gp)||0,eventGp=Number(row.eventGp)||0,prod=Number(row.prodComm)||0;
