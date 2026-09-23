@@ -2735,12 +2735,13 @@ function renderFortnightlyAdmin() {
       if (isWallet) {
         const qkey = wQKey(i);
         const newQuarter = (prevQKey !== null && qkey !== prevQKey);
-        if (newQuarter) payout = prevWalletBal; // first run of a new quarter pays the prior quarter's final balance
-        // Accumulate the quarter's premiums. Because each premium is now derived from the engine's blended
-        // rate with the engine's own formula, this sum reproduces the engine's wallet_qtd exactly — so we
-        // don't read a per-fortnight snapshot here (it may not exist for a given fortnight, and reading
-        // .wallet_qtd off an undefined snapshot was crashing the Pull).
+        // Accumulate the quarter's premiums (locked per fortnight from the engine) — reproduces wallet_qtd exactly.
         walletBal = (newQuarter ? 0 : prevWalletBal) + premium;
+        // QUARTER RULE (23 Sep 2026): the wallet pays on the run of the LAST fortnight that starts in the quarter
+        // (5 Oct · 11 Jan · 5 Apr · 12 Jul), and that fortnight's own premium is inside the payout. So the payout
+        // shows on this run when the NEXT fortnight starts a new quarter — not on the first run of the new quarter.
+        const lastOfQuarter = (i + 1 < rows.length) && (wQKey(i + 1) !== qkey);
+        if (lastOfQuarter) payout = walletBal;
         prevWalletBal = walletBal; prevQKey = qkey;
       }
       const incSuper = landsNow;
@@ -2830,7 +2831,7 @@ function renderFortnightlyAdmin() {
     return { done, total, all };
   }
 
-  // ── Grouped QUARTERLY WALLET PAYOUT (only on the first run after a quarter closes) ──
+  // ── Grouped QUARTERLY WALLET PAYOUT (on the run of the last fortnight starting in the quarter — the run that pays it) ──
   // Rendered into #pr-wallet-payout so the Pull can re-render it with the engine's locked figures
   // (23 Sep 2026: it used to be built once at tab render and never refreshed after a Pull).
   function walletPayoutBlockHtml(idx) {
@@ -2838,10 +2839,10 @@ function renderFortnightlyAdmin() {
     reps.forEach(r => { const f = payrunFigures(r.id, idx); if (f.wallet && f.wallet.payout > 0) walletPayouts.push({ name: r.fullName, payout: f.wallet.payout }); });
     let h = '';
     if (walletPayouts.length) {
-      const priorQEnd = new Date(wQKey(idx - 1));
+      const priorQEnd = new Date(wQKey(idx));
       const qlabel = priorQEnd.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
-      // which fortnights the payout covers (every fortnight that STARTS in the closed quarter, from wallet launch)
-      let fFirst = -1, fLast = -1; for (let k = WALLET_LAUNCH_IDX; k < idx; k++) { if (wQKey(k) === wQKey(idx - 1)) { if (fFirst < 0) fFirst = k; fLast = k; } }
+      // which fortnights the payout covers (every fortnight that STARTS in this quarter, from wallet launch, incl. this run)
+      let fFirst = -1, fLast = -1; for (let k = WALLET_LAUNCH_IDX; k <= idx; k++) { if (wQKey(k) === wQKey(idx)) { if (fFirst < 0) fFirst = k; fLast = k; } }
       const covers = (fFirst >= 0 && FORTNIGHTS[fFirst] && FORTNIGHTS[fLast]) ? ` · covers ${fLast - fFirst + 1} fortnights (${esc((FORTNIGHTS[fFirst].period || '').split(' – ')[0])} → ${esc((FORTNIGHTS[fLast].period || '').split(' – ')[1] || '')})` : '';
       let totBonus = 0, totSuper = 0;
       const rowsH = walletPayouts.map(function (wp) {

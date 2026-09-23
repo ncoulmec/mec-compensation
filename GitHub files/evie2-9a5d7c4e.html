@@ -6026,11 +6026,11 @@ function renderBreakdown(r) {
 
     /* ---------- LAUNCH-ONWARD LEDGER (widget walletPayTable) ---------- */
     var ledgerEl = document.getElementById('wallet-ledger');
-    var runBal = 0, body = '';
+    var runBal = 0, body = '', _ledgerRows = [];
     for (var L = launchIdx; L <= curIdx; L++){
       var f = fig(L); runBal += f.prem;
       var isNow = (L === curIdx);
-      body += '<tr data-wv-modal="' + L + '" style="cursor:pointer">' +
+      _ledgerRows.push('<tr data-wv-modal="' + L + '" style="cursor:pointer">' +
         '<td>' + ((FN[L] && FN[L].period) || ('FN ' + L)) + (isNow ? ' <span style="color:var(--fg-dim)">now</span>' : '') + '</td>' +
         '<td class="r">' + mFull(f.gp) + '</td>' +
         '<td class="r"><b>' + m2(f.full) + '</b></td>' +
@@ -6038,8 +6038,10 @@ function renderBreakdown(r) {
         '<td class="r wm-p">+' + m2(f.prem) + '</td>' +
         '<td class="r wm-p">' + m2(runBal) + '</td>' +
         '<td class="r" style="color:var(--fg-dim)">—</td>' +
-      '</tr>';
+      '</tr>');
     }
+    // newest fortnight at the top — same order as the Bookings HQ widget (23 Sep 2026)
+    body = _ledgerRows.reverse().join('');
     ledgerEl.innerHTML =
       '<h2 class="wv-h">My Commission by Fortnight <span class="clock-tag recd">GP RECEIVED</span> <span class="tag-wallet">PREMIUM WALLET</span></h2>' +
       '<div style="overflow-x:auto"><table><thead><tr>' +
