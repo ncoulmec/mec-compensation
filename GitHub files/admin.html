@@ -3222,7 +3222,9 @@ function renderFortnightlyAdmin() {
                 });
               }
               engApplied++;
-              engWalletRaw.push({ name: r2.name, wallet: +eng.wallet_qtd, premium: +eng.premium_fn });
+              engWalletRaw.push({ name: r2.name, wallet: +eng.wallet_qtd, premium: +eng.premium_fn,
+                lockedN: (eng.wallet_locked && Array.isArray(eng.locked_by_fn)) ? eng.locked_by_fn.length : 0,
+                prior: (eng.wallet_prior != null) ? +eng.wallet_prior : null });
             });
           } else if (body.engineOk === false) {
             engNote = 'Engine wallet unavailable' + ((body.engineErrors && body.engineErrors.length) ? ' (' + body.engineErrors.join('; ') + ')' : '') + ' — wallet falls back to the admin estimate.';
@@ -3248,6 +3250,15 @@ function renderFortnightlyAdmin() {
           if (engApplied) {
             const wl = engWalletRaw.map(w => `${esc(w.name)} 💰${dollar(w.wallet)}${w.premium > 0 ? ` (+${dollar(w.premium)} this fn)` : ''}`).join(' &nbsp;·&nbsp; ');
             lines.push(`<div style="margin-top:6px; color:#3f4a5c;"><strong>✓ Premium Wallet — single source (engine):</strong> ${wl}</div>`);
+            // LOCKED-WALLET DIAGNOSTIC: the Apps Script must pass locked_by_fn / wallet_prior through. If it doesn't, the
+            // deployed script is the old version — admin would silently fall back to re-pricing at the latest rate.
+            const anyLocked = engWalletRaw.some(w => w.lockedN > 0);
+            if (anyLocked) {
+              const ll = engWalletRaw.filter(w => w.lockedN > 0).map(w => `${esc(w.name)} 🔒${w.lockedN} fortnights locked · last quarter ${dollar(w.prior || 0)}`).join(' &nbsp;·&nbsp; ');
+              lines.push(`<div style="margin-top:4px; color:#1e6624;"><strong>✓ Locked wallet received from engine:</strong> ${ll}</div>`);
+            } else {
+              lines.push(`<div style="margin-top:4px; color:#b42318;"><strong>⚠ No locked fortnights came back from the engine.</strong> The Google Apps Script is still the old version (Deploy → Manage deployments → edit → New version → Deploy), or the Zoho engine paste didn't save. Until then the quarterly payout below is re-priced at today's rate and will NOT match the widget.</div>`);
+            }
           } else if (engNote) {
             lines.push(`<div style="margin-top:4px; color:#8a6a00;">⚠ ${esc(engNote)}</div>`);
           }
