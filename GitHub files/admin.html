@@ -2702,8 +2702,8 @@ function renderFortnightlyAdmin() {
     // that were never pulled from the engine.
     const _emp = (typeof data !== 'undefined' && data.employees) ? data.employees.find(e => e.id === repId) : null;
     const engFn = (_emp && _emp.engineWalletByFn) || {};
-    // The engine's latest blended rate drives EVERY wallet fortnight's premium, so the admin reproduces
-    // the widget exactly: premium = (blended − base) × that fortnight's GP.
+    // LOCKED WALLET (23 Sep 2026): fortnights the engine has locked (engineWalletByFn[i].locked) keep their
+    // own rate + premium. The latest blended rate is only used for fortnights not yet locked/pulled.
     const engLatest = (_emp && _emp.engineLatest) || null;
     const engBlended = (engLatest && engLatest.blended_rate != null) ? +engLatest.blended_rate : null;
     const out = [];
@@ -2714,15 +2714,19 @@ function renderFortnightlyAdmin() {
       const g = r.gp, prodComm = r.prodComm, pos = r.pace;
       let blended = pos > 0 ? cumBandComm(pos, bands) / pos : baseRate;
       let fromEngine = false;
-      if (engBlended != null) { blended = engBlended; fromEngine = true; }
+      const eng = engFn[i];
+      const engLocked = !!(isWallet && eng && eng.locked && eng.premium_fn != null && eng.blended_rate != null);
+      // LOCKED WALLET (23 Sep 2026): a locked fortnight keeps its own rate — never the latest blended.
+      if (engBlended != null && !engLocked) { blended = engBlended; fromEngine = true; }
       // lands now (→ Xero): wallet model = 4% + event ; legacy (locked) = full band commission + event
       const landsNow = isWallet ? (baseRate * g + prodComm) : (r.properPay + prodComm);
       let premium = isWallet ? Math.max(0, (blended - baseRate) * g) : 0;
-      const eng = engFn[i];
-      // Only trust a stored per-fortnight premium when it was captured for THAT fortnight while it was the
-      // engine's current one AND the GP hasn't moved since — otherwise recompute from the blended rate.
-      if (isWallet && eng && eng.premium_fn != null && eng.blended_rate != null &&
+      if (engLocked) {
+        premium = +eng.premium_fn; blended = +eng.blended_rate; fromEngine = true;
+      } else if (isWallet && eng && eng.premium_fn != null && eng.blended_rate != null &&
           Math.abs(((+eng.blended_rate) - baseRate) * g - (+eng.premium_fn)) < 0.02) {
+        // Only trust an unlocked stored premium when it was captured for THAT fortnight while it was the
+        // engine's current one AND the GP hasn't moved since — otherwise recompute from the blended rate.
         premium = +eng.premium_fn; blended = +eng.blended_rate; fromEngine = true;
       }
       let payout = 0, walletBal = 0;
@@ -3201,6 +3205,21 @@ function renderFortnightlyAdmin() {
                   blended_rate: +eng.blended_rate, trailing_position: +eng.trailing_position,
                   fnIndex: engFort.index, pulledAt: body.pulledAt
                 };
+              }
+              // LOCKED WALLET (23 Sep 2026): the engine now fixes every wallet fortnight's premium at that
+              // fortnight's own blended rate. Store each one (engine fn n ↔ admin idx n−1) flagged locked, so
+              // walletLedger + the dashboards show the locked figure and never re-price it at the latest rate.
+              if (eng.wallet_locked && Array.isArray(eng.locked_by_fn)) {
+                emp.engineLatest.wallet_prior = +eng.wallet_prior; emp.engineLatest.wallet_locked = true;
+                eng.locked_by_fn.forEach(function(lr) {
+                  var li = Number(lr.fn) - 1;
+                  if (!(li >= 0)) return;
+                  var prev = emp.engineWalletByFn[li] || {};
+                  emp.engineWalletByFn[li] = Object.assign({}, prev, {
+                    premium_fn: +lr.premium, blended_rate: +lr.blended, gp_received: +lr.gp,
+                    trailing_position: +lr.position, locked: true, fnIndex: Number(lr.fn), pulledAt: body.pulledAt
+                  });
+                });
               }
               engApplied++;
               engWalletRaw.push({ name: r2.name, wallet: +eng.wallet_qtd, premium: +eng.premium_fn });

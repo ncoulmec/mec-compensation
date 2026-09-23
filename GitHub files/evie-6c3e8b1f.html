@@ -5953,6 +5953,9 @@ function renderBreakdown(r) {
     function fig(i){
       var gp=Number(gpv[i])||0, eg=Number(evv[i])||0;
       var baseInc=base*gp, eventInc=eg*PROD, prem=Math.max(0,(blended-base)*gp);
+      // LOCKED WALLET (23 Sep 2026): a closed fortnight keeps the premium the engine fixed at THAT
+      // fortnight's own rate (published by admin as engineWalletByFn[i].locked) — never re-priced at today's.
+      var _le=(window.__PMengineWallet||{})[i]; if(_le && _le.locked && _le.premium_fn!=null){ prem=Math.max(0,Number(_le.premium_fn)); }
       var land=baseInc+eventInc, full=land+prem;
       var bank=land/(1+SUP), sup=land-bank;
       return {gp:gp,eg:eg,baseInc:baseInc,eventInc:eventInc,prem:prem,land:land,full:full,bank:bank,sup:sup,neg:land<0};
@@ -6010,7 +6013,7 @@ function renderBreakdown(r) {
         '<div><span class="wm-link" data-wv-help="1">How the wallet works ›</span></div>' +
         '<div style="margin-top:11px;background:#fdf6e9;border:1px solid #e7c887;border-radius:9px;padding:9px 11px;font-size:11px;color:#7a5c0a;line-height:1.55">' +
           '<b>⚠ Estimate — not your final wallet.</b> This is a snapshot from the last pay run. Your wallet grows with every sale, so the <b>live</b> figure is in Zoho → <b>Bookings HQ → My Numbers</b> and will differ slightly from this.' +
-          '<div style="margin-top:5px">The <b>money that lands in your bank each fortnight is exact</b> and always matches. Only this wallet estimate moves — it settles and pays in full at quarter-end.</div>' +
+          '<div style="margin-top:5px">The <b>money that lands in your bank each fortnight is exact</b> and always matches. Each closed fortnight&#39;s deposit is <b>locked</b> at the rate you were on when it closed and never moves; only the current fortnight updates until it closes. It pays in full at quarter-end.</div>' +
         '</div>' +
       '</div>';
 
@@ -6098,7 +6101,7 @@ function renderBreakdown(r) {
         '<p style="margin:0 0 11px"><b>What it is.</b> Every dollar you collect earns your blended rate ('+pct2(blended)+'). The first <b>4%</b> lands in your bank every fortnight. Everything <b>above 4%</b> &mdash; the premium &mdash; builds here in your wallet.</p>'+
         '<p style="margin:0 0 11px"><b>How it builds.</b> This fortnight it grew by <b>'+m2(cur.prem)+'</b>. It ticks up a little each pay run as you collect more cash.</p>'+
         '<p style="margin:0 0 11px"><b>When it pays.</b> The whole balance pays into your bank at the end of each quarter &mdash; next on <b>'+endLbl+'</b> &mdash; on top of your normal fortnightly commission.</p>'+
-        '<p style="margin:0"><b>It never goes backwards.</b> Through a quarter it only builds. If your rate eases, new additions just get smaller &mdash; whatever is already in your wallet stays yours.</p></div>';
+        '</div>';
       h += '<div class="wv-sech">The detail &mdash; how your rate is set</div>';
       h += '<details class="wv-msec" open><summary>Your blended rate &middot; '+pct2(blended)+'</summary>'+
         '<div style="font-size:12px;color:#667085;margin-top:8px">Your last 12 months &mdash; '+mFull(trailing)+' &mdash; sets one blended rate. Every dollar you collect: 4% to your bank now, the extra '+e1.toFixed(2)+'% to your wallet.</div>'+bandBar+
