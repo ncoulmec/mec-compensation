@@ -2683,11 +2683,13 @@ function renderFortnightlyAdmin() {
   const WALLET_LAUNCH_IDX = (function () { const i = FORTNIGHTS.findIndex(f => f.paid === '27 Jul 2026'); return i < 0 ? 3 : i; })();
   const WALLET_COMP_START = new Date(2026, 5, 1); // 1 Jun 2026 = fortnight-0 start
   function wQEnd(dt) { const y = dt.getFullYear(); const ends = [new Date(y, 2, 31), new Date(y, 5, 30), new Date(y, 8, 30), new Date(y, 11, 31)]; for (let i = 0; i < ends.length; i++) { if (dt <= ends[i]) return ends[i]; } return new Date(y + 1, 2, 31); }
-  // Bucket by the fortnight's PAID date — the wallet pays out on the first run PAID after a quarter
-  // closes (Q1 FY27 → 5 Oct 2026 · Q2 → 11 Jan 2027 · Q3 → 5 Apr 2027 …), matching the admin's
-  // existing quarterly-commission convention.
+  // QUARTER RULE (23 Sep 2026, per Nathan): a fortnight belongs to the calendar quarter it STARTS in — the
+  // rule the dashboards always used and the engine/widget now use. The wallet still pays on the first run
+  // after quarter-close (5 Oct 2026 · 11 Jan 2027 · 5 Apr 2027 · 12 Jul 2027), but 21 Sep–4 Oct is INSIDE
+  // the Q3 wallet paid on 5 Oct, not the first fortnight of Q4. (Was: bucketed by paid date.)
   function wPaidDate(idx) { const p = FORTNIGHTS[idx] && FORTNIGHTS[idx].paid; let d = p ? new Date(p) : NaN; if (isNaN(d)) { d = new Date(WALLET_COMP_START); d.setDate(d.getDate() + idx * 14 + 14); } return d; }
-  function wQKey(idx) { return wQEnd(wPaidDate(idx)).getTime(); }
+  function wStartDate(idx) { const d = new Date(WALLET_COMP_START); d.setDate(d.getDate() + idx * 14); return d; }
+  function wQKey(idx) { return wQEnd(wStartDate(idx)).getTime(); }
 
   // Per-fortnight wallet ledger for one rep. incSuper = what goes to Xero this fortnight.
   function walletLedger(repId) {
