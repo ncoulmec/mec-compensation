@@ -3229,10 +3229,18 @@ function renderFortnightlyAdmin() {
               // walletLedger + the dashboards show the locked figure and never re-price it at the latest rate.
               if (eng.wallet_locked && Array.isArray(eng.locked_by_fn)) {
                 emp.engineLatest.wallet_prior = +eng.wallet_prior; emp.engineLatest.wallet_locked = true;
+                const _conf = ensureFortnightly(emp).confirmed || [];
                 eng.locked_by_fn.forEach(function(lr) {
                   var li = Number(lr.fn) - 1;
                   if (!(li >= 0)) return;
                   var prev = emp.engineWalletByFn[li] || {};
+                  // FREEZE PAID QUARTERS (6 Oct 2026): once a quarter's wallet has been paid (its last fortnight's
+                  // pay run is confirmed), its locked fortnights are never overwritten again — so the rep's dashboard
+                  // history keeps showing exactly what was paid, even if a payment later lands in an old fortnight.
+                  if (prev.locked && wQKey(li) !== wQKey(idx)) {
+                    var lastQ = li; while (lastQ + 1 < FORTNIGHTS.length && wQKey(lastQ + 1) === wQKey(li)) lastQ++;
+                    if (_conf[lastQ] === true) return;
+                  }
                   emp.engineWalletByFn[li] = Object.assign({}, prev, {
                     premium_fn: +lr.premium, blended_rate: +lr.blended, gp_received: +lr.gp,
                     trailing_position: +lr.position, locked: true, fnIndex: Number(lr.fn), pulledAt: body.pulledAt
@@ -3349,8 +3357,21 @@ function renderFortnightlyAdmin() {
           if (gpAmt > 0) earned.push(`${money(w.baseRate * w.g)} (${basePct}% base on ${money(gpAmt)} GP Received)`);
           if (evAmt > 0 || w.prodComm > 0) earned.push(`${money(w.prodComm)} (1% on ${money(evAmt)} Event GP Produced)`);
           if (!earned.length) earned.push('$0 GP this fortnight');
+          const payoutNow = (w.payout || 0) > 0;
           note = `[${period}]: ${earned.join(' + ')} = ${money(f.incSuper)} inc super → ${money(f.exSuper)} + ${money(f.incSuper - f.exSuper)} super`
-               + (w.premium > 0 ? ` · plus ${money(w.premium)} added to your Quarterly Premium Wallet (paid at quarter-end)` : '');
+               + (w.premium > 0 ? (payoutNow
+                    ? ` · plus ${money(w.premium)} premium this fortnight (included in the wallet payout below)`
+                    : ` · plus ${money(w.premium)} added to your Quarterly Premium Wallet (paid at quarter-end)`) : '');
+          // QUARTERLY WALLET PAYOUT line (5 Oct · 11 Jan · 5 Apr · 12 Jul) — 6 Oct 2026: the note previously
+          // never mentioned the payout, so the payslip would show the lump sum with no explanation.
+          if (payoutNow) {
+            let fFirst = -1, fLast = -1;
+            for (let k = WALLET_LAUNCH_IDX; k <= idx; k++) { if (wQKey(k) === wQKey(idx)) { if (fFirst < 0) fFirst = k; fLast = k; } }
+            const span = (fFirst >= 0) ? `${(FORTNIGHTS[fFirst].period || '').split(' – ')[0]} – ${(FORTNIGHTS[fLast].period || '').split(' – ')[1] || ''}` : 'this quarter';
+            const pEx = w.payout / SUPER_DIV, pSup = w.payout - pEx;
+            const nF = (fFirst >= 0) ? (fLast - fFirst + 1) : 0;
+            note += `\nQUARTERLY PREMIUM WALLET PAYOUT [${span}${nF ? ', ' + nF + ' fortnights' : ''}]: ${money(w.payout)} inc super → ${money(pEx)} + ${money(pSup)} super. Each fortnight's premium locked at the rate you were on when it closed; settled against your full-year GP received at 30 June.`;
+          }
         } else {
           // LEGACY fortnights (before the wallet launched) — paid in full on the band model.
           if (gpAmt > 0 || f.row.properPay > 0) earned.push(`${money(f.row.properPay)} on ${money(gpAmt)} GP Received`);

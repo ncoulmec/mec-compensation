@@ -5664,6 +5664,17 @@ function renderBreakdown(r) {
     var launchIdx = 0; for (var i=0;i<FN.length;i++){ if (fnStart(i).getTime() >= qs.getTime()) { launchIdx = i; break; } }
     var curIdx = launchIdx; for (var j=0;j<FN.length;j++){ if (fnStart(j).getTime() <= today.getTime()) curIdx = j; else break; }
     if (curIdx < launchIdx) curIdx = launchIdx;
+    // FIXED wallet launch (13 Jul 2026 fortnight). launchIdx above = first fortnight of the CURRENT quarter;
+    // WL = where the wallet history starts. Before 6 Oct 2026 these were the same thing, so once Q4 began the
+    // Q3 wallet fortnights would have shown as "paid in full · previous plan" legacy rows. Now kept apart.
+    var WL = Math.max(0, Math.round((Date.UTC(2026, 6, 13) - anchor) / (14 * MS)));
+    function qKeyIdx(i){ return qStart(fnStart(i)).getTime(); }
+    // last fortnight that starts in the current quarter = the run that pays this quarter's wallet
+    var qLastIdx = curIdx; for (var ql = curIdx; ql < FN.length; ql++){ if (qKeyIdx(ql) === qs.getTime()) qLastIdx = ql; else break; }
+    var qPayLabel = (FN[qLastIdx] && FN[qLastIdx].paid) || '';
+    // the most recently CLOSED quarter's locked wallet (paid on its last fortnight's pay day)
+    var priorLast = launchIdx - 1, priorTot = 0, priorFirst = -1;
+    if (priorLast >= WL){ for (var pk = priorLast; pk >= WL && qKeyIdx(pk) === qKeyIdx(priorLast); pk--){ priorFirst = pk; } }
     var qeDate = qEnd(fnStart(curIdx));
 
     // Mirrors the widget: premium never goes negative; base/event (and therefore
@@ -5728,7 +5739,8 @@ function renderBreakdown(r) {
           '<div class="wm-add">▲ +' + m2(cur.prem) + ' added this fortnight</div></div>' +
         '</div>' +
         '<div class="wm-track" style="margin-top:13px"><div class="wm-fill" style="width:' + fillPct.toFixed(0) + '%"></div></div>' +
-        '<div class="wm-next">Pays into your bank <b>' + dLabel(qeDate) + '</b> · ~' + weeks + ' weeks' +
+        (priorFirst >= 0 ? (function(){ var t=0; for (var z=priorFirst; z<=priorLast; z++) t += fig(z).prem; return '<div style="margin:0 0 10px;padding:8px 11px;border:1px solid #bfe0cd;background:#eef6f1;border-radius:9px;display:flex;justify-content:space-between;align-items:center;gap:10px"><div><div style="font-size:10px;font-weight:800;letter-spacing:.05em;color:#1e6624">LAST QUARTER&#39;S WALLET &middot; PAID ' + String((FN[priorLast] && FN[priorLast].paid) || '').toUpperCase() + '</div><div style="font-size:11px;color:#3d6b47">' + ((FN[priorFirst] && FN[priorFirst].period) || '').split(' – ')[0] + ' – ' + (((FN[priorLast] && FN[priorLast].period) || '').split(' – ')[1] || '') + ' &middot; locked per fortnight</div></div><div style="font-size:18px;font-weight:800;color:#1e6624;font-family:var(--mono)">' + m2(t) + '</div></div>'; })() : '') +
+        '<div class="wm-next">Pays into your bank <b>' + (qPayLabel || dLabel(qeDate)) + '</b> · ~' + weeks + ' weeks' +
           (tracking > 0 ? ' · on track for <b>~' + mFull(tracking) + '</b>' : '') + '</div>' +
         '<div><span class="wm-link" data-wv-help="1">How the wallet works ›</span></div>' +
         '<div style="margin-top:11px;background:#fdf6e9;border:1px solid #e7c887;border-radius:9px;padding:9px 11px;font-size:11px;color:#7a5c0a;line-height:1.55">' +
@@ -5740,9 +5752,12 @@ function renderBreakdown(r) {
     /* ---------- LAUNCH-ONWARD LEDGER (widget walletPayTable) ---------- */
     var ledgerEl = document.getElementById('wallet-ledger');
     var runBal = 0, body = '', _ledgerRows = [];
-    for (var L = launchIdx; L <= curIdx; L++){
+    for (var L = WL; L <= curIdx; L++){
+      if (L > WL && qKeyIdx(L) !== qKeyIdx(L - 1)) runBal = 0;   // each quarter's wallet starts at $0
       var f = fig(L); runBal += f.prem;
       var isNow = (L === curIdx);
+      var closesQ = (L < launchIdx) && (L + 1 > curIdx || qKeyIdx(L + 1) !== qKeyIdx(L));
+      var payoutCell = closesQ ? ('<b style="color:#1e6624">' + m2(runBal) + '</b><div style="font-size:10.5px;color:var(--fg-dim)">paid ' + ((FN[L] && FN[L].paid) || '') + '</div>') : '—';
       _ledgerRows.push('<tr data-wv-modal="' + L + '" style="cursor:pointer">' +
         '<td>' + ((FN[L] && FN[L].period) || ('FN ' + L)) + (isNow ? ' <span style="color:var(--fg-dim)">now</span>' : '') + '</td>' +
         '<td class="r">' + mFull(f.gp) + '</td>' +
@@ -5750,7 +5765,7 @@ function renderBreakdown(r) {
         '<td class="r">' + m2(f.land) + '</td>' +
         '<td class="r wm-p">+' + m2(f.prem) + '</td>' +
         '<td class="r wm-p">' + m2(runBal) + '</td>' +
-        '<td class="r" style="color:var(--fg-dim)">—</td>' +
+        '<td class="r" style="color:var(--fg-dim)">' + payoutCell + '</td>' +
       '</tr>');
     }
     // newest fortnight at the top — same order as the Bookings HQ widget (23 Sep 2026)
@@ -5765,9 +5780,9 @@ function renderBreakdown(r) {
     /* ---------- LEGACY (pre-launch, collapsed) ---------- */
     var legacyEl = document.getElementById('wallet-legacy');
     var paidByIdx = {};
-    rows.forEach(function (r) { if (r.confirmed && (r.idx < launchIdx)) paidByIdx[r.idx] = (Number(r.properPay)||0) + (Number(r.prodComm)||0); });
+    rows.forEach(function (r) { if (r.confirmed && (r.idx < WL)) paidByIdx[r.idx] = (Number(r.properPay)||0) + (Number(r.prodComm)||0); });
     var legRows = '', legCount = 0;
-    for (var g = launchIdx - 1; g >= 0; g--){   // most recent fortnight first
+    for (var g = WL - 1; g >= 0; g--){   // most recent fortnight first
       var amt = (paidByIdx[g] != null && paidByIdx[g] > 0) ? paidByIdx[g] : (LEGACY_PAID[g] != null ? LEGACY_PAID[g] : null);
       if (amt == null) continue;
       legCount++;
@@ -5839,12 +5854,12 @@ function renderBreakdown(r) {
 
     window.openWVModal = function(sel){
       sel = Number(sel); if (isNaN(sel)) sel = curIdx;
-      if (sel < launchIdx) sel = launchIdx; if (sel > curIdx) sel = curIdx;
+      if (sel < WL) sel = WL; if (sel > curIdx) sel = curIdx;
       var host = document.getElementById('wv-modal'); if (!host) return;
       var f = fig(sel), lbl = (FN[sel] && FN[sel].period) || ('FN ' + sel), hasEvent = (f.eg > 0);
       var h = '';
       h += '<div class="wv-mnav">' +
-        '<button type="button" class="wv-navb" data-wvnav="-1"' + (sel <= launchIdx ? ' disabled' : '') + '>&#9664;</button>' +
+        '<button type="button" class="wv-navb" data-wvnav="-1"' + (sel <= WL ? ' disabled' : '') + '>&#9664;</button>' +
         '<div class="wv-mlab">' + lbl + '</div>' +
         '<button type="button" class="wv-navb" data-wvnav="1"' + (sel >= curIdx ? ' disabled' : '') + '>&#9654;</button></div>';
       h += '<div class="wv-mhero">' + m2(f.full) + '</div><div class="wv-mherosub">your commission this fortnight · inc super</div>';
