@@ -3364,19 +3364,23 @@ function renderFortnightlyAdmin() {
           if (evAmt > 0 || w.prodComm > 0) earned.push(`${money(w.prodComm)} (1% on ${money(evAmt)} Event GP Produced)`);
           if (!earned.length) earned.push('$0 GP this fortnight');
           const payoutNow = (w.payout || 0) > 0;
-          note = `[${period}]: ${earned.join(' + ')} = ${money(f.incSuper)} inc super → ${money(f.exSuper)} + ${money(f.incSuper - f.exSuper)} super`
-               + (w.premium > 0 ? (payoutNow
-                    ? ` · plus ${money(w.premium)} premium this fortnight (included in the wallet payout below)`
-                    : ` · plus ${money(w.premium)} added to your Quarterly Premium Wallet (paid at quarter-end)`) : '');
-          // QUARTERLY WALLET PAYOUT line (5 Oct · 11 Jan · 5 Apr · 12 Jul) — 6 Oct 2026: the note previously
-          // never mentioned the payout, so the payslip would show the lump sum with no explanation.
           if (payoutNow) {
+            // QUARTERLY PAYOUT RUN — compact version (Xero's payslip note has a tight character limit).
             let fFirst = -1, fLast = -1;
             for (let k = WALLET_LAUNCH_IDX; k <= idx; k++) { if (wQKey(k) === wQKey(idx)) { if (fFirst < 0) fFirst = k; fLast = k; } }
-            const span = (fFirst >= 0) ? `${(FORTNIGHTS[fFirst].period || '').split(' – ')[0]} – ${(FORTNIGHTS[fLast].period || '').split(' – ')[1] || ''}` : 'this quarter';
+            const span = (fFirst >= 0) ? `${(FORTNIGHTS[fFirst].period || '').split(' – ')[0]}–${((FORTNIGHTS[fLast].period || '').split(' – ')[1] || '').replace(/ \d{4}$/, '')}` : 'qtr';
             const pEx = w.payout / SUPER_DIV, pSup = w.payout - pEx;
-            const nF = (fFirst >= 0) ? (fLast - fFirst + 1) : 0;
-            note += `\nQUARTERLY PREMIUM WALLET PAYOUT [${span}${nF ? ', ' + nF + ' fortnights' : ''}]: ${money(w.payout)} inc super → ${money(pEx)} + ${money(pSup)} super. Each fortnight's premium locked at the rate you were on when it closed; settled against your full-year GP received at 30 June.`;
+            const short = [];
+            if (gpAmt > 0) short.push(`${basePct}% on ${money(gpAmt)} GP`);
+            if (evAmt > 0 || w.prodComm > 0) short.push(`1% on ${money(evAmt)} event GP`);
+            if (!short.length) short.push('$0 GP');
+            // Parts shown EX super, then one grand total the rep can tick off against the payslip:
+            //   "[21 Sep – 4 Oct] 4% on $10,831.63 GP $386.84 + Wallet 13 Jul–4 Oct $520.63 = $907.47 + $108.90 super"
+            const totEx = f.exSuper + pEx, totSup = (f.incSuper - f.exSuper) + pSup;
+            note = `[${period.replace(/ \d{4}$/, '')}] ${short.join(' + ')} ${money(f.exSuper)} + Wallet ${span} ${money(pEx)} = ${money(totEx)} + ${money(totSup)} super`;
+          } else {
+            note = `[${period}]: ${earned.join(' + ')} = ${money(f.incSuper)} inc super → ${money(f.exSuper)} + ${money(f.incSuper - f.exSuper)} super`
+                 + (w.premium > 0 ? ` · plus ${money(w.premium)} added to your Quarterly Premium Wallet (paid at quarter-end)` : '');
           }
         } else {
           // LEGACY fortnights (before the wallet launched) — paid in full on the band model.
@@ -4953,6 +4957,21 @@ function renderQuarterlyAdmin() {
               ? `${esc(c.fullName)} · ${esc(q.label)}\nTTM ${esc(c.metricName)} (last 365 days): ${_fmt(row.metric)}\nAnnual commission at this TTM: ${_fmt(row.annualComm)}\nQuarterly payout (annual ÷ 4): ${_fmt(incSuper)}\n  · Bonus ex super: ${_fmt(exSuper)}\n  · Super (12%): ${_fmt(superAmt)}`
               : `${esc(c.fullName)} · ${esc(q.label)}\n${esc(c.metricName)} this quarter: ${_fmt(row.metric)}\nYTD: ${_fmt(row.ytd)} · Annualised: ${_fmt(row.annualised)}\nAnnual commission projection: ${_fmt(row.annualComm)}\nQuarterly payout (${payoutPctTxt}% pro-rata): ${_fmt(incSuper)}\n  · Bonus ex super: ${_fmt(exSuper)}\n  · Super (12%): ${_fmt(superAmt)}`)
           : `${esc(c.fullName)} · ${esc(q.label)}\nNo ${esc(c.metricName)} entered yet.`;
+        // XERO PAYSLIP NOTE (6 Oct 2026) — same idea as the fortnightly "Copy Xero note": explains the quarterly line.
+        const _m2 = v => '$' + (Number(v) || 0).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const _m0 = v => '$' + Math.round(Number(v) || 0).toLocaleString('en-AU');
+        // kept SHORT — Xero's payslip note field has a tight character limit
+        // trailing-365 window = the 12 months ending on this quarter's last day (e.g. 1 Oct 2025 – 30 Sep 2026)
+        const _ttmWin = (() => {
+          const mm = /([A-Za-z]{3})\s+(\d{4})$/.exec(q.period || ''); if (!mm) return q.label;
+          const mi = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(mm[1]); if (mi < 0) return q.label;
+          const end = new Date(+mm[2], mi + 1, 0), start = new Date(+mm[2] - 1, mi + 1, 1);
+          const f = d => d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+          return `${f(start)} – ${f(end)}`;
+        })();
+        const xeroNote = c.isTTM
+          ? `[${q.label} · TTM ${_ttmWin}] ${c.metricName} ${_m0(row.metric)} → ${_m0(row.annualComm)}/yr ÷ 4 = ${_m2(incSuper)} → ${_m2(exSuper)} + ${_m2(superAmt)} super`
+          : `[${q.label}] ${c.metricName} ${_m0(row.metric)}, ${payoutPctTxt}% of ${_m0(row.annualComm)}/yr proj = ${_m2(incSuper)} → ${_m2(exSuper)} + ${_m2(superAmt)} super`;
         const copyVals = incSuper > 0
           ? `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px;">
                <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Bonus</div>
@@ -4960,7 +4979,10 @@ function renderQuarterlyAdmin() {
                <div><div style="font-size: 8px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;">Super</div>
                  <input type="text" class="qtp-copy-super" tabindex="-1" readonly value="${superAmt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}" title="Super (12%) — click to copy" style="width: 100%; padding: 6px 9px; border: 1px solid #cdd9e8; border-radius: 6px; background: #eef4fa; text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer;"></div>
              </div>
-             <div style="font-size: 9px; color: var(--muted); margin-top: 3px; text-align: right; font-family: var(--mono);">annualised ${_fmt(row.annualised)}</div>`
+             <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:4px;">
+               <button type="button" class="qtp-xero-note" data-note="${esc(xeroNote)}" title="Copy this quarter's payslip note to paste into Xero" style="padding:3px 9px; border:1px solid #cdd9e8; background:#eef4fa; color:var(--navy); border-radius:6px; font-size:10.5px; font-weight:600; cursor:pointer; white-space:nowrap;">📋 Copy Xero note</button>
+               <div style="font-size: 9px; color: var(--muted); text-align: right; font-family: var(--mono);">annualised ${_fmt(row.annualised)}</div>
+             </div>`
           : (row.metric > 0
               ? `<div style="font-size: 10px; color: var(--muted); margin-top: 3px; font-family: var(--mono); text-align: right;">annualised ${_fmt(row.annualised)} · $0 payout</div>`
               : `<div style="font-size: 10px; color: var(--faint); margin-top: 3px; font-family: var(--mono); text-align: right;">—</div>`);
@@ -4973,6 +4995,20 @@ function renderQuarterlyAdmin() {
       h += `</tr>`;
     });
     document.getElementById('qtp-tbody').innerHTML = h;
+    // Copy Xero note — every click copies (incl. repeats) and flashes a confirmation
+    document.querySelectorAll('#qtp-tbody .qtp-xero-note').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const note = btn.getAttribute('data-note') || '';
+        let ok = false;
+        try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(note); ok = true; } } catch (err) {}
+        if (!ok) { try { const ta = document.createElement('textarea'); ta.value = note; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch (err) {} }
+        const orig = '📋 Copy Xero note';
+        btn.innerHTML = ok ? '✓ Copied to clipboard' : '⚠ Copy failed';
+        btn.style.background = ok ? '#1e6624' : '#fdecea'; btn.style.color = ok ? '#fff' : '#b91c1c'; btn.style.borderColor = ok ? '#1e6624' : '#f5b5ae';
+        setTimeout(() => { btn.innerHTML = ok ? '✓ Note copied · copy again' : orig; btn.style.background = ok ? '#d4edda' : '#eef4fa'; btn.style.color = ok ? '#1e6624' : ''; btn.style.borderColor = ok ? '#9cc7a6' : '#cdd9e8'; }, 1200);
+      });
+    });
 
     // Footer — year totals per employee
     let footHtml = `<tr style="font-weight: 700; background: #f6f8fc; border-top: 2px solid #d3d1c7;">
