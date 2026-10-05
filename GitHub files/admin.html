@@ -2796,7 +2796,8 @@ function renderFortnightlyAdmin() {
       const rep = b.getAttribute('data-rep');
       if (st.notes[rep]) {
         done++;
-        b.innerHTML = '✓ Note copied';
+        b.innerHTML = '✓ Note copied · <span style="text-decoration:underline">copy again</span>';
+        b.title = 'Already copied — click to copy this note to the clipboard again';
         b.style.background = '#d4edda'; b.style.borderColor = '#9cc7a6'; b.style.color = '#1e6624';
       } else {
         b.innerHTML = '📋 Copy Xero note';
@@ -3389,7 +3390,10 @@ function renderFortnightlyAdmin() {
           // Remember it — the button stays green and the Step 5 counter ticks up, so a
           // missed note is obvious at a glance instead of being silently forgotten.
           const st = prSteps(idx); st.notes[rep] = true; prStepsSave(idx, st);
-          prRefreshNotes(idx);
+          // visible confirmation on EVERY click (incl. re-copies), then settle back to the ticked state
+          btn.innerHTML = '✓ Copied to clipboard';
+          btn.style.background = '#1e6624'; btn.style.borderColor = '#1e6624'; btn.style.color = '#fff';
+          setTimeout(() => prRefreshNotes(idx), 1200);
         } else {
           btn.innerHTML = '⚠ Copy failed';
           btn.style.background = '#fdecea';
