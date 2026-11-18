@@ -582,7 +582,8 @@
 
   <section class="panel" id="panel-payouts">
     <!-- Payroll-locked actuals (populated from admin entries) -->
-    <div id="payroll-locked-card"></div>
+    <div id="sales-addon-card"></div>
+<div id="payroll-locked-card"></div>
 
     <div class="banner info">
       <span class="dot"></span>
@@ -1782,6 +1783,7 @@ function update() {
 
   // Render the payroll-locked quarterly actuals card
   if (typeof renderPayrollLockedCard === 'function') renderPayrollLockedCard();
+    try { renderSalesAddOnCard(); } catch (e) { console.error('sales add-on card', e); }
 
   // ===== ACTUAL =====
   const { rows: qRows, totals: qTot, latestAnnual, trueUp, latestTrailingCM } = computeQuarterlyPayouts();
@@ -2446,6 +2448,56 @@ function renderTeamPool() {
     if (!tryRender()) setTimeout(repeat, 200);
   }, 0);
 })();
+
+
+// ----- Sales & production add-on: flat 4% sales + 1% production (both inc super) — added 18 Nov 2026 -----
+function renderSalesAddOnCard() {
+  const wrap = document.getElementById('sales-addon-card');
+  if (!wrap) return;
+  const a = (typeof emp !== 'undefined' && emp) ? emp.salesAddOn : null;
+  if (!a) { wrap.innerHTML = ''; return; }
+  const money = (n) => '$' + (Number(n) || 0).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const plan = (data.planTypes && data.planTypes[a.planType]) || {};
+  const salesRate = (Array.isArray(plan.bands) && plan.bands[0] && Number(plan.bands[0].rate)) || 0.04;
+  const prodRate = typeof plan.productionPct === 'number' ? plan.productionPct : 0.01;
+  const sr = (data.globals && data.globals.superRate) || 0.12;
+  const f = a.fortnightly || {};
+  const gp = f.gp || [], ev = f.event || [], conf = f.confirmed || [];
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const fmtD = (t) => { const d = new Date(t); return d.getUTCDate() + ' ' + MON[d.getUTCMonth()]; };
+  const fmtDY = (t) => fmtD(t) + ' ' + new Date(t).getUTCFullYear();
+  const DAY = 86400000, start0 = Date.UTC(2026, 5, 1);
+  const rows = [];
+  for (let i = 0; i < 26; i++) {
+    if (conf[i] !== true) continue;
+    const s = start0 + i * 14 * DAY;
+    const g = Number(gp[i]) || 0, v = Number(ev[i]) || 0;
+    const salesC = g * salesRate, prodC = v * prodRate, tot = salesC + prodC;
+    const bank = tot / (1 + sr);
+    rows.push({ i, label: fmtD(s) + ' – ' + fmtD(s + 13 * DAY), pay: fmtDY(s + 14 * DAY), g, v, salesC, prodC, tot, bank, sup: tot - bank });
+  }
+  const startTxt = a.startDate ? fmtDY(Date.parse(a.startDate + 'T00:00:00Z')) : '18 Nov 2026';
+  const hdr = '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">💼 Sales &amp; Production Commission <span style="text-transform:none;letter-spacing:0;font-weight:500;">— on top of your quarterly plan</span></div>';
+  const how = '<div style="font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5;">A flat <strong>' + (salesRate * 100).toFixed(0) + '%</strong> of the gross profit <em>received</em> on bookings you sell (closed from ' + startTxt + '), plus <strong>' + (prodRate * 100).toFixed(0) + '%</strong> of the gross profit on events you produce. Both rates include super, paid every fortnight. No tiers &mdash; every sale, every quote and every close earns the same rate.</div>';
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="card" style="background:#fafaf7;border:1px dashed var(--border);margin-bottom:18px;padding:14px 18px;">' + hdr + how +
+      '<div style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:8px;">Starts ' + startTxt + ' &middot; your first pay lands in the 30 Nov 2026 pay run once payroll confirms the fortnight.</div></div>';
+    return;
+  }
+  const last = rows[rows.length - 1];
+  const sum = rows.reduce((o, r) => ({ g: o.g + r.g, v: o.v + r.v, salesC: o.salesC + r.salesC, prodC: o.prodC + r.prodC, tot: o.tot + r.tot, bank: o.bank + r.bank, sup: o.sup + r.sup }), { g: 0, v: 0, salesC: 0, prodC: 0, tot: 0, bank: 0, sup: 0 });
+  const th = 'style="text-align:right;padding:6px 8px;font-size:11px;color:var(--muted);font-weight:600;"';
+  const td = 'style="text-align:right;padding:6px 8px;font-family:var(--mono);font-size:12px;"';
+  const body = rows.slice().reverse().map(r => '<tr style="border-top:1px solid var(--border);"><td style="padding:6px 8px;font-size:12px;">' + r.label + '<div style="font-size:10px;color:var(--faint);">paid ' + r.pay + '</div></td>' +
+    '<td ' + td + '>' + money(r.g) + '</td><td ' + td + '>' + money(r.v) + '</td><td ' + td + '>' + money(r.bank) + '</td><td ' + td + '>' + money(r.sup) + '</td><td ' + td + '><strong>' + money(r.tot) + '</strong> <span style="color:#1a7f37;font-size:10px;">✓ PAID</span></td></tr>').join('');
+  wrap.innerHTML = '<div class="card" style="margin-bottom:18px;padding:16px 18px;">' + hdr + how +
+    '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;">' +
+      '<div style="flex:1;min-width:200px;background:#f5f8f5;border:1px solid #d6e5d6;border-radius:10px;padding:10px 14px;"><div style="font-size:11px;color:var(--muted);">Latest pay (' + last.label + ')</div><div style="font-size:22px;font-weight:700;">' + money(last.tot) + '</div><div style="font-size:11px;color:var(--muted);">Bank ' + money(last.bank) + ' + Super ' + money(last.sup) + '</div></div>' +
+      '<div style="flex:1;min-width:200px;background:#fafaf7;border:1px solid var(--border);border-radius:10px;padding:10px 14px;"><div style="font-size:11px;color:var(--muted);">Total so far on this plan</div><div style="font-size:22px;font-weight:700;">' + money(sum.tot) + '</div><div style="font-size:11px;color:var(--muted);">' + money(sum.salesC) + ' sales + ' + money(sum.prodC) + ' production</div></div>' +
+    '</div>' +
+    '<div style="overflow-x:auto;margin-top:12px;"><table style="width:100%;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--muted);font-weight:600;">Fortnight</th><th ' + th + '>GP received</th><th ' + th + '>Event GP</th><th ' + th + '>&rarr; Xero Bonus</th><th ' + th + '>&rarr; Xero Super</th><th ' + th + '>Total this pay</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+}
+
 
 </script>
 </body>

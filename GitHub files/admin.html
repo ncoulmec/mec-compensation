@@ -650,13 +650,21 @@ function _buildEmployeeSubset(fullData, employeeId) {
   const emp = (fullData.employees || []).find(e => e.id === employeeId);
   if (!emp) throw new Error(`Employee not found: ${employeeId}`);
   const projects = (fullData.projects || []).filter(p => Array.isArray(p.assignedTo) && p.assignedTo.includes(employeeId));
+  // Flat 4% sales + 1% production add-on (from 18 Nov 2026): embed the virtual slot's data
+  // (<id>_sales) into the person's own blob so their dashboard can render the add-on card.
+  let outEmp = emp;
+  const _slot = (fullData.employees || []).find(e => e.id === employeeId + '_sales' && e.virtual);
+  if (_slot) {
+    const _f = _slot.fortnightly || {};
+    outEmp = Object.assign({}, emp, { salesAddOn: { planType: _slot.planType, startDate: _slot.startDate || '2026-11-18', fortnightly: { gp: _f.gp || [], event: _f.event || [], confirmed: _f.confirmed || [] } } });
+  }
   return {
     meta: fullData.meta,
     globals: fullData.globals,
     planTypes: fullData.planTypes,
     faqs: fullData.faqs,
     projects,
-    employees: [emp]
+    employees: [outEmp]
   };
 }
 
@@ -944,11 +952,37 @@ function _migrateCanonicalBands() {
   } catch (e) { console.error('Canonical band guard failed:', e); }
 }
 
+function _migrateFlat4AddOn() {
+  try {
+    if (!data) return;
+    data.planTypes = data.planTypes || {};
+    let changed = false;
+    if (!data.planTypes.flat_gp4) {
+      data.planTypes.flat_gp4 = { label: 'Flat 4% GP + 1% Production (inc super)', bands: [{ threshold: 0, rate: 0.04, poolRate: 0 }], productionPct: 0.01, superRate: 0.12, addOn: true };
+      changed = true;
+    }
+    data.employees = data.employees || [];
+    [['hayley', 'Hayley'], ['tom', 'Tom']].forEach(function (p) {
+      const sid = p[0] + '_sales';
+      if (!data.employees.some(e => e.id === sid)) {
+        data.employees.push({ id: sid, name: p[1], planType: 'flat_gp4', virtual: true, startDate: '2026-11-18', dashboardFile: '', seedFortnights: [] });
+        changed = true;
+      }
+    });
+    if (changed) {
+      dirty = true;
+      const slot = document.getElementById('error-slot');
+      if (slot) slot.innerHTML = '<div class="error-banner" style="background:#e8f5ee; border-color:#8cc5a4; color:#1d5a3a;"><strong>Hayley &amp; Tom sales add-on added:</strong> flat 4% GP + 1% production (inc super), from 18 Nov 2026. Click <b>Save to GitHub</b> to publish.</div>';
+    }
+  } catch (e) { console.error('flat4 migration failed:', e); }
+}
+
 async function load() {
   try {
     // v41: Master password gate + decrypt the encrypted master file
     data = await (DEV_MODE ? _devLoadAdmin() : unlockAdmin());
     _migrateCanonicalBands();
+    _migrateFlat4AddOn();
     $('#loading').style.display = 'none';
     $('#content').style.display = 'block';
     $('#meta-sub').textContent = `${data.meta.companyName} · Actuals for payroll — last edited ${data.meta.effectiveDate}`;
@@ -2327,7 +2361,7 @@ function renderFortnightlyAdmin() {
   _fnpInitialised = true;
 
   // Sales reps included in the grid. Pull from employees, filtered to sales plans.
-  const SALES_PLAN_IDS = ['gp_bands', 'gp_bands_senior', 'hybrid_gp', 'hybrid_gp_intended'];
+  const SALES_PLAN_IDS = ['gp_bands', 'gp_bands_senior', 'hybrid_gp', 'hybrid_gp_intended', 'flat_gp4'];
   // Smart short name: if the full name (or id) contains a "2.0" marker, keep it
   // so we don't get two "Evie" columns. Otherwise first word only.
   function shortName(full, id) {

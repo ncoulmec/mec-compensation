@@ -1399,13 +1399,21 @@ function _buildEmployeeSubset(fullData, employeeId) {
   const emp = (fullData.employees || []).find(e => e.id === employeeId);
   if (!emp) throw new Error(`Employee not found: ${employeeId}`);
   const projects = (fullData.projects || []).filter(p => Array.isArray(p.assignedTo) && p.assignedTo.includes(employeeId));
+  // Flat 4% sales + 1% production add-on (from 18 Nov 2026): embed the virtual slot's data
+  // (<id>_sales) into the person's own blob so their dashboard can render the add-on card.
+  let outEmp = emp;
+  const _slot = (fullData.employees || []).find(e => e.id === employeeId + '_sales' && e.virtual);
+  if (_slot) {
+    const _f = _slot.fortnightly || {};
+    outEmp = Object.assign({}, emp, { salesAddOn: { planType: _slot.planType, startDate: _slot.startDate || '2026-11-18', fortnightly: { gp: _f.gp || [], event: _f.event || [], confirmed: _f.confirmed || [] } } });
+  }
   return {
     meta: fullData.meta,
     globals: fullData.globals,
     planTypes: fullData.planTypes,
     faqs: fullData.faqs,
     projects,
-    employees: [emp]
+    employees: [outEmp]
   };
 }
 
