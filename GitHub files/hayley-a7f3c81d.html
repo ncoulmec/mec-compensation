@@ -400,7 +400,7 @@
 
     <div id="pay-increase-banner"></div>
     <div class="section-head">      <h2>Forecast your year</h2>
-      <p class="blurb">Drag the slider to model full-year CM — your incentive is driven entirely by Contribution Margin. Numbers are super-inclusive.</p>
+      <p class="blurb">Drag the sliders to model full-year company CM (your quarterly incentive) and the GP you sell and produce yourself (your fortnightly sales &amp; production commission). Numbers are super-inclusive.</p>
     </div>
 
     <div class="kpi-row">
@@ -413,6 +413,11 @@
         <div class="label">CM Incentive</div>
         <div class="value" id="card-cm">—</div>
         <div class="sub" id="card-cm-sub">—</div>
+      </div>
+      <div class="kpi-card" id="card-addon-wrap" style="display:none;">
+        <div class="label">Sales &amp; Production</div>
+        <div class="value" id="card-addon">—</div>
+        <div class="sub" id="card-addon-sub">—</div>
       </div>
       <div class="kpi-card inverted">
         <div class="label">Total Package</div>
@@ -594,6 +599,7 @@
       <h2 style="font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px;">Superannuation &amp; Total Package (Planning)</h2>
       <div class="super-line"><span>Base salary (ex-super)</span><span id="spr-base">—</span></div>
       <div class="super-line"><span>+ CM Incentive (ex-super portion)</span><span id="spr-cm" class="plus-line">—</span></div>
+      <div class="super-line" id="spr-addon-line" style="display:none;"><span>+ Sales &amp; production commission (ex-super portion)</span><span id="spr-addon" class="plus-line">—</span></div>
       <div class="super-line muted"><span>Subtotal ex-super</span><span id="spr-subtotal">—</span></div>
       <div class="super-line"><span id="spr-super-label">+ Superannuation (total)</span><span id="spr-super" class="plus-line">—</span></div>
       <div class="super-line total"><span>Total package (inc. super)</span><span id="spr-total">—</span></div>
@@ -1406,8 +1412,9 @@ function calcAll() {
   const baseSuper = base * sr;
   const baseInc = base + baseSuper;
 
-  const subtotalExSuper = base + cmIncEx;
-  const totalSuper = baseSuper + cmIncSuperPart;
+  const addon = calcAddOn();
+  const subtotalExSuper = base + cmIncEx + addon.ex;
+  const totalSuper = baseSuper + cmIncSuperPart + addon.sup;
   const totalPackage = subtotalExSuper + totalSuper;
 
   return {
@@ -1417,7 +1424,7 @@ function calcAll() {
     totalCommInc,
     effectiveKpi,
     base, baseSuper, baseInc,
-    subtotalExSuper, totalSuper, totalPackage,
+    subtotalExSuper, totalSuper, totalPackage, addon,
   };
 }
 
@@ -1677,6 +1684,7 @@ function update() {
 
   document.getElementById('card-total').textContent = fmtMoney(r.totalPackage);
   document.getElementById('card-total-sub').textContent = `${fmtMoney(r.subtotalExSuper)} + ${fmtMoney(r.totalSuper)} super`;
+  try { paintAddOn(r); } catch (e) { console.warn('addon', e); }
 
   // Breakdown
   const table = document.getElementById('breakdown-table');
@@ -1689,6 +1697,7 @@ function update() {
     <tr class="plus"><td>Super on base (${fmtPct(g.superRate, 0)})</td><td>+ ${fmtMoney(r.baseSuper)}</td></tr>
     <tr class="plus"><td>CM Bands (inc. super, × ${r.effectiveKpi.toFixed(2)} KPI)${maintainedBadge}</td><td>+ ${fmtMoney(r.cmBandsGross)}</td></tr>
     ${flatBonusRow}
+    ${r.addon && r.addon.on ? `<tr class="plus"><td>Sales commission — ${fmtPct(r.addon.sRate, 0)} of ${fmtMoney(r.addon.gp)} GP (inc. super)</td><td>+ ${fmtMoney(r.addon.sales)}</td></tr><tr class="plus"><td>Production commission — ${fmtPct(r.addon.pRate, 0)} of ${fmtMoney(r.addon.ev)} event GP (inc. super)</td><td>+ ${fmtMoney(r.addon.prod)}</td></tr>` : ''}
     <tr class="total"><td>Total package</td><td>${fmtMoney(r.totalPackage)}</td></tr>
   `;
 
@@ -2500,7 +2509,7 @@ function renderSalesAddOnCard() {
 }
 
 
-// ----- Sales & production add-on: surface it on Overview, Payouts, Key Terms, FAQ, How This Works -----
+// ----- Sales & production add-on: surface it everywhere Tom/Hayley look (Overview, Payouts, Key Terms, FAQ, How This Works) -----
 function renderSalesAddOnExtras(a) {
   const plan = (data.planTypes && data.planTypes[a.planType]) || {};
   const salesPct = ((Array.isArray(plan.bands) && plan.bands[0] && Number(plan.bands[0].rate)) || 0.04) * 100;
@@ -2512,6 +2521,8 @@ function renderSalesAddOnExtras(a) {
     if (!el) { el = document.createElement('div'); el.id = id; before.parentNode.insertBefore(el, before); }
     el.innerHTML = html; return el;
   };
+
+  // 1. Overview banner
   const ob = document.getElementById('pay-increase-banner');
   if (ob) {
     mk('sales-addon-banner',
@@ -2520,11 +2531,15 @@ function renderSalesAddOnExtras(a) {
       '<span style="color:var(--muted);">The Total Package and slider on this tab cover your quarterly plan only &mdash; this is extra.</span> ' +
       '<a href="#" onclick="' + gotoPayouts + '" style="color:#1b5e20;font-weight:600;">See your fortnightly pay &rarr;</a></div>', ob);
   }
+
+  // 2. Payouts tab: clarify cadence (the banner below says "paid quarterly")
   const pb = document.getElementById('payout-banner');
   if (pb) {
     mk('sales-addon-cadence',
       '<div class="banner info" style="margin-top:8px;"><span class="dot"></span><span>Your <strong>quarterly plan</strong> commission is paid quarterly. Your <strong>sales &amp; production commission</strong> (above) is paid <strong>every fortnight</strong> &mdash; the two are separate and add together.</span></div>', pb.nextSibling);
   }
+
+  // 3. Key Terms
   const dl = document.querySelector('#key-terms-modal dl');
   if (dl && !document.getElementById('kt-sales-addon')) {
     const wrap = document.createElement('div'); wrap.id = 'kt-sales-addon';
@@ -2534,6 +2549,8 @@ function renderSalesAddOnExtras(a) {
       '<dt>GP Received</dt><dd>The gross profit on a booking that has actually been paid in cash during the fortnight. Commission is paid on what has landed, not on what has been quoted or booked.</dd>';
     dl.appendChild(wrap);
   }
+
+  // 4. FAQ (separate container so renderFaqTab re-renders don't wipe it)
   const fl = document.getElementById('faq-list');
   if (fl) {
     const items = [
@@ -2548,6 +2565,8 @@ function renderSalesAddOnExtras(a) {
     if (!c) { c = document.createElement('div'); c.id = 'faq-addon-list'; fl.parentNode.insertBefore(c, fl.nextSibling); }
     c.innerHTML = '<div class="faq-group-tag" style="margin-top:18px;">Sales &amp; Production Commission</div>' + items.map(i => '<details class="faq-item"><summary>' + i[0] + '</summary><div class="faq-body">' + i[1] + '</div></details>').join('');
   }
+
+  // 5. How This Works
   const hw = document.getElementById('panel-howitworks');
   if (hw && !document.getElementById('hw-sales-addon')) {
     const cards = hw.querySelectorAll(':scope > .card');
@@ -2562,6 +2581,81 @@ function renderSalesAddOnExtras(a) {
       '<p style="font-size:12px;color:var(--muted);margin:0;line-height:1.6;">Where to look: your fortnightly pay appears on the <strong>Payouts &amp; Super</strong> tab once payroll confirms each fortnight.</p>';
     if (cards.length > 1) hw.insertBefore(d, cards[1]); else hw.appendChild(d);
   }
+}
+
+
+// ===== Sales & production add-on — scenario integration (flat 4% GP sold + 1% event GP, inc super) =====
+// Defaults = last 12 months to 18 Nov 2026 from Zoho (Confirmed deals: GP on bookings closed as owner; GP on events as Entertainment Producer).
+const ADDON_DEFAULTS = { tom: { gp: 11023, ev: 5920, max: 200000 }, hayley: { gp: 100020, ev: 72096, max: 400000 } };
+let addonScenario = null;
+function calcAddOn() {
+  const a = (typeof emp !== 'undefined' && emp) ? emp.salesAddOn : null;
+  if (!a) return { on: false, sales: 0, prod: 0, inc: 0, ex: 0, sup: 0, sRate: 0, pRate: 0, gp: 0, ev: 0 };
+  const pl = (data.planTypes && data.planTypes[a.planType]) || {};
+  const sRate = (Array.isArray(pl.bands) && pl.bands[0] && Number(pl.bands[0].rate)) || 0.04;
+  const pRate = typeof pl.productionPct === 'number' ? pl.productionPct : 0.01;
+  if (!addonScenario) { const d = ADDON_DEFAULTS[EMPLOYEE_ID] || { gp: 0, ev: 0 }; addonScenario = { gp: d.gp, ev: d.ev }; }
+  const sr = (data.globals && data.globals.superRate) || 0.12;
+  const sales = addonScenario.gp * sRate, prod = addonScenario.ev * pRate, inc = sales + prod, ex = inc / (1 + sr);
+  return { on: true, sales, prod, inc, ex, sup: inc - ex, sRate, pRate, gp: addonScenario.gp, ev: addonScenario.ev };
+}
+function renderAddOnInputs() {
+  const ad = calcAddOn();
+  if (!ad.on || document.getElementById('addon-inputs')) return;
+  const card = [...document.querySelectorAll('#panel-overview .card')].find(c => { const h = c.querySelector('h2'); return h && /Scenario Inputs/.test(h.textContent); });
+  if (!card) return;
+  const d = ADDON_DEFAULTS[EMPLOYEE_ID] || { gp: 0, ev: 0, max: 200000 };
+  const fmt = (n) => Math.round(n).toLocaleString('en-AU');
+  const row = (id, label, tip, val, rateTxt) =>
+    '<div style="margin-top:12px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">' +
+        '<label style="font-size:13px;font-weight:600;">' + label + ' <span class="tooltip-trigger" data-tip="' + tip + '">?</span> <span style="font-weight:500;color:var(--muted);font-size:11px;font-family:var(--mono);">× ' + rateTxt + '</span></label>' +
+        '<div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>' +
+        '<input type="text" inputmode="numeric" id="' + id + '-input" class="value-input" style="padding-left:22px;width:130px;" value="' + fmt(val) + '"></div>' +
+      '</div>' +
+      '<input type="range" id="' + id + '-slider" min="0" max="' + d.max + '" step="1000" value="' + val + '" style="width:100%;margin-top:8px;">' +
+      '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--mono);"><span>$0</span><span>Last 12 months: $' + fmt(id === 'addon-gp' ? d.gp : d.ev) + '</span><span>$' + fmt(d.max) + '</span></div>' +
+    '</div>';
+  const box = document.createElement('div');
+  box.id = 'addon-inputs';
+  box.style.cssText = 'margin-top:18px;padding:14px 16px;background:#f3f8f3;border:1px solid #cfe3cf;border-left:4px solid #2e7d32;border-radius:10px;';
+  box.innerHTML =
+    '<div style="font-size:12px;font-weight:700;color:#1b5e20;text-transform:uppercase;letter-spacing:0.05em;">💼 Sales &amp; Production Commission <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--muted);">· new from 18 Nov 2026 · paid fortnightly</span></div>' +
+    '<div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5;">On top of your quarterly plan. Flat ' + (ad.sRate * 100).toFixed(0) + '% of the GP received on bookings you sell + ' + (ad.pRate * 100).toFixed(0) + '% of the GP on events you produce. Both include super, no tiers, no cap. Sliders start at your last 12 months.</div>' +
+    row('addon-gp', 'Annual GP on bookings you sell', 'Gross profit on bookings you own and close. You are paid as the cash is received.', ad.gp, (ad.sRate * 100).toFixed(0) + '%') +
+    row('addon-ev', 'Annual GP on events you produce', 'Gross profit on events where you are the Entertainment Producer, by event date.', ad.ev, (ad.pRate * 100).toFixed(0) + '%') +
+    '<div id="addon-result" style="margin-top:12px;padding-top:10px;border-top:1px dashed #cfe3cf;font-family:var(--mono);font-size:12px;color:var(--ink);"></div>';
+  const anchor = card.querySelector('#planning-projects-section');
+  if (anchor) card.insertBefore(box, anchor); else card.appendChild(box);
+  const wire = (id, key) => {
+    const sl = document.getElementById(id + '-slider'), inp = document.getElementById(id + '-input');
+    const set = (v, from) => {
+      v = Math.max(0, Math.round(+v || 0));
+      addonScenario[key] = v;
+      if (from !== 'slider') sl.value = Math.min(v, +sl.max);
+      if (from !== 'input') inp.value = fmt(v);
+      if (typeof update === 'function') update();
+      if (typeof paintSimpleFloater === 'function') { try { paintSimpleFloater(); } catch (e) {} }
+    };
+    sl.addEventListener('input', () => set(sl.value, 'slider'));
+    inp.addEventListener('change', () => set(String(inp.value).replace(/[^0-9.]/g, ''), 'input'));
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.blur(); });
+  };
+  wire('addon-gp', 'gp'); wire('addon-ev', 'ev');
+}
+function paintAddOn(r) {
+  const ad = (r && r.addon) || calcAddOn();
+  if (!ad.on) return;
+  renderAddOnInputs();
+  const res = document.getElementById('addon-result');
+  if (res) res.innerHTML = '$' + Math.round(ad.gp).toLocaleString('en-AU') + ' × ' + (ad.sRate * 100).toFixed(0) + '% = <strong>' + fmtMoney(ad.sales) + '</strong> &nbsp;+&nbsp; $' + Math.round(ad.ev).toLocaleString('en-AU') + ' × ' + (ad.pRate * 100).toFixed(0) + '% = <strong>' + fmtMoney(ad.prod) + '</strong><br>= <strong style="color:#1b5e20;font-size:14px;">' + fmtMoney(ad.inc) + ' a year</strong> <span style="color:var(--muted);">(' + fmtMoney(ad.ex) + ' + ' + fmtMoney(ad.sup) + ' super) · ≈ ' + fmtMoney(ad.inc / 26) + ' a fortnight</span>';
+  const v = document.getElementById('card-addon'), s = document.getElementById('card-addon-sub'), w = document.getElementById('card-addon-wrap');
+  if (w) w.style.display = '';
+  if (v) v.textContent = fmtMoney(ad.inc);
+  if (s) s.textContent = fmtMoney(ad.sales) + ' sales + ' + fmtMoney(ad.prod) + ' production';
+  const sl = document.getElementById('spr-addon-line'), sv = document.getElementById('spr-addon');
+  if (sl) sl.style.display = '';
+  if (sv) sv.textContent = '+ ' + fmtMoney(ad.ex);
 }
 
 
