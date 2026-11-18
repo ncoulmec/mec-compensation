@@ -3389,7 +3389,7 @@ function renderSalesAddOnExtras(a) {
     mk('sales-addon-banner',
       '<div style="margin:0 0 14px;padding:12px 16px;background:#eef6ee;border:1px solid #b9d9bb;border-left:4px solid #2e7d32;border-radius:10px;font-size:13px;line-height:1.55;">' +
       '<strong>💼 New from 18 Nov 2026 — Sales &amp; Production Commission.</strong> On top of your quarterly plan you now earn a flat <strong>' + sp + '%</strong> of the gross profit received on bookings you sell, plus <strong>' + pp + '%</strong> of the gross profit on events you produce (both include super), paid <strong>every fortnight</strong>. ' +
-      '<span style="color:var(--muted);">Model it with the green sliders under Scenario Inputs &mdash; it flows into your Sales &amp; Production card, Breakdown and Total Package.</span> ' +
+      '<span style="color:var(--muted);">Model it with the two GP sliders under Scenario Inputs &mdash; it flows into your Sales &amp; Production card, Breakdown and Total Package.</span> ' +
       '<a href="#" onclick="' + gotoPayouts + '" style="color:#1b5e20;font-weight:600;">See your fortnightly pay &rarr;</a></div>', ob);
   }
 
@@ -3420,7 +3420,7 @@ function renderSalesAddOnExtras(a) {
       ['When do I get paid?', 'Every fortnight, in the normal pay run. Your first pay lands in the 30 Nov 2026 pay run (covering 16&ndash;29 Nov), once payroll has confirmed the fortnight. Commission is paid on gross profit actually <em>received</em> in that fortnight.'],
       ['Is it super-inclusive? What does it look like in my bank?', 'Yes. The total includes 12% super, so the bank amount is the total &divide; 1.12 and the rest goes to your super fund. Example: a $10,000 GP booking earns $400 and a $2,000 GP event earns $20 &mdash; $420 total, which is $375 to your bank and $45 to super.'],
       ['Are there tiers, a premium wallet or a cap?', 'No. It is a flat rate on every sale, with no tiers, no wallet and no cap.'],
-      ['Does it change my quarterly plan or Total Package figures?', 'Your quarterly plan is unchanged. The Total Package on the Overview now includes the sales &amp; production commission, modelled with the green sliders under Scenario Inputs (they start at your last 12 months). What you have actually been paid each fortnight is on the Payouts &amp; Super tab.']
+      ['Does it change my quarterly plan or Total Package figures?', 'Your quarterly plan is unchanged. The Total Package on the Overview now includes the sales &amp; production commission, modelled with the two GP sliders under Scenario Inputs (they start at your last 12 months). What you have actually been paid each fortnight is on the Payouts &amp; Super tab.']
     ];
     let c = document.getElementById('faq-addon-list');
     if (!c) { c = document.createElement('div'); c.id = 'faq-addon-list'; fl.parentNode.insertBefore(c, fl.nextSibling); }
@@ -3462,37 +3462,50 @@ function calcAddOn() {
 }
 function renderAddOnInputs() {
   const ad = calcAddOn();
-  if (!ad.on || document.getElementById('addon-inputs')) return;
+  if (!ad.on || document.getElementById('addon-gp-input')) return;
   const card = [...document.querySelectorAll('#panel-overview .card')].find(c => { const h = c.querySelector('h2'); return h && /Scenario Inputs/.test(h.textContent); });
   if (!card) return;
   const d = ADDON_DEFAULTS[EMPLOYEE_ID] || { gp: 0, ev: 0, max: 200000 };
   const fmt = (n) => Math.round(n).toLocaleString('en-AU');
-  const row = (id, label, tip, val, rateTxt) =>
-    '<div style="margin-top:12px;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">' +
-        '<label style="font-size:13px;font-weight:600;">' + label + ' <span class="tooltip-trigger" data-tip="' + tip + '">?</span> <span style="font-weight:500;color:var(--muted);font-size:11px;font-family:var(--mono);">× ' + rateTxt + '</span></label>' +
-        '<div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>' +
-        '<input type="text" inputmode="numeric" id="' + id + '-input" class="value-input" style="padding-left:22px;width:130px;" value="' + fmt(val) + '"></div>' +
-      '</div>' +
-      '<input type="range" id="' + id + '-slider" min="0" max="' + d.max + '" step="1000" value="' + val + '" style="width:100%;margin-top:8px;">' +
-      '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:var(--mono);"><span>$0</span><span>Last 12 months: $' + fmt(id === 'addon-gp' ? d.gp : d.ev) + '</span><span>$' + fmt(d.max) + '</span></div>' +
-    '</div>';
-  const box = document.createElement('div');
-  box.id = 'addon-inputs';
-  box.style.cssText = 'margin-top:18px;padding:14px 16px;background:#f3f8f3;border:1px solid #cfe3cf;border-left:4px solid #2e7d32;border-radius:10px;';
-  box.innerHTML =
-    '<div style="font-size:12px;font-weight:700;color:#1b5e20;text-transform:uppercase;letter-spacing:0.05em;">💼 Sales &amp; Production Commission <span style="text-transform:none;letter-spacing:0;font-weight:500;color:var(--muted);">· new from 18 Nov 2026 · paid fortnightly</span></div>' +
-    '<div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5;">On top of your quarterly plan. Flat ' + (ad.sRate * 100).toFixed(0) + '% of the GP received on bookings you sell + ' + (ad.pRate * 100).toFixed(0) + '% of the GP on events you produce. Both include super, no tiers, no cap. Sliders start at your last 12 months.</div>' +
-    row('addon-gp', 'Annual GP on bookings you sell', 'Gross profit on bookings you own and close. You are paid as the cash is received.', ad.gp, (ad.sRate * 100).toFixed(0) + '%') +
-    row('addon-ev', 'Annual GP on events you produce', 'Gross profit on events where you are the Entertainment Producer, by event date.', ad.ev, (ad.pRate * 100).toFixed(0) + '%') +
-    '<div id="addon-result" style="margin-top:12px;padding-top:10px;border-top:1px dashed #cfe3cf;font-family:var(--mono);font-size:12px;color:var(--ink);"></div>';
-  const anchor = card.querySelector('#planning-projects-section');
-  if (anchor) card.insertBefore(box, anchor); else card.appendChild(box);
-  const wire = (id, key) => {
-    const sl = document.getElementById(id + '-slider'), inp = document.getElementById(id + '-input');
+  const sP = (ad.sRate * 100).toFixed(0) + '%', pP = (ad.pRate * 100).toFixed(0) + '%';
+  const defs = [
+    { id: 'addon-gp', key: 'gp', label: 'Annual GP on bookings you sell (' + sP + ')', tip: 'Sales commission from 18 Nov 2026: a flat ' + sP + ' of the gross profit received on bookings you own and close (inc. super, paid fortnightly). Starts at your last 12 months.', val: ad.gp, last: d.gp },
+    { id: 'addon-ev', key: 'ev', label: 'Annual GP on events you produce (' + pP + ')', tip: 'Production commission from 18 Nov 2026: ' + pP + ' of the gross profit on events where you are the Entertainment Producer (inc. super, paid fortnightly). Starts at your last 12 months.', val: ad.ev, last: d.ev }
+  ];
+  const dollarInput = (id, val, w) => '<div style="position: relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>' +
+    '<input type="text" inputmode="numeric" id="' + id + '-input" class="value-input" style="padding-left: 22px;' + (w ? ' width: ' + w + ';' : '') + '" value="' + fmt(val) + '"></div>';
+  const tipHtml = (t) => ' <span class="tooltip-trigger" data-tip="' + t + '">?</span>';
+  const tomStyle = !!card.querySelector('.scenario-row.has-realistic-slider');
+  const rows = defs.map(f => {
+    const el = document.createElement('div');
+    if (tomStyle) {
+      // Same markup as "Annual Performance Revenue" row
+      const lastPct = Math.max(0, Math.min(100, (f.last / d.max) * 100));
+      el.className = 'scenario-row has-realistic-slider';
+      el.innerHTML = '<div class="label-row"><label>' + f.label + tipHtml(f.tip) + '</label><div class="value-cell">' + dollarInput(f.id, f.val, '150px') + '</div></div>' +
+        '<div class="realistic-slider-wrap" style="padding-top: 0;">' +
+          '<input type="range" id="' + f.id + '-slider" min="0" max="' + d.max + '" step="1000" value="' + f.val + '" style="margin-top: 8px;">' +
+          '<div class="ticks"><span class="tick" style="left:' + lastPct.toFixed(1) + '%;">$' + Math.round(f.last / 1000) + 'k</span></div>' +
+        '</div>';
+    } else {
+      // Same markup as "Company CM (annual)" row
+      el.className = 'scenario-row';
+      el.innerHTML = '<label>' + f.label + tipHtml(f.tip) + '</label>' +
+        '<input type="range" id="' + f.id + '-slider" min="0" max="' + d.max + '" step="1000" value="' + f.val + '">' +
+        '<div style="display: flex; flex-direction: column; gap: 4px; align-items: stretch;">' + dollarInput(f.id, f.val, '') +
+        '<div style="font-size: 11px; color: var(--muted); font-family: var(--mono); text-align: right;">Last 12m: <span style="color:var(--navy);font-weight:600;">$' + fmt(f.last) + '</span></div></div>';
+    }
+    return el;
+  });
+  // Insert directly after the main scenario row (before the hidden KPI row / projects section)
+  const mainRow = card.querySelector('.scenario-row');
+  let after = mainRow;
+  rows.forEach(r => { after.parentNode.insertBefore(r, after.nextSibling); after = r; });
+  defs.forEach(f => {
+    const sl = document.getElementById(f.id + '-slider'), inp = document.getElementById(f.id + '-input');
     const set = (v, from) => {
       v = Math.max(0, Math.round(+v || 0));
-      addonScenario[key] = v;
+      addonScenario[f.key] = v;
       if (from !== 'slider') sl.value = Math.min(v, +sl.max);
       if (from !== 'input') inp.value = fmt(v);
       if (typeof update === 'function') update();
@@ -3501,8 +3514,8 @@ function renderAddOnInputs() {
     sl.addEventListener('input', () => set(sl.value, 'slider'));
     inp.addEventListener('change', () => set(String(inp.value).replace(/[^0-9.]/g, ''), 'input'));
     inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.blur(); });
-  };
-  wire('addon-gp', 'gp'); wire('addon-ev', 'ev');
+  });
+  if (typeof wireTooltips === 'function') { try { wireTooltips(); } catch (e) {} }
 }
 function paintAddOn(r) {
   const ad = (r && r.addon) || calcAddOn();
