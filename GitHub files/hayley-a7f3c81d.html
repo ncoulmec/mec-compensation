@@ -2608,8 +2608,8 @@ function renderAddOnInputs() {
   const fmt = (n) => Math.round(n).toLocaleString('en-AU');
   const sP = (ad.sRate * 100).toFixed(0) + '%', pP = (ad.pRate * 100).toFixed(0) + '%';
   const defs = [
-    { id: 'addon-gp', key: 'gp', label: 'Annual GP on bookings you sell (' + sP + ')', tip: 'Sales commission from 18 Nov 2026: a flat ' + sP + ' of the gross profit received on bookings you own and close (inc. super, paid fortnightly). Starts at your last 12 months.', val: ad.gp, last: d.gp },
-    { id: 'addon-ev', key: 'ev', label: 'Annual GP on events you produce (' + pP + ')', tip: 'Production commission from 18 Nov 2026: ' + pP + ' of the gross profit on events where you are the Entertainment Producer (inc. super, paid fortnightly). Starts at your last 12 months.', val: ad.ev, last: d.ev }
+    { id: 'addon-gp', key: 'gp', label: 'Annual GP Sold (' + sP + ')', tip: 'Sales commission from 18 Nov 2026: a flat ' + sP + ' of the gross profit received on bookings you own and close (inc. super, paid fortnightly). Starts at your last 12 months.', val: ad.gp, last: d.gp },
+    { id: 'addon-ev', key: 'ev', label: 'Annual Event GP Produced (' + pP + ')', tip: 'Production commission from 18 Nov 2026: ' + pP + ' of the gross profit on events where you are the Entertainment Producer (inc. super, paid fortnightly). Starts at your last 12 months.', val: ad.ev, last: d.ev }
   ];
   const dollarInput = (id, val, w) => '<div style="position: relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:14px;color:var(--muted);">$</span>' +
     '<input type="text" inputmode="numeric" id="' + id + '-input" class="value-input" style="padding-left: 22px;' + (w ? ' width: ' + w + ';' : '') + '" value="' + fmt(val) + '"></div>';
